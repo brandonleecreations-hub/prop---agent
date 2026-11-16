@@ -1347,14 +1347,6 @@ async function downloadTradingCard(ti, ci, btn){
   var rw = ctx.measureText(t.rarity).width + 30;
   rrC(ctx, W - 62 - rw, 618, rw, 36, 18); ctx.fillStyle = accent; ctx.fill();
   ctx.fillStyle = "#0a0a10"; ctx.font = "900 19px system-ui, sans-serif"; ctx.textAlign = "center"; ctx.fillText(t.rarity, W - 62 - rw / 2, 643);
-  var st = charStats(ci, ti); var sl = ["PWR", "NEG", "STY"];
-  st.forEach(function(v, k){
-    var x = 62 + k * 176;
-    ctx.textAlign = "left"; ctx.fillStyle = "#a1a1aa"; ctx.font = "800 16px system-ui, sans-serif"; ctx.fillText(sl[k], x, 692);
-    ctx.textAlign = "right"; ctx.fillStyle = "#fff"; ctx.fillText(String(v), x + 150, 692);
-    rrC(ctx, x, 702, 150, 9, 4); ctx.fillStyle = "rgba(255,255,255,.13)"; ctx.fill();
-    rrC(ctx, x, 702, Math.round(150 * v / 100), 9, 4); ctx.fillStyle = accent; ctx.fill();
-  });
   ctx.textAlign = "left"; ctx.fillStyle = "#a1a1aa"; ctx.font = "500 19px system-ui, sans-serif";
   ctx.fillText(un ? "Unlocked — in your collection" : ("Unlocks at " + t.wins + " winning tickets — you have " + wins), 62, 762);
   ctx.textAlign = "center"; ctx.fillStyle = "#fff"; ctx.font = "800 22px system-ui, sans-serif"; ctx.fillText("P R O P   A G E N T", W / 2, 838);
@@ -1459,7 +1451,6 @@ function tierCardHTML(t, wins, withBtns, ci){
     + '<div class="tcplate"><span class="tcname">' + cname + gems + '</span><span class="tcno">' + numTxt + '</span></div>'
     + '<div class="tcwin">' + (art ? '<img class="cardart" src="' + esc(art) + '" alt="">' : '<div class="cardart ph" style="color:' + t.color + '">' + t.name.charAt(0) + '</div>') + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:' + t.color + '">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:' + t.color + '">' + t.rarity + '</span></div>'
-    + stats
     + '<div class="tierto" style="margin-top:6px">' + (un ? 'Unlocked — in your collection' : (t.wins - wins) + ' winning ticket' + ((t.wins - wins) === 1 ? '' : 's') + ' to go') + (ci ? '' : ' · Pick your agent in your profile') + '</div>'
     + (withBtns ? ((un ? setProfBtn(art || '/api/icons?s=512', cname + ' · ' + t.name + ' Card') : '') + dlBtn('tier', ti, ci)) : '')
     + '</div>'
