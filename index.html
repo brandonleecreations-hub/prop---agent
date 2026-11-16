@@ -219,7 +219,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <!-- MY TICKETS -->
   <section class="view" id="view-tickets">
     <h2>My Tickets</h2>
-    <p class="sub">These are only yours — tickets save to your cloud profile (Supabase) and this device. Name your profile as an Agent (top right); your record, tiers and cards follow your agent name.</p>
+    <p class="sub">These are only yours — tickets save to your cloud profile (Supabase) and this device. Tap the logo (top left) or the Your Agent card on the Board tab to set your agent name and profile pic; your record, tiers and cards follow your agent name.</p>
     <div class="card" style="background:linear-gradient(135deg,#3b1470,#22103f);border-color:#5b21b6">
       <div style="font-size:15.5px">Lock a ticket and its live stats load here automatically.</div>
       <button class="ghostbtn" id="tkRefresh" style="margin-top:10px;background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none;font-weight:800;padding:10px 16px">⟳ Refresh stats now</button>
@@ -579,7 +579,7 @@ function renderTopAgents(){
   var rows = agentRows().slice(0,5);
   setHtml($("topAgents"), '<div class="card">'+rows.map(function(r,i){
     var t = tierFor(r.wins);
-    return '<div class="leg"><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.emoji+' '+t.name+'</span></div><span class="note">'+r.wins+' winning tickets</span></div>';
+    return '<div class="leg"><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.name+'</span></div><span class="note">'+r.wins+' winning tickets</span></div>';
   }).join("")+'</div>');
 }
 function renderUpcoming(){
@@ -975,7 +975,7 @@ async function downloadCard(kind, idx, btn){
   if (kind==="tier"){
     var t=TIERS[idx]; if(!t) return;
     var cols={Rookie:"#22c55e",Bronze:"#d97706",Silver:"#c7cbd1",Gold:"#f5c518",Platinum:"#22d3ee",Diamond:"#7dd3fc",Legend:"#c084fc"};
-    accent=cols[t.name]||"#7C3AED"; big=t.emoji; title=t.name+" Card";
+    accent=cols[t.name]||"#7C3AED"; big=t.name.charAt(0); title=t.name+" Card";
     sub = wins>=t.wins ? "UNLOCKED" : "LOCKED - "+(t.wins-wins)+" WINS TO GO";
     foot = "Unlocks at "+t.wins+" winning tickets - you have "+wins;
   } else {
@@ -1030,18 +1030,18 @@ async function downloadCard(kind, idx, btn){
 function renderBoard(){
   var rows = agentRows();
   $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Wins</th></tr>'
-    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b></td><td>'+t.emoji+' '+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
+    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b></td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
   var wins = myWins();
   $("tiers").innerHTML = TIERS.map(function(t){
     var un = wins >= t.wins;
     var to = un ? "Unlocked" : (t.wins - wins) + " winning ticket" + ((t.wins-wins)===1?"":"s") + " to " + t.name;
-    return '<div class="tiercard'+(un?" unlocked":"")+'"><div class="tierinner"><div class="flipfront"><div class="tieremoji">'+t.emoji+'</div><div class="tiername">'+t.name+'</div><div class="tierto">'+to+'</div></div><div class="flipback">'+t.name+' tier — needs '+t.wins+' winning tickets. You have '+wins+'. A win counts only when every leg on the ticket hits.</div></div></div>';
+    return '<div class="tiercard'+(un?" unlocked":"")+'"><div class="tierinner"><div class="flipfront"><div class="tieremoji">'+t.name.charAt(0)+'</div><div class="tiername">'+t.name+'</div><div class="tierto">'+to+'</div></div><div class="flipback">'+t.name+' tier — needs '+t.wins+' winning tickets. You have '+wins+'. A win counts only when every leg on the ticket hits.</div></div></div>';
   }).join("");
   var cards = [];
   tickets.filter(function(t){ return t.result==="win"; }).forEach(function(t){ t.legs.forEach(function(l){ cards.push(l); }); });
   var tierCards = TIERS.map(function(t, ti){
     var un = wins >= t.wins;
-    return '<div class="tiercard'+(un?" unlocked":"")+'"><div class="tierinner"><div class="flipfront"><div class="tieremoji">'+t.emoji+'</div><div class="tiername">'+t.name+' Card</div><div class="tierto">'+(un?"Unlocked":(t.wins-wins)+" to "+t.name)+'</div>'+(un?setProfBtn("/api/icons?s=512", t.emoji+" "+t.name+" Card"):"") + dlBtn("tier", ti)+'</div><div class="flipback">Tier card · '+t.name+' · unlocks at '+t.wins+' winning tickets. You have '+wins+'.</div></div></div>';
+    return '<div class="tiercard'+(un?" unlocked":"")+'"><div class="tierinner"><div class="flipfront"><div class="tieremoji">'+t.name.charAt(0)+'</div><div class="tiername">'+t.name+' Card</div><div class="tierto">'+(un?"Unlocked":(t.wins-wins)+" to "+t.name)+'</div>'+(un?setProfBtn("/api/icons?s=512", t.name+" Card"):"") + dlBtn("tier", ti)+'</div><div class="flipback">Tier card · '+t.name+' · unlocks at '+t.wins+' winning tickets. You have '+wins+'.</div></div></div>';
   }).join("");
   var playerCards = cards.map(function(l, li){
     return '<div class="tiercard unlocked"><div class="tierinner"><div class="flipfront"><div class="tieremoji">🃏</div><div class="tiername">'+esc(l.player)+'</div><div class="tierto">'+esc(l.stat)+' '+l.line+' · '+l.dir+' · from a winning ticket</div>'+setProfBtn(photoCache[(l.player||"").toLowerCase()]||"/api/icons?s=512", l.player) + dlBtn("player", li)+'</div><div class="flipback">'+esc(l.player)+' — '+esc(l.team||"")+'<br>'+esc(l.matchup||"")+'<br>Earned on a ticket where every leg hit.</div></div></div>';
@@ -1061,7 +1061,7 @@ var logoImgEl = $("logoImg"); if (logoImgEl) logoImgEl.addEventListener("click",
 $("agentBtn").addEventListener("click", function(){
   $("agName").value = profile.name || ""; $("agEmail").value = profile.email || "";
   var ai = $("agAvatarImg"); if (ai) { if (profile.avatar) { ai.src = profile.avatar; ai.style.display = ""; } else ai.style.display = "none"; }
-  var af = $("agFeatured"); if (af) af.textContent = profile.featured || "No profile card set";
+  var af = $("agFeatured"); if (af) af.textContent = String(profile.featured || "").replace(/^[^A-Za-z0-9]+/, "") || "No profile card set";
   var t = tierFor(myWins()), nx = nextTier(myWins());
   $("agStats").innerHTML = "<span>Tier <b>"+t.name+"</b></span><span>Wins <b>"+myWins()+"</b></span><span>Tickets <b>"+tickets.length+"</b></span>" + (nx ? "<span>Next: <b>"+nx.name+"</b> in "+(nx.wins-myWins())+" wins</span>" : "<span><b>Top tier reached 👑</b></span>");
   $("agentDlg").showModal();
@@ -1232,7 +1232,7 @@ function cloudInit(){
     if (!j || !j.ok) return;
     var restored = false;
     if (j.profile && j.profile.display_name && !profile.name) { profile.name = j.profile.display_name; lsSet("pa_profile", profile); refreshAgentBtn(); restored = true; }
-    if (j.profile && j.profile.avatar_url && !profile.avatar) { profile.avatar = j.profile.avatar_url; profile.featured = j.profile.featured_card || ""; lsSet("pa_profile", profile); refreshAgentBtn(); restored = true; }
+    if (j.profile && j.profile.avatar_url && !profile.avatar) { profile.avatar = j.profile.avatar_url; profile.featured = String(j.profile.featured_card || "").replace(/^[^A-Za-z0-9]+/, ""); lsSet("pa_profile", profile); refreshAgentBtn(); restored = true; }
     if ((!tickets || !tickets.length) && j.tickets && j.tickets.length) {
       tickets = j.tickets.map(function(ct, i){
         var legs = Array.isArray(ct.legs) ? ct.legs : [];
