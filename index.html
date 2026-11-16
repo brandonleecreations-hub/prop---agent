@@ -256,10 +256,21 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <h2>Sports News</h2>
     <p class="sub" id="newsNote">Latest headlines from ESPN · refreshes automatically</p>
     <div class="card news" id="news"><p class="empty">Loading the top headlines…</p></div>
-    <div class="card" id="installCard" style="display:none;text-align:center;padding:22px 18px;margin-top:18px">
-      <div style="font-size:19px;font-weight:900">Get the Prop Agent app</div>
-      <p class="sub" id="installNote" style="margin:8px auto 14px;max-width:430px">Add Prop Agent to your home screen — its own icon, full screen, opens like a real app.</p>
-      <button class="ghostbtn" id="installBtn" style="background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none;font-weight:800;padding:13px 22px;font-size:15px">📲 Add to Home Screen</button>
+    <div class="card" id="installCard" style="display:none;margin-top:20px;padding:0;overflow:hidden;border:2px solid #f5b942;background:radial-gradient(130% 150% at 15% 0%, #4c1d95 0%, #2a1650 46%, #12082b 100%);box-shadow:0 14px 44px rgba(124,58,237,.5)">
+      <div style="display:flex;gap:14px;align-items:center;padding:18px 18px 6px">
+        <img src="/api/icons?s=512" alt="" style="width:76px;height:76px;border-radius:18px;box-shadow:0 8px 26px rgba(0,0,0,.55);flex:0 0 auto">
+        <div style="min-width:0">
+          <div style="font-size:11px;font-weight:900;letter-spacing:2.5px;color:#f5b942">FREE · NO DOWNLOAD NEEDED</div>
+          <div style="font-size:26px;font-weight:900;line-height:1.08;color:#fff;text-shadow:0 2px 16px rgba(167,139,250,.65)">PROP AGENT</div>
+          <div style="font-size:13.5px;color:#ddd0ff;line-height:1.45;margin-top:3px">Real PrizePicks props · Live tickets · <b style="color:#fff">84 collectible agent cards</b> to unlock</div>
+        </div>
+      </div>
+      <p class="sub" id="installNote" style="margin:8px 18px 0;color:#cdbcf5">One tap puts Prop Agent on your home screen — its own icon, full screen, opens like a real app.</p>
+      <div style="display:flex;gap:10px;padding:14px 18px 18px;flex-wrap:wrap">
+        <button class="ghostbtn" id="installBtn" style="flex:1;min-width:170px;background:linear-gradient(135deg,#f5b942,#d97706);color:#1a1000;border:none;font-weight:900;padding:14px 18px;font-size:15.5px;box-shadow:0 8px 24px rgba(245,185,66,.45)">📲 ADD TO HOME SCREEN</button>
+        <button class="ghostbtn" id="shareBtn" style="flex:1;min-width:140px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.4);font-weight:800;padding:14px 18px;font-size:15px">🔗 Share the app</button>
+      </div>
+      <div style="text-align:center;padding:0 18px 14px;font-size:12px;letter-spacing:1.6px;color:#a78bfa;font-weight:700">PROP-AGENT-BRE.VERCEL.APP</div>
     </div>
   </section>
 
@@ -1672,6 +1683,7 @@ function renderInstall(){
   else { btn.style.display = "none"; note.innerHTML = "Open your browser menu (\u22ee) and tap <b>Install app</b> or <b>Add to Home screen</b> — Prop Agent gets its own icon and opens full screen."; }
 }
 var ib0 = $("installBtn"); if (ib0) ib0.addEventListener("click", function(){ if (!deferredInstall) return; deferredInstall.prompt(); deferredInstall.userChoice.then(function(){ deferredInstall = null; renderInstall(); }); });
+var sb0 = $("shareBtn"); if (sb0) sb0.addEventListener("click", function(){ var url = "https://prop-agent-bre.vercel.app/"; if (navigator.share) { navigator.share({title:"Prop Agent", text:"Prop Agent — real PrizePicks props, live tickets, 84 collectible agent cards. Get the app:", url:url}).catch(function(){}); } else if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function(){ var o = sb0.textContent; sb0.textContent = "\u2713 Link copied"; setTimeout(function(){ sb0.textContent = o; }, 1800); }); } });
 renderInstall();
 function renderTicker(){
   var wrap = $("tickerWrap"), box = $("yourTicker");
