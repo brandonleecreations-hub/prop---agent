@@ -7,12 +7,13 @@
 <meta name="description" content="Player props ticker — build tickets, track live games, climb the agent tiers.">
 <meta name="theme-color" content="#000000">
 <link rel="manifest" href="/manifest.json">
-<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/api/icons?s=192">
+<link rel="apple-touch-icon" href="/api/icons?s=192">
 <style>
 :root{
   --bg:#000; --panel:#121212; --panel2:#1a1a1a; --line:#262626; --txt:#f2f2f2; --mut:#9a9a9a;
   --grn:#00c853; --grn-d:#063; --red:#ff5252; --gold:#f5c518; --blu:#40c4ff;
+  --purp:#7C3AED; --purp2:#9333EA; --purp-lt:#a78bfa; --teal:#2dd4bf; --cyan:#22d3ee;
   --r:14px;
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
@@ -21,16 +22,23 @@ a{color:var(--blu);text-decoration:none}
 button{font-family:inherit;cursor:pointer}
 header{position:sticky;top:0;z-index:50;background:rgba(0,0,0,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .hwrap{max-width:1060px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:10px}
-.logo{font-size:22px}
-h1{font-size:19px;margin:0;letter-spacing:.2px}
-h1 small{display:block;font-size:11px;color:var(--mut);font-weight:500;letter-spacing:.4px;text-transform:uppercase}
+.logo{width:44px;height:44px;border-radius:10px;object-fit:cover;flex:0 0 auto}
+h1{font-size:20px;margin:0;letter-spacing:.4px;font-weight:900;text-transform:uppercase}
+h1 small{display:block;font-size:11px;color:var(--mut);font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-top:1px}
+.hbars{display:flex;gap:4px;margin-top:4px}
+.hbars i{display:block;height:4px;border-radius:2px}
+.hbars i:first-child{width:34px;background:linear-gradient(90deg,var(--teal),var(--cyan))}
+.hbars i:last-child{width:52px;background:linear-gradient(90deg,var(--purp),var(--purp2))}
+.livepill{flex:0 0 auto;background:rgba(245,197,24,.12);color:var(--gold);border:1px solid rgba(245,197,24,.45);border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:800;white-space:nowrap}
+.livepill .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:6px}
+.refreshbtn{flex:0 0 auto;background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700}
 .hsp{flex:1}
 .agentbtn{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600}
 .agentbtn b{color:var(--gold)}
 .tabs{max-width:1060px;margin:0 auto;padding:0 14px 10px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 .tab{flex:0 0 auto;background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13.5px;font-weight:600;white-space:nowrap}
-.tab.on{background:var(--grn);border-color:var(--grn);color:#02150a}
+.tab.on{background:linear-gradient(135deg,var(--purp),var(--purp2));border-color:var(--purp);color:#fff}
 main{max-width:1060px;margin:0 auto;padding:14px 14px 96px}
 .view{display:none}
 .view.on{display:block}
@@ -39,18 +47,29 @@ h2:first-child{margin-top:4px}
 .sub{color:var(--mut);font-size:13.5px;margin:0 0 12px;line-height:1.45}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:0 0 12px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
-.prop{display:flex;gap:12px;align-items:flex-start}
+.prop{display:block;overflow:hidden;padding:0}
+.propbanner{background:linear-gradient(180deg,#2a1650 0%,#7C3AED 55%,#1a0b2e 100%);min-height:120px;display:flex;align-items:flex-end;justify-content:center}
+.propbanner img{height:118px;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(0,0,0,.5))}
+.propbanner .pinit-big{font-size:44px;font-weight:900;color:#fff;padding:26px 0 18px;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+.pcenter{padding:16px 16px 18px;text-align:center}
+.pname{font-weight:800;font-size:19px}
+.pmeta{color:var(--mut);font-size:12.5px;margin-top:3px;line-height:1.5}
+.pstat{font-size:13px;font-weight:700;letter-spacing:2px;color:var(--txt);margin-top:12px;text-transform:uppercase}
+.pline-big{font-size:48px;font-weight:900;line-height:1.05;margin:2px 0 10px}
+.starts-pill{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.4px;color:var(--teal);border:1.5px solid var(--teal);border-radius:999px;padding:7px 14px;margin:2px 0 10px}
+.psrc{font-size:12px;color:var(--mut);line-height:1.5}
 .pimg{width:64px;height:64px;border-radius:50%;background:var(--panel2);object-fit:cover;flex:0 0 auto;border:1px solid var(--line)}
 .pinit{width:64px;height:64px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:var(--gold);flex:0 0 auto}
 .pbody{flex:1;min-width:0}
-.pname{font-weight:700;font-size:16px}
-.pmeta{color:var(--mut);font-size:12.5px;margin-top:1px;line-height:1.4}
 .pline{font-size:24px;font-weight:800;margin:6px 0 2px}
 .pline span{font-size:13px;color:var(--mut);font-weight:600}
 .psrc{font-size:11.5px;color:var(--mut)}
-.ml{display:flex;gap:8px;margin-top:10px}
-.ml button{flex:1;border-radius:10px;padding:10px 0;font-size:14px;font-weight:800;border:1px solid var(--line);background:var(--panel2);color:var(--txt)}
-.ml button.more.sel{background:var(--grn);border-color:var(--grn);color:#02150a}
+.ml{display:flex;gap:8px;margin-top:12px}
+.ml button{flex:1;border-radius:12px;padding:12px 0;font-size:15px;font-weight:900;border:1px solid var(--line);background:var(--panel2);color:var(--txt)}
+.ml button span{display:block;font-size:12px;font-weight:700;color:var(--mut);margin-top:2px;text-transform:none}
+.ml button.more{background:linear-gradient(135deg,var(--purp),var(--purp2));border-color:var(--purp);color:#fff}
+.ml button.more span{color:rgba(255,255,255,.85)}
+.ml button.more.sel{box-shadow:0 0 0 2px #fff inset}
 .ml button.less.sel{background:var(--red);border-color:var(--red);color:#1c0505}
 .badge{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;background:var(--panel2);border:1px solid var(--line);color:var(--mut)}
 .badge.live{color:#fff;background:#b71c1c;border-color:#b71c1c}
@@ -60,12 +79,12 @@ h2:first-child{margin-top:4px}
 .leg:last-child{border-bottom:none}
 .leg .x{background:none;border:none;color:var(--red);font-size:16px;padding:2px 6px}
 .leg .dir{font-weight:800;font-size:12px;padding:2px 7px;border-radius:6px;background:var(--panel2);border:1px solid var(--line)}
-.leg .dir.more{color:var(--grn)} .leg .dir.less{color:var(--red)}
+.leg .dir.more{color:var(--purp-lt)} .leg .dir.less{color:var(--red)}
 input[type=text],input[type=email],input[type=number],select{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:10px 12px;font-size:14.5px;width:100%}
 input[type=number]{width:110px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.bigbtn{background:var(--grn);color:#02150a;border:none;border-radius:12px;padding:13px 18px;font-size:15.5px;font-weight:800;width:100%}
-.bigbtn:disabled{background:var(--panel2);color:var(--mut)}
+.bigbtn{background:linear-gradient(135deg,var(--purp),var(--purp2));color:#fff;border:none;border-radius:12px;padding:13px 18px;font-size:15.5px;font-weight:800;width:100%}
+.bigbtn:disabled{background:#3b2a6b;color:#8a7bb8}
 .ghostbtn{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-size:13.5px;font-weight:700}
 .pay{font-size:14px;color:var(--mut)} .pay b{color:var(--gold);font-size:17px}
 .game{display:flex;justify-content:space-between;gap:10px;align-items:center}
@@ -90,7 +109,7 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(10,10,10,.97);border-top:1px solid var(--line)}
 nav.bottom .nwrap{max-width:1060px;margin:0 auto;display:flex}
 nav.bottom button{flex:1;background:none;border:none;color:var(--mut);font-size:11.5px;font-weight:700;padding:9px 2px 12px}
-nav.bottom button.on{color:var(--grn)}
+nav.bottom button.on{color:var(--purp-lt)}
 nav.bottom button .ni{display:block;font-size:19px;margin-bottom:1px}
 dialog{background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:16px;max-width:420px;width:calc(100% - 28px);padding:20px}
 dialog::backdrop{background:rgba(0,0,0,.7)}
@@ -108,15 +127,51 @@ dialog h3{margin:0 0 6px;font-size:18px}
 .searchbar{margin:0 0 12px}
 .empty{color:var(--mut);font-size:14px;padding:8px 0}
 details.card summary{cursor:pointer;font-weight:700;font-size:15px}
+.hero{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 16px 14px;margin:0 0 12px;cursor:pointer;box-shadow:0 0 0 1px rgba(124,58,237,.25),0 8px 30px rgba(124,58,237,.18);position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--cyan),var(--purp),var(--purp2))}
+.heroscore{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.heroname{font-weight:900;font-size:21px;line-height:1.15;max-width:38%}
+.heroname small{display:block;color:var(--purp-lt);font-size:14px;font-weight:700;margin-top:2px}
+.heroscore .hscore{font-size:44px;font-weight:900;line-height:1}
+.heroscore .hdash{color:var(--purp-lt);font-size:44px;font-weight:900;line-height:1}
+.herolive{display:inline-block;margin:12px 0 8px;background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.35);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:800}
+.herotap{color:var(--mut);font-size:13.5px;font-weight:700;text-align:center;margin:4px 0 0}
 @media (max-width:640px){ .slip{position:static} .pline{font-size:21px} }
+.card{position:relative}
+.stampwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:5}
+.stamp{border:4px solid var(--grn);color:var(--grn);font-size:32px;font-weight:900;letter-spacing:3px;padding:8px 18px;border-radius:10px;background:rgba(0,20,8,.35);text-shadow:0 2px 10px rgba(0,0,0,.6);animation:stampIn .45s cubic-bezier(.2,2.4,.4,1) both}
+@keyframes stampIn{0%{transform:rotate(-32deg) scale(2.4);opacity:0}60%{opacity:1}100%{transform:rotate(-12deg) scale(1);opacity:1}}
+.shake{animation:shk .3s ease .4s}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.stampmini{position:absolute;top:46px;right:10px;border:2.5px solid var(--grn);color:var(--grn);font-size:10px;font-weight:900;letter-spacing:1.5px;padding:2px 7px;border-radius:6px;transform:rotate(-10deg);opacity:.9;pointer-events:none}
+.redxwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(24,0,0,.45);border-radius:var(--r);z-index:5;pointer-events:none;animation:xfade 1.6s ease both}
+.redxwrap svg{width:110px;height:110px}
+.redxwrap line{stroke:#ff2d2d;stroke-width:11;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;animation:drawx .45s ease forwards}
+.redxwrap line:last-child{animation-delay:.3s}
+@keyframes drawx{to{stroke-dashoffset:0}}
+@keyframes xfade{0%{opacity:0}12%{opacity:1}78%{opacity:1}100%{opacity:0}}
+#confettiCanvas{position:fixed;inset:0;pointer-events:none;z-index:200}
+.tickwrap{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
+.tickwrap::-webkit-scrollbar{display:none}
+.tickchip{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--purp);border-radius:10px;padding:8px 12px;font-size:12.5px;line-height:1.45;max-width:230px}
+.tickchip b{display:block;font-size:13.5px}
+.tickchip span{display:block;color:var(--mut)}
+.tickchip .tickfrom{color:var(--gold);font-weight:700}
+.yours-tag{display:inline-block;background:rgba(245,197,24,.16);color:var(--gold);border:1px solid rgba(245,197,24,.4);font-size:10px;font-weight:800;border-radius:999px;padding:1px 7px;letter-spacing:.4px}
+
 </style>
 </head>
 <body>
 <header>
   <div class="hwrap">
-    <div class="logo">🎯</div>
-    <h1>Prop Agent <small>Props Ticker</small></h1>
+    <img class="logo" src="/api/icons?s=192" alt="Prop Agent">
+    <div>
+      <h1>Prop Agent <small>Props Ticker · All Sports</small></h1>
+      <div class="hbars"><i></i><i></i></div>
+    </div>
     <div class="hsp"></div>
+    <span class="livepill" id="livePill"><span class="dot"></span>LIVE · 0</span>
+    <button class="refreshbtn" id="refreshBtn" type="button">↻ Refresh</button>
     <button class="agentbtn" id="agentBtn">👤 Guest Agent</button>
   </div>
   <div class="tabs" id="sportTabs"></div>
@@ -125,10 +180,14 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 <main>
   <!-- HOME -->
   <section class="view" id="view-home">
-    <p class="sub">Tap a sport — its props for the day open on their own page. Home is just your ticket builder, a few upcoming games and Sports News. Props are real PrizePicks lines, served live via Parlay API. Scores and news come from ESPN.</p>
+    <div id="liveHero"></div>
+    <p class="note" id="heroStatus"></p>
+    <h2 style="font-size:20px">Tap a sport — its props for the day open on their own page</h2>
+    <p class="sub">Home is just your ticket builder, a few upcoming games and Sports News. Props are real PrizePicks lines, served live via Parlay API. Scores and news come from ESPN.</p>
     <h2>Ticket Builder</h2>
     <p class="sub">Your slip lives here. Tap a sport tab above, then tap <b>MORE</b> or <b>LESS</b> on any prop — it lands on this slip instantly. Tap the same pick again to take it off, or tap ✕ on a pick below.</p>
     <div class="card slip" id="slipHome"></div>
+    <div id="tickerWrap" style="display:none"><h2>Your Players Ticker</h2><p class="sub">Your picks, live — follows the players on your slip and tickets, updated with the scores every 30 seconds.</p><div class="tickwrap" id="yourTicker"></div></div>
     <h2>Top Agents</h2>
     <p class="sub">Ranked by most winning tickets — tap an agent to see their shared tickets.</p>
     <div id="topAgents"><p class="empty">Loading Top Agents…</p></div>
@@ -136,13 +195,14 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <p class="sub">A few big ones coming up — marquee matchups, primetime games, and games with props on the board. Tap one to open it in Live Center.</p>
     <div id="upcoming"><p class="empty">Loading upcoming games from ESPN…</p></div>
     <h2>Sports News</h2>
-    <p class="sub">Top headlines from ESPN — refreshed with the scores every 30 seconds.</p>
+    <p class="sub" id="newsNote">Top headlines from ESPN — refreshed with the scores every 30 seconds.</p>
     <div class="card news" id="news"><p class="empty">Loading the top headlines…</p></div>
   </section>
 
   <!-- SPORT PROPS -->
   <section class="view" id="view-sport">
     <h2 id="sportTitle">Props</h2>
+    <div class="row" style="justify-content:space-between;margin:0 0 12px"><h3 style="margin:0;font-size:17px">Future Games</h3><span class="badge" id="propCountPill"></span></div>
     <p class="sub">Every card is a real PrizePicks line — player, team, matchup, stat and the big line, labeled with its source. A prop is on this board <b>only</b> before its game starts — the moment a game tips off, its props come off the board.</p>
     <div class="grid" id="sportProps"><p class="empty">Loading props…</p></div>
     <div class="card slip" id="slipSport" style="margin-top:14px"></div>
@@ -166,6 +226,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <!-- HIGHLIGHTS -->
   <section class="view" id="view-highlights">
     <h2>Highlights</h2>
+    <div id="hlYoursWrap" style="display:none"><h2 style="font-size:16px">⭐ Your Players</h2><div class="card news" id="hlYours"></div></div>
     <h2 style="font-size:16px">NBA — Top Plays Feed</h2>
     <div class="card news" id="hlNba"><p class="empty">Loading latest plays…</p></div>
     <h2 style="font-size:16px">NFL &amp; College — Big Plays</h2>
@@ -295,6 +356,7 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ re
 function initials(name){ return name.split(/\s+/).map(function(w){return w.charAt(0);}).join("").slice(0,2).toUpperCase(); }
 function fetchJson(url){ return fetch(url).then(function(r){ if(!r.ok) throw new Error("http "+r.status); return r.json(); }); }
 function fmtTime(iso){ try { var d = new Date(iso); return d.toLocaleString([], {weekday:"short", hour:"numeric", minute:"2-digit"}); } catch(e){ return ""; } }
+function fmtClock(iso){ try { var d = new Date(iso); return d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); } catch(e){ return ""; } }
 function fmtDay(iso){ try { var d = new Date(iso); return d.toLocaleDateString([], {weekday:"short", month:"short", day:"numeric"}); } catch(e){ return ""; } }
 function roundLine(v){ return Math.round(v*2)/2 - 0.0; }  // nearest .5
 function ymd(d){ return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0"); }
@@ -358,12 +420,13 @@ function buildProps(lg){
         league: lg.key, leagueLabel: lg.label,
         stat: r.stat, line: r.line,
         matchup: r.matchup || "", starts: r.starts || "", eventId: "",
-        img: "",
+        img: photoCache[(r.player||"").toLowerCase()] || "",
         src: "PrizePicks \u00B7 via Parlay API"
       });
     });
     out.sort(function(a,b){ return (new Date(a.starts||0) - new Date(b.starts||0)) || a.player.localeCompare(b.player); });
     propsCache[lg.key] = out.slice(0, 80);
+    resolvePhotos(lg, propsCache[lg.key]);
     return propsCache[lg.key];
   }).catch(function(){ propsCache[lg.key] = []; return []; });
 }
@@ -381,9 +444,9 @@ function togglePick(prop, dir){
     var leg = {id:prop.id, player:prop.player, team:prop.team, league:prop.league, stat:prop.stat, line:prop.line, dir:dir, matchup:prop.matchup||"", starts:prop.starts||"", src:prop.src||"ESPN Leaders", custom:!!prop.custom, athleteId:prop.athleteId||"", eventId:prop.eventId||""};
     if (i>-1) slip[i]=leg; else slip.push(leg);
   }
-  lsSet("pa_slip", slip); renderAllSlips(); renderBoards();
+  lsSet("pa_slip", slip); renderAllSlips(); renderBoards(); renderTicker();
 }
-function removeLeg(id){ slip = slip.filter(function(l){ return l.id!==id; }); lsSet("pa_slip", slip); renderAllSlips(); renderBoards(); }
+function removeLeg(id){ slip = slip.filter(function(l){ return l.id!==id; }); lsSet("pa_slip", slip); renderAllSlips(); renderBoards(); renderTicker(); }
 var PAYOUTS = {2:3, 3:5, 4:10, 5:20, 6:37.5};
 function slipHtml(){
   var n = slip.length;
@@ -393,9 +456,9 @@ function slipHtml(){
   var mult = PAYOUTS[n] || 0;
   var can = n>=2;
   return '<h3 style="margin:0 0 6px">Your slip ('+n+' pick'+(n===1?"":"s")+')</h3>'
-    + (n ? legs : '<p class="empty">No picks yet — tap MORE or LESS on any prop.</p>')
+    + (n ? legs : '<p class="empty">No picks yet — tap a sport tab above, then tap MORE or LESS on any prop card. It lands here instantly; tap the same pick again to take it off.</p>')
     + '<div class="row" style="margin-top:12px"><label class="note">Entry $</label><input type="number" id="entryAmt" min="1" step="1" value="10"><span class="pay">'+(can ? 'Power Play <b>'+mult+'x</b> · pays <b>$<span id="payOut"></span></b>' : 'Pick at least 2 to lock a ticket')+'</span></div>'
-    + '<div style="margin-top:12px"><button class="bigbtn" id="lockBtn" '+(can?"":"disabled")+'>🔒 Lock in ticket</button></div>';
+    + '<div style="margin-top:12px"><button class="bigbtn" id="lockBtn" '+(can?"":"disabled")+'>'+(can?"🔒 Lock In Ticket":"Lock In (pick 2+ to enable)")+'</button></div>';
 }
 function renderSlip(el){
   if (!el) return;
@@ -409,35 +472,51 @@ function renderSlip(el){
     tickets.unshift({id:"t"+Date.now(), ts:Date.now(), entry:entry, mult:PAYOUTS[slip.length]||0, legs:slip.slice()});
     lsSet("pa_tickets", tickets);
     slip = []; lsSet("pa_slip", slip);
-    renderAllSlips(); renderBoards(); renderTickets(); renderBoard();
-    showView("tickets");
+    playStamp(el);
+    renderNews(); renderTicker();
+    setTimeout(function(){ renderAllSlips(); renderBoards(); renderTickets(); renderBoard(); showView("tickets"); }, 1000);
   });
 }
 function renderAllSlips(){ renderSlip($("slipHome")); renderSlip($("slipSport")); renderSlip($("slipBuild")); }
 
 /* ---------- prop cards ---------- */
 function propCard(p){
-  var img = p.img ? '<img class="pimg" src="'+esc(p.img)+'" alt="" loading="lazy" onerror="this.outerHTML=\'<div class=&quot;pinit&quot;>'+esc(initials(p.player))+'</div>\'">' : '<div class="pinit">'+esc(initials(p.player))+'</div>';
-  var soon = p.starts && (new Date(p.starts) - Date.now() < 3*3600*1000);
-  return '<div class="card prop">'+img+'<div class="pbody">'
-    + '<div class="pname">'+esc(p.player)+' <span class="badge'+(soon?" soon":"")+'">STARTS '+esc(fmtTime(p.starts))+'</span></div>'
-    + '<div class="pmeta">'+esc(p.team)+' · '+esc(p.matchup)+' · '+esc(fmtDay(p.starts))+'</div>'
-    + '<div class="pline">'+p.line+' <span>'+esc(p.stat)+'</span></div>'
-    + '<div class="psrc">'+esc(p.leagueLabel)+' · via '+esc(p.src)+'</div>'
-    + '<div class="ml"><button class="more'+(slipHas(p.id,"MORE")?" sel":"")+'" data-pick="'+esc(p.id)+'|MORE">MORE</button><button class="less'+(slipHas(p.id,"LESS")?" sel":"")+'" data-pick="'+esc(p.id)+'|LESS">LESS</button></div>'
+  /* Original layout: purple-gradient photo banner, centered name / team /
+     matchup / stat / GIANT line, teal STARTS pill, source lines, MORE (purple)
+     + LESS (dark) with the line+stat as sublabels. Fields the Parlay feed
+     leaves blank (team/matchup/photo) are hidden, never shown as "·". */
+  var banner = p.img
+    ? '<img src="'+esc(p.img)+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
+    : '<div class="pinit-big">'+esc(initials(p.player))+'</div>';
+  var teamLine = [p.team, p.leagueLabel].filter(function(x){ return x; }).join(" · ");
+  var matchLine = [p.matchup, p.starts ? fmtDay(p.starts) : "", p.starts ? fmtClock(p.starts) + " ET" : ""].filter(function(x){ return x; }).join(" · ");
+  var startsTxt = p.starts ? "TODAY · STARTS " + fmtDay(p.starts) + ", " + fmtClock(p.starts) + (p.matchup ? " · " + p.matchup : "") : "";
+  var srcDate = p.starts ? fmtDay(p.starts) + ", " + new Date(p.starts).getFullYear() : "";
+  var sub = p.line + " " + p.stat;
+  return '<div class="card prop"><div class="propbanner">'+banner+'</div><div class="pcenter">'
+    + '<div class="pname">'+esc(p.player)+'</div>'
+    + (teamLine ? '<div class="pmeta">'+esc(teamLine)+'</div>' : '')
+    + (matchLine ? '<div class="pmeta">'+esc(matchLine)+'</div>' : '')
+    + '<div class="pstat">'+esc(p.stat)+'</div>'
+    + '<div class="pline-big">'+p.line+'</div>'
+    + (startsTxt ? '<div><span class="starts-pill">'+esc(startsTxt)+'</span></div>' : '')
+    + '<div class="psrc">PrizePicks · '+esc(p.leagueLabel)+' · via Parlay API'+(srcDate ? ' · '+esc(srcDate) : '')+'</div>'
+    + '<div class="ml"><button class="more'+(slipHas(p.id,"MORE")?" sel":"")+'" data-pick="'+esc(p.id)+'|MORE">MORE<span>'+esc(sub)+'</span></button><button class="less'+(slipHas(p.id,"LESS")?" sel":"")+'" data-pick="'+esc(p.id)+'|LESS">LESS<span>'+esc(sub)+'</span></button></div>'
     + '</div></div>';
 }
 var currentSport = "all";
 function renderBoards(){
   if (currentSport && currentSport!=="all"){
     var lg = leagueByKey(currentSport);
-    $("sportTitle").textContent = lg.label + " — Props for the day";
+    $("sportTitle").textContent = lg.label + " Props — Today";
+    var pill = $("propCountPill"); if (pill) pill.textContent = "";
     var box = $("sportProps");
     box.innerHTML = '<p class="empty">Loading '+esc(lg.label)+' props — real PrizePicks lines via Parlay API…</p>';
     buildProps(lg).then(function(ps){
       if (currentSport!==lg.key) return;
       if (!propsConfigured) { box.innerHTML = '<p class="empty">PrizePicks props are wired up, but the Parlay API key isn\'t set yet. Add <b>PARLAY_API_KEY</b> in Vercel (project Settings → Environment Variables) and redeploy — the board fills in automatically. Custom legs on the + Add Ticket tab work right now.</p>'; return; }
       box.innerHTML = ps.length ? ps.map(propCard).join("") : '<p class="empty">No PrizePicks props posted for '+esc(lg.label)+' right now — lines usually appear closer to game time.</p>';
+      var pill2 = $("propCountPill"); if (pill2) pill2.textContent = ps.length + " props · tap MORE / LESS to add";
       bindPicks(box);
     });
   }
@@ -474,6 +553,37 @@ function renderTopAgents(){
 function renderUpcoming(){
   var jobs = PROP_LEAGUES.concat(["tennis","mlb"]).map(function(k){ var lg = leagueByKey(k); return getScoreboard(lg, 3).then(function(ev){ return {lg:lg, ev:ev}; }); });
   Promise.all(jobs).then(function(rs){
+    /* Live hero (original Home top card) + header LIVE pill + status line.
+       First live game across all leagues; hidden when nothing is live. */
+    try {
+      var liveAll = [], total = 0;
+      rs.forEach(function(r){ (r.ev||[]).forEach(function(ev){ total++;
+        var st = ev.status && ev.status.type && ev.status.type.state;
+        if (st==="in") liveAll.push({lg:r.lg, ev:ev});
+      }); });
+      var lp = $("livePill"); if (lp) lp.innerHTML = '<span class="dot"></span>LIVE · ' + liveAll.length;
+      var hs = $("heroStatus");
+      if (hs) hs.textContent = "Updated " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}) + " · auto-refresh 30s · ESPN · " + total + " games on the board · " + liveAll.length + " live now";
+      var hero = $("liveHero");
+      if (hero) {
+        if (!liveAll.length) { hero.innerHTML = ""; }
+        else {
+          var g = liveAll[0], ts = eventTeams(g.ev);
+          var st = g.ev.status && g.ev.status.type || {};
+          var a = ts[0] || {}, b = ts[1] || {};
+          var nm = function(t){ var n = t.name || ""; var parts = n.split(" "); return {first: parts.slice(0,-1).join(" ") || n, last: parts[parts.length-1] || ""}; };
+          var na = nm(a), nb = nm(b);
+          hero.innerHTML = '<div class="hero" id="heroCard"><div class="heroscore">'
+            + '<div class="heroname">'+esc(na.first)+' '+esc(na.last)+'<small>'+esc(na.last)+'</small></div>'
+            + '<div><span class="hscore">'+esc(a.score!=null?a.score:"0")+'</span> <span class="hdash">—</span> <span class="hscore">'+esc(b.score!=null?b.score:"0")+'</span></div>'
+            + '<div class="heroname" style="text-align:right">'+esc(nb.first)+' '+esc(nb.last)+'<small>'+esc(nb.last)+'</small></div></div>'
+            + '<div style="text-align:center"><span class="herolive">🔴 LIVE · '+esc(st.shortDetail||st.detail||g.lg.label)+'</span></div>'
+            + '<p class="herotap">Tap for team stats, player stats &amp; plays →</p></div>';
+          var hc = $("heroCard");
+          if (hc) hc.addEventListener("click", function(){ showView("live"); openGame(g.lg.key, g.ev.id); });
+        }
+      }
+    } catch(e) { /* hero is decorative — never break Home */ }
     var ups = [];
     rs.forEach(function(r){ r.ev.forEach(function(ev){
       var st = ev.status && ev.status.type && ev.status.type.state;
@@ -488,29 +598,43 @@ function renderUpcoming(){
     $("upcoming").querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); showView("live"); openGame(p[0], p[1]); }); });
   });
 }
+function articleHtml(a, picks){
+  var href = a.links && a.links.web && a.links.web.href || "https://www.espn.com";
+  var tag = picks && picks.length && mentionsPicks(a, picks) ? ' <span class="yours-tag">⭐ YOUR PLAYER</span>' : '';
+  return '<a href="'+esc(href)+'" target="_blank" rel="noopener">'+esc(a.headline||"")+tag+' <span class="nd">· '+esc(fmtDay(a.published))+'</span></a>';
+}
 function renderNews(){
+  var picks = pickedPlayers();
   Promise.all(NEWS_LEAGUES.map(function(sl){ return fetchJson(ESPN+sl[0]+"/"+sl[1]+"/news?limit=4").catch(function(){ return {articles:[]}; }); }))
   .then(function(rs){
+    var nbaArts = ((rs[0]||{}).articles||[]).slice();
     var arts = [];
     rs.forEach(function(r){ (r.articles||[]).forEach(function(a){ arts.push(a); }); });
     arts.sort(function(a,b){ return new Date(b.published||0)-new Date(a.published||0); });
+    if (picks.length) arts.sort(function(a,b){ return (mentionsPicks(b,picks)?1:0)-(mentionsPicks(a,picks)?1:0); });
     arts = arts.slice(0,10);
-    $("news").innerHTML = arts.length ? arts.map(function(a){
-      var href = a.links && a.links.web && a.links.web.href || "https://www.espn.com";
-      return '<a href="'+esc(href)+'" target="_blank" rel="noopener">'+esc(a.headline||"")+' <span class="nd">· '+esc(fmtDay(a.published))+'</span></a>';
-    }).join("") : '<p class="empty">Headlines unavailable right now.</p>';
-    var nba = arts.filter(function(a){ return (a.headline||"").length; }).slice(0,5);
-    $("hlNba").innerHTML = $("news").innerHTML;
+    var note = $("newsNote");
+    if (note) note.textContent = picks.length ? "Leading with news about your picked players — then the top ESPN headlines. Refreshed every 30 seconds." : "Top headlines from ESPN — refreshed with the scores every 30 seconds.";
+    $("news").innerHTML = arts.length ? arts.map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">Headlines unavailable right now.</p>';
+    if (picks.length) nbaArts.sort(function(a,b){ return (mentionsPicks(b,picks)?1:0)-(mentionsPicks(a,picks)?1:0); });
+    $("hlNba").innerHTML = nbaArts.length ? nbaArts.slice(0,6).map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">Loading latest plays…</p>';
     fetchJson(ESPN+"football/nfl/news?limit=6").catch(function(){ return {articles:[]}; }).then(function(r){
       var list = (r.articles||[]).slice(0,6);
-      $("hlNfl").innerHTML = list.length ? list.map(function(a){
-        var href = a.links && a.links.web && a.links.web.href || "https://www.espn.com";
-        return '<a href="'+esc(href)+'" target="_blank" rel="noopener">'+esc(a.headline||"")+' <span class="nd">· '+esc(fmtDay(a.published))+'</span></a>';
-      }).join("") : '<p class="empty">Big plays feed unavailable right now.</p>';
+      if (picks.length) list.sort(function(a,b){ return (mentionsPicks(b,picks)?1:0)-(mentionsPicks(a,picks)?1:0); });
+      $("hlNfl").innerHTML = list.length ? list.map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">Big plays feed unavailable right now.</p>';
+      var wrap = $("hlYoursWrap"), yb = $("hlYours");
+      if (wrap && yb){
+        if (!picks.length){ wrap.style.display = "none"; }
+        else {
+          wrap.style.display = "";
+          var seen = {}, yours = [];
+          arts.concat(list).forEach(function(a){ var h = a.headline||""; if (h && !seen[h] && mentionsPicks(a, picks)) { seen[h]=1; yours.push(a); } });
+          yb.innerHTML = yours.length ? yours.slice(0,6).map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">No headlines about your players right now — stories about '+esc(picks.slice(0,3).join(", "))+' land here the moment they break.</p>';
+        }
+      }
     });
   });
 }
-
 /* ---------- live center ---------- */
 function gameCard(lg, ev){
   var ts = eventTeams(ev);
@@ -636,6 +760,7 @@ function gradeTicket(t){
     var allDone = rs.every(function(r){ return (r.status==="hit" || r.status==="push") && (r.final || r.manual); });
     if (!t.result && anyMiss) { t.result = "loss"; lsSet("pa_tickets", tickets); }
     else if (!t.result && allDone && rs.length) { t.result = "win"; lsSet("pa_tickets", tickets); }
+    if (t.result) celebrateCheck(t);
     return map;
   });
 }
@@ -648,7 +773,7 @@ function renderTickets(){
       return '<div class="leg"><span class="dir '+(l.dir==="MORE"?"more":"less")+'">'+l.dir+'</span><div style="flex:1"><b>'+esc(l.player)+'</b> — '+esc(l.stat)+' '+l.line+'<br><span class="note">'+esc(l.matchup||l.team||"")+(l.starts?' · '+esc(fmtTime(l.starts)):"")+' · '+esc(l.src)+'</span></div><span data-grade="'+esc(t.id)+'|'+esc(l.id)+'"><span class="pend">…</span></span></div>'
         + '<div data-stepper="'+esc(t.id)+'|'+esc(l.id)+'"></div>';
     }).join("");
-    return '<div class="card"><div class="row" style="justify-content:space-between"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span class="pay">Entry $'+t.entry+' · <b>'+t.mult+'x</b>'+res+'</span></div>'+legs+'</div>';
+    return '<div class="card" data-ticket="'+t.id+'"><div class="row" style="justify-content:space-between"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span class="pay">Entry $'+t.entry+' · <b>'+t.mult+'x</b>'+res+'</span></div><span class="stampmini">LOCKED IN</span>'+legs+'</div>';
   }).join("");
   tickets.forEach(function(t){
     gradeTicket(t).then(function(map){
@@ -729,6 +854,113 @@ $("pushBtn").addEventListener("click", function(){
   }).catch(function(){ note.textContent = "Couldn't enable notifications — check your browser's notification permission."; });
 });
 
+/* ---------- result animations (the only animations in the app) ----------
+   LOCKED IN stamp on lock-in, animated red X on a loss, confetti on a win. */
+var animSeen = lsGet("pa_anim_seen", {});
+function playStamp(container){
+  if (!container) return;
+  var o = document.createElement("div");
+  o.className = "stampwrap";
+  o.innerHTML = '<div class="stamp">LOCKED IN</div>';
+  container.appendChild(o);
+  container.classList.add("shake");
+  setTimeout(function(){ if (o.parentNode) o.parentNode.removeChild(o); container.classList.remove("shake"); }, 1150);
+}
+function playRedX(card){
+  if (!card || card.querySelector(".redxwrap")) return;
+  var o = document.createElement("div");
+  o.className = "redxwrap";
+  o.innerHTML = '<svg viewBox="0 0 100 100"><line pathLength="100" x1="22" y1="22" x2="78" y2="78"/><line pathLength="100" x1="78" y1="22" x2="22" y2="78"/></svg>';
+  card.appendChild(o);
+  setTimeout(function(){ if (o.parentNode) o.parentNode.removeChild(o); }, 1650);
+}
+function confetti(){
+  var old = document.getElementById("confettiCanvas"); if (old) old.remove();
+  var cv = document.createElement("canvas"); cv.id = "confettiCanvas"; document.body.appendChild(cv);
+  var ctx = cv.getContext("2d");
+  cv.width = window.innerWidth; cv.height = window.innerHeight;
+  var colors = ["#7C3AED","#9333EA","#a78bfa","#f5c518","#22d3ee","#00c853","#ffffff"];
+  var ps = [];
+  for (var i=0;i<140;i++){ ps.push({x:Math.random()*cv.width, y:-20-Math.random()*cv.height*.35, w:6+Math.random()*6, h:8+Math.random()*8, vy:2.2+Math.random()*3.2, vx:-1.4+Math.random()*2.8, rot:Math.random()*Math.PI, vr:-.12+Math.random()*.24, c:colors[i%colors.length]}); }
+  var t0 = Date.now();
+  (function frame(){
+    var el = Date.now()-t0;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ps.forEach(function(p){ p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.c; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore(); });
+    if (el<2600) requestAnimationFrame(frame); else { ctx.clearRect(0,0,cv.width,cv.height); cv.remove(); }
+  })();
+}
+function celebrateCheck(t){
+  if (!t.result || animSeen[t.id]) return;
+  animSeen[t.id] = 1; lsSet("pa_anim_seen", animSeen);
+  if (t.result==="win") confetti();
+  else if (t.result==="loss"){
+    var card = document.querySelector('[data-ticket="'+t.id+'"]');
+    if (card) setTimeout(function(){ playRedX(card); }, 250);
+  }
+}
+
+/* ---------- personalization: your picked players drive news / highlights / ticker ---------- */
+function pickedPlayers(){
+  var seen = {}, out = [];
+  function add(name){ var k = String(name||"").toLowerCase(); if (k && !seen[k]) { seen[k]=1; out.push(name); } }
+  slip.forEach(function(l){ add(l.player); });
+  tickets.forEach(function(t){ t.legs.forEach(function(l){ add(l.player); }); });
+  return out;
+}
+function mentionsPicks(a, picks){
+  var hay = ((a.headline||"") + " " + (a.description||"")).toLowerCase();
+  return (picks||[]).some(function(p){
+    var parts = String(p).toLowerCase().split(/\s+/);
+    var last = parts[parts.length-1];
+    return last && last.length>2 && hay.indexOf(last)>-1;
+  });
+}
+function renderTicker(){
+  var wrap = $("tickerWrap"), box = $("yourTicker");
+  if (!wrap || !box) return;
+  var items = [];
+  slip.forEach(function(l){ items.push({l:l, from:"On your slip"}); });
+  tickets.forEach(function(t){ t.legs.forEach(function(l){ items.push({l:l, from: t.result==="win" ? "Ticket · WON 🏆" : t.result==="loss" ? "Ticket · LOST" : "Ticket · Live / Pending"}); }); });
+  if (!items.length){ wrap.style.display = "none"; box.innerHTML = ""; return; }
+  wrap.style.display = "";
+  box.innerHTML = items.slice(0,30).map(function(x){
+    var l = x.l;
+    return '<div class="tickchip"><b>'+esc(l.player)+'</b><span>'+esc(l.dir)+' '+l.line+' '+esc(l.stat)+'</span><span class="tickfrom">'+esc(x.from)+(l.starts ? ' · '+esc(fmtTime(l.starts)) : '')+'</span></div>';
+  }).join("");
+}
+
+/* ---------- player photos for Parlay props (ESPN search -> headshot, cached) ---------- */
+var photoCache = lsGet("pa_photos", {});
+function resolvePhotos(lg, list){
+  var need = (list||[]).filter(function(p){ return p.player && !p.img && photoCache[p.player.toLowerCase()]===undefined; }).slice(0,40);
+  if (!need.length) return;
+  var chain = Promise.resolve();
+  need.forEach(function(p){
+    chain = chain.then(function(){
+      var key = p.player.toLowerCase();
+      if (photoCache[key]!==undefined){ if (photoCache[key]) p.img = photoCache[key]; return; }
+      return fetchJson("https://site.api.espn.com/apis/search/v2?query="+encodeURIComponent(p.player)+"&limit=5").then(function(r){
+        var url = "";
+        try {
+          var res = (r && r.results) || [];
+          for (var i=0;i<res.length && !url;i++){
+            var it = res[i] || {};
+            var conts = it.contents || [it];
+            for (var j=0;j<conts.length;j++){
+              var c = conts[j] || {};
+              if ((c.type==="player" || c.type==="athlete") && c.id) { url = headshotUrl(lg, c.id); break; }
+              if (c.headshot && c.headshot.href) { url = c.headshot.href; break; }
+            }
+          }
+        } catch(e){}
+        photoCache[key] = url; lsSet("pa_photos", photoCache);
+        if (url){ p.img = url; if (currentSport===lg.key) renderBoards(); }
+      }).catch(function(){ photoCache[key] = ""; lsSet("pa_photos", photoCache); });
+    });
+  });
+}
+
 /* ---------- navigation ---------- */
 function showView(name){
   document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("on"); });
@@ -762,7 +994,8 @@ function setSport(key){
 })();
 
 /* ---------- init + refresh ---------- */
-function refreshHome(){ renderTopAgents(); renderUpcoming(); renderNews(); }
+function refreshHome(){ renderTopAgents(); renderUpcoming(); renderNews(); renderTicker(); }
+$("refreshBtn").addEventListener("click", function(){ boardCache = {}; propsCache = {}; refreshHome(); if ($("view-live").classList.contains("on")) renderLive(); if (currentSport!=="all") renderBoards(); });
 refreshAgentBtn();
 renderAllSlips();
 refreshHome();

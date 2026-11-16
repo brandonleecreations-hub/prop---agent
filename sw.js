@@ -12,8 +12,8 @@ self.addEventListener("push", function(event) {
   var title = data.title || "Prop Agent";
   var options = {
     body: data.body || "",
-    icon: "/icon-192.png",
-    badge: "/icon-192.png",
+    icon: "/api/icons?s=192",
+    badge: "/api/icons?s=192",
     data: { url: (data && data.url) || "/" },
     tag: (data && data.type) || "prop-agent"
   };
