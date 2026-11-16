@@ -1,1 +1,9 @@
-{"dependencies":{"web-push":"^3.6.7"},"description":"Prop Agent — Props Ticker (static site + push endpoint)","name":"prop-agent","private":true,"version":"1.0.1"}
+{
+ "dependencies": {
+  "web-push": "^3.6.7"
+ },
+ "description": "Prop Agent \u2014 Props Ticker (static site + push endpoint)",
+ "name": "prop-agent",
+ "private": true,
+ "version": "1.0.2"
+}
