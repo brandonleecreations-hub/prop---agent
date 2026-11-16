@@ -143,7 +143,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 @keyframes stampIn{0%{transform:rotate(-32deg) scale(2.4);opacity:0}60%{opacity:1}100%{transform:rotate(-12deg) scale(1);opacity:1}}
 .shake{animation:shk .3s ease .4s}
 @keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
-.stampmini{position:absolute;top:46px;right:10px;border:2.5px solid var(--grn);color:var(--grn);font-size:10px;font-weight:900;letter-spacing:1.5px;padding:2px 7px;border-radius:6px;transform:rotate(-10deg);opacity:.9;pointer-events:none}
+.stampmini{position:absolute;top:-9px;right:16px;background:var(--panel);z-index:2;border:2.5px solid var(--grn);color:var(--grn);font-size:10px;font-weight:900;letter-spacing:1.5px;padding:2px 7px;border-radius:6px;transform:rotate(-10deg);opacity:.9;pointer-events:none}
 .redxwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(24,0,0,.45);border-radius:var(--r);z-index:5;pointer-events:none;animation:xfade 1.6s ease both}
 .redxwrap svg{width:110px;height:110px}
 .redxwrap line{stroke:#ff2d2d;stroke-width:11;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;animation:drawx .45s ease forwards}
@@ -485,9 +485,8 @@ function propCard(p){
      matchup / stat / GIANT line, teal STARTS pill, source lines, MORE (purple)
      + LESS (dark) with the line+stat as sublabels. Fields the Parlay feed
      leaves blank (team/matchup/photo) are hidden, never shown as "·". */
-  var banner = p.img
-    ? '<img src="'+esc(p.img)+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
-    : '<div class="pinit-big">'+esc(initials(p.player))+'</div>';
+  var banner = (p.img ? '<img src="'+esc(p.img)+'" alt="" loading="lazy" onerror="this.style.display=\'none\';var n=this.nextElementSibling;if(n)n.style.display=\'\'">' : '')
+    + '<div class="pinit-big"'+(p.img ? ' style="display:none"' : '')+'>'+esc(initials(p.player))+'</div>';
   var teamLine = [p.team, p.leagueLabel].filter(function(x){ return x; }).join(" · ");
   var matchLine = [p.matchup, p.starts ? fmtDay(p.starts) : "", p.starts ? fmtClock(p.starts) + " ET" : ""].filter(function(x){ return x; }).join(" · ");
   var startsTxt = p.starts ? "TODAY · STARTS " + fmtDay(p.starts) + ", " + fmtClock(p.starts) + (p.matchup ? " · " + p.matchup : "") : "";
@@ -949,7 +948,8 @@ function resolvePhotos(lg, list){
             var conts = it.contents || [it];
             for (var j=0;j<conts.length;j++){
               var c = conts[j] || {};
-              if ((c.type==="player" || c.type==="athlete") && c.id) { url = headshotUrl(lg, c.id); break; }
+              if (c.image && c.image.default) { url = c.image.default; break; }
+              if ((c.type==="player" || c.type==="athlete") && c.uid) { var mm = /a:(\d+)/.exec(c.uid); if (mm) { url = headshotUrl(lg, mm[1]); break; } }
               if (c.headshot && c.headshot.href) { url = c.headshot.href; break; }
             }
           }
