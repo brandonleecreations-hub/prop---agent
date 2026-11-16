@@ -5,7 +5,14 @@
 // Settings -> Environment Variables). Without it: { ok:false, configured:false }.
 // Parlay API: GET https://parlay-api.com/v1/sports/{sport_key}/props
 //   header X-API-Key, filter bookmakers=prizepicks. One call per sport,
-//   3 credits per call — responses are cached in-memory for 60s per sport.
+//   3 credits per call.
+// Refresh policy (free plan, per Brandon 2026-11-16): each sport's board is
+// refreshed from Parlay at most TWICE A DAY (11h cache, lazily on the first
+// board open after expiry — untouched sports cost zero credits). Exception:
+// one extra refresh per cycle when a game on the cached board starts within
+// 2 hours and the cache is over 30 min old, so late line moves and props
+// added/dropped near tip-off ("major changes") still land. The CDN edge
+// cache (30 min) absorbs repeat traffic across serverless instances.
 
 const SPORT_KEYS = [
   "basketball_nba", "basketball_ncaab", "basketball_wncaab", "basketball_wnba",
@@ -107,20 +114,43 @@ function normalize(rows) {
   return out;
 }
 
+const DAY_TTL = 11 * 60 * 60 * 1000;      // twice-a-day refresh window
+const PREGAME_TTL = 30 * 60 * 1000;       // near tip-off, a fresher board matters
+const PREGAME_WINDOW = 2 * 60 * 60 * 1000;
+
+function cacheFresh(hit) {
+  if (!hit) return false;
+  const age = Date.now() - hit.ts;
+  if (age < DAY_TTL) {
+    if (hit.pregameRefreshed) return true;
+    // Major-changes exception: a game on this board starts within 2h and the
+    // cached lines are over 30 min old -> allow ONE early refresh this cycle.
+    let earliest = Infinity;
+    for (const p of hit.props) {
+      const t = p.starts ? new Date(p.starts).getTime() : NaN;
+      if (isFinite(t) && t > Date.now() - 10 * 60 * 1000 && t < earliest) earliest = t;
+    }
+    if (earliest !== Infinity && earliest - Date.now() < PREGAME_WINDOW && age > PREGAME_TTL) return false;
+    return true;
+  }
+  return false;
+}
+
 module.exports = async (req, res) => {
   res.setHeader("Content-Type", "application/json");
-  res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=120");
+  res.setHeader("Cache-Control", "s-maxage=1800, stale-while-revalidate=21600");
   const key = process.env.PARLAY_API_KEY || process.env.PRIZEPICKS_FEED_API_KEY || process.env.PRIZEPICKS_API_KEY || process.env.PARLAY_KEY;
   if (!key) { res.status(200).json({ ok: false, configured: false, props: [] }); return; }
   const sport = (req.query && req.query.sport) || "";
   if (SPORT_KEYS.indexOf(sport) === -1) { res.status(400).json({ ok: false, error: "unknown sport" }); return; }
   const hit = cache[sport];
-  if (hit && Date.now() - hit.ts < 60 * 1000) { res.status(200).json({ ok: true, configured: true, props: hit.props }); return; }
+  if (cacheFresh(hit)) { res.status(200).json({ ok: true, configured: true, cached: true, props: hit.props }); return; }
   try {
     const rows = await fetchSport(sport, key);
     const props = normalize(rows);
-    cache[sport] = { ts: Date.now(), props };
-    res.status(200).json({ ok: true, configured: true, props });
+    const wasPregame = !!(hit && Date.now() - hit.ts < DAY_TTL);
+    cache[sport] = { ts: Date.now(), props, pregameRefreshed: wasPregame };
+    res.status(200).json({ ok: true, configured: true, cached: false, props });
   } catch (err) {
     res.status(200).json({ ok: false, configured: true, error: String((err && err.message) || err), props: hit ? hit.props : [] });
   }
