@@ -126,11 +126,6 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .tcwin .cardart{width:100%;height:100%;object-fit:cover;display:block;border-radius:0}
 .tcwin .cardart.ph{display:flex;height:100%}
 .tcinfo{margin-top:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);border-radius:9px;padding:7px 9px;text-align:left}
-.tcstats{display:flex;gap:9px;margin-top:6px}
-.tcstat{flex:1;min-width:0}
-.tcstat .sl{font-size:9px;font-weight:800;letter-spacing:.6px;color:var(--mut);display:flex;justify-content:space-between}
-.tcbar{height:4px;border-radius:2px;background:rgba(255,255,255,.13);margin-top:2px;overflow:hidden}
-.tcbar i{display:block;height:100%;background:var(--tc,#7C3AED);border-radius:2px}
 .tcspark{position:absolute;inset:0;pointer-events:none;opacity:.55;background-image:radial-gradient(2px 2px at 18% 26%,#fff 50%,transparent 52%),radial-gradient(1.6px 1.6px at 68% 16%,#fff 50%,transparent 52%),radial-gradient(2px 2px at 86% 60%,#fff 50%,transparent 52%),radial-gradient(1.5px 1.5px at 38% 82%,#fff 50%,transparent 52%),radial-gradient(1.8px 1.8px at 55% 44%,#fff 50%,transparent 52%)}
 .charstrip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px}
 .charstrip img{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid var(--line);cursor:pointer;flex:0 0 auto}
@@ -1428,7 +1423,6 @@ function charArt(){ var c = (profile && profile.char) || ""; return /^(\/api\/av
 var CHARNAMES = ["THE CLOSER","THE BOSS","THE OPERATOR","ALL-AMERICAN","THE DEALMAKER","THE EXECUTIVE","THE SLUGGER","THE PLAYMAKER","THE CAPTAIN","THE FRANCHISE","THE ACE","THE ISLANDER"];
 function charIdxOf(){ var m = /[?&]s=(\d+)/.exec((profile && profile.char) || ""); return m ? parseInt(m[1], 10) : 0; }
 function cardCharIdx(){ var v = parseInt(localStorage.getItem("pa_cardchar") || "0", 10); if (v >= 1 && v <= 12) return v; return charIdxOf() || 1; }
-function charStats(ci, ti){ var b = [60 + ((ci * 29) % 36), 58 + ((ci * 47) % 34), 57 + ((ci * 71) % 38)]; return b.map(function(x){ return Math.min(99, x + ti * 3); }); }
 function cardBackHTML(title, sub){
   return '<div class="flipback"><img src="/api/icons?s=512" alt=""><div class="bkname">PROP AGENT</div><div class="bksub"><b style="color:#fff">' + title + '</b><br>' + sub + '</div></div>';
 }
@@ -1440,9 +1434,6 @@ function tierCardHTML(t, wins, withBtns, ci){
   var cname = ci >= 1 ? CHARNAMES[ci - 1] : "YOUR AGENT";
   var num = ci >= 1 ? ((ci - 1) * 7 + ti + 1) : 0;
   var numTxt = num ? ("№ " + ("00" + num).slice(-3) + " / 084") : "№ —";
-  var st = charStats(ci || 1, ti);
-  var sl = ["PWR", "NEG", "STY"];
-  var stats = '<div class="tcstats">' + st.map(function(v, k){ return '<div class="tcstat"><div class="sl"><span>' + sl[k] + '</span><span>' + v + '</span></div><div class="tcbar"><i style="width:' + v + '%"></i></div></div>'; }).join("") + '</div>';
   var stars = "★".repeat(ti + 1);
   var gems = ti >= 3 ? ' <span style="color:' + t.color + '">◆</span>' : '';
   var glow = ti >= 3 ? (", 0 0 " + (12 + ti * 4) + "px " + t.color + "59") : "";
