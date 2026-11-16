@@ -101,6 +101,26 @@ function normalize(rows) {
     const starts = row.commence_time || row.start_time || row.event_time || row.game_time || "";
     // Only pre-game props: if a start time is present and already passed, skip.
     if (starts && new Date(starts).getTime() < Date.now() - 10 * 60 * 1000) continue;
+    // Best-percentage support: pass through an implied probability when the
+    // feed provides one (or derive it from American odds/prices when present).
+    let pct = null;
+    const probRaw = row.implied_probability != null ? row.implied_probability
+      : (row.impliedProbability != null ? row.impliedProbability
+      : (row.probability != null ? row.probability
+      : (row.win_probability != null ? row.win_probability
+      : (row.confidence != null ? row.confidence : null))));
+    if (probRaw != null) {
+      const pv = typeof probRaw === "number" ? probRaw : parseFloat(probRaw);
+      if (isFinite(pv) && pv > 0) pct = Math.round((pv <= 1 ? pv * 100 : pv) * 10) / 10;
+    }
+    if (pct == null) {
+      const priceRaw = row.over_price != null ? row.over_price
+        : (row.over_odds != null ? row.over_odds
+        : (row.price != null ? row.price
+        : (row.odds != null ? row.odds : null)));
+      const av = typeof priceRaw === "number" ? priceRaw : parseFloat(priceRaw);
+      if (isFinite(av) && av !== 0) pct = Math.round((av < 0 ? (-av) / ((-av) + 100) : 100 / (av + 100)) * 1000) / 10;
+    }
     out.push({
       player,
       stat: row.market || statLabel(marketKey, row.market_display_name || row.description),
@@ -109,6 +129,7 @@ function normalize(rows) {
       matchup: String(matchup || ""),
       starts: String(starts || ""),
       book: row.bookmaker_title || row.bookmaker || "PrizePicks",
+      pct,
     });
   }
   return out;

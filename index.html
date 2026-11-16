@@ -165,6 +165,31 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .tickchip span{display:block;color:var(--mut)}
 .tickchip .tickfrom{color:var(--gold);font-weight:700}
 .yours-tag{display:inline-block;background:rgba(245,197,24,.16);color:var(--gold);border:1px solid rgba(245,197,24,.4);font-size:10px;font-weight:800;border-radius:999px;padding:1px 7px;letter-spacing:.4px}
+.pctchip{display:inline-block;background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.45);border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:800;letter-spacing:.4px}
+.closed .pickrow{display:none}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(106px,1fr));gap:10px}
+.ptile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:11px 8px;text-align:center;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.05)}
+.ptile img{width:56px;height:56px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)}
+.ptile .pinit{width:56px;height:56px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:19px;background:linear-gradient(135deg,#3b1470,#1b1030);color:var(--purp-lt)}
+.ptile .pn{font-weight:800;font-size:13.5px;margin-top:7px;line-height:1.15}
+.ptile .pm{color:var(--mut);font-size:11px;margin-top:2px}
+.ptile .pc{display:inline-block;margin-top:6px;background:rgba(124,58,237,.18);color:var(--purp-lt);border:1px solid rgba(124,58,237,.4);border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800}
+.ptile .plive{display:inline-block;margin-top:5px;background:rgba(220,38,38,.18);color:#fda4af;border:1px solid rgba(220,38,38,.5);border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800}
+.plive-line{margin-top:8px;background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.4);color:#fecaca;border-radius:10px;padding:7px 10px;font-size:13px;font-weight:700}
+.hlfeed{padding:0;overflow:hidden}
+.hlimg{width:100%;height:168px;object-fit:cover;display:block}
+.hlbody{padding:14px 16px 16px}
+.hltitle{font-size:21px;font-weight:900}
+.hlopen{background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none;font-weight:800;padding:11px 18px;border-radius:10px;font-size:14.5px;cursor:pointer}
+.vidcard{display:flex;gap:11px;padding:10px 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--txt);align-items:center}
+.vidwrap{position:relative;flex:0 0 auto}
+.vidcard img{width:118px;height:66px;object-fit:cover;border-radius:9px;display:block;background:#1b1030}
+.vidplay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;text-shadow:0 2px 8px rgba(0,0,0,.85)}
+#slipChip{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:60;background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none;font-weight:800;padding:11px 18px;border-radius:999px;box-shadow:0 10px 24px rgba(124,58,237,.5);display:none;cursor:pointer}
+.teamhead{font-size:15px;font-weight:900;margin:18px 0 8px;color:var(--purp-lt);letter-spacing:.4px}
+#playerDlg{max-width:520px;width:94vw}
+#playerDlg .pdlgbody{max-height:62vh;overflow-y:auto}
+
 
 </style>
 </head>
@@ -195,12 +220,12 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <p class="sub">Your slip lives here. Tap a sport tab above, then tap <b>MORE</b> or <b>LESS</b> on any prop — it lands on this slip instantly. Tap the same pick again to take it off, or tap ✕ on a pick below.</p>
     <div class="card slip" id="slipHome"></div>
     <div id="tickerWrap" style="display:none"><h2>Your Players Ticker</h2><p class="sub">Your picks, live — follows the players on your slip and tickets, updated with the scores every 30 seconds.</p><div class="tickwrap" id="yourTicker"></div></div>
-    <h2>Top Agents</h2>
+    <div id="secAgents"><h2>Top Agents</h2>
     <p class="sub">Ranked by most winning tickets — tap an agent to see their shared tickets.</p>
-    <div id="topAgents"><p class="empty">Loading Top Agents…</p></div>
-    <h2>Upcoming Games</h2>
+    <div id="topAgents"><p class="empty">Loading Top Agents…</p></div></div>
+    <div id="secUpcoming"><h2>Upcoming Games</h2>
     <p class="sub">A few big ones coming up — marquee matchups, primetime games, and games with props on the board. Tap one to open it in Live Center.</p>
-    <div id="upcoming"><p class="empty">Loading upcoming games from ESPN…</p></div>
+    <div id="upcoming"><p class="empty">Loading upcoming games from ESPN…</p></div></div>
     <h2>Sports News</h2>
     <p class="sub" id="newsNote">Latest headlines from ESPN · refreshes automatically</p>
     <div class="card news" id="news"><p class="empty">Loading the top headlines…</p></div>
@@ -211,8 +236,16 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <h2 id="sportTitle">Props</h2>
     <div class="row" style="justify-content:space-between;margin:0 0 12px"><h3 style="margin:0;font-size:17px">Future Games</h3><span class="badge" id="propCountPill"></span></div>
     <p class="sub">Every card is a real PrizePicks line — player, team, matchup, stat and the big line, labeled with its source. A prop is on this board <b>only</b> before its game starts — the moment a game tips off, its props come off the board.</p>
-    <div class="tabs" id="propFilters" style="margin:-4px 0 12px"></div>
-    <div class="grid" id="sportProps"><p class="empty">Loading props…</p></div>
+    <div class="searchbar"><input type="text" id="boardSearch" placeholder="Find a player — tap their tile and all their props pop up"></div>
+    <div class="tabs" id="boardSort" style="margin:2px 0 8px">
+      <button type="button" class="tab on" data-sort="popular">Popular first</button>
+      <button type="button" class="tab" data-sort="pct">Best %</button>
+      <button type="button" class="tab" data-sort="time">Start time</button>
+    </div>
+    <div class="tabs" id="teamFilters" style="margin:0 0 8px"></div>
+    <div class="tabs" id="propFilters" style="margin:0 0 12px"></div>
+    <div id="popWrap" style="display:none"><h3 style="margin:4px 0 8px;font-size:16px">Popular Players</h3><div class="pgrid" id="popTiles"></div><h3 style="margin:16px 0 8px;font-size:16px">All Players</h3></div>
+    <div class="pgrid" id="sportProps"><p class="empty">Loading props…</p></div>
     <div class="card slip" id="slipSport" style="margin-top:14px"></div>
   </section>
 
@@ -240,19 +273,36 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <!-- HIGHLIGHTS -->
   <section class="view" id="view-highlights">
     <h2>Highlights</h2>
-    <div id="hlYoursWrap" style="display:none"><h2 style="font-size:16px">⭐ Your Players</h2><div class="card news" id="hlYours"></div></div>
-    <h2 style="font-size:16px">NBA — Top Plays Feed</h2>
-    <div class="card news" id="hlNba"><p class="empty">Loading latest plays…</p></div>
-    <h2 style="font-size:16px">NFL &amp; College — Big Plays</h2>
-    <div class="card news" id="hlNfl"><p class="empty">Loading latest plays…</p></div>
+    <div id="hlTicket"></div>
+    <div id="hlYoursWrap" style="display:none"><h2 style="font-size:17px">Your Players — Videos</h2><p class="sub">Highlight clips of the players on your tickets — updates the moment you lock a ticket in.</p><div class="card" id="hlVideos" style="padding:4px 16px"></div></div>
+    <div class="card hlfeed">
+      <img class="hlimg" src="/api/banners?s=nba" alt="">
+      <div class="hlbody"><div class="hltitle">NBA — Top Plays Feed</div>
+      <p class="sub">Plays will appear here once a basketball game you open is underway.</p>
+      <button class="hlopen" data-goto="live">Open a game in Live Center</button>
+      <div class="news" id="hlNba" style="margin-top:8px"><p class="empty">Loading latest plays…</p></div></div>
+    </div>
+    <div class="card hlfeed">
+      <img class="hlimg" src="/api/banners?s=nfl" alt="">
+      <div class="hlbody"><div class="hltitle">NFL — Top Plays Feed</div>
+      <p class="sub">Plays will appear here once a football game you open is underway.</p>
+      <button class="hlopen" data-goto="live">Open a game in Live Center</button>
+      <div class="news" id="hlNfl" style="margin-top:8px"><p class="empty">Loading latest plays…</p></div></div>
+    </div>
   </section>
 
   <!-- BUILD / ADD TICKET -->
   <section class="view" id="view-build">
     <h2>Build Your Ticket</h2>
-    <p class="sub"><b>1 ·</b> Tap a sport — its props pop up right away &nbsp;·&nbsp; <b>2 ·</b> Future Games — props lock when the game tips off &nbsp;·&nbsp; <b>3 ·</b> Tap MORE or LESS on a card — it's on your slip. Pick at least 2 to lock a ticket.</p>
-    <div class="searchbar"><input type="text" id="searchInput" placeholder="Find a player — type a name, team or stat (e.g. “Ball”)"></div>
-    <div class="grid" id="searchResults"></div>
+    <p class="sub"><b>1 ·</b> Tap a player — all their props pop up &nbsp;·&nbsp; <b>2 ·</b> Tap MORE or LESS — it's on your slip &nbsp;·&nbsp; <b>3 ·</b> Pick at least 2 and lock in below. No money, no typing — just More or Less.</p>
+    <div class="searchbar"><input type="text" id="searchInput" placeholder="Find a player — type a name or team (e.g. “Ball”)"></div>
+    <div class="tabs" id="buildSort" style="margin:2px 0 8px">
+      <button type="button" class="tab on" data-bsort="popular">Popular first</button>
+      <button type="button" class="tab" data-bsort="pct">Best %</button>
+      <button type="button" class="tab" data-bsort="time">Start time</button>
+    </div>
+    <div class="tabs" id="buildTeams" style="margin:0 0 4px"></div>
+    <div id="searchResults"><p class="empty">Loading players…</p></div>
     <div class="card slip" id="slipBuild" style="margin-top:14px"></div>
     <details class="card" style="margin-top:14px">
       <summary>Optional: add a fully custom leg</summary>
@@ -301,6 +351,9 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   </div>
 </nav>
 
+<dialog id="playerDlg">
+  <div id="playerDlgBody"></div>
+</dialog>
 <dialog id="agentDlg">
   <h3>Agent profile</h3>
   <p class="note">Your agent name, tickets, tiers and cards save to your cloud profile (Supabase) and this device, so your progress is backed up and your profile pic shows on the leaderboard.</p>
@@ -439,9 +492,11 @@ function buildProps(lg){
         stat: r.stat, line: r.line,
         matchup: r.matchup || "", starts: r.starts || "", eventId: "",
         img: photoCache[(r.player||"").toLowerCase()] || "",
+        pct: (r.pct!=null ? r.pct : null),
         src: "PrizePicks \u00B7 via Parlay API"
       });
     });
+    out.forEach(function(p){ var k = p.player.toLowerCase(); if (!p.team && teamCache[k]) p.team = teamCache[k]; if (!p.athleteId && aidCache[k]) p.athleteId = aidCache[k]; });
     out.sort(function(a,b){ return (new Date(a.starts||0) - new Date(b.starts||0)) || a.player.localeCompare(b.player); });
     propsCache[lg.key] = out.slice(0, 80);
     resolvePhotos(lg, propsCache[lg.key]);
@@ -462,9 +517,9 @@ function togglePick(prop, dir){
     var leg = {id:prop.id, player:prop.player, team:prop.team, league:prop.league, stat:prop.stat, line:prop.line, dir:dir, matchup:prop.matchup||"", starts:prop.starts||"", src:prop.src||"ESPN Leaders", custom:!!prop.custom, athleteId:prop.athleteId||"", eventId:prop.eventId||""};
     if (i>-1) slip[i]=leg; else slip.push(leg);
   }
-  lsSet("pa_slip", slip); renderAllSlips(); renderBoards(); renderTicker();
+  lsSet("pa_slip", slip); renderAllSlips(); renderBoards(); renderTicker(); refreshPlayerDlg(); updateSlipChip();
 }
-function removeLeg(id){ slip = slip.filter(function(l){ return l.id!==id; }); lsSet("pa_slip", slip); renderAllSlips(); renderBoards(); renderTicker(); }
+function removeLeg(id){ slip = slip.filter(function(l){ return l.id!==id; }); lsSet("pa_slip", slip); renderAllSlips(); renderBoards(); renderTicker(); refreshPlayerDlg(); updateSlipChip(); }
 var PAYOUTS = {2:3, 3:5, 4:10, 5:20, 6:37.5};
 function slipHtml(){
   var n = slip.length;
@@ -475,19 +530,16 @@ function slipHtml(){
   var can = n>=2;
   return '<h3 style="margin:0 0 6px">Your slip ('+n+' pick'+(n===1?"":"s")+')</h3>'
     + (n ? legs : '<p class="empty">No picks yet — tap a sport tab above, then tap MORE or LESS on any prop card. It lands here instantly; tap the same pick again to take it off.</p>')
-    + '<div class="row" style="margin-top:12px"><label class="note">Entry $</label><input type="number" id="entryAmt" min="1" step="1" value="10"><span class="pay">'+(can ? 'Power Play <b>'+mult+'x</b> · pays <b>$<span id="payOut"></span></b>' : 'Pick at least 2 to lock a ticket')+'</span></div>'
-    + '<div style="margin-top:12px"><button class="bigbtn" id="lockBtn" '+(can?"":"disabled")+'>'+(can?"🔒 Lock In Ticket":"Lock In (pick 2+ to enable)")+'</button></div>';
+    + '<div class="row" style="margin-top:12px"><span class="pay">'+(can ? n+' picks — ready to lock in' : 'Pick at least 2 to lock a ticket')+'</span></div>'
+    + '<div style="margin-top:12px"><button class="bigbtn" id="lockBtn" '+(can?"":"disabled")+'>'+(can?"Lock In Ticket":"Lock In (pick 2+ to enable)")+'</button></div>';
 }
 function renderSlip(el){
   if (!el) return;
   el.innerHTML = slipHtml();
-  var amt = el.querySelector("#entryAmt"), out = el.querySelector("#payOut"), btn = el.querySelector("#lockBtn");
-  function upd(){ var v = parseFloat(amt.value)||0; if (out) out.textContent = (v*(PAYOUTS[slip.length]||0)).toFixed(2); }
-  if (amt) { amt.addEventListener("input", upd); upd(); }
+  var btn = el.querySelector("#lockBtn");
   el.querySelectorAll("[data-remove]").forEach(function(b){ b.addEventListener("click", function(){ removeLeg(b.getAttribute("data-remove")); }); });
   if (btn) btn.addEventListener("click", function(){
-    var entry = parseFloat(amt.value)||0;
-    tickets.unshift({id:"t"+Date.now(), ts:Date.now(), entry:entry, mult:PAYOUTS[slip.length]||0, legs:slip.slice()});
+    tickets.unshift({id:"t"+Date.now(), ts:Date.now(), entry:0, mult:PAYOUTS[slip.length]||0, legs:slip.slice()});
     lsSet("pa_tickets", tickets);
     slip = []; lsSet("pa_slip", slip);
     playStamp(el);
@@ -495,7 +547,8 @@ function renderSlip(el){
     setTimeout(function(){ renderAllSlips(); renderBoards(); renderTickets(); renderBoard(); cloudSave(); showView("tickets"); }, 1000);
   });
 }
-function renderAllSlips(){ renderSlip($("slipHome")); renderSlip($("slipSport")); renderSlip($("slipBuild")); }
+
+function renderAllSlips(){ renderSlip($("slipHome")); renderSlip($("slipSport")); renderSlip($("slipBuild")); updateSlipChip(); }
 
 /* ---------- prop cards ---------- */
 function propCard(p){
@@ -515,41 +568,184 @@ function propCard(p){
     + (teamLine ? '<div class="pmeta">'+esc(teamLine)+'</div>' : '')
     + (matchLine ? '<div class="pmeta">'+esc(matchLine)+'</div>' : '')
     + '<div class="pstat">'+esc(p.stat)+'</div>'
-    + '<div class="pline-big">'+p.line+'</div>'
+    + '<div class="pline-big">'+p.line+'</div>' + (p.pct!=null ? '<div><span class="pctchip">'+p.pct+'% IMPLIED</span></div>' : '')
     + (startsTxt ? '<div><span class="starts-pill">'+esc(startsTxt)+'</span></div>' : '')
+    + (p.liveActual!=null ? '<div class="plive-line">LIVE · '+p.liveActual+' '+esc(p.stat)+' so far · line '+p.line+'</div>' : '')
     + '<div class="psrc">PrizePicks · '+esc(p.leagueLabel)+' · via Parlay API'+(srcDate ? ' · '+esc(srcDate) : '')+'</div>'
     + '<div class="ml"><button class="more'+(slipHas(p.id,"MORE")?" sel":"")+'" data-pick="'+esc(p.id)+'|MORE">MORE<span>'+esc(sub)+'</span></button><button class="less'+(slipHas(p.id,"LESS")?" sel":"")+'" data-pick="'+esc(p.id)+'|LESS">LESS<span>'+esc(sub)+'</span></button></div>'
     + '</div></div>';
+}
+var boardQuery = "", boardSort = "popular", boardTeam = "all";
+var buildSort = "popular", buildTeam = "all";
+var teamCache = lsGet("pa_teams", {});
+var aidCache = lsGet("pa_aids", {});
+var liveTeamsByLeague = {};
+function groupMaxPct(g){ var m = -1; g.props.forEach(function(p){ if (p.pct!=null && p.pct>m) m = p.pct; }); return m; }
+function playerGroups(ps){
+  var by = {}, order = [];
+  ps.forEach(function(p){
+    var k = p.player + "|" + p.league;
+    if (!by[k]){ by[k] = {player:p.player, team:p.team||"", img:p.img||"", league:p.league, leagueLabel:p.leagueLabel, props:[], starts:p.starts||""}; order.push(by[k]); }
+    by[k].props.push(p);
+    if (p.team && !by[k].team) by[k].team = p.team;
+    if (p.img && !by[k].img) by[k].img = p.img;
+    if (p.starts && (!by[k].starts || p.starts < by[k].starts)) by[k].starts = p.starts;
+  });
+  return order;
+}
+function sortGroups(gs, mode){
+  var out = gs.slice();
+  if (mode==="pct") out.sort(function(a,b){ return groupMaxPct(b)-groupMaxPct(a) || b.props.length-a.props.length; });
+  else if (mode==="time") out.sort(function(a,b){ return new Date(a.starts||"2999")-new Date(b.starts||"2999") || a.player.localeCompare(b.player); });
+  else out.sort(function(a,b){ return b.props.length-a.props.length || groupMaxPct(b)-groupMaxPct(a) || new Date(a.starts||"2999")-new Date(b.starts||"2999"); });
+  return out;
+}
+function tileHtml(g){
+  var lt = liveTeamsByLeague[g.league] && liveTeamsByLeague[g.league][(g.team||"").toLowerCase()];
+  return '<div class="ptile" data-player="'+esc(g.player)+'" data-league="'+esc(g.league)+'">'
+    + (g.img ? '<img src="'+esc(g.img)+'" alt="" loading="lazy">' : '<div class="pinit">'+esc(initials(g.player))+'</div>')
+    + '<div class="pn">'+esc(g.player)+'</div><div class="pm">'+esc([g.team, g.leagueLabel].filter(function(x){ return x; }).join(" · "))+'</div>'
+    + '<span class="pc">'+g.props.length+' prop'+(g.props.length===1?"":"s")+(g.starts ? ' · '+esc(fmtClock(g.starts)) : '')+'</span>'
+    + (lt ? '<br><span class="plive">LIVE · '+esc(lt.detail)+'</span>' : '') + '</div>';
+}
+function bindTiles(scope){ if (!scope) return; scope.querySelectorAll("[data-player]").forEach(function(t){ t.addEventListener("click", function(){ openPlayer(t.getAttribute("data-player"), t.getAttribute("data-league")); }); }); }
+var dlgPlayer = null;
+function openPlayer(name, leagueKey){
+  dlgPlayer = {name:name, league:leagueKey};
+  fillPlayerDlg();
+  var d = $("playerDlg"); if (d && !d.open) d.showModal();
+}
+function fillPlayerDlg(){
+  if (!dlgPlayer) return;
+  var list = (propsCache[dlgPlayer.league]||[]).filter(function(p){ return p.player===dlgPlayer.name; });
+  var body = $("playerDlgBody"); if (!body) return;
+  if (!list.length){ body.innerHTML = '<p class="empty">No props found for '+esc(dlgPlayer.name)+'.</p>'; return; }
+  var g = playerGroups(list)[0];
+  var live = liveTeamsByLeague[g.league] && liveTeamsByLeague[g.league][(g.team||"").toLowerCase()];
+  body.innerHTML = '<div class="row" style="gap:12px;align-items:center"><img src="'+esc(g.img||"")+'" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:19px;font-weight:900">'+esc(g.player)+'</div><div class="note">'+esc([g.team, g.leagueLabel].filter(function(x){ return x; }).join(" · "))+' · '+list.length+' props · PrizePicks</div></div><button class="ghostbtn" id="pdlgClose">Close</button></div>'
+    + '<div id="pdlgLive"></div>'
+    + (live ? '<p class="sub" style="margin-top:8px">This game is live — props are closed. Props on your locked-in tickets keep tracking in My Tickets.</p>' : '')
+    + '<div class="pdlgbody'+(live ? ' closed' : '')+'">' + list.map(propCard).join("") + '</div>';
+  if (!live) bindPicks(body);
+  var cb = $("pdlgClose"); if (cb) cb.addEventListener("click", function(){ $("playerDlg").close(); });
+  loadLiveForPlayer(g, list);
+}
+function refreshPlayerDlg(){ if (dlgPlayer && $("playerDlg") && $("playerDlg").open) fillPlayerDlg(); }
+function findLiveStat(summary, athleteId, playerName, stat){
+  try {
+    var groups = [];
+    (summary.boxscore && summary.boxscore.players || []).forEach(function(tp){ (tp.statistics||[]).forEach(function(g){ groups.push(g); }); });
+    var dicts = [];
+    groups.forEach(function(g){ (g.athletes||[]).forEach(function(a){
+      var nm = (a.athlete && a.athlete.displayName) || "";
+      if (!((athleteId && String(a.athlete && a.athlete.id)===String(athleteId)) || nm.toLowerCase()===String(playerName).toLowerCase() || lastNameOf(nm)===lastNameOf(playerName))) return;
+      var d = {__names:(g.names||[]).join(",")};
+      (g.names||[]).forEach(function(n, i){ d[n] = (a.stats||[])[i]; });
+      dicts.push(d);
+    }); });
+    function num(x){ var v = parseFloat(x); return isFinite(v) ? v : null; }
+    function made(x){ if (x==null) return null; var parts = String(x).split("/"); return parts.length===2 ? num(parts[0]) : num(x); }
+    for (var i=0;i<dicts.length;i++){ var d = dicts[i], v = null;
+      if (stat==="Points") v = num(d.PTS!=null ? d.PTS : d.P);
+      else if (stat==="Rebounds") v = num(d.REB);
+      else if (stat==="Assists") v = num(d.AST!=null ? d.AST : d.A);
+      else if (stat==="Steals") v = num(d.STL);
+      else if (stat==="Blocks") v = num(d.BLK);
+      else if (stat==="Turnovers") v = num(d.TO);
+      else if (stat==="3-Pointers Made" || stat==="3-PT Made") v = made(d["3PT"]);
+      else if (stat==="Goals") v = num(d.G);
+      else if (stat==="Shots on Goal") v = num(d.SOG);
+      else if (stat==="Saves") v = num(d.SV);
+      else if (stat==="Passing Yards" && d.__names.indexOf("C/ATT")>-1) v = num(d.YDS);
+      else if (stat==="Passing TDs" && d.__names.indexOf("C/ATT")>-1) v = num(d.TD);
+      else if (stat==="Rushing Yards" && d.__names.indexOf("CAR")>-1) v = num(d.YDS);
+      else if (stat==="Rushing TDs" && d.__names.indexOf("CAR")>-1) v = num(d.TD);
+      else if (stat==="Receiving Yards" && d.__names.indexOf("REC")>-1) v = num(d.YDS);
+      else if (stat==="Receiving TDs" && d.__names.indexOf("REC")>-1) v = num(d.TD);
+      else if (stat==="Receptions" && d.__names.indexOf("REC")>-1) v = num(d.REC);
+      if (v!=null) return v;
+    }
+  } catch(e){}
+  return null;
+}
+function loadLiveForPlayer(g, list){
+  var lg = leagueByKey(g.league); if (!lg || !g.team) return;
+  getScoreboard(lg, 1).then(function(evs){
+    var ev = null;
+    (evs||[]).forEach(function(e){ if (ev) return; var st = e.status && e.status.type && e.status.type.state; if (st!=="in") return; var ts = eventTeams(e); if (ts.some(function(t){ return (t.name||"").toLowerCase()===g.team.toLowerCase(); })) ev = e; });
+    if (!ev) return;
+    var ts = eventTeams(ev);
+    var detail = (ev.status && ev.status.type && (ev.status.type.shortDetail || ev.status.type.detail)) || "LIVE";
+    var scoreLine = ts.map(function(t){ return t.name + " " + (t.score!=null ? t.score : ""); }).join(" · ");
+    var lv = $("pdlgLive"); if (lv) lv.innerHTML = '<div class="plive-line">LIVE · '+esc(detail)+' · '+esc(scoreLine)+'</div>';
+    var aid = aidCache[g.player.toLowerCase()] || (list[0] && list[0].athleteId) || "";
+    fetchJson(ESPN+lg.sport+"/"+lg.league+"/summary?event="+encodeURIComponent(ev.id)).then(function(sm){
+      list.forEach(function(p){ var v = findLiveStat(sm, aid, g.player, p.stat); if (v!=null) p.liveActual = v; });
+      if (dlgPlayer && dlgPlayer.name===g.player){ var body = $("playerDlgBody"); var grid = body && body.querySelector(".pdlgbody"); if (grid){ grid.innerHTML = list.map(propCard).join(""); if (!grid.classList.contains("closed")) bindPicks(body); } }
+    }).catch(function(){});
+  }).catch(function(){});
+}
+function updateSlipChip(){
+  var sc = $("slipChip"); if (!sc) return;
+  var show = slip.length>0 && (window._view==="sport" || window._view==="build");
+  sc.style.display = show ? "" : "none";
+  if (show) sc.textContent = "Your slip · " + slip.length + " pick" + (slip.length===1?"":"s") + " →";
 }
 var currentSport = "all";
 var boardStat = "all";
 var liveFilter = "all";
 function renderBoards(){
-  if (currentSport && currentSport!=="all"){
-    var lg = leagueByKey(currentSport);
-    $("sportTitle").textContent = lg.label + " Props — Today";
-    var pill = $("propCountPill"); if (pill) pill.textContent = "";
-    var box = $("sportProps");
-    box.innerHTML = '<p class="empty">Loading '+esc(lg.label)+' props — real PrizePicks lines via Parlay API…</p>';
-    buildProps(lg).then(function(ps){
-      if (currentSport!==lg.key) return;
-      if (!propsConfigured) { box.innerHTML = '<p class="empty">PrizePicks props are wired up, but the Parlay API key isn\'t set yet. Add <b>PARLAY_API_KEY</b> in Vercel (project Settings → Environment Variables) and redeploy — the board fills in automatically. Custom legs on the + Add Ticket tab work right now.</p>'; return; }
-      if (!ps.length) { var fw9 = $("propFilters"); if (fw9) setHtml(fw9, ""); box.innerHTML = '<p class="empty">No PrizePicks props posted for '+esc(lg.label)+' right now — lines usually appear closer to game time.</p>'; var pill0 = $("propCountPill"); if (pill0) pill0.textContent = ""; return; }
-      var fw = $("propFilters");
-      if (fw){
-        var counts = {}; ps.forEach(function(p){ counts[p.stat] = (counts[p.stat]||0)+1; });
-        var statList = Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; }).slice(0,12);
-        if (boardStat!=="all" && !counts[boardStat]) boardStat = "all";
-        setHtml(fw, '<button type="button" class="tab'+(boardStat==="all"?" on":"")+'" data-stat="all">All stats</button>' + statList.map(function(st){ return '<button type="button" class="tab'+(boardStat===st?" on":"")+'" data-stat="'+esc(st)+'">'+esc(st)+' · '+counts[st]+'</button>'; }).join(""));
-        fw.querySelectorAll("[data-stat]").forEach(function(b){ b.addEventListener("click", function(){ boardStat = b.getAttribute("data-stat"); renderBoards(); }); });
-      }
-      var shown = boardStat==="all" ? ps : ps.filter(function(p){ return p.stat===boardStat; });
-      box.innerHTML = shown.length ? shown.map(propCard).join("") : '<p class="empty">No '+esc(boardStat)+' props right now — try another stat.</p>';
-      var pill2 = $("propCountPill"); if (pill2) pill2.textContent = shown.length + " props · tap MORE / LESS to add";
-      bindPicks(box);
-    });
-  }
+  var lg = leagueByKey(currentSport);
+  if (!lg){ currentSport = "nba"; lg = leagueByKey("nba"); }
+  $("sportTitle").textContent = lg.label + " Props — Today";
+  $("propCountPill").textContent = "";
+  $("sportProps").innerHTML = '<p class="empty">Loading props…</p>';
+  buildProps(lg).then(function(ps){
+    if (currentSport!==lg.key) return;
+    if (!ps.length){
+      if (propsConfigured === false) $("sportProps").innerHTML = '<p class="empty">Props are almost ready — the PrizePicks feed key is being connected. Scores, news and tickets all work meanwhile.</p>';
+      else $("sportProps").innerHTML = '<p class="empty">No '+esc(lg.label)+' props on the board right now — games with props will appear here.</p>';
+      var pw0 = $("popWrap"); if (pw0) pw0.style.display = "none";
+      return;
+    }
+    getScoreboard(lg, 1).then(function(evs){
+      var lt = {};
+      (evs||[]).forEach(function(e){ var st = e.status && e.status.type && e.status.type.state; if (st!=="in") return; var det = (e.status.type.shortDetail || e.status.type.detail || "LIVE"); eventTeams(e).forEach(function(t){ lt[(t.name||"").toLowerCase()] = {detail: det}; }); });
+      liveTeamsByLeague[lg.key] = lt;
+    }).catch(function(){}).then(function(){ if (currentSport===lg.key) renderBoardTiles(lg, ps); });
+  }).catch(function(){ $("sportProps").innerHTML = '<p class="empty">Props could not load — check your connection and tap Refresh.</p>'; });
 }
+function renderBoardTiles(lg, ps){
+  var stats = [];
+  ps.forEach(function(p){ if (stats.indexOf(p.stat)<0) stats.push(p.stat); });
+  var counts = {}; ps.forEach(function(p){ counts[p.stat] = (counts[p.stat]||0)+1; });
+  stats.sort(function(a,b){ return (counts[b]||0)-(counts[a]||0); });
+  var fw = [{k:"all", label:"All stats"}].concat(stats.slice(0,12).map(function(st){ return {k:st, label:st}; }));
+  if (fw.map(function(x){ return x.k; }).indexOf(boardStat)<0) boardStat = "all";
+  var pf = $("propFilters");
+  setHtml(pf, fw.map(function(x){ return '<button type="button" class="tab'+(boardStat===x.k?" on":"")+'" data-stat="'+esc(x.k)+'">'+esc(x.label)+'</button>'; }).join(""));
+  pf.querySelectorAll("[data-stat]").forEach(function(b){ b.addEventListener("click", function(){ boardStat = b.getAttribute("data-stat"); renderBoards(); }); });
+  var teams = {}; ps.forEach(function(p){ if (p.team) teams[p.team] = (teams[p.team]||0)+1; });
+  var teamList = Object.keys(teams).sort(function(a,b){ return teams[b]-teams[a]; }).slice(0,10);
+  if (boardTeam!=="all" && !teams[boardTeam]) boardTeam = "all";
+  var tf = $("teamFilters");
+  if (tf){ setHtml(tf, teamList.length ? '<button type="button" class="tab'+(boardTeam==="all"?" on":"")+'" data-team="all">All teams</button>' + teamList.map(function(t){ return '<button type="button" class="tab'+(boardTeam===t?" on":"")+'" data-team="'+esc(t)+'">'+esc(t)+'</button>'; }).join("") : "");
+    tf.querySelectorAll("[data-team]").forEach(function(b){ b.addEventListener("click", function(){ boardTeam = b.getAttribute("data-team"); renderBoards(); }); }); }
+  var liveMap = liveTeamsByLeague[lg.key] || {};
+  var gs = playerGroups(ps).filter(function(g){ return !(g.team && liveMap[g.team.toLowerCase()]); });
+  if (boardStat!=="all") gs = gs.map(function(g){ return {player:g.player, team:g.team, img:g.img, league:g.league, leagueLabel:g.leagueLabel, starts:g.starts, props:g.props.filter(function(p){ return p.stat===boardStat; })}; }).filter(function(g){ return g.props.length; });
+  if (boardTeam!=="all") gs = gs.filter(function(g){ return g.team===boardTeam; });
+  if (boardQuery) gs = gs.filter(function(g){ return g.player.toLowerCase().indexOf(boardQuery)>-1; });
+  gs = sortGroups(gs, boardSort);
+  var filtered = boardStat!=="all" || boardTeam!=="all" || boardQuery;
+  var pw = $("popWrap");
+  if (pw){ if (!filtered && boardSort==="popular" && gs.length>3){ pw.style.display = ""; setHtml($("popTiles"), gs.slice(0,6).map(tileHtml).join("")); bindTiles($("popTiles")); } else pw.style.display = "none"; }
+  var box = $("sportProps");
+  box.innerHTML = gs.length ? gs.map(tileHtml).join("") : '<p class="empty">No players match — try another name, team or stat.</p>';
+  var pill2 = $("propCountPill"); if (pill2) pill2.textContent = gs.length + " players · tap a player for all their props";
+  bindTiles(box);
+}
+
 function bindPicks(scope){
   (scope||document).querySelectorAll("[data-pick]").forEach(function(b){
     b.addEventListener("click", function(){
@@ -596,6 +792,11 @@ function renderUpcoming(){
       var lp = $("livePill"); if (lp) lp.innerHTML = '<span class="dot"></span>LIVE · ' + liveAll.length;
       var hs = $("heroStatus");
       if (hs) hs.textContent = "Updated " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}) + " · auto-refresh 30s · ESPN · " + total + " games on the board · " + liveAll.length + " live now";
+      window._liveNow = liveAll.length;
+      var _nl = liveAll.length===0;
+      var _sa = $("secAgents"); if (_sa) _sa.style.display = _nl ? "none" : "";
+      var _su = $("secUpcoming"); if (_su) _su.style.display = _nl ? "none" : "";
+      renderTicker();
       var hero = $("liveHero");
       var heroSig = liveAll.map(function(g){ var tt = eventTeams(g.ev); return g.ev.id + ":" + tt.map(function(x){ return x.score||""; }).join("-"); }).join(",");
       var heroChanged = heroSig !== window._heroSig;
@@ -642,6 +843,50 @@ function articleHtml(a, picks){
   var href = a.links && a.links.web && a.links.web.href || "https://www.espn.com";
   var tag = picks && picks.length && mentionsPicks(a, picks) ? ' <span class="yours-tag">⭐ YOUR PLAYER</span>' : '';
   return '<a href="'+esc(href)+'" target="_blank" rel="noopener"><span class="nhead">'+esc(a.headline||"")+tag+'</span><span class="nsrc">ESPN · '+esc(fmtDay(a.published))+'</span></a>';
+}
+var vidSig = "";
+function renderTicketHighlights(){
+  var box = $("hlTicket"); if (!box) return;
+  if (!tickets.length){
+    setHtml(box, '<div class="card" style="background:linear-gradient(135deg,#3b1470,#22103f);border-color:#5b21b6"><div style="font-size:16px"><b>No ticket highlights yet.</b> Build a ticket from your own slip and its hits and close legs will surface here.</div><button class="hlopen" id="hlBuild" style="margin-top:12px">+ Build a ticket</button></div>');
+    var b = $("hlBuild"); if (b) b.addEventListener("click", function(){ showView("build"); });
+    return;
+  }
+  var rows = [];
+  tickets.slice(0,4).forEach(function(t){ (t.legs||[]).forEach(function(l){
+    if (t.result==="win") rows.push('<div class="leg"><span class="dir more">HIT</span><div style="flex:1"><b>'+esc(l.player)+'</b> — '+esc(l.dir)+' '+l.line+' '+esc(l.stat)+'</div></div>');
+  }); });
+  setHtml(box, '<div class="card"><div style="font-size:16.5px;font-weight:900;margin-bottom:6px">Your Ticket Highlights</div>' + (rows.length ? rows.slice(0,8).join("") : '<p class="empty">Your hits and close legs will surface here as your games play.</p>') + '</div>');
+}
+function renderYourVideos(){
+  var wrap = $("hlYoursWrap"), box = $("hlVideos"); if (!wrap || !box) return;
+  var picks = pickedPlayers();
+  if (!picks.length){ wrap.style.display = "none"; vidSig = ""; return; }
+  wrap.style.display = "";
+  var sig = picks.join("|");
+  if (sig === vidSig) return; vidSig = sig;
+  box.innerHTML = '<p class="empty">Loading highlight clips of your players…</p>';
+  var players = picks.slice(0,4);
+  Promise.all(players.map(function(name){
+    return fetchJson("https://site.api.espn.com/apis/search/v2?query="+encodeURIComponent(name)+"&limit=10").then(function(r){
+      var clips = [];
+      try { (r.results||[]).forEach(function(g){ if (g.type!=="clips") return; (g.contents||[]).forEach(function(c){ if (c.type==="vod" && clips.length<3) clips.push(c); }); }); } catch(e){}
+      return {name:name, clips:clips};
+    }).catch(function(){ return {name:name, clips:[]}; });
+  })).then(function(rs){
+    if (vidSig !== sig) return;
+    var html = rs.map(function(x){
+      var head = '<div class="teamhead" style="margin:12px 0 2px">'+esc(x.name)+'</div>';
+      var vids = x.clips.map(function(c){
+        var href = (c.link && c.link.web) || ("https://www.youtube.com/results?search_query="+encodeURIComponent(x.name+" highlights"));
+        var img = (c.image && c.image.default) || "";
+        return '<a class="vidcard" href="'+esc(href)+'" target="_blank" rel="noopener"><span class="vidwrap">'+(img ? '<img src="'+esc(img)+'" alt="">' : '<span style="display:block;width:118px;height:66px;border-radius:9px;background:#1b1030"></span>')+'<span class="vidplay">▶</span></span><span><b>'+esc(c.displayName||"Highlight")+'</b><br><span class="note">ESPN clip · tap to watch</span></span></a>';
+      }).join("");
+      var yt = '<a class="vidcard" href="https://www.youtube.com/results?search_query='+encodeURIComponent(x.name+" highlights")+'" target="_blank" rel="noopener"><span class="vidwrap"><span style="display:block;width:118px;height:66px;border-radius:9px;background:linear-gradient(135deg,#3b1470,#1b1030)"></span><span class="vidplay">▶</span></span><span><b>More '+esc(x.name)+' highlights</b><br><span class="note">YouTube · tap to watch</span></span></a>';
+      return head + vids + yt;
+    }).join("");
+    setHtml(box, html || '<p class="empty">No clips found for your players yet.</p>');
+  });
 }
 function renderNews(){
   var picks = pickedPlayers();
@@ -712,26 +957,38 @@ function matchName(ts){
 }
 
 /* ---------- live center ---------- */
-function gameCard(lg, ev){
-  var ts = eventTeams(ev);
-  var st = ev.status && ev.status.type || {};
-  var live = st.state==="in";
-  var detail = st.shortDetail || st.detail || "";
-  var extra = "";
-  if (lg.key==="tennis" && live){
-    try {
-      var tcs = ((ev.competitions||[])[0]||{}).competitors||[];
-      if (tcs.length===2){
-        var sfmt = function(c){ return (c.linescores||[]).map(function(x){ return x.displayValue; }).join(" · "); };
-        extra = '<div class="note" style="margin-top:6px">Sets: '+esc(sfmt(tcs[0]))+' vs '+esc(sfmt(tcs[1]))+' · '+esc(detail)+' · Point score not reported by ESPN</div><div class="note">Tap for the full match tracker — sets, games, point &amp; serve →</div>';
-      }
-    } catch(e){}
-  }
-  return '<div class="card game" data-game="'+lg.key+'|'+ev.id+'" style="cursor:pointer"><div>'
-    + ts.map(function(t){ return '<div class="gteam">'+esc(t.name)+' <span class="gscore">'+(t.score!=null && st.state!=="pre" ? esc(t.score) : "")+'</span></div>'; }).join("")
-    + '<div class="note">'+esc(lg.label)+'</div>'+extra+'</div>'
-    + '<div class="gstat">'+(live?'<span class="badge live">LIVE</span><br>':"")+esc(detail)+'<br>'+(st.state==="pre"?esc(fmtTime(ev.date)):"")+'</div></div>';
+function fmtFullDate(iso){
+  try {
+    var d = new Date(iso);
+    var wd = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
+    var mons = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    var day = d.getDate();
+    var suf = (day%10===1 && day!==11) ? "st" : (day%10===2 && day!==12) ? "nd" : (day%10===3 && day!==13) ? "rd" : "th";
+    return wd + ", " + mons[d.getMonth()] + " " + day + suf + " at " + fmtClock(iso) + " EST";
+  } catch(e){ return fmtTime(iso); }
 }
+function gameCard(lg, ev){
+  var cs = ((ev.competitions||[])[0]||{}).competitors||[];
+  var st = ev.status && ev.status.type || {};
+  var live = st.state==="in", pre = st.state==="pre";
+  var detail = st.shortDetail || st.detail || "";
+  var tour = ev._tour ? " · "+ev._tour : (lg.key==="tennis" ? " · ATP" : "");
+  var leagueLine = lg.key==="tennis" ? "Tennis"+tour : lg.label;
+  var right = live ? "LIVE · "+detail : (pre ? fmtFullDate(ev.date) : detail);
+  var rows = cs.map(function(c){
+    var nm = (c.team && (c.team.shortDisplayName || c.team.displayName)) || "";
+    var sc = pre ? "0" : (c.score!=null ? c.score : "");
+    return '<div class="gteam">'+esc(nm)+' <span class="gscore">'+esc(sc)+'</span></div>';
+  }).join("");
+  var extra = "";
+  if (lg.key==="tennis" && live && cs.length===2){
+    var sfmt = function(c){ return (c.linescores||[]).map(function(x){ return x.displayValue; }).join(" vs "); };
+    extra = '<div class="note" style="margin-top:6px">Sets: '+esc(sfmt(cs[0]))+' vs '+esc(sfmt(cs[1]))+' · '+esc(detail)+' · Point score not reported by ESPN</div>';
+  }
+  var sub = lg.key==="tennis" && live ? "Tap for the full match tracker — sets, games, point & serve →" : "Tap for team stats, player stats & plays →";
+  return '<div class="card game" data-game="'+lg.key+'|'+(ev._tour ? ev._tour.toLowerCase()+":" : "")+ev.id+'" style="cursor:pointer"><div class="row" style="justify-content:space-between"><span class="note" style="text-transform:uppercase;letter-spacing:1px">'+esc(leagueLine)+'</span><span class="note">'+esc(right)+'</span></div><div style="margin-top:6px">'+rows+'</div>'+extra+'<div class="note" style="margin-top:6px">'+sub+'</div></div>';
+}
+
 var collegeCheck = {}; // eventId -> {ok, ts}
 function lastNameOf(n){ var p = String(n||"").toLowerCase().replace(/[^a-z ]/g,"").split(/\s+/).filter(Boolean); var last = p[p.length-1]||""; if (["jr","sr","ii","iii","iv"].indexOf(last)>-1) last = p[p.length-2]||last; return last; }
 function collegeGameHasProp(lg, ev){
@@ -750,7 +1007,16 @@ function collegeGameHasProp(lg, ev){
 }
 function renderLive(){
   var leagues = LEAGUES.slice(1).filter(function(lg){ return liveFilter==="all" || lg.key===liveFilter; });
-  var jobs = leagues.map(function(lg){ return getScoreboard(lg, 2).then(function(ev){ return {lg:lg, ev:ev}; }).catch(function(){ return {lg:lg, ev:[]}; }); });
+  var jobs = leagues.map(function(lg){
+    if (lg.key==="tennis"){
+      var wtaLg = {key:"tennisw", label:"Tennis", sport:"tennis", league:"wta"};
+      return Promise.all([
+        getScoreboard(lg, 2).then(function(ev){ ev.forEach(function(e){ e._tour = "ATP"; }); return ev; }).catch(function(){ return []; }),
+        getScoreboard(wtaLg, 2).then(function(ev){ ev.forEach(function(e){ e._tour = "WTA"; }); return ev; }).catch(function(){ return []; })
+      ]).then(function(rr){ return {lg:lg, ev:rr[0].concat(rr[1])}; });
+    }
+    return getScoreboard(lg, 2).then(function(ev){ return {lg:lg, ev:ev}; }).catch(function(){ return {lg:lg, ev:[]}; });
+  });
   Promise.all(jobs).then(function(rs){
     var live = [], fut = [];
     rs.forEach(function(r){ r.ev.forEach(function(ev){
@@ -776,9 +1042,25 @@ function renderLive(){
     });
   });
 }
+function renderGameProps(lg, s){
+  var box = $("gameProps"); if (!box) return;
+  buildProps(lg).then(function(ps){
+    if (!ps.length) return;
+    var names = {};
+    try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ (tp.athletes||[]).forEach(function(a){ if (a.athlete && a.athlete.displayName) names[lastNameOf(a.athlete.displayName)] = 1; }); }); } catch(e){}
+    try { var comp = (s.header && s.header.competitions || [])[0] || {}; (comp.competitors||[]).forEach(function(c){ if (c.team && c.team.displayName) names[lastNameOf(c.team.displayName)] = 1; }); } catch(e){}
+    var hits = ps.filter(function(p){ return names[lastNameOf(p.player)]; }).slice(0, 12);
+    if (!hits.length) return;
+    box.innerHTML = '<div style="font-size:16px;margin-top:14px"><b>Props in this game</b> <span class="note">— tap MORE / LESS to add to your slip</span></div>' + hits.map(propCard).join("");
+    bindPicks(box);
+  }).catch(function(){});
+}
 function openGame(key, eventId){
   var lg = leagueByKey(key);
-  fetchJson(ESPN+lg.sport+"/"+lg.league+"/summary?event="+encodeURIComponent(eventId)).then(function(s){
+  var tourLg = lg.league, eid = String(eventId);
+  var ci = eid.indexOf(":");
+  if (ci>0){ tourLg = eid.slice(0, ci); eid = eid.slice(ci+1); }
+  fetchJson(ESPN+lg.sport+"/"+tourLg+"/summary?event="+encodeURIComponent(eid)).then(function(s){
     var comp = (s.header && s.header.competitions || [])[0] || {};
     var cs = comp.competitors || [];
     var st = comp.status && comp.status.type || {};
@@ -831,24 +1113,45 @@ function openGame(key, eventId){
       var plays = (s.plays || []).slice(-8).reverse();
       if (plays.length) html += '<div style="font-size:16px;margin-top:14px"><b>Latest Plays</b></div>' + plays.map(function(pl){ return '<div style="padding:6px 0;border-bottom:1px solid var(--line)"><span class="note">' + esc(((pl.period && pl.period.displayValue)||"") + " " + ((pl.clock && pl.clock.displayValue)||"")) + '</span> ' + esc(pl.text || pl.shortText || "") + '</div>'; }).join("");
     }
-    html += '</div>';
+    html += '<div id="gameProps"></div></div>';
     $("gameDetail").innerHTML = html;
+    renderGameProps(lg, s);
     $("gameDetail").scrollIntoView({behavior:"smooth"});
   }).catch(function(){ $("gameDetail").innerHTML = '<div class="card"><p class="err">Couldn\'t load that game\'s details from ESPN.</p></div>'; });
 }
 
 /* ---------- search + custom legs ---------- */
-function renderSearch(q){
-  var box = $("searchResults");
-  if (!q || q.trim().length < 2) { box.innerHTML = ""; return; }
-  var needle = q.trim().toLowerCase();
+function renderSearch(q){ renderBuild(); }
+function renderBuild(){
+  var box = $("searchResults"); if (!box) return;
+  var inp = $("searchInput");
+  var q = ((inp && inp.value) || "").trim().toLowerCase();
   allProps().then(function(ps){
-    var hits = ps.filter(function(p){ return (p.player+" "+p.team+" "+p.stat+" "+p.leagueLabel).toLowerCase().indexOf(needle)>-1; }).slice(0,24);
-    box.innerHTML = hits.length ? hits.map(propCard).join("") : '<p class="empty">No matching props — try another name, team or stat.</p>';
-    bindPicks(box);
-  });
+    var gs = playerGroups(ps);
+    var teams = {}; gs.forEach(function(g){ if (g.team) teams[g.team] = (teams[g.team]||0)+1; });
+    var teamList = Object.keys(teams).sort(function(a,b){ return teams[b]-teams[a]; }).slice(0,12);
+    if (buildTeam!=="all" && !teams[buildTeam]) buildTeam = "all";
+    var tf = $("buildTeams");
+    if (tf){ setHtml(tf, teamList.length ? '<button type="button" class="tab'+(buildTeam==="all"?" on":"")+'" data-bteam="all">All teams</button>' + teamList.map(function(t){ return '<button type="button" class="tab'+(buildTeam===t?" on":"")+'" data-bteam="'+esc(t)+'">'+esc(t)+'</button>'; }).join("") : "");
+      tf.querySelectorAll("[data-bteam]").forEach(function(b){ b.addEventListener("click", function(){ buildTeam = b.getAttribute("data-bteam"); renderBuild(); }); }); }
+    if (buildTeam!=="all") gs = gs.filter(function(g){ return g.team===buildTeam; });
+    if (q) gs = gs.filter(function(g){ return (g.player+" "+g.team+" "+g.props.map(function(p){ return p.stat; }).join(" ")).toLowerCase().indexOf(q)>-1; });
+    gs = sortGroups(gs, buildSort);
+    if (!gs.length){ box.innerHTML = '<p class="empty">No matching players — try another name or team.</p>'; return; }
+    var byTeam = {}, order = [];
+    gs.forEach(function(g){ var t = g.team || "More players"; if (!byTeam[t]){ byTeam[t] = []; order.push(t); } byTeam[t].push(g); });
+    order.sort(function(a,b){ var am = a==="More players" ? 1 : 0, bm = b==="More players" ? 1 : 0; return am-bm || byTeam[b].length-byTeam[a].length; });
+    box.innerHTML = order.map(function(t){ return '<div class="teamhead">'+esc(t)+'</div><div class="pgrid">'+byTeam[t].map(tileHtml).join("")+'</div>'; }).join("");
+    bindTiles(box);
+  }).catch(function(){ box.innerHTML = '<p class="empty">Players could not load — check your connection and tap Refresh.</p>'; });
 }
+
 $("searchInput").addEventListener("input", function(e){ renderSearch(e.target.value); });
+var bsEl = $("boardSearch"); if (bsEl) bsEl.addEventListener("input", function(e){ boardQuery = e.target.value.trim().toLowerCase(); renderBoards(); });
+document.querySelectorAll("#boardSort [data-sort]").forEach(function(b){ b.addEventListener("click", function(){ boardSort = b.getAttribute("data-sort"); document.querySelectorAll("#boardSort [data-sort]").forEach(function(x){ x.classList.toggle("on", x===b); }); renderBoards(); }); });
+document.querySelectorAll("#buildSort [data-bsort]").forEach(function(b){ b.addEventListener("click", function(){ buildSort = b.getAttribute("data-bsort"); document.querySelectorAll("#buildSort [data-bsort]").forEach(function(x){ x.classList.toggle("on", x===b); }); renderBuild(); }); });
+document.querySelectorAll(".hlopen").forEach(function(b){ b.addEventListener("click", function(){ showView("live"); }); });
+var scEl = $("slipChip"); if (scEl) scEl.addEventListener("click", function(){ showView("home"); });
 (function(){ var sel = $("cSport"); LEAGUES.slice(1).forEach(function(l){ var o=document.createElement("option"); o.value=l.key; o.textContent=l.label; sel.appendChild(o); }); })();
 $("cAdd").addEventListener("click", function(){
   var player = $("cPlayer").value.trim(), stat = $("cStat").value.trim(), line = parseFloat($("cLine").value);
@@ -923,12 +1226,12 @@ function renderTickets(){
   var box = $("myTickets");
   if (!tickets.length) { box.innerHTML = '<div class="card" style="text-align:center;padding:26px 18px"><div style="font-size:21px;font-weight:800">No tickets yet</div><p class="sub" style="margin:10px auto 16px;max-width:420px">Build your first one from your own slip — add the lines your site shows you, pick More or Less on each, and lock it in. It takes about 20 seconds.</p><button class="ghostbtn" id="tkBuild" style="background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none;font-weight:800;padding:12px 20px">+ Build a ticket</button></div>'; var tb = $("tkBuild"); if (tb) tb.addEventListener("click", function(){ showView("build"); }); return; }
   box.innerHTML = tickets.map(function(t){
-    var res = t.result==="win" ? ' <span class="hit">· WON $'+(t.entry*t.mult).toFixed(2)+'</span>' : t.result==="loss" ? ' <span class="miss">· LOST</span>' : ' <span class="pend">· LIVE / PENDING</span>';
+    var res = t.result==="win" ? ' <span class="hit">· WON</span>' : t.result==="loss" ? ' <span class="miss">· LOST</span>' : ' <span class="pend">· LIVE / PENDING</span>';
     var legs = t.legs.map(function(l){
       return '<div class="leg"><span class="dir '+(l.dir==="MORE"?"more":"less")+'">'+l.dir+'</span><div style="flex:1"><b>'+esc(l.player)+'</b> — '+esc(l.stat)+' '+l.line+'<br><span class="note">'+esc(l.matchup||l.team||"")+(l.starts?' · '+esc(fmtTime(l.starts)):"")+' · '+esc(l.src)+'</span></div><span data-grade="'+esc(t.id)+'|'+esc(l.id)+'"><span class="pend">…</span></span></div>'
         + '<div data-stepper="'+esc(t.id)+'|'+esc(l.id)+'"></div>';
     }).join("");
-    return '<div class="card" data-ticket="'+t.id+'"><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span class="pay">Entry $'+t.entry+' · <b>'+t.mult+'x</b>'+res+'</span></div><span class="stampmini">LOCKED IN</span>'+legs+'</div>';
+    return '<div class="card" data-ticket="'+t.id+'"><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span>' + res + '</span></div><span class="stampmini">LOCKED IN</span>'+legs+'</div>';
   }).join("");
   tickets.forEach(function(t){
     gradeTicket(t).then(function(map){
@@ -1154,7 +1457,7 @@ function renderTicker(){
   slip.forEach(function(l){ items.push({l:l, from:"On your slip"}); });
   tickets.forEach(function(t){ t.legs.forEach(function(l){ items.push({l:l, from: t.result==="win" ? "Ticket · WON 🏆" : t.result==="loss" ? "Ticket · LOST" : "Ticket · Live / Pending"}); }); });
   if (!items.length){ wrap.style.display = "none"; box.innerHTML = ""; return; }
-  wrap.style.display = "";
+  wrap.style.display = (window._liveNow===0) ? "none" : "";
   box.innerHTML = items.slice(0,30).map(function(x){
     var l = x.l;
     return '<div class="tickchip"><b>'+esc(l.player)+'</b><span>'+esc(l.dir)+' '+l.line+' '+esc(l.stat)+'</span><span class="tickfrom">'+esc(x.from)+(l.starts ? ' · '+esc(fmtTime(l.starts)) : '')+'</span></div>';
@@ -1173,6 +1476,12 @@ function resolvePhotos(lg, list){
       if (photoCache[key]!==undefined){ if (photoCache[key]) p.img = photoCache[key]; return; }
       return fetchJson("https://site.api.espn.com/apis/search/v2?query="+encodeURIComponent(p.player)+"&limit=5").then(function(r){
         var url = "";
+        try { (r.results||[]).forEach(function(g){ (g.contents||[]).forEach(function(c){
+          if (c.type==="player" && (c.displayName||"").toLowerCase()===p.player.toLowerCase()){
+            if (c.subtitle && !p.team) { p.team = c.subtitle; teamCache[p.player.toLowerCase()] = c.subtitle; lsSet("pa_teams", teamCache); }
+            var mm2 = /a:(\d+)/.exec(c.uid||""); if (mm2 && !p.athleteId) { p.athleteId = mm2[1]; aidCache[p.player.toLowerCase()] = mm2[1]; lsSet("pa_aids", aidCache); }
+          }
+        }); }); } catch(e){}
         try {
           var res = (r && r.results) || [];
           for (var i=0;i<res.length && !url;i++){
@@ -1256,6 +1565,9 @@ function showView(name){
   if (name==="live") renderLive();
   if (name==="tickets") renderTickets();
   if (name==="board") renderBoard();
+  if (name==="build") renderBuild();
+  if (name==="highlights"){ renderTicketHighlights(); renderYourVideos(); }
+  window._view = name; updateSlipChip();
   window.scrollTo(0,0);
 }
 document.querySelectorAll("nav.bottom button").forEach(function(b){
@@ -1267,7 +1579,7 @@ document.querySelectorAll("nav.bottom button").forEach(function(b){
 });
 function setSport(key){
   currentSport = key;
-  boardStat = "all";
+  boardStat = "all"; boardTeam = "all"; boardQuery = ""; var bq = $("boardSearch"); if (bq) bq.value = "";
   document.querySelectorAll("#sportTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-sport")===key); });
   if (key==="all") showView("home"); else { showView("sport"); renderBoards(); }
 }
@@ -1304,5 +1616,6 @@ if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").c
 setInterval(function(){ boardCache = {}; refreshHome(); if ($("view-live").classList.contains("on")) renderLive(); }, 30000);
 setInterval(function(){ propsCache = {}; if (currentSport!=="all") renderBoards(); }, 30*60*1000);
 </script>
+<button id="slipChip" type="button"></button>
 </body>
 </html>
