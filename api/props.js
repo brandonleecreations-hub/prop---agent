@@ -70,7 +70,7 @@ const cache = {}; // sport -> {ts, props}
 async function fetchSport(sport, key) {
   const base = "https://parlay-api.com/v1/sports/" + encodeURIComponent(sport) + "/props";
   let offset = 0, rows = [], guard = 0;
-  while (guard < 3) {
+  while (guard < 2) {
     guard++;
     const url = base + "?bookmakers=prizepicks&limit=200&offset=" + offset;
     const r = await fetch(url, { headers: { "X-API-Key": key, "Accept": "application/json" } });
@@ -142,6 +142,13 @@ const PREGAME_WINDOW = 2 * 60 * 60 * 1000;
 function cacheFresh(hit) {
   if (!hit) return false;
   const age = Date.now() - hit.ts;
+  // Most-recent rule: if every game on the cached board has already started,
+  // the board is yesterday's news — a newer slate may be posted, so refresh
+  // (at most once per 30 min) instead of riding the 11h cache into empty.
+  if (age > PREGAME_TTL && hit.props.length) {
+    const anyFuture = hit.props.some((p) => p.starts && new Date(p.starts).getTime() > Date.now() - 10 * 60 * 1000);
+    if (!anyFuture) return false;
+  }
   if (age < DAY_TTL) {
     if (hit.pregameRefreshed) return true;
     // Major-changes exception: a game on this board starts within 2h and the
@@ -173,6 +180,7 @@ module.exports = async (req, res) => {
     cache[sport] = { ts: Date.now(), props, pregameRefreshed: wasPregame };
     res.status(200).json({ ok: true, configured: true, cached: false, props });
   } catch (err) {
+    res.setHeader("Cache-Control", "no-store");
     res.status(200).json({ ok: false, configured: true, error: String((err && err.message) || err), props: hit ? hit.props : [] });
   }
 };
