@@ -97,15 +97,27 @@ input[type=number]{width:110px}
 table.lb{width:100%;border-collapse:collapse;font-size:14.5px}
 table.lb td,table.lb th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
 table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
-.tiercard{perspective:800px;cursor:pointer}
-.tierinner{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;text-align:center;box-shadow:0 12px 26px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05)}
+.tiercard{perspective:1200px;cursor:pointer;aspect-ratio:3/4.2;min-height:320px}
+.tierinner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .65s cubic-bezier(.25,.8,.3,1.15)}
+.tiercard.flipped .tierinner{transform:rotateY(180deg)}
+.flipfront,.flipback{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:var(--r);padding:14px;text-align:center;overflow:hidden;background:var(--panel);border:1px solid var(--line);box-shadow:0 12px 26px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05)}
+.flipfront{display:flex;flex-direction:column}
+.flipback{transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(120% 90% at 50% 0%, #2a1650 0%, #0d0a18 62%)}
+.flipback img{width:118px;height:118px;object-fit:contain;filter:drop-shadow(0 6px 18px rgba(124,58,237,.55))}
+.flipback .bkname{font-weight:900;letter-spacing:2px;font-size:15px}
+.flipback .bksub{color:var(--mut);font-size:12.5px;line-height:1.55;padding:0 10px}
 .tieremoji{font-size:34px}
-.tiername{font-weight:800;font-size:17px;margin-top:4px}
+.tiername{font-weight:800;font-size:17px;margin-top:8px}
 .tierto{color:var(--mut);font-size:13px;margin-top:3px;line-height:1.45}
-.tiercard.unlocked .tierinner{border-color:var(--gold)}
-.flipback{display:none;color:var(--mut);font-size:13.5px;line-height:1.5;padding-top:8px}
-.tiercard.flipped .flipback{display:block}
-.tiercard.flipped .flipfront{display:none}
+.cardhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.cardtier{font-weight:900;font-size:16px;letter-spacing:.4px}
+.rarpill{font-size:10.5px;font-weight:900;letter-spacing:.8px;padding:4px 9px;border-radius:999px;color:#0a0a10;white-space:nowrap}
+.cardart{width:100%;flex:1 1 auto;min-height:0;object-fit:cover;border-radius:12px;display:block}
+.cardart.ph{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#241545,#120a26);font-size:60px;font-weight:900}
+.holo{position:absolute;inset:0;pointer-events:none;border-radius:var(--r);background:linear-gradient(115deg,transparent 32%,var(--hc,rgba(255,255,255,.13)) 47%,rgba(255,255,255,.17) 50%,var(--hc,rgba(255,255,255,.13)) 53%,transparent 68%);background-size:280% 100%;background-position:110% 0;opacity:.55;animation:holoshift 5.5s ease-in-out infinite}
+@keyframes holoshift{0%,100%{background-position:110% 0}50%{background-position:-10% 0}}
+.tiercard.locked .cardart{filter:grayscale(.85) brightness(.55)}
+.lockveil{position:absolute;left:0;right:0;top:42%;text-align:center;font-weight:900;letter-spacing:2px;font-size:14px;color:#fff;text-shadow:0 2px 12px #000;pointer-events:none}
 nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(10,10,10,.97);border-top:1px solid var(--line)}
 nav.bottom .nwrap{max-width:1060px;margin:0 auto;display:flex}
 nav.bottom button{flex:1;background:none;border:none;color:var(--mut);font-size:11.5px;font-weight:700;padding:7px 2px 9px;margin:5px 2px;border-radius:14px}
@@ -360,9 +372,22 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 <dialog id="agentDlg">
   <h3>Agent profile</h3>
   <p class="note">Your agent name, tickets, tiers and cards save to your cloud profile (Supabase) and this device, so your progress is backed up and your profile pic shows on the leaderboard.</p>
-  <div class="row" style="margin:4px 0 8px"><img id="agAvatarImg" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;display:none"><div><b id="agFeatured">No profile card set</b><br><span class="note">Set your profile pic from any unlocked card in My Cards (Board tab) — it saves to your cloud profile for everyone to see.</span></div></div>
+  <div class="row" style="margin:4px 0 8px"><img id="agAvatarImg" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;display:none"><div><b id="agFeatured">No profile card set</b><br><span class="note">Pick a character below, or set your profile pic from any unlocked card in My Cards (Board tab) — it saves to your cloud profile for everyone to see.</span></div></div>
   <div class="fld"><label>Agent name</label><input type="text" id="agName" placeholder="e.g. Brandon"></div>
-  <div class="fld"><label>Email (optional, kept on this device)</label><input type="email" id="agEmail" placeholder="you@example.com"></div>
+  <div class="fld"><label>Pick your character — anime avatars</label><div id="agAvatars" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div><p class="note">Your character shows on all your tier cards and becomes your profile pic.</p></div>
+  <div class="fld"><label>Account — email &amp; password</label>
+    <div id="agAuthOut">
+      <input type="email" id="agEmail" placeholder="you@example.com" autocomplete="email">
+      <input type="password" id="agPass" placeholder="Password (8+ characters)" autocomplete="current-password" style="margin-top:8px">
+      <div class="row" style="margin-top:8px;gap:8px"><button class="bigbtn" id="agLogin" type="button" style="flex:1">Log in</button><button class="ghostbtn" id="agSignup" type="button" style="flex:1">Create account</button></div>
+      <button class="ghostbtn" id="agForgot" type="button" style="font-size:12px;margin-top:6px">Forgot password?</button>
+      <button class="bigbtn" id="agSetPass" type="button" style="display:none;margin-top:8px;width:100%">Set new password</button>
+    </div>
+    <div id="agAuthIn" style="display:none">
+      <div class="row"><span class="note" style="flex:1">Logged in as <b id="agAuthEmail" style="color:#fff"></b></span><button class="ghostbtn" id="agLogout" type="button">Log out</button></div>
+    </div>
+    <p class="note" id="agAuthNote">Passwords are encrypted by Supabase Auth — never stored in the app, never shown to anyone. Your email stays private and never appears on the leaderboard. No account? Guest play still saves progress on this device.</p>
+  </div>
   <div class="statline" id="agStats"></div>
   <div class="fld" style="margin-top:14px"><label>Push notifications</label>
     <button class="ghostbtn" id="pushBtn" type="button">Enable notifications</button>
@@ -407,13 +432,13 @@ var manualTr = lsGet("pa_manual", {});            // ticketId -> {legId: current
 
 /* ---------- tiers ---------- */
 var TIERS = [
-  {name:"Rookie",   emoji:"🌱", wins:0},
-  {name:"Bronze",   emoji:"🥉", wins:3},
-  {name:"Silver",   emoji:"🥈", wins:8},
-  {name:"Gold",     emoji:"🥇", wins:15},
-  {name:"Platinum", emoji:"💠", wins:25},
-  {name:"Diamond",  emoji:"💎", wins:40},
-  {name:"Legend",   emoji:"👑", wins:60}
+  {name:"Rookie",   emoji:"🌱", wins:0,  color:"#9aa7bd", rarity:"COMMON"},
+  {name:"Bronze",   emoji:"🥉", wins:3,  color:"#d08a4e", rarity:"RARE"},
+  {name:"Silver",   emoji:"🥈", wins:8,  color:"#e5e9f2", rarity:"SUPER RARE"},
+  {name:"Gold",     emoji:"🥇", wins:15, color:"#f5b942", rarity:"EPIC"},
+  {name:"Platinum", emoji:"💠", wins:25, color:"#4fe3c1", rarity:"LEGENDARY"},
+  {name:"Diamond",  emoji:"💎", wins:40, color:"#7dd3fc", rarity:"MYTHIC"},
+  {name:"Legend",   emoji:"👑", wins:60, color:"#b26bff", rarity:"ULTIMATE"}
 ];
 function tierFor(wins){ var t = TIERS[0]; for (var i=0;i<TIERS.length;i++) if (wins>=TIERS[i].wins) t = TIERS[i]; return t; }
 function nextTier(wins){ for (var i=0;i<TIERS.length;i++) if (wins<TIERS[i].wins) return TIERS[i]; return null; }
@@ -1281,8 +1306,8 @@ async function downloadCard(kind, idx, btn){
   if (kind==="tier"){
     var t=TIERS[idx]; if(!t) return;
     var cols={Rookie:"#22c55e",Bronze:"#d97706",Silver:"#c7cbd1",Gold:"#f5c518",Platinum:"#22d3ee",Diamond:"#7dd3fc",Legend:"#c084fc"};
-    accent=cols[t.name]||"#7C3AED"; big=t.name.charAt(0); title=t.name+" Card";
-    sub = wins>=t.wins ? "UNLOCKED" : "LOCKED - "+(t.wins-wins)+" WINS TO GO";
+    accent=t.color||cols[t.name]||"#7C3AED"; big=t.name.charAt(0); title=t.name+" Card"; if (profile.char) { photoSrc=profile.char; initials=t.name.charAt(0); }
+    sub = (wins>=t.wins ? "UNLOCKED" : "LOCKED - "+(t.wins-wins)+" WINS TO GO") + (t.rarity ? " \u00b7 " + t.rarity : "");
     foot = "Unlocks at "+t.wins+" winning tickets - you have "+wins;
   } else {
     var legs=[]; tickets.filter(function(x){ return x.result==="win"; }).forEach(function(x){ x.legs.forEach(function(l){ legs.push(l); }); });
@@ -1297,7 +1322,7 @@ async function downloadCard(kind, idx, btn){
   rrC(ctx,6,6,W-12,H-12,36); ctx.fillStyle=g; ctx.fill(); ctx.lineWidth=3; ctx.strokeStyle=accent; ctx.stroke();
   ctx.save(); rrC(ctx,6,6,W-12,H-12,36); ctx.clip();
   var g2=ctx.createLinearGradient(0,0,0,320); g2.addColorStop(0,accent); g2.addColorStop(1,"rgba(0,0,0,0)");
-  ctx.globalAlpha=.26; ctx.fillStyle=g2; ctx.fillRect(0,0,W,320); ctx.globalAlpha=.06; ctx.fillStyle="#fff";
+  ctx.globalAlpha=.26; ctx.fillStyle=g2; ctx.fillRect(0,0,W,320); ctx.globalAlpha = kind==="tier" ? .12 : .06; ctx.fillStyle = kind==="tier" ? accent : "#fff";
   for (var i=-2;i<6;i++){ ctx.save(); ctx.translate(i*180,0); ctx.rotate(.5); ctx.fillRect(0,-100,60,H+300); ctx.restore(); }
   ctx.globalAlpha=1; ctx.restore();
   ctx.textAlign="center"; ctx.fillStyle="#fff";
@@ -1333,24 +1358,44 @@ async function downloadCard(kind, idx, btn){
     }, "image/png");
   } catch(e){ if (btn) btn.textContent="Could not save - screenshot it"; }
 }
+/* ---------- collectible cards: your character, rarity per tier ---------- */
+function charArt(){ var c = (profile && profile.char) || ""; return /^(\/api\/avatars\?s=|https?:)/.test(c) ? c : ""; }
+function cardBackHTML(title, sub){
+  return '<div class="flipback"><img src="/api/icons?s=512" alt=""><div class="bkname">PROP AGENT</div><div class="bksub"><b style="color:#fff">' + title + '</b><br>' + sub + '</div></div>';
+}
+function tierCardHTML(t, wins, withBtns){
+  var un = wins >= t.wins;
+  var art = charArt();
+  var front = '<div class="flipfront" style="border-color:' + t.color + '">'
+    + '<div class="cardhead"><span class="cardtier" style="color:' + t.color + '">' + t.name.toUpperCase() + '</span><span class="rarpill" style="background:' + t.color + '">' + t.rarity + '</span></div>'
+    + (art ? '<img class="cardart" src="' + esc(art) + '" alt="">' : '<div class="cardart ph" style="color:' + t.color + '">' + t.name.charAt(0) + '</div>')
+    + (un ? '' : '<div class="lockveil">LOCKED</div>')
+    + '<div class="tiername">' + t.name + ' Card</div>'
+    + '<div class="tierto">' + (un ? 'Unlocked' : (t.wins - wins) + ' winning ticket' + ((t.wins - wins) === 1 ? '' : 's') + ' to go') + (art ? '' : ' \u00b7 Pick your character in your profile') + '</div>'
+    + (withBtns ? ((un ? setProfBtn(art || '/api/icons?s=512', t.name + ' Card') : '') + dlBtn('tier', TIERS.indexOf(t))) : '')
+    + '<div class="holo" style="--hc:' + t.color + '59"></div></div>';
+  return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(t.name + ' \u00b7 ' + t.rarity, 'Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits.') + '</div></div>';
+}
+
 function renderBoard(){
   var rows = agentRows();
   $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Wins</th></tr>'
     + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b></td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
   var wins = myWins();
-  $("tiers").innerHTML = TIERS.map(function(t){
-    var un = wins >= t.wins;
-    var to = un ? "Unlocked" : (t.wins - wins) + " winning ticket" + ((t.wins-wins)===1?"":"s") + " to " + t.name;
-    return '<div class="tiercard'+(un?" unlocked":"")+'"><div class="tierinner"><div class="flipfront"><div class="tieremoji">'+t.name.charAt(0)+'</div><div class="tiername">'+t.name+'</div><div class="tierto">'+to+'</div></div><div class="flipback">'+t.name+' tier — needs '+t.wins+' winning tickets. You have '+wins+'. A win counts only when every leg on the ticket hits.</div></div></div>';
-  }).join("");
+  $("tiers").innerHTML = TIERS.map(function(t){ return tierCardHTML(t, wins, false); }).join("");
   var cards = [];
   tickets.filter(function(t){ return t.result==="win"; }).forEach(function(t){ t.legs.forEach(function(l){ cards.push(l); }); });
-  var tierCards = TIERS.map(function(t, ti){
-    var un = wins >= t.wins;
-    return '<div class="tiercard'+(un?" unlocked":"")+'"><div class="tierinner"><div class="flipfront"><div class="tieremoji">'+t.name.charAt(0)+'</div><div class="tiername">'+t.name+' Card</div><div class="tierto">'+(un?"Unlocked":(t.wins-wins)+" to "+t.name)+'</div>'+(un?setProfBtn("/api/icons?s=512", t.name+" Card"):"") + dlBtn("tier", ti)+'</div><div class="flipback">Tier card · '+t.name+' · unlocks at '+t.wins+' winning tickets. You have '+wins+'.</div></div></div>';
-  }).join("");
+  var tierCards = TIERS.map(function(t){ return tierCardHTML(t, wins, true); }).join("");
   var playerCards = cards.map(function(l, li){
-    return '<div class="tiercard unlocked"><div class="tierinner"><div class="flipfront"><div class="tieremoji">🃏</div><div class="tiername">'+esc(l.player)+'</div><div class="tierto">'+esc(l.stat)+' '+l.line+' · '+l.dir+' · from a winning ticket</div>'+setProfBtn(photoCache[(l.player||"").toLowerCase()]||"/api/icons?s=512", l.player) + dlBtn("player", li)+'</div><div class="flipback">'+esc(l.player)+' — '+esc(l.team||"")+'<br>'+esc(l.matchup||"")+'<br>Earned on a ticket where every leg hit.</div></div></div>';
+    var photo = photoCache[(l.player || "").toLowerCase()] || "";
+    var front = '<div class="flipfront" style="border-color:#a78bfa">'
+      + '<div class="cardhead"><span class="cardtier" style="color:#a78bfa">PLAYER CARD</span><span class="rarpill" style="background:#a78bfa">EARNED</span></div>'
+      + (photo ? '<img class="cardart" src="' + esc(photo) + '" alt="">' : '<div class="cardart ph" style="color:#a78bfa">\U0001F0CF</div>')
+      + '<div class="tiername">' + esc(l.player) + '</div>'
+      + '<div class="tierto">' + esc(l.stat) + ' ' + l.line + ' \u00b7 ' + l.dir + ' \u00b7 from a winning ticket</div>'
+      + setProfBtn(photo || '/api/icons?s=512', l.player) + dlBtn('player', li)
+      + '<div class="holo" style="--hc:#a78bfa59"></div></div>';
+    return '<div class="tiercard unlocked"><div class="tierinner">' + front + cardBackHTML(esc(l.player), esc(l.team || "") + '<br>' + esc(l.matchup || "") + '<br>Earned on a ticket where every leg hit.') + '</div></div>';
   }).join("");
   $("myCards").innerHTML = tierCards + playerCards;
   document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); profile.avatar = b.getAttribute("data-avatar")||""; profile.featured = b.getAttribute("data-featured")||""; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
@@ -1370,6 +1415,7 @@ $("agentBtn").addEventListener("click", function(){
   var af = $("agFeatured"); if (af) af.textContent = String(profile.featured || "").replace(/^[^A-Za-z0-9]+/, "") || "No profile card set";
   var t = tierFor(myWins()), nx = nextTier(myWins());
   $("agStats").innerHTML = "<span>Tier <b>"+t.name+"</b></span><span>Wins <b>"+myWins()+"</b></span><span>Tickets <b>"+tickets.length+"</b></span>" + (nx ? "<span>Next: <b>"+nx.name+"</b> in "+(nx.wins-myWins())+" wins</span>" : "<span><b>Top tier reached 👑</b></span>");
+  renderAuth(); renderAvatarGrid();
   $("agentDlg").showModal();
 });
 $("agClose").addEventListener("click", function(){ $("agentDlg").close(); });
@@ -1377,6 +1423,80 @@ $("agSave").addEventListener("click", function(){
   profile.name = $("agName").value.trim(); profile.email = $("agEmail").value.trim();
   lsSet("pa_profile", profile); refreshAgentBtn(); renderTopAgents(); renderBoard(); cloudSave(); $("agentDlg").close();
 });
+
+/* ---------- accounts: email + password via Supabase Auth (server proxy) ---------- */
+function authNote(t){ var n = $("agAuthNote"); if (n) n.textContent = t; }
+function renderAuth(){
+  var inEl = $("agAuthIn"), outEl = $("agAuthOut"); if (!inEl || !outEl) return;
+  var a = lsGet("pa_auth", null);
+  if (a && a.email) { inEl.style.display = ""; outEl.style.display = "none"; $("agAuthEmail").textContent = a.email; }
+  else { inEl.style.display = "none"; outEl.style.display = ""; }
+}
+function authCall(p){ return fetch("/api/auth", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(p)}).then(function(r){ return r.json(); }); }
+function authSignedIn(j, msg){
+  lsSet("pa_auth", {email:j.email, uid:j.uid, access_token:j.session.access_token, refresh_token:j.session.refresh_token, exp:j.session.expires_at});
+  cloudUid = j.uid; lsSet("pa_uid", cloudUid);
+  profile.email = j.email; lsSet("pa_profile", profile);
+  renderAuth(); cloudSave(); authNote(msg);
+}
+function authCreds(){
+  var em = ($("agEmail").value || "").trim(), pw = $("agPass").value || "";
+  if (!em || pw.length < 8) { authNote("Enter your email and a password of at least 8 characters."); return null; }
+  return {email: em, password: pw};
+}
+$("agLogin").addEventListener("click", function(){
+  var c = authCreds(); if (!c) return;
+  authNote("Logging in\u2026");
+  authCall({action:"login", email:c.email, password:c.password}).then(function(j){
+    if (j && j.ok) authSignedIn(j, "Logged in \u2014 welcome back. Your progress saves to your account on any device.");
+    else authNote((j && j.error) || "Couldn't log in \u2014 try again.");
+  }).catch(function(){ authNote("Couldn't reach the account service \u2014 try again in a moment."); });
+});
+$("agSignup").addEventListener("click", function(){
+  var c = authCreds(); if (!c) return;
+  authNote("Creating your account\u2026");
+  authCall({action:"signup", email:c.email, password:c.password}).then(function(j){
+    if (j && j.ok) authSignedIn(j, "Account created \u2014 you're logged in. Your progress now saves to your account on any device.");
+    else authNote((j && j.error) || "Couldn't create the account \u2014 try again.");
+  }).catch(function(){ authNote("Couldn't reach the account service \u2014 try again in a moment."); });
+});
+$("agForgot").addEventListener("click", function(){
+  var em = ($("agEmail").value || "").trim();
+  if (!em) { authNote("Type your account email above first, then tap Forgot password."); return; }
+  authCall({action:"recover", email:em}).then(function(){ authNote("If that email has an account, a reset link is on its way. Open it on this device, then set a new password here."); }).catch(function(){ authNote("Couldn't send the reset email \u2014 try again in a moment."); });
+});
+$("agSetPass").addEventListener("click", function(){
+  var pw = $("agPass").value || "";
+  if (pw.length < 8) { authNote("New password needs at least 8 characters."); return; }
+  authCall({action:"setpassword", access_token:window._paRecovery || "", password:pw}).then(function(j){
+    if (j && j.ok) { window._paRecovery = ""; $("agSetPass").style.display = "none"; authNote("Password updated \u2014 log in with your new password."); }
+    else authNote((j && j.error) || "Couldn't set the password \u2014 request a fresh reset link.");
+  }).catch(function(){ authNote("Couldn't reach the account service \u2014 try again in a moment."); });
+});
+$("agLogout").addEventListener("click", function(){
+  lsSet("pa_auth", null);
+  cloudUid = lsGet("pa_device_uid", "") || uuid4(); lsSet("pa_uid", cloudUid);
+  renderAuth(); cloudSave(); authNote("Logged out. You're playing as a guest on this device now \u2014 your account progress is saved in your account.");
+});
+
+/* ---------- avatar picker ---------- */
+function renderAvatarGrid(){
+  var g = $("agAvatars"); if (!g) return;
+  var cur = (profile && profile.char) || "";
+  g.innerHTML = "";
+  for (var i = 1; i <= 12; i++) { (function(n){
+    var u = "/api/avatars?s=" + n;
+    var im = document.createElement("img");
+    im.src = u; im.alt = "Character " + n; im.loading = "lazy";
+    im.style.cssText = "width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;cursor:pointer;border:3px solid " + (cur === u ? "#7C3AED" : "rgba(255,255,255,.08)");
+    im.addEventListener("click", function(){
+      profile.char = u; profile.avatar = u; lsSet("pa_profile", profile);
+      var ai = $("agAvatarImg"); if (ai) { ai.src = u; ai.style.display = ""; }
+      refreshAgentBtn(); renderBoard(); renderAvatarGrid(); cloudSave();
+    });
+    g.appendChild(im);
+  })(i); }
+}
 function urlB64ToUint8(b64){ var pad = "=".repeat((4 - b64.length % 4) % 4); var raw = atob((b64+pad).replace(/-/g,"+").replace(/_/g,"/")); var arr = new Uint8Array(raw.length); for (var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i); return arr; }
 $("pushBtn").addEventListener("click", function(){
   var note = $("pushNote");
@@ -1386,8 +1506,9 @@ $("pushBtn").addEventListener("click", function(){
     return navigator.serviceWorker.ready.then(function(reg){
       return reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:urlB64ToUint8(cfg.publicKey)});
     }).then(function(sub){
-      return fetch("/api/send-push", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"test", subscription:sub, title:"Prop Agent", body:"Notifications are on — game starts, leg hits and line moves will land here."})});
-    }).then(function(){ note.textContent = "Notifications enabled — a test push was sent."; });
+      var saveSub = fetch("/api/subscribe", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({uid:cloudUid, subscription:sub.toJSON()})}).then(function(r){ return r.json(); }).then(function(j){ if (j && j.uid && j.uid !== cloudUid) { cloudUid = j.uid; lsSet("pa_uid", cloudUid); } }).catch(function(){});
+      return saveSub.then(function(){ return fetch("/api/send-push", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"test", subscription:sub, title:"Prop Agent", body:"Notifications are on — win/loss alerts now land even when the app is closed."})}); });
+    }).then(function(){ note.textContent = "Notifications enabled — a test push was sent. Win/loss alerts work even when the app is closed."; });
   }).catch(function(){ note.textContent = "Couldn't enable notifications — check your browser's notification permission."; });
 });
 
@@ -1615,6 +1736,36 @@ refreshAgentBtn();
 renderAllSlips();
 refreshHome();
 renderBoard();
+/* account session boot: a logged-in account owns the cloud identity */
+(function(){
+  var a = lsGet("pa_auth", null);
+  var prevUid = cloudUid;
+  if (a && a.uid) {
+    if (a.exp && a.exp > Date.now() + 30000) { cloudUid = a.uid; lsSet("pa_uid", cloudUid); }
+    else if (a.refresh_token) {
+      fetch("/api/auth", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"refresh", refresh_token:a.refresh_token})}).then(function(r){ return r.json(); }).then(function(j){
+        if (j && j.ok && j.session) { lsSet("pa_auth", {email:j.email, uid:j.uid, access_token:j.session.access_token, refresh_token:j.session.refresh_token, exp:j.session.expires_at}); cloudUid = j.uid; lsSet("pa_uid", cloudUid); cloudInit(); }
+        else lsSet("pa_auth", null);
+      }).catch(function(){});
+    }
+  }
+  if (prevUid && prevUid !== cloudUid && !lsGet("pa_device_uid", "")) lsSet("pa_device_uid", prevUid);
+  if (location.hash && location.hash.indexOf("type=recovery") > -1) {
+    try {
+      var hp = new URLSearchParams(location.hash.slice(1));
+      var rtok = hp.get("access_token");
+      if (rtok) {
+        window._paRecovery = rtok;
+        history.replaceState(null, "", location.pathname);
+        setTimeout(function(){
+          var ab = $("agentBtn"); if (ab) ab.click();
+          authNote("Enter a new password below, then tap Set new password.");
+          var sp = $("agSetPass"); if (sp) sp.style.display = "";
+        }, 700);
+      }
+    } catch (e) {}
+  }
+})();
 cloudInit();
 showView("home");
 if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").catch(function(){}); }
