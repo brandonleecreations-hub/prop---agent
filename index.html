@@ -118,6 +118,23 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 @keyframes holoshift{0%,100%{background-position:110% 0}50%{background-position:-10% 0}}
 .tiercard.locked .cardart{filter:grayscale(.85) brightness(.55)}
 .lockveil{position:absolute;left:0;right:0;top:42%;text-align:center;font-weight:900;letter-spacing:2px;font-size:14px;color:#fff;text-shadow:0 2px 12px #000;pointer-events:none}
+.flipfront{padding:10px}
+.tcplate{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.02));border:1.5px solid var(--tc,#7C3AED);border-radius:9px;padding:5px 9px;margin-bottom:8px}
+.tcname{font-weight:900;font-size:13px;letter-spacing:.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.tcno{font-size:11px;font-weight:800;color:var(--tc,#a78bfa);white-space:nowrap;margin-left:6px}
+.tcwin{position:relative;border:2px solid var(--tc,#7C3AED);border-radius:10px;overflow:hidden;flex:1 1 auto;min-height:0;background:#120a26}
+.tcwin .cardart{width:100%;height:100%;object-fit:cover;display:block;border-radius:0}
+.tcwin .cardart.ph{display:flex;height:100%}
+.tcinfo{margin-top:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);border-radius:9px;padding:7px 9px;text-align:left}
+.tcstats{display:flex;gap:9px;margin-top:6px}
+.tcstat{flex:1;min-width:0}
+.tcstat .sl{font-size:9px;font-weight:800;letter-spacing:.6px;color:var(--mut);display:flex;justify-content:space-between}
+.tcbar{height:4px;border-radius:2px;background:rgba(255,255,255,.13);margin-top:2px;overflow:hidden}
+.tcbar i{display:block;height:100%;background:var(--tc,#7C3AED);border-radius:2px}
+.tcspark{position:absolute;inset:0;pointer-events:none;opacity:.55;background-image:radial-gradient(2px 2px at 18% 26%,#fff 50%,transparent 52%),radial-gradient(1.6px 1.6px at 68% 16%,#fff 50%,transparent 52%),radial-gradient(2px 2px at 86% 60%,#fff 50%,transparent 52%),radial-gradient(1.5px 1.5px at 38% 82%,#fff 50%,transparent 52%),radial-gradient(1.8px 1.8px at 55% 44%,#fff 50%,transparent 52%)}
+.charstrip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px}
+.charstrip img{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid var(--line);cursor:pointer;flex:0 0 auto}
+.charstrip img.on{border-color:#a78bfa;box-shadow:0 0 12px rgba(124,58,237,.8)}
 nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(10,10,10,.97);border-top:1px solid var(--line)}
 nav.bottom .nwrap{max-width:1060px;margin:0 auto;display:flex}
 nav.bottom button{flex:1;background:none;border:none;color:var(--mut);font-size:11.5px;font-weight:700;padding:7px 2px 9px;margin:5px 2px;border-radius:14px}
@@ -351,7 +368,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <div class="grid" id="tiers"></div>
     <h2>🃏 My Cards</h2>
     <p class="sub">Your collection — player cards from winning tickets and your tier cards. Tap a card to flip it over.</p>
-    <div class="grid" id="myCards"><p class="empty">Loading cards…</p></div>
+    <div class="charstrip" id="cardStrip"></div><p class="note" style="margin:0 0 10px">Every agent has a card in every tier — tap an agent to see their full set. Higher tiers look rarer. Your wins unlock them.</p><div class="grid" id="myCards"><p class="empty">Loading cards…</p></div>
   </section>
 </main>
 
@@ -374,7 +391,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <p class="note">Your agent name, tickets, tiers and cards save to your cloud profile (Supabase) and this device, so your progress is backed up and your profile pic shows on the leaderboard.</p>
   <div class="row" style="margin:4px 0 8px"><img id="agAvatarImg" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;display:none"><div><b id="agFeatured">No profile card set</b><br><span class="note">Pick a character below, or set your profile pic from any unlocked card in My Cards (Board tab) — it saves to your cloud profile for everyone to see.</span></div></div>
   <div class="fld"><label>Agent name</label><input type="text" id="agName" placeholder="e.g. Brandon"></div>
-  <div class="fld"><label>Pick your character — anime avatars</label><div id="agAvatars" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div><p class="note">Your character shows on all your tier cards and becomes your profile pic.</p></div>
+  <div class="fld"><label>Pick your agent — comic book style</label><div id="agAvatars" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div><p class="note">Your character shows on all your tier cards and becomes your profile pic.</p></div>
   <div class="fld"><label>Account — email &amp; password</label>
     <div id="agAuthOut">
       <input type="email" id="agEmail" placeholder="you@example.com" autocomplete="email">
@@ -1291,14 +1308,70 @@ function setProfBtn(av, feat){
   var cur = profile.featured === feat;
   return '<div style="margin-top:8px"><button type="button" class="ghostbtn setprof" data-avatar="'+esc(av)+'" data-featured="'+esc(feat)+'" style="font-size:12px;padding:6px 10px">'+(cur ? "✓ Profile card" : "Set as profile card")+'</button></div>';
 }
-function dlBtn(kind, idx){
-  return '<div style="margin-top:6px"><button type="button" class="ghostbtn dlcard" data-kind="'+kind+'" data-idx="'+idx+'" style="font-size:12px;padding:6px 10px">Download PNG</button></div>';
+function dlBtn(kind, idx, ch){
+  return '<div style="margin-top:6px"><button type="button" class="ghostbtn dlcard" data-kind="'+kind+'" data-idx="'+idx+'" data-char="'+(ch||0)+'" style="font-size:12px;padding:6px 10px">Download PNG</button></div>';
 }
 function loadImgC(src, cors){
   return new Promise(function(res){ var im = new Image(); if (cors) im.crossOrigin = "anonymous"; im.onload = function(){ res(im); }; im.onerror = function(){ res(null); }; im.src = src; });
 }
 function rrC(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+async function downloadTradingCard(ti, ci, btn){
+  var t = TIERS[ti]; if (!t) return;
+  var W = 630, H = 900, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  var ctx = cv.getContext("2d");
+  var wins = myWins(); var un = wins >= t.wins;
+  var accent = t.color; var cname = CHARNAMES[ci - 1] || "YOUR AGENT";
+  var num = ("00" + ((ci - 1) * 7 + ti + 1)).slice(-3);
+  var g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, "#17102b"); g.addColorStop(.55, "#0b0b10"); g.addColorStop(1, "#07070a");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  rrC(ctx, 10, 10, W - 20, H - 20, 34); ctx.lineWidth = 12; ctx.strokeStyle = accent; ctx.stroke();
+  rrC(ctx, 28, 28, W - 56, H - 56, 24); ctx.lineWidth = 2; ctx.globalAlpha = .55; ctx.stroke(); ctx.globalAlpha = 1;
+  rrC(ctx, 42, 44, W - 84, 62, 12); ctx.fillStyle = "rgba(255,255,255,.06)"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = accent; ctx.stroke();
+  ctx.textAlign = "left"; ctx.fillStyle = "#fff"; ctx.font = "900 29px system-ui, sans-serif";
+  ctx.fillText(cname, 62, 86);
+  ctx.textAlign = "right"; ctx.fillStyle = accent; ctx.font = "800 24px system-ui, sans-serif";
+  ctx.fillText("№ " + num + " / 084", W - 62, 86);
+  var ph = await loadImgC("/api/avatars?s=" + ci, false);
+  ctx.save(); rrC(ctx, 42, 126, W - 84, 448, 14); ctx.clip();
+  if (ph){ try { if (!un) ctx.filter = "grayscale(85%) brightness(.55)"; } catch(e){}
+    var sc = Math.max((W - 84) / ph.width, 448 / ph.height); var dw = ph.width * sc, dh = ph.height * sc;
+    ctx.drawImage(ph, 42 + (W - 84 - dw) / 2, 126 + (448 - dh) / 2, dw, dh);
+    try { ctx.filter = "none"; } catch(e){}
+  } else { ctx.fillStyle = "#241545"; ctx.fillRect(42, 126, W - 84, 448); }
+  ctx.restore();
+  rrC(ctx, 42, 126, W - 84, 448, 14); ctx.lineWidth = 3; ctx.strokeStyle = accent; ctx.stroke();
+  if (!un){ ctx.textAlign = "center"; ctx.fillStyle = "#fff"; ctx.font = "900 44px system-ui, sans-serif"; ctx.fillText("L O C K E D", W / 2, 362); }
+  rrC(ctx, 42, 596, W - 84, 198, 14); ctx.fillStyle = "rgba(255,255,255,.05)"; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = "rgba(255,255,255,.16)"; ctx.stroke();
+  ctx.textAlign = "left"; ctx.fillStyle = accent; ctx.font = "900 31px system-ui, sans-serif";
+  ctx.fillText(t.name.toUpperCase() + "  " + "★".repeat(ti + 1), 62, 646);
+  var rw = ctx.measureText(t.rarity).width + 30;
+  rrC(ctx, W - 62 - rw, 618, rw, 36, 18); ctx.fillStyle = accent; ctx.fill();
+  ctx.fillStyle = "#0a0a10"; ctx.font = "900 19px system-ui, sans-serif"; ctx.textAlign = "center"; ctx.fillText(t.rarity, W - 62 - rw / 2, 643);
+  var st = charStats(ci, ti); var sl = ["PWR", "NEG", "STY"];
+  st.forEach(function(v, k){
+    var x = 62 + k * 176;
+    ctx.textAlign = "left"; ctx.fillStyle = "#a1a1aa"; ctx.font = "800 16px system-ui, sans-serif"; ctx.fillText(sl[k], x, 692);
+    ctx.textAlign = "right"; ctx.fillStyle = "#fff"; ctx.fillText(String(v), x + 150, 692);
+    rrC(ctx, x, 702, 150, 9, 4); ctx.fillStyle = "rgba(255,255,255,.13)"; ctx.fill();
+    rrC(ctx, x, 702, Math.round(150 * v / 100), 9, 4); ctx.fillStyle = accent; ctx.fill();
+  });
+  ctx.textAlign = "left"; ctx.fillStyle = "#a1a1aa"; ctx.font = "500 19px system-ui, sans-serif";
+  ctx.fillText(un ? "Unlocked — in your collection" : ("Unlocks at " + t.wins + " winning tickets — you have " + wins), 62, 762);
+  ctx.textAlign = "center"; ctx.fillStyle = "#fff"; ctx.font = "800 22px system-ui, sans-serif"; ctx.fillText("P R O P   A G E N T", W / 2, 838);
+  ctx.fillStyle = "#71717a"; ctx.font = "700 15px system-ui, sans-serif"; ctx.fillText("prop-agent-bre.vercel.app", W / 2, 866);
+  try {
+    cv.toBlob(function(blob){
+      if (!blob){ if (btn) btn.textContent = "Could not save - screenshot it"; return; }
+      var a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+      a.download = "prop-agent-" + cname.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + t.name.toLowerCase() + "-card.png";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+      if (btn){ var old = btn.textContent; btn.textContent = "Saved"; setTimeout(function(){ btn.textContent = old; }, 1600); }
+    }, "image/png");
+  } catch(e){ if (btn) btn.textContent = "Could not save - screenshot it"; }
+}
 async function downloadCard(kind, idx, btn){
+  if (kind === "tier") { var ch0 = btn ? parseInt(btn.getAttribute("data-char") || "0", 10) : 0; return downloadTradingCard(idx, ch0 || charIdxOf() || 1, btn); }
   var W=630, H=900, cv=document.createElement("canvas"); cv.width=W; cv.height=H;
   var ctx=cv.getContext("2d");
   var wins=myWins();
@@ -1360,21 +1433,39 @@ async function downloadCard(kind, idx, btn){
 }
 /* ---------- collectible cards: your character, rarity per tier ---------- */
 function charArt(){ var c = (profile && profile.char) || ""; return /^(\/api\/avatars\?s=|https?:)/.test(c) ? c : ""; }
+var CHARNAMES = ["THE CLOSER","THE BOSS","THE OPERATOR","ALL-AMERICAN","THE DEALMAKER","THE EXECUTIVE","THE SLUGGER","THE PLAYMAKER","THE CAPTAIN","THE FRANCHISE","THE ACE","THE ISLANDER"];
+function charIdxOf(){ var m = /[?&]s=(\d+)/.exec((profile && profile.char) || ""); return m ? parseInt(m[1], 10) : 0; }
+function cardCharIdx(){ var v = parseInt(localStorage.getItem("pa_cardchar") || "0", 10); if (v >= 1 && v <= 12) return v; return charIdxOf() || 1; }
+function charStats(ci, ti){ var b = [60 + ((ci * 29) % 36), 58 + ((ci * 47) % 34), 57 + ((ci * 71) % 38)]; return b.map(function(x){ return Math.min(99, x + ti * 3); }); }
 function cardBackHTML(title, sub){
   return '<div class="flipback"><img src="/api/icons?s=512" alt=""><div class="bkname">PROP AGENT</div><div class="bksub"><b style="color:#fff">' + title + '</b><br>' + sub + '</div></div>';
 }
-function tierCardHTML(t, wins, withBtns){
+function tierCardHTML(t, wins, withBtns, ci){
   var un = wins >= t.wins;
-  var art = charArt();
-  var front = '<div class="flipfront" style="border-color:' + t.color + '">'
-    + '<div class="cardhead"><span class="cardtier" style="color:' + t.color + '">' + t.name.toUpperCase() + '</span><span class="rarpill" style="background:' + t.color + '">' + t.rarity + '</span></div>'
-    + (art ? '<img class="cardart" src="' + esc(art) + '" alt="">' : '<div class="cardart ph" style="color:' + t.color + '">' + t.name.charAt(0) + '</div>')
-    + (un ? '' : '<div class="lockveil">LOCKED</div>')
-    + '<div class="tiername">' + t.name + ' Card</div>'
-    + '<div class="tierto">' + (un ? 'Unlocked' : (t.wins - wins) + ' winning ticket' + ((t.wins - wins) === 1 ? '' : 's') + ' to go') + (art ? '' : ' \u00b7 Pick your character in your profile') + '</div>'
-    + (withBtns ? ((un ? setProfBtn(art || '/api/icons?s=512', t.name + ' Card') : '') + dlBtn('tier', TIERS.indexOf(t))) : '')
+  var ti = TIERS.indexOf(t);
+  ci = ci || charIdxOf();
+  var art = ci >= 1 ? "/api/avatars?s=" + ci : charArt();
+  var cname = ci >= 1 ? CHARNAMES[ci - 1] : "YOUR AGENT";
+  var num = ci >= 1 ? ((ci - 1) * 7 + ti + 1) : 0;
+  var numTxt = num ? ("№ " + ("00" + num).slice(-3) + " / 084") : "№ —";
+  var st = charStats(ci || 1, ti);
+  var sl = ["PWR", "NEG", "STY"];
+  var stats = '<div class="tcstats">' + st.map(function(v, k){ return '<div class="tcstat"><div class="sl"><span>' + sl[k] + '</span><span>' + v + '</span></div><div class="tcbar"><i style="width:' + v + '%"></i></div></div>'; }).join("") + '</div>';
+  var stars = "★".repeat(ti + 1);
+  var gems = ti >= 3 ? ' <span style="color:' + t.color + '">◆</span>' : '';
+  var glow = ti >= 3 ? (", 0 0 " + (12 + ti * 4) + "px " + t.color + "59") : "";
+  var bw = ti >= 4 ? 3 : 2;
+  var front = '<div class="flipfront" style="border:' + bw + 'px solid ' + t.color + ';--tc:' + t.color + ';box-shadow:0 12px 26px rgba(0,0,0,.38)' + glow + ', inset 0 1px 0 rgba(255,255,255,.05)">'
+    + '<div class="tcplate"><span class="tcname">' + cname + gems + '</span><span class="tcno">' + numTxt + '</span></div>'
+    + '<div class="tcwin">' + (art ? '<img class="cardart" src="' + esc(art) + '" alt="">' : '<div class="cardart ph" style="color:' + t.color + '">' + t.name.charAt(0) + '</div>') + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
+    + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:' + t.color + '">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:' + t.color + '">' + t.rarity + '</span></div>'
+    + stats
+    + '<div class="tierto" style="margin-top:6px">' + (un ? 'Unlocked — in your collection' : (t.wins - wins) + ' winning ticket' + ((t.wins - wins) === 1 ? '' : 's') + ' to go') + (ci ? '' : ' · Pick your agent in your profile') + '</div>'
+    + (withBtns ? ((un ? setProfBtn(art || '/api/icons?s=512', cname + ' · ' + t.name + ' Card') : '') + dlBtn('tier', ti, ci)) : '')
+    + '</div>'
+    + (ti >= 5 ? '<div class="tcspark"></div>' : '')
     + '<div class="holo" style="--hc:' + t.color + '59"></div></div>';
-  return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(t.name + ' \u00b7 ' + t.rarity, 'Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits.') + '</div></div>';
+  return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · ' + t.name + ' · ' + t.rarity, 'Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits.') + '</div></div>';
 }
 
 function renderBoard(){
@@ -1382,24 +1473,28 @@ function renderBoard(){
   $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Wins</th></tr>'
     + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b></td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
   var wins = myWins();
-  $("tiers").innerHTML = TIERS.map(function(t){ return tierCardHTML(t, wins, false); }).join("");
+  $("tiers").innerHTML = TIERS.map(function(t){ return tierCardHTML(t, wins, false, charIdxOf()); }).join("");
   var cards = [];
   tickets.filter(function(t){ return t.result==="win"; }).forEach(function(t){ t.legs.forEach(function(l){ cards.push(l); }); });
-  var tierCards = TIERS.map(function(t){ return tierCardHTML(t, wins, true); }).join("");
+  var cci = cardCharIdx();
+  var stripEl = $("cardStrip");
+  if (stripEl) stripEl.innerHTML = CHARNAMES.map(function(n, k){ var n1 = k + 1; return '<img src="/api/avatars?s=' + n1 + '" data-ci="' + n1 + '" class="' + (n1 === cci ? 'on' : '') + '" title="' + n + '" alt="' + n + '">'; }).join("");
+  var tierCards = TIERS.map(function(t){ return tierCardHTML(t, wins, true, cci); }).join("");
   var playerCards = cards.map(function(l, li){
     var photo = photoCache[(l.player || "").toLowerCase()] || "";
-    var front = '<div class="flipfront" style="border-color:#a78bfa">'
-      + '<div class="cardhead"><span class="cardtier" style="color:#a78bfa">PLAYER CARD</span><span class="rarpill" style="background:#a78bfa">EARNED</span></div>'
-      + (photo ? '<img class="cardart" src="' + esc(photo) + '" alt="">' : '<div class="cardart ph" style="color:#a78bfa">\U0001F0CF</div>')
-      + '<div class="tiername">' + esc(l.player) + '</div>'
-      + '<div class="tierto">' + esc(l.stat) + ' ' + l.line + ' \u00b7 ' + l.dir + ' \u00b7 from a winning ticket</div>'
+    var front = '<div class="flipfront" style="border:2px solid #a78bfa;--tc:#a78bfa">'
+      + '<div class="tcplate"><span class="tcname">' + esc((l.player || "PLAYER").toUpperCase()) + '</span><span class="tcno">★ EARNED</span></div>'
+      + '<div class="tcwin">' + (photo ? '<img class="cardart" src="' + esc(photo) + '" alt="">' : '<div class="cardart ph" style="color:#a78bfa">🃏</div>') + '</div>'
+      + '<div class="tcinfo"><div style="font-weight:900;font-size:13.5px;color:#a78bfa">PLAYER CARD</div>'
+      + '<div class="tierto" style="margin-top:3px">' + esc(l.stat) + ' ' + l.line + ' · ' + l.dir + '<br>From a winning ticket — every leg hit</div>'
       + setProfBtn(photo || '/api/icons?s=512', l.player) + dlBtn('player', li)
-      + '<div class="holo" style="--hc:#a78bfa59"></div></div>';
+      + '</div><div class="holo" style="--hc:#a78bfa59"></div></div>';
     return '<div class="tiercard unlocked"><div class="tierinner">' + front + cardBackHTML(esc(l.player), esc(l.team || "") + '<br>' + esc(l.matchup || "") + '<br>Earned on a ticket where every leg hit.') + '</div></div>';
   }).join("");
   $("myCards").innerHTML = tierCards + playerCards;
-  document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); profile.avatar = b.getAttribute("data-avatar")||""; profile.featured = b.getAttribute("data-featured")||""; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
+  document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); var av0 = b.getAttribute("data-avatar")||""; profile.avatar = av0; profile.featured = b.getAttribute("data-featured")||""; if (av0.indexOf("/api/avatars") === 0) profile.char = av0; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
   document.querySelectorAll(".dlcard").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadCard(b.getAttribute("data-kind"), parseInt(b.getAttribute("data-idx"),10), b); }); });
+  document.querySelectorAll("#cardStrip img").forEach(function(im){ im.addEventListener("click", function(){ localStorage.setItem("pa_cardchar", im.getAttribute("data-ci")); renderBoard(); }); });
   document.querySelectorAll(".tiercard").forEach(function(c){ c.addEventListener("click", function(){ c.classList.toggle("flipped"); }); });
 }
 
