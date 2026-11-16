@@ -1247,7 +1247,8 @@ function cloudInit(){
 function showView(name){
   document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("on"); });
   var el = $("view-"+name); if (el) el.classList.add("on");
-  document.querySelectorAll("nav.bottom button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-nav")===name); });
+  var navName = name==="sport" ? "home" : name;
+  document.querySelectorAll("nav.bottom button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-nav")===navName); });
   if (name==="live") renderLive();
   if (name==="tickets") renderTickets();
   if (name==="board") renderBoard();
