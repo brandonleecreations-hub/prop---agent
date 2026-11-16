@@ -854,6 +854,73 @@ function setProfBtn(av, feat){
   var cur = profile.featured === feat;
   return '<div style="margin-top:8px"><button type="button" class="ghostbtn setprof" data-avatar="'+esc(av)+'" data-featured="'+esc(feat)+'" style="font-size:12px;padding:6px 10px">'+(cur ? "✓ Profile card" : "Set as profile card")+'</button></div>';
 }
+function dlBtn(kind, idx){
+  return '<div style="margin-top:6px"><button type="button" class="ghostbtn dlcard" data-kind="'+kind+'" data-idx="'+idx+'" style="font-size:12px;padding:6px 10px">Download PNG</button></div>';
+}
+function loadImgC(src, cors){
+  return new Promise(function(res){ var im = new Image(); if (cors) im.crossOrigin = "anonymous"; im.onload = function(){ res(im); }; im.onerror = function(){ res(null); }; im.src = src; });
+}
+function rrC(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+async function downloadCard(kind, idx, btn){
+  var W=630, H=900, cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+  var ctx=cv.getContext("2d");
+  var wins=myWins();
+  var accent="#7C3AED", title="", big="", sub="", foot="", photoSrc="", initials="";
+  if (kind==="tier"){
+    var t=TIERS[idx]; if(!t) return;
+    var cols={Rookie:"#22c55e",Bronze:"#d97706",Silver:"#c7cbd1",Gold:"#f5c518",Platinum:"#22d3ee",Diamond:"#7dd3fc",Legend:"#c084fc"};
+    accent=cols[t.name]||"#7C3AED"; big=t.emoji; title=t.name+" Card";
+    sub = wins>=t.wins ? "UNLOCKED" : "LOCKED - "+(t.wins-wins)+" WINS TO GO";
+    foot = "Unlocks at "+t.wins+" winning tickets - you have "+wins;
+  } else {
+    var legs=[]; tickets.filter(function(x){ return x.result==="win"; }).forEach(function(x){ x.legs.forEach(function(l){ legs.push(l); }); });
+    var l=legs[idx]; if(!l) return;
+    accent="#a78bfa"; title=l.player||"Player Card";
+    sub=((l.stat||"")+" "+(l.line!=null?l.line:"")+" - "+(l.dir||"")).trim();
+    foot="From a winning ticket - every leg hit";
+    photoSrc=photoCache[(l.player||"").toLowerCase()]||"";
+    initials=(l.player||"?").split(/\s+/).map(function(w){ return w[0]; }).slice(0,2).join("").toUpperCase();
+  }
+  var g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,"#17102b"); g.addColorStop(.55,"#0b0b10"); g.addColorStop(1,"#07070a");
+  rrC(ctx,6,6,W-12,H-12,36); ctx.fillStyle=g; ctx.fill(); ctx.lineWidth=3; ctx.strokeStyle=accent; ctx.stroke();
+  ctx.save(); rrC(ctx,6,6,W-12,H-12,36); ctx.clip();
+  var g2=ctx.createLinearGradient(0,0,0,320); g2.addColorStop(0,accent); g2.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.globalAlpha=.26; ctx.fillStyle=g2; ctx.fillRect(0,0,W,320); ctx.globalAlpha=.06; ctx.fillStyle="#fff";
+  for (var i=-2;i<6;i++){ ctx.save(); ctx.translate(i*180,0); ctx.rotate(.5); ctx.fillRect(0,-100,60,H+300); ctx.restore(); }
+  ctx.globalAlpha=1; ctx.restore();
+  ctx.textAlign="center"; ctx.fillStyle="#fff";
+  var icon=await loadImgC("/api/icons?s=512", false);
+  if (icon) ctx.drawImage(icon, W/2-52, 44, 104, 104);
+  ctx.font="800 30px system-ui, sans-serif"; ctx.fillText("PROP AGENT", W/2, 198);
+  ctx.font="700 15px system-ui, sans-serif"; ctx.fillStyle="#b9a8e8"; ctx.fillText("P R O P S   T I C K E R", W/2, 226);
+  var cy=472;
+  if (photoSrc){
+    var ph=await loadImgC(photoSrc, true);
+    ctx.save(); ctx.beginPath(); ctx.arc(W/2, cy, 118, 0, Math.PI*2); ctx.clip();
+    if (ph){ var sc=Math.max(236/ph.width, 236/ph.height); var dw=ph.width*sc, dh=ph.height*sc; ctx.drawImage(ph, W/2-dw/2, cy-dh/2, dw, dh); }
+    else { ctx.fillStyle="#7C3AED"; ctx.fillRect(W/2-118, cy-118, 236, 236); ctx.fillStyle="#fff"; ctx.font="800 84px system-ui, sans-serif"; ctx.fillText(initials, W/2, cy+30); }
+    ctx.restore();
+    ctx.beginPath(); ctx.arc(W/2, cy, 118, 0, Math.PI*2); ctx.lineWidth=4; ctx.strokeStyle=accent; ctx.stroke();
+  } else if (big){
+    ctx.font="150px system-ui, sans-serif"; ctx.fillText(big, W/2, cy+52);
+  }
+  ctx.fillStyle="#fff"; ctx.font="800 46px system-ui, sans-serif";
+  if (ctx.measureText(title).width > W-80) ctx.font="800 34px system-ui, sans-serif";
+  ctx.fillText(title, W/2, 662);
+  ctx.font="800 24px system-ui, sans-serif"; ctx.fillStyle=accent; ctx.fillText(sub, W/2, 708);
+  ctx.font="500 21px system-ui, sans-serif"; ctx.fillStyle="#a1a1aa"; ctx.fillText(foot, W/2, 750);
+  ctx.font="700 17px system-ui, sans-serif"; ctx.fillStyle="#71717a"; ctx.fillText("prop-agent-bre.vercel.app", W/2, H-42);
+  try {
+    cv.toBlob(function(blob){
+      if (!blob){ if (btn) btn.textContent="Could not save - screenshot it"; return; }
+      var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+      a.download="prop-agent-"+(kind==="tier" ? TIERS[idx].name.toLowerCase()+"-card" : (title||"player").toLowerCase().replace(/[^a-z0-9]+/g,"-")+"-card")+".png";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+      if (btn){ var old=btn.textContent; btn.textContent="Saved"; setTimeout(function(){ btn.textContent=old; }, 1600); }
+    }, "image/png");
+  } catch(e){ if (btn) btn.textContent="Could not save - screenshot it"; }
+}
 function renderBoard(){
   var rows = agentRows();
   $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Wins</th></tr>'
@@ -866,15 +933,16 @@ function renderBoard(){
   }).join("");
   var cards = [];
   tickets.filter(function(t){ return t.result==="win"; }).forEach(function(t){ t.legs.forEach(function(l){ cards.push(l); }); });
-  var tierCards = TIERS.map(function(t){
+  var tierCards = TIERS.map(function(t, ti){
     var un = wins >= t.wins;
-    return '<div class="tiercard'+(un?" unlocked":"")+'"><div class="tierinner"><div class="flipfront"><div class="tieremoji">'+t.emoji+'</div><div class="tiername">'+t.name+' Card</div><div class="tierto">'+(un?"Unlocked":(t.wins-wins)+" to "+t.name)+'</div>'+(un?setProfBtn("/api/icons?s=512", t.emoji+" "+t.name+" Card"):"")+'</div><div class="flipback">Tier card · '+t.name+' · unlocks at '+t.wins+' winning tickets. You have '+wins+'.</div></div></div>';
+    return '<div class="tiercard'+(un?" unlocked":"")+'"><div class="tierinner"><div class="flipfront"><div class="tieremoji">'+t.emoji+'</div><div class="tiername">'+t.name+' Card</div><div class="tierto">'+(un?"Unlocked":(t.wins-wins)+" to "+t.name)+'</div>'+(un?setProfBtn("/api/icons?s=512", t.emoji+" "+t.name+" Card"):"") + dlBtn("tier", ti)+'</div><div class="flipback">Tier card · '+t.name+' · unlocks at '+t.wins+' winning tickets. You have '+wins+'.</div></div></div>';
   }).join("");
-  var playerCards = cards.map(function(l){
-    return '<div class="tiercard unlocked"><div class="tierinner"><div class="flipfront"><div class="tieremoji">🃏</div><div class="tiername">'+esc(l.player)+'</div><div class="tierto">'+esc(l.stat)+' '+l.line+' · '+l.dir+' · from a winning ticket</div>'+setProfBtn(photoCache[(l.player||"").toLowerCase()]||"/api/icons?s=512", l.player)+'</div><div class="flipback">'+esc(l.player)+' — '+esc(l.team||"")+'<br>'+esc(l.matchup||"")+'<br>Earned on a ticket where every leg hit.</div></div></div>';
+  var playerCards = cards.map(function(l, li){
+    return '<div class="tiercard unlocked"><div class="tierinner"><div class="flipfront"><div class="tieremoji">🃏</div><div class="tiername">'+esc(l.player)+'</div><div class="tierto">'+esc(l.stat)+' '+l.line+' · '+l.dir+' · from a winning ticket</div>'+setProfBtn(photoCache[(l.player||"").toLowerCase()]||"/api/icons?s=512", l.player) + dlBtn("player", li)+'</div><div class="flipback">'+esc(l.player)+' — '+esc(l.team||"")+'<br>'+esc(l.matchup||"")+'<br>Earned on a ticket where every leg hit.</div></div></div>';
   }).join("");
   $("myCards").innerHTML = tierCards + playerCards;
   document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); profile.avatar = b.getAttribute("data-avatar")||""; profile.featured = b.getAttribute("data-featured")||""; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
+  document.querySelectorAll(".dlcard").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadCard(b.getAttribute("data-kind"), parseInt(b.getAttribute("data-idx"),10), b); }); });
   document.querySelectorAll(".tiercard").forEach(function(c){ c.addEventListener("click", function(){ c.classList.toggle("flipped"); }); });
 }
 
