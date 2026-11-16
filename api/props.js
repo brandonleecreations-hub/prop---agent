@@ -96,7 +96,7 @@ function normalize(rows) {
     if (starts && new Date(starts).getTime() < Date.now() - 10 * 60 * 1000) continue;
     out.push({
       player,
-      stat: statLabel(marketKey, row.market_display_name || row.description),
+      stat: row.market || statLabel(marketKey, row.market_display_name || row.description),
       line,
       team: row.team || row.player_team || "",
       matchup: String(matchup || ""),
@@ -118,7 +118,6 @@ module.exports = async (req, res) => {
   if (hit && Date.now() - hit.ts < 60 * 1000) { res.status(200).json({ ok: true, configured: true, props: hit.props }); return; }
   try {
     const rows = await fetchSport(sport, key);
-    if (req.query && req.query.debug === "1") { res.status(200).json({ debug: true, count: rows.length, rowKeys: rows[0] ? Object.keys(rows[0]) : [], sample: rows.slice(0, 2) }); return; }
     const props = normalize(rows);
     cache[sport] = { ts: Date.now(), props };
     res.status(200).json({ ok: true, configured: true, props });
