@@ -498,7 +498,7 @@ function buildProps(lg){
     });
     out.forEach(function(p){ var k = p.player.toLowerCase(); if (!p.team && teamCache[k]) p.team = teamCache[k]; if (!p.athleteId && aidCache[k]) p.athleteId = aidCache[k]; });
     out.sort(function(a,b){ return (new Date(a.starts||0) - new Date(b.starts||0)) || a.player.localeCompare(b.player); });
-    propsCache[lg.key] = out.slice(0, 80);
+    propsCache[lg.key] = out.slice(0, 240);
     resolvePhotos(lg, propsCache[lg.key]);
     return propsCache[lg.key];
   }).catch(function(){ propsCache[lg.key] = []; return []; });
@@ -1467,13 +1467,13 @@ function renderTicker(){
 /* ---------- player photos for Parlay props (ESPN search -> headshot, cached) ---------- */
 var photoCache = lsGet("pa_photos", {});
 function resolvePhotos(lg, list){
-  var need = (list||[]).filter(function(p){ return p.player && !p.img && photoCache[p.player.toLowerCase()]===undefined; }).slice(0,40);
+  var need = (list||[]).filter(function(p){ return p.player && ((photoCache[p.player.toLowerCase()]===undefined && !p.img) || (teamCache[p.player.toLowerCase()]===undefined && !p.team)); }).slice(0,60);
   if (!need.length) return;
   var chain = Promise.resolve();
   need.forEach(function(p){
     chain = chain.then(function(){
       var key = p.player.toLowerCase();
-      if (photoCache[key]!==undefined){ if (photoCache[key]) p.img = photoCache[key]; return; }
+      if (photoCache[key]!==undefined && teamCache[key]!==undefined){ if (photoCache[key]) p.img = photoCache[key]; if (teamCache[key] && !p.team) p.team = teamCache[key]; if (aidCache[key] && !p.athleteId) p.athleteId = aidCache[key]; return; }
       return fetchJson("https://site.api.espn.com/apis/search/v2?query="+encodeURIComponent(p.player)+"&limit=5").then(function(r){
         var url = "";
         try { (r.results||[]).forEach(function(g){ (g.contents||[]).forEach(function(c){
@@ -1495,9 +1495,11 @@ function resolvePhotos(lg, list){
             }
           }
         } catch(e){}
+        if (teamCache[key]===undefined){ teamCache[key] = p.team || ""; lsSet("pa_teams", teamCache); }
         photoCache[key] = url; lsSet("pa_photos", photoCache);
-        if (url){ p.img = url; if (currentSport===lg.key) renderBoards(); }
-      }).catch(function(){ photoCache[key] = ""; lsSet("pa_photos", photoCache); });
+        if (url) p.img = url;
+        if (url || p.team){ if (currentSport===lg.key) renderBoards(); if (window._view==="build") renderBuild(); }
+      }).catch(function(){ photoCache[key] = ""; lsSet("pa_photos", photoCache); if (teamCache[key]===undefined){ teamCache[key] = ""; lsSet("pa_teams", teamCache); } });
     });
   });
 }
