@@ -24,6 +24,27 @@ async function rest(path, opts) {
 }
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
+// profiles.id has a foreign key to auth.users (the original build used
+// Supabase Auth). A device's self-made UUID is not an auth user, so the
+// first save for a new device creates a device auth user server-side and
+// the app adopts its id. The password is random and never stored or shown —
+// the account is only an anchor row for the profile; the device keeps the id.
+async function createDeviceUser() {
+  const rand = (n) => Array.from({ length: n }, () => "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 55)]).join("");
+  const r = await fetch(SB_URL + "/auth/v1/admin/users", {
+    method: "POST",
+    headers: { apikey: SRK, Authorization: "Bearer " + SRK, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "device-" + Date.now() + "-" + rand(10) + "@propagent.dev",
+      password: rand(24),
+      email_confirm: true,
+      user_metadata: { device: true, app: "prop-agent" },
+    }),
+  });
+  const j = await r.json().catch(() => null);
+  return j && j.id ? j.id : null;
+}
+
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   if (!SB_URL || !SRK) { res.status(200).json({ ok: false, configured: false }); return; }
@@ -45,18 +66,27 @@ module.exports = async (req, res) => {
       let body = req.body;
       if (typeof body === "string") { try { body = JSON.parse(body || "{}"); } catch (e) { body = {}; } }
       body = body || {};
-      const uid = String(body.uid || "");
+      let uid = String(body.uid || "");
       if (!UUID_RE.test(uid)) { res.status(200).json({ ok: false, error: "bad uid" }); return; }
       const name = String(body.display_name || "Guest Agent").slice(0, 60);
       const avatarUrl = String(body.avatar_url || "").slice(0, 500);
       const featuredCard = String(body.featured_card || "").slice(0, 80);
       const wins = Math.max(0, parseInt(body.wins, 10) || 0);
       const rows = Array.isArray(body.tickets) ? body.tickets.slice(0, 200) : [];
-      const up = await rest("profiles", {
+      const upsertProfile = (id) => rest("profiles", {
         method: "POST",
         headers: sbHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }),
-        body: JSON.stringify({ id: uid, display_name: name, wins: wins, avatar_url: avatarUrl, featured_card: featuredCard }),
+        body: JSON.stringify({ id: id, display_name: name, wins: wins, avatar_url: avatarUrl, featured_card: featuredCard }),
       });
+      let up = await upsertProfile(uid);
+      if (up.status >= 300 && (up.text || "").indexOf("23503") > -1) {
+        // Device id is not an auth user yet — create one and adopt its id.
+        const newId = await createDeviceUser();
+        if (newId) {
+          uid = newId;
+          up = await upsertProfile(uid);
+        }
+      }
       if (up.status >= 300) { res.status(200).json({ ok: false, step: "profile", status: up.status, detail: (up.text || "").slice(0, 200) }); return; }
       await rest("tickets?user_id=eq." + uid, { method: "DELETE", headers: sbHeaders({ Prefer: "return=minimal" }) });
       if (rows.length) {
@@ -72,7 +102,7 @@ module.exports = async (req, res) => {
         });
         if (ins.status >= 300) { res.status(200).json({ ok: false, step: "tickets", status: ins.status, detail: (ins.text || "").slice(0, 200) }); return; }
       }
-      res.status(200).json({ ok: true });
+      res.status(200).json({ ok: true, uid });
       return;
     }
     res.status(200).json({ ok: false, error: "method" });
