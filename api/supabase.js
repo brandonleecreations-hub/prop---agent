@@ -20,20 +20,32 @@ module.exports = async (req, res) => {
     keyVar: k ? k.name : null,
     supabaseVarsPresent: present,
   };
+  async function probeWith(keyValue) {
+    const base = u.value.replace(/\/+$/, "");
+    const r = await fetch(base + "/rest/v1/", {
+      headers: { apikey: keyValue, Authorization: "Bearer " + keyValue },
+    });
+    const j = await r.json().catch(() => null);
+    const res = { status: r.status, tables: [], tableColumns: {} };
+    if (j && j.paths) res.tables = Object.keys(j.paths).filter((p) => p !== "/").map((p) => p.slice(1));
+    if (j && j.definitions) res.tableColumns = Object.fromEntries(
+      Object.entries(j.definitions).map(([t, d]) => [t, Object.keys((d && d.properties) || {})])
+    );
+    return res;
+  }
   if (u && k && req.query && req.query.probe) {
     try {
-      const base = u.value.replace(/\/+$/, "");
-      const r = await fetch(base + "/rest/v1/", {
-        headers: { apikey: k.value, Authorization: "Bearer " + k.value },
-      });
-      const j = await r.json().catch(() => null);
-      out.probeStatus = r.status;
-      out.tables = j && j.paths
-        ? Object.keys(j.paths).filter((p) => p !== "/").map((p) => p.slice(1))
-        : [];
-      if (j && j.definitions) out.tableColumns = Object.fromEntries(
-        Object.entries(j.definitions).map(([t, d]) => [t, Object.keys((d && d.properties) || {})])
-      );
+      const anon = await probeWith(k.value);
+      out.probeStatus = anon.status;
+      out.tables = anon.tables;
+      if (anon.tableColumns && Object.keys(anon.tableColumns).length) out.tableColumns = anon.tableColumns;
+      const sr = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (sr) {
+        const svc = await probeWith(sr);
+        out.serviceRoleStatus = svc.status;
+        if (svc.tables.length) out.tables = svc.tables;
+        if (svc.tableColumns && Object.keys(svc.tableColumns).length) out.tableColumns = svc.tableColumns;
+      }
     } catch (e) {
       out.probeError = String((e && e.message) || e);
     }
