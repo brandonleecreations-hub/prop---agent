@@ -86,7 +86,8 @@ function normalize(rows) {
     const player = row.player_name || row.player || row.athlete_name || row.name || "";
     const marketKey = row.market_key || row.market || row.market_name || "";
     const lineRaw = row.line != null ? row.line : (row.point != null ? row.point : (row.projection != null ? row.projection : row.value));
-    const line = typeof lineRaw === "number" ? lineRaw : parseFloat(lineRaw);
+    let line = typeof lineRaw === "number" ? lineRaw : parseFloat(lineRaw);
+    if (isFinite(line)) line = Math.round(line * 100) / 100;
     if (!player || !isFinite(line)) continue;
     const home = row.home_team || "", away = row.away_team || "";
     const matchup = row.event_name || row.matchup || (home && away ? away + " @ " + home : (row.event || ""));
@@ -117,6 +118,7 @@ module.exports = async (req, res) => {
   if (hit && Date.now() - hit.ts < 60 * 1000) { res.status(200).json({ ok: true, configured: true, props: hit.props }); return; }
   try {
     const rows = await fetchSport(sport, key);
+    if (req.query && req.query.debug === "1") { res.status(200).json({ debug: true, count: rows.length, rowKeys: rows[0] ? Object.keys(rows[0]) : [], sample: rows.slice(0, 2) }); return; }
     const props = normalize(rows);
     cache[sport] = { ts: Date.now(), props };
     res.status(200).json({ ok: true, configured: true, props });
