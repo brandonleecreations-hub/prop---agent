@@ -256,6 +256,11 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <h2>Sports News</h2>
     <p class="sub" id="newsNote">Latest headlines from ESPN · refreshes automatically</p>
     <div class="card news" id="news"><p class="empty">Loading the top headlines…</p></div>
+    <div class="card" id="installCard" style="display:none;text-align:center;padding:22px 18px;margin-top:18px">
+      <div style="font-size:19px;font-weight:900">Get the Prop Agent app</div>
+      <p class="sub" id="installNote" style="margin:8px auto 14px;max-width:430px">Add Prop Agent to your home screen — its own icon, full screen, opens like a real app.</p>
+      <button class="ghostbtn" id="installBtn" style="background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none;font-weight:800;padding:13px 22px;font-size:15px">📲 Add to Home Screen</button>
+    </div>
   </section>
 
   <!-- SPORT PROPS -->
@@ -1652,6 +1657,22 @@ function mentionsPicks(a, picks){
     return last && last.length>2 && hay.indexOf(last)>-1;
   });
 }
+var deferredInstall = null;
+window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); deferredInstall = e; renderInstall(); });
+window.addEventListener("appinstalled", function(){ deferredInstall = null; renderInstall(); });
+function renderInstall(){
+  var card = $("installCard"); if (!card) return;
+  var standalone = false;
+  try { standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true; } catch(e){}
+  if (standalone) { card.style.display = "none"; return; }
+  card.style.display = "";
+  var btn = $("installBtn"), note = $("installNote");
+  if (deferredInstall) { btn.style.display = ""; note.textContent = "One tap and Prop Agent lands on your home screen — its own icon, full screen, no browser bars."; }
+  else if (/iphone|ipad|ipod/i.test(navigator.userAgent || "")) { btn.style.display = "none"; note.innerHTML = "On iPhone: tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b> — Prop Agent gets its own icon and opens full screen."; }
+  else { btn.style.display = "none"; note.innerHTML = "Open your browser menu (\u22ee) and tap <b>Install app</b> or <b>Add to Home screen</b> — Prop Agent gets its own icon and opens full screen."; }
+}
+var ib0 = $("installBtn"); if (ib0) ib0.addEventListener("click", function(){ if (!deferredInstall) return; deferredInstall.prompt(); deferredInstall.userChoice.then(function(){ deferredInstall = null; renderInstall(); }); });
+renderInstall();
 function renderTicker(){
   var wrap = $("tickerWrap"), box = $("yourTicker");
   if (!wrap || !box) return;
