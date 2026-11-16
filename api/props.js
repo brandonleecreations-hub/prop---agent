@@ -109,7 +109,7 @@ function normalize(rows) {
 module.exports = async (req, res) => {
   res.setHeader("Content-Type", "application/json");
   res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=120");
-  const key = process.env.PARLAY_API_KEY;
+  const key = process.env.PARLAY_API_KEY || process.env.PRIZEPICKS_FEED_API_KEY || process.env.PRIZEPICKS_API_KEY || process.env.PARLAY_KEY;
   if (!key) { res.status(200).json({ ok: false, configured: false, props: [] }); return; }
   const sport = (req.query && req.query.sport) || "";
   if (SPORT_KEYS.indexOf(sport) === -1) { res.status(400).json({ ok: false, error: "unknown sport" }); return; }
