@@ -170,6 +170,9 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(106px,1fr));gap:10px}
 .ptile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:11px 8px;text-align:center;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.05)}
 .ptile img{width:56px;height:56px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)}
+.pwrap{position:relative;display:block;width:56px;height:56px;margin:0 auto}
+.pwrap .pinit{position:absolute;inset:0;margin:0}
+.pwrap img{position:absolute;inset:0}
 .ptile .pinit{width:56px;height:56px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:19px;background:linear-gradient(135deg,#3b1470,#1b1030);color:var(--purp-lt)}
 .ptile .pn{font-weight:800;font-size:13.5px;margin-top:7px;line-height:1.15}
 .ptile .pm{color:var(--mut);font-size:11px;margin-top:2px}
@@ -603,7 +606,7 @@ function sortGroups(gs, mode){
 function tileHtml(g){
   var lt = liveTeamsByLeague[g.league] && liveTeamsByLeague[g.league][(g.team||"").toLowerCase()];
   return '<div class="ptile" data-player="'+esc(g.player)+'" data-league="'+esc(g.league)+'">'
-    + (g.img ? '<img src="'+esc(g.img)+'" alt="" loading="lazy">' : '<div class="pinit">'+esc(initials(g.player))+'</div>')
+    + '<span class="pwrap"><span class="pinit">'+esc(initials(g.player))+'</span>' + (g.img ? '<img src="'+esc(g.img)+'" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>'
     + '<div class="pn">'+esc(g.player)+'</div><div class="pm">'+esc([g.team, g.leagueLabel].filter(function(x){ return x; }).join(" · "))+'</div>'
     + '<span class="pc">'+g.props.length+' prop'+(g.props.length===1?"":"s")+(g.starts ? ' · '+esc(fmtClock(g.starts)) : '')+'</span>'
     + (lt ? '<br><span class="plive">LIVE · '+esc(lt.detail)+'</span>' : '') + '</div>';
