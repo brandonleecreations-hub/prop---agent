@@ -29,14 +29,14 @@ module.exports = async (req, res) => {
   if (!SB_URL || !SRK) { res.status(200).json({ ok: false, configured: false }); return; }
   try {
     if (req.method === "GET" && req.query && req.query.board) {
-      const r = await rest("profiles?select=id,display_name,wins&order=wins.desc&limit=50", { headers: sbHeaders() });
+      const r = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card&order=wins.desc&limit=50", { headers: sbHeaders() });
       res.status(200).json({ ok: r.status === 200, board: Array.isArray(r.json) ? r.json : [] });
       return;
     }
     if (req.method === "GET" && req.query && req.query.uid) {
       const uid = String(req.query.uid);
       if (!UUID_RE.test(uid)) { res.status(200).json({ ok: false, error: "bad uid" }); return; }
-      const p = await rest("profiles?select=id,display_name,wins&id=eq." + uid, { headers: sbHeaders() });
+      const p = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card&id=eq." + uid, { headers: sbHeaders() });
       const t = await rest("tickets?select=legs,status,created_at&user_id=eq." + uid + "&order=created_at.desc&limit=200", { headers: sbHeaders() });
       res.status(200).json({ ok: true, profile: (p.json && p.json[0]) || null, tickets: Array.isArray(t.json) ? t.json : [] });
       return;
@@ -48,12 +48,14 @@ module.exports = async (req, res) => {
       const uid = String(body.uid || "");
       if (!UUID_RE.test(uid)) { res.status(200).json({ ok: false, error: "bad uid" }); return; }
       const name = String(body.display_name || "Guest Agent").slice(0, 60);
+      const avatarUrl = String(body.avatar_url || "").slice(0, 500);
+      const featuredCard = String(body.featured_card || "").slice(0, 80);
       const wins = Math.max(0, parseInt(body.wins, 10) || 0);
       const rows = Array.isArray(body.tickets) ? body.tickets.slice(0, 200) : [];
       const up = await rest("profiles", {
         method: "POST",
         headers: sbHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }),
-        body: JSON.stringify({ id: uid, display_name: name, wins: wins }),
+        body: JSON.stringify({ id: uid, display_name: name, wins: wins, avatar_url: avatarUrl, featured_card: featuredCard }),
       });
       if (up.status >= 300) { res.status(200).json({ ok: false, step: "profile", status: up.status, detail: (up.text || "").slice(0, 200) }); return; }
       await rest("tickets?user_id=eq." + uid, { method: "DELETE", headers: sbHeaders({ Prefer: "return=minimal" }) });

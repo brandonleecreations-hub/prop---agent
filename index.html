@@ -211,7 +211,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <!-- MY TICKETS -->
   <section class="view" id="view-tickets">
     <h2>My Tickets</h2>
-    <p class="sub">These are only yours — tickets live on this device, in this browser. Log in as an Agent (top right) to name your profile; your record, tiers and cards are saved on this device under your agent name.</p>
+    <p class="sub">These are only yours — tickets save to your cloud profile (Supabase) and this device. Name your profile as an Agent (top right); your record, tiers and cards follow your agent name.</p>
     <div id="myTickets"><p class="empty">No tickets yet — lock one in from the builder.</p></div>
   </section>
 
@@ -286,6 +286,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 <dialog id="agentDlg">
   <h3>Agent profile</h3>
   <p class="note">Your agent name, tickets, tiers and cards are saved on this device. Guests keep tickets on-device too — nothing leaves your phone unless you share it.</p>
+  <div class="row" style="margin:4px 0 8px"><img id="agAvatarImg" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;display:none"><div><b id="agFeatured">No profile card set</b><br><span class="note">Set your profile pic from any unlocked card in My Cards (Board tab) — it saves to your cloud profile for everyone to see.</span></div></div>
   <div class="fld"><label>Agent name</label><input type="text" id="agName" placeholder="e.g. Brandon"></div>
   <div class="fld"><label>Email (optional, kept on this device)</label><input type="email" id="agEmail" placeholder="you@example.com"></div>
   <div class="statline" id="agStats"></div>
@@ -302,10 +303,9 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 <script>
 "use strict";
 /* ============ Prop Agent — rebuilt main page ============
-   Data: ESPN public API (scores, news, season leaders, box scores).
-   Props: generated live from ESPN per-game season leaders for players
-   whose team has a game today/tomorrow that has not started yet.
-   Tickets / profile / tiers / cards: saved on-device (localStorage). */
+   Props: real PrizePicks lines via Parlay API (/api/props proxy).
+   Data: ESPN public API (scores, news, box scores, player photos).
+   Tickets / profile / tiers / cards: localStorage + Supabase cloud sync (/api/profile). */
 
 var ESPN = "https://site.api.espn.com/apis/site/v2/sports/";
 var LEAGUES = [
@@ -538,9 +538,9 @@ function findProp(id){
 function myWins(){ return tickets.filter(function(t){ return t.result==="win"; }).length; }
 function agentRows(){
   var rows = cloudAgents
-    ? cloudAgents.filter(function(a){ return a.id !== cloudUid; }).map(function(a){ return {name:a.display_name||"Agent", wins:a.wins||0, me:false}; })
-    : SEED_AGENTS.map(function(a){ return {name:a.name, wins:a.wins, me:false}; });
-  rows.push({name:(profile.name||"You")+" (You)", wins:myWins(), me:true});
+    ? cloudAgents.filter(function(a){ return a.id !== cloudUid; }).map(function(a){ return {name:a.display_name||"Agent", wins:a.wins||0, me:false, avatar:a.avatar_url||""}; })
+    : SEED_AGENTS.map(function(a){ return {name:a.name, wins:a.wins, me:false, avatar:""}; });
+  rows.push({name:(profile.name||"You")+" (You)", wins:myWins(), me:true, avatar:profile.avatar||""});
   rows.sort(function(a,b){ return b.wins-a.wins; });
   return rows;
 }
@@ -548,7 +548,7 @@ function renderTopAgents(){
   var rows = agentRows().slice(0,5);
   $("topAgents").innerHTML = '<div class="card">'+rows.map(function(r,i){
     var t = tierFor(r.wins);
-    return '<div class="leg"><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1"><b>'+esc(r.name)+'</b> <span class="badge">'+t.emoji+' '+t.name+'</span></div><span class="note">'+r.wins+' winning tickets</span></div>';
+    return '<div class="leg"><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.emoji+' '+t.name+'</span></div><span class="note">'+r.wins+' winning tickets</span></div>';
   }).join("")+'</div>';
 }
 function renderUpcoming(){
@@ -802,10 +802,14 @@ function renderTickets(){
 }
 
 /* ---------- leaderboard / tiers / cards ---------- */
+function setProfBtn(av, feat){
+  var cur = profile.featured === feat;
+  return '<div style="margin-top:8px"><button type="button" class="ghostbtn setprof" data-avatar="'+esc(av)+'" data-featured="'+esc(feat)+'" style="font-size:12px;padding:6px 10px">'+(cur ? "✓ Profile card" : "Set as profile card")+'</button></div>';
+}
 function renderBoard(){
   var rows = agentRows();
   $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Wins</th></tr>'
-    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+'><td>'+(i+1)+'</td><td><b>'+esc(r.name)+'</b></td><td>'+t.emoji+' '+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
+    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b></td><td>'+t.emoji+' '+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
   var wins = myWins();
   $("tiers").innerHTML = TIERS.map(function(t){
     var un = wins >= t.wins;
@@ -816,22 +820,25 @@ function renderBoard(){
   tickets.filter(function(t){ return t.result==="win"; }).forEach(function(t){ t.legs.forEach(function(l){ cards.push(l); }); });
   var tierCards = TIERS.map(function(t){
     var un = wins >= t.wins;
-    return '<div class="tiercard'+(un?" unlocked":"")+'"><div class="tierinner"><div class="flipfront"><div class="tieremoji">'+t.emoji+'</div><div class="tiername">'+t.name+' Card</div><div class="tierto">'+(un?"Unlocked":(t.wins-wins)+" to "+t.name)+'</div></div><div class="flipback">Tier card · '+t.name+' · unlocks at '+t.wins+' winning tickets. You have '+wins+'.</div></div></div>';
+    return '<div class="tiercard'+(un?" unlocked":"")+'"><div class="tierinner"><div class="flipfront"><div class="tieremoji">'+t.emoji+'</div><div class="tiername">'+t.name+' Card</div><div class="tierto">'+(un?"Unlocked":(t.wins-wins)+" to "+t.name)+'</div>'+(un?setProfBtn("/api/icons?s=512", t.emoji+" "+t.name+" Card"):"")+'</div><div class="flipback">Tier card · '+t.name+' · unlocks at '+t.wins+' winning tickets. You have '+wins+'.</div></div></div>';
   }).join("");
   var playerCards = cards.map(function(l){
-    return '<div class="tiercard unlocked"><div class="tierinner"><div class="flipfront"><div class="tieremoji">🃏</div><div class="tiername">'+esc(l.player)+'</div><div class="tierto">'+esc(l.stat)+' '+l.line+' · '+l.dir+' · from a winning ticket</div></div><div class="flipback">'+esc(l.player)+' — '+esc(l.team||"")+'<br>'+esc(l.matchup||"")+'<br>Earned on a ticket where every leg hit.</div></div></div>';
+    return '<div class="tiercard unlocked"><div class="tierinner"><div class="flipfront"><div class="tieremoji">🃏</div><div class="tiername">'+esc(l.player)+'</div><div class="tierto">'+esc(l.stat)+' '+l.line+' · '+l.dir+' · from a winning ticket</div>'+setProfBtn(photoCache[(l.player||"").toLowerCase()]||"/api/icons?s=512", l.player)+'</div><div class="flipback">'+esc(l.player)+' — '+esc(l.team||"")+'<br>'+esc(l.matchup||"")+'<br>Earned on a ticket where every leg hit.</div></div></div>';
   }).join("");
   $("myCards").innerHTML = tierCards + playerCards;
+  document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); profile.avatar = b.getAttribute("data-avatar")||""; profile.featured = b.getAttribute("data-featured")||""; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
   document.querySelectorAll(".tiercard").forEach(function(c){ c.addEventListener("click", function(){ c.classList.toggle("flipped"); }); });
 }
 
 /* ---------- profile + push ---------- */
 function refreshAgentBtn(){
   var t = tierFor(myWins());
-  $("agentBtn").innerHTML = "👤 " + esc(profile.name || "Guest Agent") + " · <b>" + t.emoji + " " + t.name + "</b>";
+  $("agentBtn").innerHTML = (profile.avatar ? '<img src="'+esc(profile.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px"> ' : "👤 ") + esc(profile.name || "Guest Agent") + " · <b>" + t.emoji + " " + t.name + "</b>";
 }
 $("agentBtn").addEventListener("click", function(){
   $("agName").value = profile.name || ""; $("agEmail").value = profile.email || "";
+  var ai = $("agAvatarImg"); if (ai) { if (profile.avatar) { ai.src = profile.avatar; ai.style.display = ""; } else ai.style.display = "none"; }
+  var af = $("agFeatured"); if (af) af.textContent = profile.featured || "No profile card set";
   var t = tierFor(myWins()), nx = nextTier(myWins());
   $("agStats").innerHTML = "<span>Tier <b>"+t.emoji+" "+t.name+"</b></span><span>Wins <b>"+myWins()+"</b></span><span>Tickets <b>"+tickets.length+"</b></span>" + (nx ? "<span>Next: <b>"+nx.name+"</b> in "+(nx.wins-myWins())+" wins</span>" : "<span><b>Top tier reached 👑</b></span>");
   $("agentDlg").showModal();
@@ -981,6 +988,8 @@ function cloudSave(){
     fetch("/api/profile", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({
       uid: cloudUid,
       display_name: profile.name || "Guest Agent",
+      avatar_url: profile.avatar || "",
+      featured_card: profile.featured || "",
       wins: myWins(),
       tickets: tickets.map(function(t){ return {legs: t.legs, status: t.result || "pending"}; })
     })}).then(function(){ fetchBoard(); }).catch(function(){});
@@ -997,6 +1006,7 @@ function cloudInit(){
     if (!j || !j.ok) return;
     var restored = false;
     if (j.profile && j.profile.display_name && !profile.name) { profile.name = j.profile.display_name; lsSet("pa_profile", profile); refreshAgentBtn(); restored = true; }
+    if (j.profile && j.profile.avatar_url && !profile.avatar) { profile.avatar = j.profile.avatar_url; profile.featured = j.profile.featured_card || ""; lsSet("pa_profile", profile); refreshAgentBtn(); restored = true; }
     if ((!tickets || !tickets.length) && j.tickets && j.tickets.length) {
       tickets = j.tickets.map(function(ct, i){
         var legs = Array.isArray(ct.legs) ? ct.legs : [];
