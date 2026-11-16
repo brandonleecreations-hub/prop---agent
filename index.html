@@ -125,7 +125,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 <main>
   <!-- HOME -->
   <section class="view" id="view-home">
-    <p class="sub">Tap a sport — its props for the day open on their own page. Home is just your ticket builder, a few upcoming games and Sports News. Props are generated live from ESPN season leaders, so lines track real player averages.</p>
+    <p class="sub">Tap a sport — its props for the day open on their own page. Home is just your ticket builder, a few upcoming games and Sports News. Props are real PrizePicks lines, served live via Parlay API. Scores and news come from ESPN.</p>
     <h2>Ticket Builder</h2>
     <p class="sub">Your slip lives here. Tap a sport tab above, then tap <b>MORE</b> or <b>LESS</b> on any prop — it lands on this slip instantly. Tap the same pick again to take it off, or tap ✕ on a pick below.</p>
     <div class="card slip" id="slipHome"></div>
@@ -143,7 +143,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <!-- SPORT PROPS -->
   <section class="view" id="view-sport">
     <h2 id="sportTitle">Props</h2>
-    <p class="sub">Every card is a live line built from the player's ESPN season average, with photo, team, matchup and start time. A prop is on this board <b>only</b> before its game starts — the moment a game tips off, its props come off the board.</p>
+    <p class="sub">Every card is a real PrizePicks line — player, team, matchup, stat and the big line, labeled with its source. A prop is on this board <b>only</b> before its game starts — the moment a game tips off, its props come off the board.</p>
     <div class="grid" id="sportProps"><p class="empty">Loading props…</p></div>
     <div class="card slip" id="slipSport" style="margin-top:14px"></div>
   </section>
@@ -335,60 +335,40 @@ function nextGameFor(events, teamId){
   return best;
 }
 
-/* ---------- props generation (live, from ESPN leaders) ---------- */
+/* ---------- props (real PrizePicks lines via Parlay API) ---------- */
+var PARLAY_KEYS = {nba:"basketball_nba", nfl:"americanfootball_nfl", cfb:"americanfootball_ncaaf", cbb:"basketball_ncaab", wbb:"basketball_wncaab", nhl:"icehockey_nhl", mlb:"baseball_mlb", tennis:"tennis_atp"};
 var propsCache = {};   // leagueKey -> [prop]
-function gamesPlayed(entry, athlete){
-  var stats = (athlete && athlete.statistics) || entry.statistics || [];
-  for (var i=0;i<stats.length;i++){ var s = stats[i];
-    if ((s.name==="gamesPlayed" || s.abbreviation==="GP") && s.value) return s.value; }
-  return 0;
-}
+var propsConfigured = true;
+function slugify(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
 function buildProps(lg){
   if (propsCache[lg.key]) return Promise.resolve(propsCache[lg.key]);
-  return Promise.all([
-    fetchJson(ESPN+lg.sport+"/"+lg.league+"/leaders").catch(function(){ return null; }),
-    getScoreboard(lg, 2)
-  ]).then(function(res){
-    var lead = res[0], events = res[1], out = [];
-    if (!lead || !lead.leaders) { propsCache[lg.key] = out; return out; }
-    lead.leaders.forEach(function(cat){
-      var catName = ((cat.name||"")+" "+(cat.displayName||"")).toLowerCase();
-      var match = null;
-      lg.cats.forEach(function(c){ if (catName.indexOf(c[2])>-1 && !match) match = c; });
-      if (!match) return;
-      (cat.leaders||[]).slice(0,10).forEach(function(entry){
-        var ath = entry.athlete || {}; var val = (typeof entry.value==="number") ? entry.value : parseFloat(entry.displayValue);
-        if (!isFinite(val) || val<=0) return;
-        var perGame = val;
-        if (val > 60) { var gp = gamesPlayed(entry, ath); perGame = gp ? val/gp : val/10; }  // season total -> per game
-        var line = roundLine(perGame); if (line < 0.5) return;
-        var teamId = ath.team && ath.team.id ? String(ath.team.id) : (entry.team && entry.team.id ? String(entry.team.id) : "");
-        var game = teamId ? nextGameFor(events, teamId) : null;
-        if (!game) return;   // fair play: only props for upcoming, not-yet-started games
-        var teamName = ath.team && (ath.team.displayName || ath.team.shortDisplayName) || (entry.team && entry.team.displayName) || "";
-        out.push({
-          id: lg.key+"_"+ath.id+"_"+match[0],
-          player: ath.displayName || ath.fullName || "Unknown",
-          athleteId: ath.id || "",
-          team: teamName, teamId: teamId,
-          league: lg.key, leagueLabel: lg.label,
-          stat: match[0], line: line,
-          matchup: game.matchup, starts: game.date, eventId: game.id,
-          img: (ath.headshot && ath.headshot.href) || headshotUrl(lg, ath.id),
-          src: "ESPN Leaders"
-        });
+  var sk = PARLAY_KEYS[lg.key];
+  if (!sk) { propsCache[lg.key] = []; return Promise.resolve([]); }
+  return fetchJson("/api/props?sport="+sk).then(function(res){
+    if (res && res.configured === false) propsConfigured = false;
+    var rows = (res && res.props) || [];
+    var seen = {}, out = [];
+    rows.forEach(function(r){
+      var id = lg.key + "_" + slugify(r.player) + "_" + slugify(r.stat);
+      if (seen[id]) return; seen[id] = 1;
+      out.push({
+        id: id,
+        player: r.player, athleteId: "",
+        team: r.team || "", teamId: "",
+        league: lg.key, leagueLabel: lg.label,
+        stat: r.stat, line: r.line,
+        matchup: r.matchup || "", starts: r.starts || "", eventId: "",
+        img: "",
+        src: "PrizePicks \u00B7 via Parlay API"
       });
     });
-    // de-dupe by id, cap the board
-    var seen = {}, ded = [];
-    out.forEach(function(p){ if (!seen[p.id]) { seen[p.id]=1; ded.push(p); } });
-    ded.sort(function(a,b){ return new Date(a.starts)-new Date(b.starts); });
-    propsCache[lg.key] = ded.slice(0, 60);
+    out.sort(function(a,b){ return (new Date(a.starts||0) - new Date(b.starts||0)) || a.player.localeCompare(b.player); });
+    propsCache[lg.key] = out.slice(0, 80);
     return propsCache[lg.key];
-  });
+  }).catch(function(){ propsCache[lg.key] = []; return []; });
 }
 function allProps(){
-  return Promise.all(PROP_LEAGUES.map(function(k){ return buildProps(leagueByKey(k)); }))
+  return Promise.all(PROP_LEAGUES.concat(["tennis","mlb"]).map(function(k){ return buildProps(leagueByKey(k)); }))
     .then(function(rs){ var all=[]; rs.forEach(function(r){ all = all.concat(r); }); return all; });
 }
 
@@ -453,12 +433,11 @@ function renderBoards(){
     var lg = leagueByKey(currentSport);
     $("sportTitle").textContent = lg.label + " — Props for the day";
     var box = $("sportProps");
-    if (lg.key==="tennis"){ box.innerHTML = '<p class="empty">Tennis props aren\'t in the ESPN feed — add tennis legs (Aces, Double Faults, First Serve %) as custom legs on the + Add Ticket tab and track them with the stepper on your ticket.</p>'; return; }
-    if (lg.key==="mlb"){ box.innerHTML = '<p class="empty">MLB season is over — no upcoming games, so no props on the board. Scores and news still update below in Live Center.</p>'; return; }
-    box.innerHTML = '<p class="empty">Loading '+esc(lg.label)+' props from ESPN…</p>';
+    box.innerHTML = '<p class="empty">Loading '+esc(lg.label)+' props — real PrizePicks lines via Parlay API…</p>';
     buildProps(lg).then(function(ps){
       if (currentSport!==lg.key) return;
-      box.innerHTML = ps.length ? ps.map(propCard).join("") : '<p class="empty">No upcoming games for '+esc(lg.label)+' in the next two days, so no props right now — check back closer to game day.</p>';
+      if (!propsConfigured) { box.innerHTML = '<p class="empty">PrizePicks props are wired up, but the Parlay API key isn\'t set yet. Add <b>PARLAY_API_KEY</b> in Vercel (project Settings → Environment Variables) and redeploy — the board fills in automatically. Custom legs on the + Add Ticket tab work right now.</p>'; return; }
+      box.innerHTML = ps.length ? ps.map(propCard).join("") : '<p class="empty">No PrizePicks props posted for '+esc(lg.label)+' right now — lines usually appear closer to game time.</p>';
       bindPicks(box);
     });
   }
