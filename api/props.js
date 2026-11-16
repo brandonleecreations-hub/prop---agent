@@ -74,7 +74,7 @@ async function fetchSport(sport, key) {
     guard++;
     const url = base + "?bookmakers=prizepicks&limit=200&offset=" + offset;
     const r = await fetch(url, { headers: { "X-API-Key": key, "Accept": "application/json" } });
-    if (!r.ok) throw new Error("parlay http " + r.status);
+    if (!r.ok) { const body = await r.text().catch(() => ""); throw new Error("parlay http " + r.status + ": " + String(body).slice(0, 220)); }
     const data = await r.json();
     const batch = Array.isArray(data) ? data : (data.data || data.props || data.results || []);
     rows = rows.concat(batch);
