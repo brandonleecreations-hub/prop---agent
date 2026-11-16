@@ -98,7 +98,7 @@ table.lb{width:100%;border-collapse:collapse;font-size:14.5px}
 table.lb td,table.lb th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
 table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
 .tiercard{perspective:800px;cursor:pointer}
-.tierinner{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;text-align:center}
+.tierinner{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;text-align:center;box-shadow:0 12px 26px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05)}
 .tieremoji{font-size:34px}
 .tiername{font-weight:800;font-size:17px;margin-top:4px}
 .tierto{color:var(--mut);font-size:13px;margin-top:3px;line-height:1.45}
@@ -109,16 +109,16 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(10,10,10,.97);border-top:1px solid var(--line)}
 nav.bottom .nwrap{max-width:1060px;margin:0 auto;display:flex}
 nav.bottom button{flex:1;background:none;border:none;color:var(--mut);font-size:11.5px;font-weight:700;padding:7px 2px 9px;margin:5px 2px;border-radius:14px}
-nav.bottom button.on{color:#fff;background:linear-gradient(135deg,var(--purp),var(--purp2));box-shadow:0 4px 14px rgba(124,58,237,.45)}
+nav.bottom button.on{color:#fff;background:linear-gradient(135deg,var(--purp),var(--purp2));box-shadow:0 6px 20px rgba(124,58,237,.6), inset 0 1px 0 rgba(255,255,255,.25)}
 nav.bottom button .ni{display:block;margin-bottom:2px}
-nav.bottom button .ni svg{width:23px;height:23px;display:block;margin:0 auto}
-.addcircle{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;font-size:32px;font-weight:300;line-height:1;margin:-24px auto 3px;box-shadow:0 6px 18px rgba(124,58,237,.55);border:3px solid #0a0a0f}
+nav.bottom button .ni svg{width:23px;height:23px;display:block;margin:0 auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55))}
+.addcircle{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;font-size:32px;font-weight:300;line-height:1;margin:-24px auto 3px;box-shadow:0 8px 20px rgba(124,58,237,.55), inset 0 2px 3px rgba(255,255,255,.4), inset 0 -4px 7px rgba(0,0,0,.35);border:3px solid #0a0a0f}
 nav.bottom button.addbtn.on{background:none;box-shadow:none;color:#fff}
 .news a{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
 .news .nhead{flex:1;min-width:0}
 .news .nsrc{color:var(--mut);font-size:11.5px;font-weight:400;white-space:nowrap}
 dialog{background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:16px;max-width:420px;width:calc(100% - 28px);padding:20px}
-dialog::backdrop{background:rgba(0,0,0,.7)}
+dialog::backdrop{background:transparent}
 dialog h3{margin:0 0 6px;font-size:18px}
 .fld{margin:10px 0}
 .fld label{display:block;font-size:12.5px;color:var(--mut);margin-bottom:5px;font-weight:600}
@@ -143,13 +143,14 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .herolive{display:inline-block;margin:12px 0 8px;background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.35);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:800}
 .herotap{color:var(--mut);font-size:13.5px;font-weight:700;text-align:center;margin:4px 0 0}
 @media (max-width:640px){ .slip{position:static} .pline{font-size:21px} }
-.card{position:relative}
+.card{position:relative;box-shadow:0 12px 26px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05)}
 .stampwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:5}
-.stamp{border:4px solid var(--grn);color:var(--grn);font-size:32px;font-weight:900;letter-spacing:3px;padding:8px 18px;border-radius:10px;background:rgba(0,20,8,.35);text-shadow:0 2px 10px rgba(0,0,0,.6);animation:stampIn .45s cubic-bezier(.2,2.4,.4,1) both}
+.stamp{border:4px solid var(--grn);color:var(--grn);font-size:32px;font-weight:900;letter-spacing:3px;padding:8px 18px;border-radius:10px;background:transparent;text-shadow:0 2px 10px rgba(0,0,0,.6);animation:stampIn .45s cubic-bezier(.2,2.4,.4,1) both}
 @keyframes stampIn{0%{transform:rotate(-32deg) scale(2.4);opacity:0}60%{opacity:1}100%{transform:rotate(-12deg) scale(1);opacity:1}}
 .shake{animation:shk .3s ease .4s}
 @keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
-.stampmini{position:absolute;top:-9px;right:16px;background:var(--panel);z-index:2;border:2.5px solid var(--grn);color:var(--grn);font-size:10px;font-weight:900;letter-spacing:1.5px;padding:2px 7px;border-radius:6px;transform:rotate(-10deg);opacity:.9;pointer-events:none}
+.stampmini{display:inline-block;margin:8px 0 0;border:2.5px solid var(--grn);color:var(--grn);font-size:10px;font-weight:900;letter-spacing:1.5px;padding:2px 7px;border-radius:6px;transform:rotate(-4deg);opacity:.9;pointer-events:none}
+.gteam{overflow-wrap:break-word}
 .redxwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(24,0,0,.45);border-radius:var(--r);z-index:5;pointer-events:none;animation:xfade 1.6s ease both}
 .redxwrap svg{width:110px;height:110px}
 .redxwrap line{stroke:#ff2d2d;stroke-width:11;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;animation:drawx .45s ease forwards}
@@ -211,6 +212,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <h2 id="sportTitle">Props</h2>
     <div class="row" style="justify-content:space-between;margin:0 0 12px"><h3 style="margin:0;font-size:17px">Future Games</h3><span class="badge" id="propCountPill"></span></div>
     <p class="sub">Every card is a real PrizePicks line — player, team, matchup, stat and the big line, labeled with its source. A prop is on this board <b>only</b> before its game starts — the moment a game tips off, its props come off the board.</p>
+    <div class="tabs" id="propFilters" style="margin:-4px 0 12px"></div>
     <div class="grid" id="sportProps"><p class="empty">Loading props…</p></div>
     <div class="card slip" id="slipSport" style="margin-top:14px"></div>
   </section>
@@ -219,13 +221,19 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <section class="view" id="view-tickets">
     <h2>My Tickets</h2>
     <p class="sub">These are only yours — tickets save to your cloud profile (Supabase) and this device. Name your profile as an Agent (top right); your record, tiers and cards follow your agent name.</p>
+    <div class="card" style="background:linear-gradient(135deg,#3b1470,#22103f);border-color:#5b21b6">
+      <div style="font-size:15.5px">Lock a ticket and its live stats load here automatically.</div>
+      <button class="ghostbtn" id="tkRefresh" style="margin-top:10px;background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none;font-weight:800;padding:10px 16px">⟳ Refresh stats now</button>
+    </div>
     <div id="myTickets"><p class="empty">No tickets yet — lock one in from the builder.</p></div>
   </section>
 
   <!-- LIVE CENTER -->
   <section class="view" id="view-live">
     <h2>Live Center</h2>
-    <p class="sub">Games are grouped as <b>Live Games</b> (happening now) and <b>Future Games</b> (upcoming). Tap a game to open its score by period and details. Auto-refreshes every 30 seconds, fresh from ESPN.</p>
+    <p class="sub">Games are grouped by <b>Live Games</b> (happening now) and <b>Future Games</b> (upcoming). Tap a game to open its score by period, team stats, player stats, and play-by-play. Auto-refreshes every 30 seconds. <b>College games are listed only when a player in that game has a real PrizePicks prop</b> — every other college game is left out.</p>
+    <div class="tabs" id="liveTabs"></div>
+    <p class="note" id="liveStatus"></p>
     <div id="liveCenter"><p class="empty">Fetching fresh scores from ESPN…</p></div>
     <div id="gameDetail"></div>
   </section>
@@ -281,18 +289,18 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 
 <nav class="bottom">
   <div class="nwrap">
-    <button data-nav="home" class="on"><span class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.8V21h14V9.8"/><path d="M9.5 21v-6h5v6"/></svg></span>Home</button>
-    <button data-nav="tickets"><span class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.5a2.5 2.5 0 0 0 0 5V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1.5a2.5 2.5 0 0 0 0-5Z"/><path d="M13.5 7v1.8M13.5 11.1v1.8M13.5 15.2V17"/></svg></span>Tickets</button>
-    <button data-nav="live"><span class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/><path d="M9 15a4.2 4.2 0 0 1 0-6M15 9a4.2 4.2 0 0 1 0 6M6.5 17.5a8.5 8.5 0 0 1 0-11M17.5 6.5a8.5 8.5 0 0 1 0 11"/></svg></span>Live</button>
+    <button data-nav="home" class="on"><span class="ni"><svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 3.1 2.9 10.9h2.6v8.9h13v-8.9h2.6L12 3.1Z M10.3 19.8v-5h3.4v5h-3.4Z"/></svg></span>Home</button>
+    <button data-nav="tickets"><span class="ni"><svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.5 5h13A2.5 2.5 0 0 1 21 7.5v2a2.75 2.75 0 0 0 0 5v2a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5v-2a2.75 2.75 0 0 0 0-5v-2A2.5 2.5 0 0 1 5.5 5Zm8.7 2.2h1.6v1.9h-1.6V7.2Zm0 4h1.6v1.9h-1.6v-1.9Zm0 4h1.6v1.9h-1.6v-1.9Z"/></svg></span>Tickets</button>
+    <button data-nav="live"><span class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.9" stroke-linecap="round"><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/><path d="M8.9 15.1a4.4 4.4 0 0 1 0-6.2M15.1 8.9a4.4 4.4 0 0 1 0 6.2M6.1 17.9a8.4 8.4 0 0 1 0-11.8M17.9 6.1a8.4 8.4 0 0 1 0 11.8"/></svg></span>Live</button>
     <button data-nav="highlights"><span class="ni"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.8v12.4L18.5 12Z"/></svg></span>Highlights</button>
     <button data-nav="build" class="addbtn"><span class="addcircle">+</span>Add Ticket</button>
-    <button data-nav="board"><span class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v4.5a4 4 0 0 1-8 0Z"/><path d="M8 5.5H5a3 3 0 0 0 3.2 3M16 5.5h3a3 3 0 0 1-3.2 3"/><path d="M12 12.5V15M9 20h6M12 15c-1 1-1.6 2.4-1.8 5h3.6c-.2-2.6-.8-4-1.8-5Z"/></svg></span>Board</button>
+    <button data-nav="board"><span class="ni"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.8a6.2 6.2 0 1 1 0 12.4 6.2 6.2 0 0 1 0-12.4Z"/><path d="M8.6 13.9 6.5 21.2 12 18l5.5 3.2-2.1-7.3-2.1 1.1a3.4 3.4 0 0 1-2.6 0L8.6 13.9Z"/></svg></span>Board</button>
   </div>
 </nav>
 
 <dialog id="agentDlg">
   <h3>Agent profile</h3>
-  <p class="note">Your agent name, tickets, tiers and cards are saved on this device. Guests keep tickets on-device too — nothing leaves your phone unless you share it.</p>
+  <p class="note">Your agent name, tickets, tiers and cards save to your cloud profile (Supabase) and this device, so your progress is backed up and your profile pic shows on the leaderboard.</p>
   <div class="row" style="margin:4px 0 8px"><img id="agAvatarImg" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;display:none"><div><b id="agFeatured">No profile card set</b><br><span class="note">Set your profile pic from any unlocked card in My Cards (Board tab) — it saves to your cloud profile for everyone to see.</span></div></div>
   <div class="fld"><label>Agent name</label><input type="text" id="agName" placeholder="e.g. Brandon"></div>
   <div class="fld"><label>Email (optional, kept on this device)</label><input type="email" id="agEmail" placeholder="you@example.com"></div>
@@ -511,6 +519,8 @@ function propCard(p){
     + '</div></div>';
 }
 var currentSport = "all";
+var boardStat = "all";
+var liveFilter = "all";
 function renderBoards(){
   if (currentSport && currentSport!=="all"){
     var lg = leagueByKey(currentSport);
@@ -521,8 +531,18 @@ function renderBoards(){
     buildProps(lg).then(function(ps){
       if (currentSport!==lg.key) return;
       if (!propsConfigured) { box.innerHTML = '<p class="empty">PrizePicks props are wired up, but the Parlay API key isn\'t set yet. Add <b>PARLAY_API_KEY</b> in Vercel (project Settings → Environment Variables) and redeploy — the board fills in automatically. Custom legs on the + Add Ticket tab work right now.</p>'; return; }
-      box.innerHTML = ps.length ? ps.map(propCard).join("") : '<p class="empty">No PrizePicks props posted for '+esc(lg.label)+' right now — lines usually appear closer to game time.</p>';
-      var pill2 = $("propCountPill"); if (pill2) pill2.textContent = ps.length + " props · tap MORE / LESS to add";
+      if (!ps.length) { var fw9 = $("propFilters"); if (fw9) setHtml(fw9, ""); box.innerHTML = '<p class="empty">No PrizePicks props posted for '+esc(lg.label)+' right now — lines usually appear closer to game time.</p>'; var pill0 = $("propCountPill"); if (pill0) pill0.textContent = ""; return; }
+      var fw = $("propFilters");
+      if (fw){
+        var counts = {}; ps.forEach(function(p){ counts[p.stat] = (counts[p.stat]||0)+1; });
+        var statList = Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; }).slice(0,12);
+        if (boardStat!=="all" && !counts[boardStat]) boardStat = "all";
+        setHtml(fw, '<button type="button" class="tab'+(boardStat==="all"?" on":"")+'" data-stat="all">All stats</button>' + statList.map(function(st){ return '<button type="button" class="tab'+(boardStat===st?" on":"")+'" data-stat="'+esc(st)+'">'+esc(st)+' · '+counts[st]+'</button>'; }).join(""));
+        fw.querySelectorAll("[data-stat]").forEach(function(b){ b.addEventListener("click", function(){ boardStat = b.getAttribute("data-stat"); renderBoards(); }); });
+      }
+      var shown = boardStat==="all" ? ps : ps.filter(function(p){ return p.stat===boardStat; });
+      box.innerHTML = shown.length ? shown.map(propCard).join("") : '<p class="empty">No '+esc(boardStat)+' props right now — try another stat.</p>';
+      var pill2 = $("propCountPill"); if (pill2) pill2.textContent = shown.length + " props · tap MORE / LESS to add";
       bindPicks(box);
     });
   }
@@ -551,12 +571,13 @@ function agentRows(){
   rows.sort(function(a,b){ return b.wins-a.wins; });
   return rows;
 }
+function setHtml(el, html){ if (el && el._lastHtml !== html){ el._lastHtml = html; el.innerHTML = html; return true; } return false; }
 function renderTopAgents(){
   var rows = agentRows().slice(0,5);
-  $("topAgents").innerHTML = '<div class="card">'+rows.map(function(r,i){
+  setHtml($("topAgents"), '<div class="card">'+rows.map(function(r,i){
     var t = tierFor(r.wins);
     return '<div class="leg"><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.emoji+' '+t.name+'</span></div><span class="note">'+r.wins+' winning tickets</span></div>';
-  }).join("")+'</div>';
+  }).join("")+'</div>');
 }
 function renderUpcoming(){
   var jobs = PROP_LEAGUES.concat(["tennis","mlb"]).map(function(k){ var lg = leagueByKey(k); return getScoreboard(lg, 3).then(function(ev){ return {lg:lg, ev:ev}; }); });
@@ -573,7 +594,10 @@ function renderUpcoming(){
       var hs = $("heroStatus");
       if (hs) hs.textContent = "Updated " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}) + " · auto-refresh 30s · ESPN · " + total + " games on the board · " + liveAll.length + " live now";
       var hero = $("liveHero");
-      if (hero) {
+      var heroSig = liveAll.map(function(g){ var tt = eventTeams(g.ev); return g.ev.id + ":" + tt.map(function(x){ return x.score||""; }).join("-"); }).join(",");
+      var heroChanged = heroSig !== window._heroSig;
+      if (heroChanged) window._heroSig = heroSig;
+      if (hero && heroChanged) {
         if (!liveAll.length) { hero.innerHTML = ""; }
         else {
           var g = liveAll[0], ts = eventTeams(g.ev);
@@ -592,7 +616,7 @@ function renderUpcoming(){
         }
       }
       var hst = $("heroStats");
-      if (hst) {
+      if (hst && heroChanged) {
         if (!liveAll.length) hst.innerHTML = "";
         else fetchJson(ESPN+g.lg.sport+"/"+g.lg.league+"/summary?event="+encodeURIComponent(g.ev.id)).then(function(sm){ renderPerf(hst, g.lg, sm); }).catch(function(){ hst.innerHTML = ""; });
       }
@@ -604,11 +628,11 @@ function renderUpcoming(){
     }); });
     ups.sort(function(a,b){ return new Date(a.ev.date)-new Date(b.ev.date); });
     ups = ups.slice(0,6);
-    $("upcoming").innerHTML = ups.length ? ups.map(function(u){
+    var upChanged = setHtml($("upcoming"), ups.length ? ups.map(function(u){
       var ts = eventTeams(u.ev);
       return '<div class="card game" data-game="'+u.lg.key+'|'+u.ev.id+'" style="cursor:pointer"><div><div class="gteam">'+esc(matchName(ts))+'</div><div style="color:var(--purp-lt);font-size:11.5px;font-weight:800;letter-spacing:1.2px;margin-top:2px">'+esc(u.lg.label.toUpperCase())+'</div></div><div class="gstat">'+esc(fmtDay(u.ev.date))+' '+esc(new Date(u.ev.date).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}))+'</div></div>';
-    }).join("") : '<p class="empty">No upcoming games found right now.</p>';
-    $("upcoming").querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); showView("live"); openGame(p[0], p[1]); }); });
+    }).join("") : '<p class="empty">No upcoming games found right now.</p>');
+    if (upChanged) $("upcoming").querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); showView("live"); openGame(p[0], p[1]); }); });
   });
 }
 function articleHtml(a, picks){
@@ -628,13 +652,13 @@ function renderNews(){
     arts = arts.slice(0,10);
     var note = $("newsNote");
     if (note) note.textContent = picks.length ? "Leading with news about your picked players — then the top ESPN headlines. Refreshed every 30 seconds." : "Latest headlines from ESPN · Updated " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}) + " · refreshes automatically";
-    $("news").innerHTML = arts.length ? arts.map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">Headlines unavailable right now.</p>';
+    setHtml($("news"), arts.length ? arts.map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">Headlines unavailable right now.</p>');
     if (picks.length) nbaArts.sort(function(a,b){ return (mentionsPicks(b,picks)?1:0)-(mentionsPicks(a,picks)?1:0); });
-    $("hlNba").innerHTML = nbaArts.length ? nbaArts.slice(0,6).map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">Loading latest plays…</p>';
+    setHtml($("hlNba"), nbaArts.length ? nbaArts.slice(0,6).map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">Loading latest plays…</p>');
     fetchJson(ESPN+"football/nfl/news?limit=6").catch(function(){ return {articles:[]}; }).then(function(r){
       var list = (r.articles||[]).slice(0,6);
       if (picks.length) list.sort(function(a,b){ return (mentionsPicks(b,picks)?1:0)-(mentionsPicks(a,picks)?1:0); });
-      $("hlNfl").innerHTML = list.length ? list.map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">Big plays feed unavailable right now.</p>';
+      setHtml($("hlNfl"), list.length ? list.map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">Big plays feed unavailable right now.</p>');
       var wrap = $("hlYoursWrap"), yb = $("hlYours");
       if (wrap && yb){
         if (!picks.length){ wrap.style.display = "none"; }
@@ -642,7 +666,7 @@ function renderNews(){
           wrap.style.display = "";
           var seen = {}, yours = [];
           arts.concat(list).forEach(function(a){ var h = a.headline||""; if (h && !seen[h] && mentionsPicks(a, picks)) { seen[h]=1; yours.push(a); } });
-          yb.innerHTML = yours.length ? yours.slice(0,6).map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">No headlines about your players right now — stories about '+esc(picks.slice(0,3).join(", "))+' land here the moment they break.</p>';
+          setHtml(yb, yours.length ? yours.slice(0,6).map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">No headlines about your players right now — stories about '+esc(picks.slice(0,3).join(", "))+' land here the moment they break.</p>');
         }
       }
     });
@@ -690,13 +714,40 @@ function gameCard(lg, ev){
   var st = ev.status && ev.status.type || {};
   var live = st.state==="in";
   var detail = st.shortDetail || st.detail || "";
+  var extra = "";
+  if (lg.key==="tennis" && live){
+    try {
+      var tcs = ((ev.competitions||[])[0]||{}).competitors||[];
+      if (tcs.length===2){
+        var sfmt = function(c){ return (c.linescores||[]).map(function(x){ return x.displayValue; }).join(" · "); };
+        extra = '<div class="note" style="margin-top:6px">Sets: '+esc(sfmt(tcs[0]))+' vs '+esc(sfmt(tcs[1]))+' · '+esc(detail)+' · Point score not reported by ESPN</div><div class="note">Tap for the full match tracker — sets, games, point &amp; serve →</div>';
+      }
+    } catch(e){}
+  }
   return '<div class="card game" data-game="'+lg.key+'|'+ev.id+'" style="cursor:pointer"><div>'
     + ts.map(function(t){ return '<div class="gteam">'+esc(t.name)+' <span class="gscore">'+(t.score!=null && st.state!=="pre" ? esc(t.score) : "")+'</span></div>'; }).join("")
-    + '<div class="note">'+esc(lg.label)+'</div></div>'
+    + '<div class="note">'+esc(lg.label)+'</div>'+extra+'</div>'
     + '<div class="gstat">'+(live?'<span class="badge live">LIVE</span><br>':"")+esc(detail)+'<br>'+(st.state==="pre"?esc(fmtTime(ev.date)):"")+'</div></div>';
 }
+var collegeCheck = {}; // eventId -> {ok, ts}
+function lastNameOf(n){ var p = String(n||"").toLowerCase().replace(/[^a-z ]/g,"").split(/\s+/).filter(Boolean); var last = p[p.length-1]||""; if (["jr","sr","ii","iii","iv"].indexOf(last)>-1) last = p[p.length-2]||last; return last; }
+function collegeGameHasProp(lg, ev){
+  var hit = collegeCheck[ev.id];
+  if (hit && Date.now()-hit.ts < 5*60*1000) return Promise.resolve(hit.ok);
+  return buildProps(lg).then(function(ps){
+    if (!ps.length) { collegeCheck[ev.id] = {ok:false, ts:Date.now()}; return false; }
+    var names = {}; ps.forEach(function(p){ names[lastNameOf(p.player)] = 1; });
+    return fetchJson(ESPN+lg.sport+"/"+lg.league+"/summary?event="+encodeURIComponent(ev.id)).then(function(sm){
+      var found = false;
+      try { ((sm.boxscore && sm.boxscore.players) || []).forEach(function(tp){ (tp.athletes||[]).forEach(function(a){ if (names[lastNameOf(a.athlete && a.athlete.displayName)]) found = true; }); }); } catch(e){}
+      collegeCheck[ev.id] = {ok:found, ts:Date.now()};
+      return found;
+    }).catch(function(){ return true; });
+  });
+}
 function renderLive(){
-  var jobs = LEAGUES.slice(1).map(function(lg){ return getScoreboard(lg, 2).then(function(ev){ return {lg:lg, ev:ev}; }).catch(function(){ return {lg:lg, ev:[]}; }); });
+  var leagues = LEAGUES.slice(1).filter(function(lg){ return liveFilter==="all" || lg.key===liveFilter; });
+  var jobs = leagues.map(function(lg){ return getScoreboard(lg, 2).then(function(ev){ return {lg:lg, ev:ev}; }).catch(function(){ return {lg:lg, ev:[]}; }); });
   Promise.all(jobs).then(function(rs){
     var live = [], fut = [];
     rs.forEach(function(r){ r.ev.forEach(function(ev){
@@ -705,28 +756,80 @@ function renderLive(){
       else if (st==="pre") fut.push({lg:r.lg, ev:ev});
     }); });
     fut.sort(function(a,b){ return new Date(a.ev.date)-new Date(b.ev.date); });
-    $("liveCenter").innerHTML =
-      '<h2 style="font-size:16px">Live Games</h2>' + (live.length ? live.map(function(g){ return gameCard(g.lg, g.ev); }).join("") : '<p class="empty">No games live right now.</p>')
-      + '<h2 style="font-size:16px">Future Games</h2>' + (fut.length ? fut.slice(0,20).map(function(g){ return gameCard(g.lg, g.ev); }).join("") : '<p class="empty">No future games in the next two days.</p>');
-    $("liveCenter").querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
+    var college = live.concat(fut).filter(function(g){ return ["cfb","cbb","wbb"].indexOf(g.lg.key)>-1; });
+    var checks = college.slice(0,16).map(function(g){ return collegeGameHasProp(g.lg, g.ev).then(function(ok){ g._propOk = ok; }); });
+    college.slice(16).forEach(function(g){ g._propOk = true; });
+    return Promise.all(checks).then(function(){
+      var keep = function(g){ return ["cfb","cbb","wbb"].indexOf(g.lg.key)===-1 || g._propOk !== false; };
+      live = live.filter(keep); fut = fut.filter(keep).slice(0,40);
+      var ls = $("liveStatus"); if (ls) ls.textContent = "Updated " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}) + " · fresh from ESPN · auto-refreshes every 30s and whenever you come back to this tab";
+      var html =
+        '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Live Games</h2><span style="color:var(--purp-lt);font-weight:700">' + live.length + ' game' + (live.length===1?"":"s") + '</span></div>'
+        + (live.length ? live.map(function(g){ return gameCard(g.lg, g.ev); }).join("") : '<p class="empty">No games live right now.</p>')
+        + '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Future Games</h2><span style="color:var(--purp-lt);font-weight:700">' + fut.length + ' game' + (fut.length===1?"":"s") + '</span></div>'
+        + (fut.length ? fut.map(function(g){ return gameCard(g.lg, g.ev); }).join("") : '<p class="empty">No future games in the next two days.</p>');
+      var lc = $("liveCenter");
+      if (setHtml(lc, html)) lc.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
+    });
   });
 }
 function openGame(key, eventId){
   var lg = leagueByKey(key);
   fetchJson(ESPN+lg.sport+"/"+lg.league+"/summary?event="+encodeURIComponent(eventId)).then(function(s){
-    var comp = s.gameInfo && s.gameInfo.venue && s.gameInfo.venue.fullDisplayName || "";
-    var lines = "";
-    var bs = s.boxscore && s.boxscore.teams || [];
-    var head = bs.map(function(t){ return (t.team && t.team.displayName)||""; }).join(" vs ");
-    var periods = "";
-    var compArr = (s.header && s.header.competitions || [])[0];
-    if (compArr && compArr.competitors){
-      periods = '<table class="lb"><tr><th>Team</th><th>Score</th></tr>' + compArr.competitors.map(function(c){
-        var ls = (c.linescores||[]).map(function(x){ return x.displayValue; }).join(" · ");
-        return '<tr><td>'+esc(c.team.displayName)+'</td><td>'+esc(c.score||"")+(ls?' <span class="note">('+esc(ls)+')</span>':"")+'</td></tr>';
+    var comp = (s.header && s.header.competitions || [])[0] || {};
+    var cs = comp.competitors || [];
+    var st = comp.status && comp.status.type || {};
+    var live = st.state === "in";
+    var isT = lg.key === "tennis";
+    var names = cs.map(function(c){ return (c.team && c.team.displayName) || ""; });
+    var aw = cs.filter(function(c){ return c.homeAway==="away"; })[0], hm = cs.filter(function(c){ return c.homeAway==="home"; })[0];
+    var title = (aw && hm) ? (aw.team.displayName + " vs " + hm.team.displayName) : (names.join(" vs ") || lg.label);
+    var venue = s.gameInfo && s.gameInfo.venue && s.gameInfo.venue.fullDisplayName || "";
+    var detail = st.shortDetail || st.detail || "";
+    var html = '<div class="card" style="border-top:3px solid var(--purp2)"><div style="font-size:24px;font-weight:900;line-height:1.15">' + esc(title) + ' <span style="color:var(--purp-lt);font-size:15px;font-weight:800">' + esc(lg.label) + '</span></div>'
+      + '<div class="note" style="margin:4px 0 8px">' + esc(detail) + (venue ? ' · ' + esc(venue) : '') + '</div>'
+      + (live ? '<div><span style="background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.45);border-radius:999px;padding:4px 11px;font-weight:800;font-size:12px">● LIVE' + (detail ? ' · ' + esc(detail) : '') + '</span></div>' : '');
+    var nper = 0; cs.forEach(function(c){ nper = Math.max(nper, (c.linescores||[]).length); });
+    if (cs.length && nper){
+      html += '<table class="lb" style="margin-top:12px"><tr><th>Team</th>';
+      for (var i=0;i<nper;i++) html += '<th>' + (isT ? "S" : "P") + (i+1) + '</th>';
+      html += '<th>Total</th></tr>' + cs.map(function(c){
+        var cells = (c.linescores||[]).map(function(x){ return '<td>' + esc(x.displayValue!=null ? x.displayValue : "") + '</td>'; }).join("");
+        return '<tr><td>' + esc((c.team && c.team.displayName) || "") + '</td>' + cells + '<td style="color:var(--purp-lt);font-weight:800">' + esc(c.score!=null ? c.score : "") + '</td></tr>';
       }).join("") + '</table>';
     }
-    $("gameDetail").innerHTML = '<div class="card"><h3 style="margin:0 0 4px">'+esc(head || lg.label)+'</h3><p class="note">'+esc(comp)+'</p>'+periods+'<p class="note">Full player stats and play-by-play are on the player cards in My Tickets for your locked legs, and on ESPN for everything else.</p></div>';
+    if (isT){
+      var setNo = Math.max(1, nper);
+      var chips = '<span class="badge">Set ' + setNo + '</span>';
+      (comp.notes || []).forEach(function(n){ if (n.headline) chips += ' <span class="badge">' + esc(n.headline) + '</span>'; });
+      if (venue) chips += ' <span class="badge">' + esc(venue) + '</span>';
+      var gamesLine = "";
+      if (cs.length===2){
+        var cur = function(c){ var ls = c.linescores || []; return ls.length ? (ls[ls.length-1].displayValue || "0") : "0"; };
+        gamesLine = 'Set ' + setNo + ' games: <b>' + esc(names[0]) + ' ' + esc(cur(cs[0])) + ' — ' + esc(cur(cs[1])) + ' ' + esc(names[1]) + '</b>';
+      }
+      html += '<div class="card" style="margin:14px 0 0;background:#101018"><div style="font-size:17px;font-weight:800;margin-bottom:8px">Match Tracker</div>'
+        + '<div>' + chips + '</div>'
+        + (live ? '<div style="margin-top:10px"><span style="background:rgba(183,28,28,.25);color:#fda4af;border:1px solid rgba(183,28,28,.5);border-radius:999px;padding:4px 11px;font-weight:800;font-size:12px">● LIVE — point by point</span></div>' : '')
+        + (gamesLine ? '<p style="margin:12px 0 4px">' + gamesLine + '</p>' : '')
+        + '<p class="note">Server not reported by the ESPN feed for this match.</p>'
+        + '<div style="background:rgba(245,197,24,.08);border:1px solid rgba(245,197,24,.35);border-radius:12px;padding:12px;margin-top:10px"><div style="color:var(--gold);font-weight:900;letter-spacing:1.5px;font-size:12.5px">CURRENT POINT</div><p style="margin-top:6px">Point score not available — ESPN is not reporting the current point for this match right now. The set and game scores above are the live reported score.</p></div></div>';
+    } else {
+      var perf = [];
+      (s.leaders || []).forEach(function(tl){ (tl.leaders||[]).forEach(function(cat){ var L = (cat.leaders||[])[0]; if (L && L.athlete && perf.length<4) perf.push({name:L.athlete.displayName, stat:(L.displayValue||"") + " " + (cat.shortDisplayName||cat.displayName||"")}); }); });
+      if (perf.length) html += '<div style="font-size:16px;margin-top:14px"><b>Top</b> <b style="color:var(--gold)">Performers</b></div>' + perf.map(function(p){ return '<div class="row" style="justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><b>' + esc(p.name) + '</b><span style="color:var(--cyan);font-weight:700;font-size:13px">' + esc(p.stat) + '</span></div>'; }).join("");
+      var tstats = (s.boxscore && s.boxscore.statistics) || [];
+      if (tstats.length===2 && tstats[0].stats && tstats[1].stats){
+        var byName = {}; tstats[0].stats.forEach(function(x){ byName[x.name] = {label:x.label||x.name, a:x.displayValue}; });
+        tstats[1].stats.forEach(function(x){ if (byName[x.name]) byName[x.name].b = x.displayValue; });
+        var skeys = Object.keys(byName).filter(function(k){ return byName[k].b != null; }).slice(0,10);
+        if (skeys.length) html += '<div style="font-size:16px;margin-top:14px"><b>Team Stats</b></div><table class="lb"><tr><th>' + esc((tstats[0].team && tstats[0].team.displayName) || "") + '</th><th>Stat</th><th>' + esc((tstats[1].team && tstats[1].team.displayName) || "") + '</th></tr>' + skeys.map(function(k){ return '<tr><td>' + esc(byName[k].a||"") + '</td><td class="note">' + esc(byName[k].label) + '</td><td>' + esc(byName[k].b||"") + '</td></tr>'; }).join("") + '</table>';
+      }
+      var plays = (s.plays || []).slice(-8).reverse();
+      if (plays.length) html += '<div style="font-size:16px;margin-top:14px"><b>Latest Plays</b></div>' + plays.map(function(pl){ return '<div style="padding:6px 0;border-bottom:1px solid var(--line)"><span class="note">' + esc(((pl.period && pl.period.displayValue)||"") + " " + ((pl.clock && pl.clock.displayValue)||"")) + '</span> ' + esc(pl.text || pl.shortText || "") + '</div>'; }).join("");
+    }
+    html += '</div>';
+    $("gameDetail").innerHTML = html;
     $("gameDetail").scrollIntoView({behavior:"smooth"});
   }).catch(function(){ $("gameDetail").innerHTML = '<div class="card"><p class="err">Couldn\'t load that game\'s details from ESPN.</p></div>'; });
 }
@@ -815,7 +918,7 @@ function gradeTicket(t){
 }
 function renderTickets(){
   var box = $("myTickets");
-  if (!tickets.length) { box.innerHTML = '<p class="empty">No tickets yet — lock one in from the builder.</p>'; return; }
+  if (!tickets.length) { box.innerHTML = '<div class="card" style="text-align:center;padding:26px 18px"><div style="font-size:21px;font-weight:800">No tickets yet</div><p class="sub" style="margin:10px auto 16px;max-width:420px">Build your first one from your own slip — add the lines your site shows you, pick More or Less on each, and lock it in. It takes about 20 seconds.</p><button class="ghostbtn" id="tkBuild" style="background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none;font-weight:800;padding:12px 20px">+ Build a ticket</button></div>'; var tb = $("tkBuild"); if (tb) tb.addEventListener("click", function(){ showView("build"); }); return; }
   box.innerHTML = tickets.map(function(t){
     var res = t.result==="win" ? ' <span class="hit">· WON $'+(t.entry*t.mult).toFixed(2)+'</span>' : t.result==="loss" ? ' <span class="miss">· LOST</span>' : ' <span class="pend">· LIVE / PENDING</span>';
     var legs = t.legs.map(function(l){
@@ -1159,6 +1262,7 @@ document.querySelectorAll("nav.bottom button").forEach(function(b){
 });
 function setSport(key){
   currentSport = key;
+  boardStat = "all";
   document.querySelectorAll("#sportTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-sport")===key); });
   if (key==="all") showView("home"); else { showView("sport"); renderBoards(); }
 }
@@ -1171,10 +1275,20 @@ function setSport(key){
     wrap.appendChild(b);
   });
 })();
+(function buildLiveTabs(){
+  var wrap = $("liveTabs"); if (!wrap) return;
+  [{key:"all", label:"All Sports"}].concat(LEAGUES.slice(1)).forEach(function(l){
+    var b = document.createElement("button");
+    b.className = "tab" + (l.key==="all" ? " on" : ""); b.textContent = l.label; b.setAttribute("data-lsport", l.key);
+    b.addEventListener("click", function(){ liveFilter = l.key; wrap.querySelectorAll(".tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-lsport")===liveFilter); }); renderLive(); });
+    wrap.appendChild(b);
+  });
+})();
 
 /* ---------- init + refresh ---------- */
 function refreshHome(){ renderTopAgents(); renderUpcoming(); renderNews(); renderTicker(); }
 $("refreshBtn").addEventListener("click", function(){ boardCache = {}; propsCache = {}; refreshHome(); if ($("view-live").classList.contains("on")) renderLive(); if (currentSport!=="all") renderBoards(); });
+var tkR = $("tkRefresh"); if (tkR) tkR.addEventListener("click", function(){ renderTickets(); });
 refreshAgentBtn();
 renderAllSlips();
 refreshHome();
