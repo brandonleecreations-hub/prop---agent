@@ -11,8 +11,15 @@
 // board open after expiry — untouched sports cost zero credits). Exception:
 // one extra refresh per cycle when a game on the cached board starts within
 // 2 hours and the cache is over 30 min old, so late line moves and props
-// added/dropped near tip-off ("major changes") still land. The CDN edge
-// cache (30 min) absorbs repeat traffic across serverless instances.
+// added/dropped near tip-off ("major changes") still land.
+// Credit management (Brandon 2026-11-16, after the free tier ran dry):
+//   - The CDN edge cache is the SHARED cache for all users and instances
+//     (1h fresh, then stale-while-revalidate up to ~11h), so repeat opens
+//     almost never reach this function, let alone Parlay.
+//   - Single-flight: concurrent requests for a sport share ONE Parlay fetch.
+//   - A hard per-instance daily budget (MAX_FETCHES_PER_DAY per sport) is a
+//     brake: when hit, the last cached board is served instead of fetching.
+//   - Fetches are capped at 2 pages; failures are never cached anywhere.
 
 const SPORT_KEYS = [
   "basketball_nba", "basketball_ncaab", "basketball_wncaab", "basketball_wnba",
@@ -66,6 +73,21 @@ function statLabel(marketKey, fallback) {
 }
 
 const cache = {}; // sport -> {ts, props}
+const inflight = {}; // sport -> Promise (single-flight dedupe)
+const fetchLog = {}; // sport -> {day, count} daily-budget brake
+const MAX_FETCHES_PER_DAY = 6;
+
+function budgetLeft(sport) {
+  const day = new Date().toISOString().slice(0, 10);
+  const log = fetchLog[sport];
+  if (!log || log.day !== day) { fetchLog[sport] = { day, count: 0 }; return MAX_FETCHES_PER_DAY; }
+  return MAX_FETCHES_PER_DAY - log.count;
+}
+function noteFetch(sport) {
+  const day = new Date().toISOString().slice(0, 10);
+  if (!fetchLog[sport] || fetchLog[sport].day !== day) fetchLog[sport] = { day, count: 0 };
+  fetchLog[sport].count++;
+}
 
 async function fetchSport(sport, key) {
   const base = "https://parlay-api.com/v1/sports/" + encodeURIComponent(sport) + "/props";
@@ -166,15 +188,27 @@ function cacheFresh(hit) {
 
 module.exports = async (req, res) => {
   res.setHeader("Content-Type", "application/json");
-  res.setHeader("Cache-Control", "s-maxage=1800, stale-while-revalidate=21600");
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=39600");
   const key = process.env.PARLAY_API_KEY || process.env.PRIZEPICKS_FEED_API_KEY || process.env.PRIZEPICKS_API_KEY || process.env.PARLAY_KEY;
-  if (!key) { res.status(200).json({ ok: false, configured: false, props: [] }); return; }
+  if (!key) { res.setHeader("Cache-Control", "no-store"); res.status(200).json({ ok: false, configured: false, props: [] }); return; }
   const sport = (req.query && req.query.sport) || "";
   if (SPORT_KEYS.indexOf(sport) === -1) { res.status(400).json({ ok: false, error: "unknown sport" }); return; }
   const hit = cache[sport];
   if (cacheFresh(hit)) { res.status(200).json({ ok: true, configured: true, cached: true, props: hit.props }); return; }
+  // Budget brake: never let a runaway loop drain the account. Serve the
+  // last board we have (even stale) rather than paying for another fetch.
+  if (budgetLeft(sport) <= 0) {
+    if (hit) { res.status(200).json({ ok: true, configured: true, cached: true, stale: true, props: hit.props }); return; }
+    res.setHeader("Cache-Control", "no-store");
+    res.status(200).json({ ok: false, configured: true, error: "daily fetch budget reached for this sport", props: [] });
+    return;
+  }
   try {
-    const rows = await fetchSport(sport, key);
+    if (!inflight[sport]) {
+      noteFetch(sport);
+      inflight[sport] = fetchSport(sport, key).finally(() => { delete inflight[sport]; });
+    }
+    const rows = await inflight[sport];
     const props = normalize(rows);
     const wasPregame = !!(hit && Date.now() - hit.ts < DAY_TTL);
     cache[sport] = { ts: Date.now(), props, pregameRefreshed: wasPregame };
