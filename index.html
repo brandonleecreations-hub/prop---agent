@@ -474,7 +474,7 @@ function renderSlip(el){
     slip = []; lsSet("pa_slip", slip);
     playStamp(el);
     renderNews(); renderTicker();
-    setTimeout(function(){ renderAllSlips(); renderBoards(); renderTickets(); renderBoard(); showView("tickets"); }, 1000);
+    setTimeout(function(){ renderAllSlips(); renderBoards(); renderTickets(); renderBoard(); cloudSave(); showView("tickets"); }, 1000);
   });
 }
 function renderAllSlips(){ renderSlip($("slipHome")); renderSlip($("slipSport")); renderSlip($("slipBuild")); }
@@ -537,7 +537,9 @@ function findProp(id){
 /* ---------- home: top agents / upcoming / news ---------- */
 function myWins(){ return tickets.filter(function(t){ return t.result==="win"; }).length; }
 function agentRows(){
-  var rows = SEED_AGENTS.map(function(a){ return {name:a.name, wins:a.wins, me:false}; });
+  var rows = cloudAgents
+    ? cloudAgents.filter(function(a){ return a.id !== cloudUid; }).map(function(a){ return {name:a.display_name||"Agent", wins:a.wins||0, me:false}; })
+    : SEED_AGENTS.map(function(a){ return {name:a.name, wins:a.wins, me:false}; });
   rows.push({name:(profile.name||"You")+" (You)", wins:myWins(), me:true});
   rows.sort(function(a,b){ return b.wins-a.wins; });
   return rows;
@@ -759,7 +761,7 @@ function gradeTicket(t){
     var allDone = rs.every(function(r){ return (r.status==="hit" || r.status==="push") && (r.final || r.manual); });
     if (!t.result && anyMiss) { t.result = "loss"; lsSet("pa_tickets", tickets); }
     else if (!t.result && allDone && rs.length) { t.result = "win"; lsSet("pa_tickets", tickets); }
-    if (t.result) celebrateCheck(t);
+    if (t.result) { celebrateCheck(t); cloudSave(); }
     return map;
   });
 }
@@ -837,7 +839,7 @@ $("agentBtn").addEventListener("click", function(){
 $("agClose").addEventListener("click", function(){ $("agentDlg").close(); });
 $("agSave").addEventListener("click", function(){
   profile.name = $("agName").value.trim(); profile.email = $("agEmail").value.trim();
-  lsSet("pa_profile", profile); refreshAgentBtn(); renderTopAgents(); renderBoard(); $("agentDlg").close();
+  lsSet("pa_profile", profile); refreshAgentBtn(); renderTopAgents(); renderBoard(); cloudSave(); $("agentDlg").close();
 });
 function urlB64ToUint8(b64){ var pad = "=".repeat((4 - b64.length % 4) % 4); var raw = atob((b64+pad).replace(/-/g,"+").replace(/_/g,"/")); var arr = new Uint8Array(raw.length); for (var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i); return arr; }
 $("pushBtn").addEventListener("click", function(){
@@ -961,6 +963,54 @@ function resolvePhotos(lg, list){
   });
 }
 
+/* ---------- Supabase cloud sync: profile + progress saved per device ----------
+   Server endpoint /api/profile (service role key stays server-side). The
+   device keeps a UUID in pa_uid; name/wins/tickets sync up automatically,
+   and a fresh device/browser restores from the cloud copy. */
+function uuid4(){
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c){ var r = Math.random()*16|0; var v = c==="x" ? r : (r&0x3|0x8); return v.toString(16); });
+}
+var cloudUid = lsGet("pa_uid", "");
+if (!cloudUid) { cloudUid = uuid4(); lsSet("pa_uid", cloudUid); }
+var cloudAgents = null;
+var cloudSaveTimer = null;
+function cloudSave(){
+  if (cloudSaveTimer) clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = setTimeout(function(){
+    fetch("/api/profile", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({
+      uid: cloudUid,
+      display_name: profile.name || "Guest Agent",
+      wins: myWins(),
+      tickets: tickets.map(function(t){ return {legs: t.legs, status: t.result || "pending"}; })
+    })}).then(function(){ fetchBoard(); }).catch(function(){});
+  }, 600);
+}
+function fetchBoard(){
+  fetch("/api/profile?board=1").then(function(r){ return r.json(); }).then(function(j){
+    if (j && j.ok && Array.isArray(j.board)) { cloudAgents = j.board; renderTopAgents(); renderBoard(); }
+  }).catch(function(){});
+}
+function cloudInit(){
+  fetchBoard();
+  fetch("/api/profile?uid="+encodeURIComponent(cloudUid)).then(function(r){ return r.json(); }).then(function(j){
+    if (!j || !j.ok) return;
+    var restored = false;
+    if (j.profile && j.profile.display_name && !profile.name) { profile.name = j.profile.display_name; lsSet("pa_profile", profile); refreshAgentBtn(); restored = true; }
+    if ((!tickets || !tickets.length) && j.tickets && j.tickets.length) {
+      tickets = j.tickets.map(function(ct, i){
+        var legs = Array.isArray(ct.legs) ? ct.legs : [];
+        var ts = new Date(ct.created_at || Date.now()).getTime() + i;
+        var t = {id:"t"+ts, ts:ts, entry:10, mult:PAYOUTS[legs.length]||0, legs:legs};
+        if (ct.status==="win" || ct.status==="loss") t.result = ct.status;
+        return t;
+      }).filter(function(t){ return t.legs.length; });
+      if (tickets.length) { lsSet("pa_tickets", tickets); restored = true; }
+    }
+    if (restored) { renderAllSlips(); renderTickets(); renderTopAgents(); renderBoard(); renderTicker(); }
+  }).catch(function(){});
+}
+
 /* ---------- navigation ---------- */
 function showView(name){
   document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("on"); });
@@ -1000,6 +1050,7 @@ refreshAgentBtn();
 renderAllSlips();
 refreshHome();
 renderBoard();
+cloudInit();
 showView("home");
 if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").catch(function(){}); }
 setInterval(function(){ boardCache = {}; refreshHome(); if ($("view-live").classList.contains("on")) renderLive(); }, 30000);
