@@ -68,12 +68,24 @@ module.exports = async (req, res) => {
       headers: sbHeaders({ Prefer: "return=minimal" }),
       body: JSON.stringify({ user_id: id, endpoint: endpoint, p256dh: p256dh, auth: auth }),
     });
+    // push_subscriptions.user_id references profiles.id, and profiles.id
+    // references auth.users — so a brand-new device may need both anchor
+    // rows before its subscription can be stored.
+    const ensureProfile = (id) => rest("profiles", {
+      method: "POST",
+      headers: sbHeaders({ Prefer: "resolution=ignore-duplicates,return=minimal" }),
+      body: JSON.stringify({ id: id, display_name: "Guest Agent", wins: 0 }),
+    });
     // One row per endpoint: drop any older row for this browser first.
     await rest("push_subscriptions?endpoint=eq." + encodeURIComponent(endpoint), { method: "DELETE", headers: sbHeaders({ Prefer: "return=minimal" }) });
     let ins = await insert(uid);
     if (ins.status >= 300 && (ins.text || "").indexOf("23503") > -1) {
-      const newId = await createDeviceUser();
-      if (newId) { uid = newId; ins = await insert(uid); }
+      let ep = await ensureProfile(uid);
+      if (ep.status >= 300 && (ep.text || "").indexOf("23503") > -1) {
+        const newId = await createDeviceUser();
+        if (newId) { uid = newId; ep = await ensureProfile(uid); }
+      }
+      if (ep.status < 300) ins = await insert(uid);
     }
     if (ins.status >= 300) { res.status(200).json({ ok: false, step: "insert", status: ins.status, detail: (ins.text || "").slice(0, 200) }); return; }
     res.status(200).json({ ok: true, uid });
