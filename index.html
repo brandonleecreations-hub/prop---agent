@@ -1315,6 +1315,7 @@ async function downloadTradingCard(ti, ci, btn){
   var W = 630, H = 900, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
   var ctx = cv.getContext("2d");
   var wins = myWins(); var un = wins >= t.wins;
+  if (!un) { if (btn) { var o0 = btn.textContent; btn.textContent = "Locked — unlock it first"; setTimeout(function(){ btn.textContent = o0; }, 1600); } return; }
   var accent = t.color; var cname = CHARNAMES[ci - 1] || "YOUR AGENT";
   var num = ("00" + ((ci - 1) * 7 + ti + 1)).slice(-3);
   var g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, "#17102b"); g.addColorStop(.55, "#0b0b10"); g.addColorStop(1, "#07070a");
@@ -1443,7 +1444,7 @@ function tierCardHTML(t, wins, withBtns, ci){
     + '<div class="tcwin">' + (art ? '<img class="cardart" src="' + esc(art) + '" alt="">' : '<div class="cardart ph" style="color:' + t.color + '">' + t.name.charAt(0) + '</div>') + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:' + t.color + '">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:' + t.color + '">' + t.rarity + '</span></div>'
     + '<div class="tierto" style="margin-top:6px">' + (un ? 'Unlocked — in your collection' : (t.wins - wins) + ' winning ticket' + ((t.wins - wins) === 1 ? '' : 's') + ' to go') + (ci ? '' : ' · Pick your agent in your profile') + '</div>'
-    + (withBtns ? ((un ? setProfBtn(art || '/api/icons?s=512', cname + ' · ' + t.name + ' Card') : '') + dlBtn('tier', ti, ci)) : '')
+    + (withBtns && un ? (setProfBtn(art || '/api/icons?s=512', cname + ' · ' + t.name + ' Card') + dlBtn('tier', ti, ci)) : '')
     + '</div>'
     + (ti >= 5 ? '<div class="tcspark"></div>' : '')
     + '<div class="holo" style="--hc:' + t.color + '59"></div></div>';
