@@ -72,6 +72,28 @@ function statLabel(marketKey, fallback) {
   return fallback || "Prop";
 }
 
+const seenMap = {}; // sport -> {rowKey: firstSeenMs} — spots props posted mid-game
+function rowKey(p) { return p.player + "|" + p.stat + "|" + p.line + "|" + (p.starts || ""); }
+function stampSeen(sport, props) {
+  const m = seenMap[sport] = seenMap[sport] || {};
+  const now = Date.now();
+  for (const p of props) { const k = rowKey(p); if (m[k] == null) m[k] = now; p.seen = m[k]; }
+  const keys = Object.keys(m);
+  if (keys.length > 4000) { const cut = now - 24 * 60 * 60 * 1000; for (const k of keys) if (m[k] < cut) delete m[k]; }
+}
+const brkLog = {}; // sport -> {day, count} break-check allowance
+function brkBudgetOk(sport) {
+  const day = new Date().toISOString().slice(0, 10);
+  const log = brkLog[sport];
+  if (!log || log.day !== day) { brkLog[sport] = { day, count: 0 }; return true; }
+  return log.count < 8; // at most 8 paid break checks per sport per day
+}
+function noteBrk(sport) {
+  const day = new Date().toISOString().slice(0, 10);
+  if (!brkLog[sport] || brkLog[sport].day !== day) brkLog[sport] = { day, count: 0 };
+  brkLog[sport].count++;
+}
+
 const cache = {}; // sport -> {ts, props}
 const inflight = {}; // sport -> Promise (single-flight dedupe)
 const fetchLog = {}; // sport -> {day, count} daily-budget brake
@@ -168,7 +190,7 @@ async function fetchSport(sport, key) {
   return rows;
 }
 
-function normalize(rows) {
+function normalize(rows, keepStarted) {
   const out = [];
   for (const row of rows) {
     if (!row || typeof row !== "object") continue;
@@ -182,7 +204,8 @@ function normalize(rows) {
     const matchup = row.event_name || row.matchup || (home && away ? away + " @ " + home : (row.event || ""));
     const starts = row.commence_time || row.start_time || row.event_time || row.game_time || "";
     // Only pre-game props: if a start time is present and already passed, skip.
-    if (starts && new Date(starts).getTime() < Date.now() - 10 * 60 * 1000) continue;
+    // (Break checks pass keepStarted and filter to genuinely-new rows themselves.)
+    if (!keepStarted && starts && new Date(starts).getTime() < Date.now() - 10 * 60 * 1000) continue;
     // Best-percentage support: pass through an implied probability when the
     // feed provides one (or derive it from American odds/prices when present).
     let pct = null;
@@ -257,6 +280,51 @@ module.exports = async (req, res) => {
   const sport = (req.query && req.query.sport) || "";
   if (SPORT_KEYS.indexOf(sport) === -1) { res.status(400).json({ ok: false, error: "unknown sport" }); return; }
   const hit = cache[sport];
+  // Break lane (Brandon 2026-11-16): while a game in this sport sits at
+  // halftime / intermission / a quarter break, the client may ask for a
+  // fresh pull (&brk=1) to catch 2nd-half / 4th-quarter props the moment
+  // PrizePicks posts them. Guardrails keep it minimal: the in-instance
+  // cache answers for 3 minutes, the response rides a 2-minute edge
+  // cache shared by every user, and paid break pulls are capped per day.
+  if (req.query && req.query.brk === "1") {
+    if (hit && Date.now() - hit.ts < 3 * 60 * 1000) {
+      res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=60");
+      res.status(200).json({ ok: true, configured: true, cached: true, brk: true, props: hit.props });
+      return;
+    }
+    if (!(await gamesToday(sport)) || !brkBudgetOk(sport)) {
+      if (hit) { res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=60"); res.status(200).json({ ok: true, configured: true, cached: true, brk: true, props: hit.props }); return; }
+      res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=60");
+      res.status(200).json({ ok: true, configured: true, brk: true, props: [] });
+      return;
+    }
+    try {
+      if (!inflight[sport]) {
+        noteBrk(sport); noteFetch(sport);
+        inflight[sport] = fetchSport(sport, key).finally(() => { delete inflight[sport]; });
+      }
+      const rows = await inflight[sport];
+      const preSeen = new Set(Object.keys(seenMap[sport] || {}));
+      let props = normalize(rows, true);
+      // Rows whose start already passed survive ONLY if they are genuinely
+      // new (posted after their game started = break props). Old rows and
+      // long-dead rows are dropped, exactly like the normal lane.
+      props = props.filter((p) => {
+        const t = p.starts ? new Date(p.starts).getTime() : NaN;
+        if (!isFinite(t) || t > Date.now() - 10 * 60 * 1000) return true;
+        if (t < Date.now() - 4 * 60 * 60 * 1000) return false;
+        return !preSeen.has(rowKey(p));
+      });
+      stampSeen(sport, props);
+      cache[sport] = { ts: Date.now(), props, pregameRefreshed: true };
+      res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=120");
+      res.status(200).json({ ok: true, configured: true, cached: false, brk: true, props });
+    } catch (err) {
+      res.setHeader("Cache-Control", "no-store");
+      res.status(200).json({ ok: false, configured: true, brk: true, error: String((err && err.message) || err), props: hit ? hit.props : [] });
+    }
+    return;
+  }
   if (cacheFresh(hit)) { if (!hit.props.length) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300"); res.status(200).json({ ok: true, configured: true, cached: true, props: hit.props }); return; }
   // Schedule gate: no games today -> no Parlay refresh until the evening,
   // and only one evening check per day for a game-less sport.
@@ -284,6 +352,7 @@ module.exports = async (req, res) => {
     }
     const rows = await inflight[sport];
     const props = normalize(rows);
+    stampSeen(sport, props);
     const wasPregame = !!(hit && Date.now() - hit.ts < DAY_TTL);
     if (noGamesMark) noGamesFetch[sport] = noGamesMark;
     cache[sport] = { ts: Date.now(), props, pregameRefreshed: wasPregame };

@@ -515,6 +515,23 @@ function headshotUrl(lg, id){
 
 /* ---------- scoreboard cache ---------- */
 var boardCache = {};   // leagueKey -> {events:[...], ts}
+var breakMap = {}; // leagueKey -> {teamLower: {detail}} games currently at a break
+function isBreakStatus(ev){
+  var t = ev && ev.status && ev.status.type;
+  if (!t || t.state !== "in") return false;
+  var nm = t.name || "", det = ((t.detail || "") + " " + (t.shortDetail || ""));
+  return /HALFTIME|END_PERIOD|INTERMISSION/i.test(nm) || /halftime|intermission|end of (1st|2nd|3rd|4th)/i.test(det);
+}
+function noteBreaks(lg, evs){
+  var bm = {};
+  (evs || []).forEach(function(e){
+    if (!isBreakStatus(e)) return;
+    var det = (e.status.type.shortDetail || e.status.type.detail || "At the break");
+    eventTeams(e).forEach(function(t){ bm[(t.name || "").toLowerCase()] = {detail: det}; });
+  });
+  breakMap[lg.key] = bm;
+  return bm;
+}
 function getScoreboard(lg, days){
   var ck = lg.key+"_"+days;
   if (boardCache[ck] && Date.now()-boardCache[ck].ts < 25000) return Promise.resolve(boardCache[ck].events);
@@ -522,7 +539,7 @@ function getScoreboard(lg, days){
   for (var i=0;i<days;i++){ var d = new Date(today); d.setDate(d.getDate()+i); urls.push(ESPN+lg.sport+"/"+lg.league+"/scoreboard?dates="+ymd(d)+"&limit=100"); }
   return Promise.all(urls.map(function(u){ return fetchJson(u).catch(function(){ return {events:[]}; }); }))
     .then(function(rs){ var ev=[]; rs.forEach(function(r){ (r.events||[]).forEach(function(e){ ev.push(e); }); });
-      boardCache[ck] = {events:ev, ts:Date.now()}; return ev; });
+      noteBreaks(lg, ev); boardCache[ck] = {events:ev, ts:Date.now()}; return ev; });
 }
 function eventTeams(ev){
   var comp = (ev.competitions||[])[0]; if (!comp) return [];
@@ -551,35 +568,59 @@ var PARLAY_KEYS = {nba:"basketball_nba", nfl:"americanfootball_nfl", cfb:"americ
 var propsCache = {};   // leagueKey -> [prop]
 var propsConfigured = true;
 function slugify(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
+function ingestProps(lg, rows){
+  var seen = {}, out = [];
+  rows.forEach(function(r){
+    var stTs = r.starts ? new Date(r.starts).getTime() : NaN;
+    var brk = !!(r.seen && isFinite(stTs) && (r.seen - stTs > 10*60*1000));
+    var id = lg.key + "_" + slugify(r.player) + "_" + slugify(r.stat) + (brk ? "_" + String(r.starts || "").replace(/[^0-9]/g, "") : "");
+    if (seen[id]) return; seen[id] = 1;
+    out.push({
+      id: id,
+      player: r.player, athleteId: "",
+      team: r.team || "", teamId: "",
+      league: lg.key, leagueLabel: lg.label,
+      stat: r.stat, line: r.line,
+      matchup: r.matchup || "", starts: r.starts || "", eventId: "",
+      img: photoCache[(r.player || "").toLowerCase()] || "",
+      pct: (r.pct != null ? r.pct : null),
+      brk: brk,
+      src: "PrizePicks \u00B7 via Parlay API"
+    });
+  });
+  out.forEach(function(p){ var k = p.player.toLowerCase(); if (!p.team && teamCache[k]) p.team = teamCache[k]; if (!p.athleteId && aidCache[k]) p.athleteId = aidCache[k]; });
+  out.sort(function(a, b){ return (new Date(a.starts || 0) - new Date(b.starts || 0)) || a.player.localeCompare(b.player); });
+  return out.slice(0, 240);
+}
 function buildProps(lg){
   if (propsCache[lg.key]) return Promise.resolve(propsCache[lg.key]);
   var sk = PARLAY_KEYS[lg.key];
   if (!sk) { propsCache[lg.key] = []; return Promise.resolve([]); }
-  return fetchJson("/api/props?sport="+sk).then(function(res){
+  return fetchJson("/api/props?sport=" + sk).then(function(res){
     if (res && res.configured === false) propsConfigured = false;
-    var rows = (res && res.props) || [];
-    var seen = {}, out = [];
-    rows.forEach(function(r){
-      var id = lg.key + "_" + slugify(r.player) + "_" + slugify(r.stat);
-      if (seen[id]) return; seen[id] = 1;
-      out.push({
-        id: id,
-        player: r.player, athleteId: "",
-        team: r.team || "", teamId: "",
-        league: lg.key, leagueLabel: lg.label,
-        stat: r.stat, line: r.line,
-        matchup: r.matchup || "", starts: r.starts || "", eventId: "",
-        img: photoCache[(r.player||"").toLowerCase()] || "",
-        pct: (r.pct!=null ? r.pct : null),
-        src: "PrizePicks \u00B7 via Parlay API"
-      });
-    });
-    out.forEach(function(p){ var k = p.player.toLowerCase(); if (!p.team && teamCache[k]) p.team = teamCache[k]; if (!p.athleteId && aidCache[k]) p.athleteId = aidCache[k]; });
-    out.sort(function(a,b){ return (new Date(a.starts||0) - new Date(b.starts||0)) || a.player.localeCompare(b.player); });
-    propsCache[lg.key] = out.slice(0, 240);
-    resolvePhotos(lg, propsCache[lg.key]);
-    return propsCache[lg.key];
+    var out = ingestProps(lg, (res && res.props) || []);
+    propsCache[lg.key] = out;
+    resolvePhotos(lg, out);
+    return out;
   }).catch(function(){ propsCache[lg.key] = []; return []; });
+}
+var brkFetchAt = {};
+function refreshPropsBrk(lg){
+  var sk = PARLAY_KEYS[lg.key]; if (!sk) return Promise.resolve(null);
+  var now = Date.now();
+  if (brkFetchAt[lg.key] && now - brkFetchAt[lg.key] < 150 * 1000) return Promise.resolve(null);
+  brkFetchAt[lg.key] = now;
+  return fetchJson("/api/props?sport=" + sk + "&brk=1").then(function(res){
+    var rows = (res && res.props) || [];
+    if (!rows.length) return null;
+    var oldIds = {}; (propsCache[lg.key] || []).forEach(function(p){ oldIds[p.id] = 1; });
+    var out = ingestProps(lg, rows);
+    var bm = breakMap[lg.key] || {};
+    out.forEach(function(p){ if (!oldIds[p.id] && p.team && bm[p.team.toLowerCase()]) p.brk = true; });
+    propsCache[lg.key] = out;
+    resolvePhotos(lg, out);
+    return out;
+  }).catch(function(){ return null; });
 }
 function allProps(){
   return Promise.all(PROP_LEAGUES.concat(["tennis","mlb"]).map(function(k){ return buildProps(leagueByKey(k)); }))
@@ -684,7 +725,7 @@ function tileHtml(g){
     + '<span class="pwrap"><span class="pinit">'+esc(initials(g.player))+'</span>' + (g.img ? '<img src="'+esc(g.img)+'" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>'
     + '<div class="pn">'+esc(g.player)+'</div><div class="pm">'+esc([g.team, g.leagueLabel].filter(function(x){ return x; }).join(" · "))+'</div>'
     + '<span class="pc">'+g.props.length+' prop'+(g.props.length===1?"":"s")+(g.starts ? ' · '+esc(fmtClock(g.starts)) : '')+'</span>'
-    + (lt ? '<br><span class="plive">LIVE · '+esc(lt.detail)+'</span>' : '') + '</div>';
+    + (g.brk ? '<br><span class="plive" style="background:rgba(245,197,24,.16);color:var(--gold)">⏸ '+esc(g.brkDetail || "AT THE BREAK")+'</span>' : (lt ? '<br><span class="plive">LIVE · '+esc(lt.detail)+'</span>' : '')) + '</div>';
 }
 function bindTiles(scope){ if (!scope) return; scope.querySelectorAll("[data-player]").forEach(function(t){ t.addEventListener("click", function(){ openPlayer(t.getAttribute("data-player"), t.getAttribute("data-league")); }); }); }
 var dlgPlayer = null;
@@ -699,12 +740,18 @@ function fillPlayerDlg(){
   var body = $("playerDlgBody"); if (!body) return;
   if (!list.length){ body.innerHTML = '<p class="empty">No props found for '+esc(dlgPlayer.name)+'.</p>'; return; }
   var g = playerGroups(list)[0];
-  var live = liveTeamsByLeague[g.league] && liveTeamsByLeague[g.league][(g.team||"").toLowerCase()];
-  body.innerHTML = '<div class="row" style="gap:12px;align-items:center"><img src="'+esc(g.img||"")+'" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:19px;font-weight:900">'+esc(g.player)+'</div><div class="note">'+esc([g.team, g.leagueLabel].filter(function(x){ return x; }).join(" · "))+' · '+list.length+' props · PrizePicks</div></div><button class="ghostbtn" id="pdlgClose">Close</button></div>'
+  var live = liveTeamsByLeague[g.league] && liveTeamsByLeague[g.league][(g.team || "").toLowerCase()];
+  var bmD = (breakMap[g.league] && g.team) ? breakMap[g.league][g.team.toLowerCase()] : null;
+  var brkList = list.filter(function(p){ return p.brk; });
+  var useBrk = !!(bmD && brkList.length);
+  var showList = useBrk ? brkList : list;
+  var closed = !!live && !useBrk;
+  body.innerHTML = '<div class="row" style="gap:12px;align-items:center"><img src="' + esc(g.img || "") + '" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:19px;font-weight:900">' + esc(g.player) + '</div><div class="note">' + esc([g.team, g.leagueLabel].filter(function(x){ return x; }).join(" · ")) + ' · ' + showList.length + ' props · PrizePicks</div></div><button class="ghostbtn" id="pdlgClose">Close</button></div>'
     + '<div id="pdlgLive"></div>'
-    + (live ? '<p class="sub" style="margin-top:8px">This game is live — props are closed. Props on your locked-in tickets keep tracking in My Tickets.</p>' : '')
-    + '<div class="pdlgbody'+(live ? ' closed' : '')+'">' + list.map(propCard).join("") + '</div>';
-  if (!live) bindPicks(body);
+    + (useBrk ? '<p class="sub" style="margin-top:8px;color:var(--gold)">⏸ ' + esc(bmD.detail || "At the break") + ' — fresh props for the next part of the game. Pick before play resumes; they come off the board when it starts.</p>' : (live ? '<p class="sub" style="margin-top:8px">This game is live — props are closed. Props on your locked-in tickets keep tracking in My Tickets.</p>' : ''))
+    + (bmD && !brkList.length && live ? '<p class="sub" style="margin-top:8px">At the break — no new props posted for this player yet. It keeps checking while the break lasts.</p>' : '')
+    + '<div class="pdlgbody' + (closed ? ' closed' : '') + '">' + showList.map(propCard).join("") + '</div>';
+  if (!closed) bindPicks(body);
   var cb = $("pdlgClose"); if (cb) cb.addEventListener("click", function(){ $("playerDlg").close(); });
   loadLiveForPlayer(g, list);
 }
@@ -799,13 +846,23 @@ function renderBoards(){
       if (propsConfigured === false) $("sportProps").innerHTML = '<p class="empty">Props are almost ready — the PrizePicks feed key is being connected. Scores, news and tickets all work meanwhile.</p>';
       else { $("sportProps").innerHTML = '<p class="empty">No '+esc(lg.label)+' props on the board right now — games with props will appear here.</p><div id="sportNews"></div>'; renderSportNews(lg); }
       var pw0 = $("popWrap"); if (pw0) pw0.style.display = "none";
+      getScoreboard(lg, 1).then(function(){
+        var bmE = breakMap[lg.key] || {};
+        if (Object.keys(bmE).length) refreshPropsBrk(lg).then(function(out){ if (out && out.length && currentSport === lg.key) renderBoards(); });
+      }).catch(function(){});
       return;
     }
     getScoreboard(lg, 1).then(function(evs){
       var lt = {};
       (evs||[]).forEach(function(e){ var st = e.status && e.status.type && e.status.type.state; if (st!=="in") return; var det = (e.status.type.shortDetail || e.status.type.detail || "LIVE"); eventTeams(e).forEach(function(t){ lt[(t.name||"").toLowerCase()] = {detail: det}; }); });
       liveTeamsByLeague[lg.key] = lt;
-    }).catch(function(){}).then(function(){ if (currentSport===lg.key) renderBoardTiles(lg, ps); });
+    }).catch(function(){}).then(function(){
+      if (currentSport !== lg.key) return;
+      var bm = breakMap[lg.key] || {};
+      if (Object.keys(bm).length){
+        refreshPropsBrk(lg).then(function(out){ if (currentSport === lg.key) renderBoardTiles(lg, out || ps); });
+      } else renderBoardTiles(lg, ps);
+    });
   }).catch(function(){ $("sportProps").innerHTML = '<p class="empty">Props could not load — check your connection and tap Refresh.</p>'; });
 }
 function renderBoardTiles(lg, ps){
@@ -825,16 +882,34 @@ function renderBoardTiles(lg, ps){
   if (tf){ setHtml(tf, teamList.length ? '<button type="button" class="tab'+(boardTeam==="all"?" on":"")+'" data-team="all">All teams</button>' + teamList.map(function(t){ return '<button type="button" class="tab'+(boardTeam===t?" on":"")+'" data-team="'+esc(t)+'">'+esc(t)+'</button>'; }).join("") : "");
     tf.querySelectorAll("[data-team]").forEach(function(b){ b.addEventListener("click", function(){ boardTeam = b.getAttribute("data-team"); renderBoards(); }); }); }
   var liveMap = liveTeamsByLeague[lg.key] || {};
-  var gs = playerGroups(ps).filter(function(g){ return !(g.team && liveMap[g.team.toLowerCase()]); });
+  var bm = breakMap[lg.key] || {};
+  var fresh = ps.filter(function(p){ if (p.brk || !p.starts) return true; return new Date(p.starts).getTime() > Date.now() - 10 * 60 * 1000; });
+  var allGroups = playerGroups(fresh);
+  var brkGroups = [];
+  allGroups.forEach(function(g){
+    if (!(g.team && bm[g.team.toLowerCase()])) return;
+    var bps = g.props.filter(function(p){ return p.brk; });
+    if (bps.length) brkGroups.push({player: g.player, team: g.team, img: g.img, league: g.league, leagueLabel: g.leagueLabel, starts: g.starts, props: bps, brk: true, brkDetail: (bm[g.team.toLowerCase()] || {}).detail || "At the break"});
+  });
+  var brkPlayers = {}; brkGroups.forEach(function(g){ brkPlayers[g.player] = 1; });
+  var gs = allGroups.filter(function(g){ return !(g.team && liveMap[g.team.toLowerCase()]) && !brkPlayers[g.player]; });
   if (boardStat!=="all") gs = gs.map(function(g){ return {player:g.player, team:g.team, img:g.img, league:g.league, leagueLabel:g.leagueLabel, starts:g.starts, props:g.props.filter(function(p){ return p.stat===boardStat; })}; }).filter(function(g){ return g.props.length; });
   if (boardTeam!=="all") gs = gs.filter(function(g){ return g.team===boardTeam; });
   if (boardQuery) gs = gs.filter(function(g){ return g.player.toLowerCase().indexOf(boardQuery)>-1; });
+  if (boardTeam !== "all") brkGroups = brkGroups.filter(function(g){ return g.team === boardTeam; });
+  if (boardQuery) brkGroups = brkGroups.filter(function(g){ return g.player.toLowerCase().indexOf(boardQuery) > -1; });
+  brkGroups = sortGroups(brkGroups, "pct");
   gs = sortGroups(gs, boardSort);
   var filtered = boardStat!=="all" || boardTeam!=="all" || boardQuery;
   var pw = $("popWrap");
   if (pw){ if (!filtered && boardSort==="popular" && gs.length>3){ pw.style.display = ""; setHtml($("popTiles"), gs.slice(0,6).map(tileHtml).join("")); bindTiles($("popTiles")); } else pw.style.display = "none"; }
   var box = $("sportProps");
-  box.innerHTML = gs.length ? gs.map(tileHtml).join("") : '<p class="empty">No players match — try another name, team or stat.</p>';
+  var brkHtml = "";
+  if (brkGroups.length){
+    brkHtml = '<div style="grid-column:1/-1;border:1px solid rgba(245,197,24,.45);background:rgba(245,197,24,.07);border-radius:14px;padding:10px 12px"><b style="color:var(--gold)">⏸ AT THE BREAK — fresh props just posted</b><div class="note" style="margin-top:2px">2nd-half &amp; next-quarter props for games at the break. Pick before play resumes — they come off the board when the next quarter or half starts.</div></div>'
+      + brkGroups.map(tileHtml).join("");
+  }
+  box.innerHTML = brkHtml + (gs.length ? gs.map(tileHtml).join("") : (brkGroups.length ? "" : '<p class="empty">No players match — try another name, team or stat.</p>'));
   var pill2 = $("propCountPill"); if (pill2) pill2.textContent = gs.length + " players · tap a player for all their props";
   bindTiles(box);
 }
@@ -1162,12 +1237,13 @@ function renderGameProps(lg, s){
   var comp = (s.header && s.header.competitions || [])[0] || {};
   var cs = comp.competitors || [];
   var st = comp.status && comp.status.type || {};
+  var inBrk = isBreakStatus({status: {type: st}});
   if (st.state === "in"){
     var lt = liveTeamsByLeague[lg.key] = liveTeamsByLeague[lg.key] || {};
     cs.forEach(function(c){ var det = st.shortDetail || st.detail || "LIVE"; if (c.team){ if (c.team.displayName) lt[c.team.displayName.toLowerCase()] = {detail: det}; if (c.team.shortDisplayName) lt[c.team.shortDisplayName.toLowerCase()] = {detail: det}; } });
   }
-  buildProps(lg).then(function(ps){
-    var head = '<div style="font-size:16px;margin-top:14px"><b>Player Props — This Game</b> <span class="note">best on top · tap a player for all their props</span></div>';
+  (inBrk ? refreshPropsBrk(lg).then(function(){ return buildProps(lg); }) : buildProps(lg)).then(function(ps){
+    var head = '<div style="font-size:16px;margin-top:14px"><b>Player Props — This Game</b> <span class="note">best on top · tap a player for all their props</span></div>' + (inBrk ? '<p class="sub" style="color:var(--gold);margin-top:6px">⏸ At the break — fresh props just posted for the next part of the game. Pick before play resumes.</p>' : '');
     if (!ps.length){ box.innerHTML = head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'; return; }
     var names = {}, teamNames = {}, teamLast = {};
     try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ (tp.athletes||[]).forEach(function(a){ if (a.athlete && a.athlete.displayName) names[lastNameOf(a.athlete.displayName)] = 1; }); }); } catch(e){}
@@ -2103,7 +2179,9 @@ renderBoard();
 cloudInit();
 showView("home");
 if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").catch(function(){}); }
-setInterval(function(){ boardCache = {}; refreshHome(); if ($("view-live").classList.contains("on")){ renderLive(); if (window._openGame) openGame(window._openGame.key, window._openGame.eventId, true); } }, 30000);
+setInterval(function(){ boardCache = {}; refreshHome(); if ($("view-live").classList.contains("on")){ renderLive(); if (window._openGame) openGame(window._openGame.key, window._openGame.eventId, true); }
+  if (window._view === "sport" && currentSport !== "all"){ getScoreboard(leagueByKey(currentSport), 1).then(function(){ var bmI = breakMap[currentSport] || {}; if (Object.keys(bmI).length || window._brkWasOpen){ window._brkWasOpen = !!Object.keys(bmI).length; renderBoards(); } }).catch(function(){}); }
+}, 30000);
 setInterval(function(){ propsCache = {}; if (currentSport!=="all") renderBoards(); }, 30*60*1000);
 </script>
 <button id="slipChip" type="button"></button>
