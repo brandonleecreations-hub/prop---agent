@@ -941,8 +941,17 @@ function renderBoardTiles(lg, ps){
     brkHtml = '<div style="grid-column:1/-1;border:1px solid rgba(245,197,24,.45);background:rgba(245,197,24,.07);border-radius:14px;padding:10px 12px"><b style="color:var(--gold)">⏸ AT THE BREAK — fresh props just posted</b><div class="note" style="margin-top:2px">2nd-half &amp; next-quarter props for games at the break. Pick before play resumes — they come off the board when the next quarter or half starts.</div></div>'
       + brkGroups.map(tileHtml).join("");
   }
-  box.innerHTML = brkHtml + (gs.length ? gs.map(tileHtml).join("") : (brkGroups.length ? "" : '<p class="empty">No players match — try another name, team or stat.</p>'));
-  var pill2 = $("propCountPill"); if (pill2) pill2.textContent = gs.length + " players · tap a player for all their props";
+  var boardEmpty = !gs.length && !brkGroups.length && !filtered;
+  if (boardEmpty){
+    // Props were fetched but every game on the board has started (or the
+    // slate turned over): show the full empty state — the sport's live and
+    // upcoming games, then its news — not the filter message.
+    box.innerHTML = '<p class="empty">No '+esc(lg.label)+' props on the board right now — games with props will appear here.</p><div id="sportGames"></div><div id="sportNews"></div>';
+    renderSportNews(lg); renderSportGames(lg);
+  } else {
+    box.innerHTML = brkHtml + (gs.length ? gs.map(tileHtml).join("") : (brkGroups.length ? "" : '<p class="empty">No players match — try another name, team or stat.</p>'));
+  }
+  var pill2 = $("propCountPill"); if (pill2) pill2.textContent = boardEmpty ? "" : gs.length + " players · tap a player for all their props";
   bindTiles(box);
 }
 
