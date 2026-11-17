@@ -23,6 +23,11 @@ async function rest(path, opts) {
   return { status: r.status, json: j, text: txt };
 }
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+// Ticket likes live on the ticket row (legs[0].__likedBy). A sync replaces
+// the user's rows, so likes are carried over by leg fingerprint.
+function fpOf(legs) {
+  return (Array.isArray(legs) ? legs : []).map((l) => [l.player || "", l.stat || "", l.dir || "", l.line].join("|")).join(";;");
+}
 
 // profiles.id has a foreign key to auth.users (the original build used
 // Supabase Auth). A device's self-made UUID is not an auth user, so the
@@ -88,17 +93,30 @@ module.exports = async (req, res) => {
         }
       }
       if (up.status >= 300) { res.status(200).json({ ok: false, step: "profile", status: up.status, detail: (up.text || "").slice(0, 200) }); return; }
+      const prev = await rest("tickets?select=legs&user_id=eq." + uid + "&limit=500", { headers: sbHeaders() });
+      const likeMap = {};
+      if (Array.isArray(prev.json)) prev.json.forEach((r) => {
+        const by = (Array.isArray(r.legs) && r.legs[0] && Array.isArray(r.legs[0].__likedBy)) ? r.legs[0].__likedBy : [];
+        if (by.length) likeMap[fpOf(r.legs)] = by;
+      });
       await rest("tickets?user_id=eq." + uid, { method: "DELETE", headers: sbHeaders({ Prefer: "return=minimal" }) });
       if (rows.length) {
         const ins = await rest("tickets", {
           method: "POST",
           headers: sbHeaders({ Prefer: "return=minimal" }),
-          body: JSON.stringify(rows.map((t) => ({
-            user_id: uid,
-            legs: Array.isArray(t.legs) ? t.legs : [],
-            status: ["win", "loss", "pending"].indexOf(t.status) > -1 ? t.status : "pending",
-            is_public: true,
-          }))),
+          body: JSON.stringify(rows.map((t) => {
+            let legs = Array.isArray(t.legs) ? t.legs : [];
+            const by = likeMap[fpOf(legs)];
+            if (by && by.length && legs.length) {
+              legs = legs.map((l, i) => (i === 0 ? Object.assign({}, l, { __likedBy: by, __likes: by.length }) : l));
+            }
+            return {
+              user_id: uid,
+              legs: legs,
+              status: ["win", "loss", "pending"].indexOf(t.status) > -1 ? t.status : "pending",
+              is_public: true,
+            };
+          })),
         });
         if (ins.status >= 300) { res.status(200).json({ ok: false, step: "tickets", status: ins.status, detail: (ins.text || "").slice(0, 200) }); return; }
       }

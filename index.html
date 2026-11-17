@@ -191,6 +191,10 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 @keyframes stampIn{0%{transform:rotate(-32deg) scale(2.4);opacity:0}60%{opacity:1}100%{transform:rotate(-12deg) scale(1);opacity:1}}
 .shake{animation:shk .3s ease .4s}
 @keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.likebtn{background:#17171f;border:1px solid #34343f;color:#e5e9f2;border-radius:999px;padding:4px 11px;font-weight:800;font-size:12.5px;cursor:pointer}
+.likebtn.on{border-color:#f5c518;color:#f5c518}
+.likebtn .hrt{color:#ff5d7a}
+.agentclick{cursor:pointer}
 .stampmini{position:absolute;top:12px;right:12px;border:3px solid var(--grn);color:var(--grn);background:var(--panel);font-size:11px;font-weight:900;letter-spacing:1.5px;padding:3px 9px;border-radius:6px;transform:rotate(-10deg);opacity:.92;pointer-events:none;z-index:2}
 .gteam{overflow-wrap:break-word}
 .redxwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(24,0,0,.45);border-radius:var(--r);z-index:5;pointer-events:none;animation:xfade 1.6s ease both}
@@ -349,6 +353,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <div id="heroStats"></div>
     <p class="note" id="heroStatus"></p>
     <div id="pickemHome" class="pickemBox"></div>
+    <div id="topTicket"></div>
     <div id="tickerWrap" style="display:none"><h2>Your Players Ticker</h2><p class="sub">Your picks, live — follows the players on your slip and tickets, updated with the scores every 30 seconds.</p><div class="tickwrap" id="yourTicker"></div></div>
     <div id="secAgents"><h2>Top Agents</h2>
     <p class="sub">Ranked by most winning tickets — tap an agent to see their shared tickets.</p>
@@ -475,8 +480,11 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
       <button class="agentbtn" id="agentBtn">👤 Guest Agent</button>
     </div>
     <h2>🏆 Leaderboard</h2>
-    <p class="sub">Top 50 agents · ranked by most winning tickets · name, tier and wins only — never private ticket details.</p>
+    <p class="sub">Top 50 agents · ranked by most winning tickets · tap an agent to see their shared tickets and follow them.</p>
     <div class="card" id="leaderboard"><p class="empty">Loading the board…</p></div>
+    <h2>👥 Following</h2>
+    <p class="sub">Agents you follow and their latest shared tickets.</p>
+    <div id="followingBox"><p class="empty">Loading…</p></div>
     <h2>🏆 Tiers</h2>
     <p class="sub">Climb the ladder by locking winning tickets. A win counts only when every leg on the ticket hits.</p>
     <div class="grid" id="tiers"></div>
@@ -502,6 +510,9 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 
 <dialog id="playerDlg">
   <div id="playerDlgBody"></div>
+</dialog>
+<dialog id="viewAgentDlg">
+  <div id="viewAgentBody"></div>
 </dialog>
 <dialog id="agentDlg">
   <h3>Agent profile</h3>
@@ -1110,9 +1121,9 @@ function myWins(){ return tickets.filter(function(t){ return t.result==="win"; }
 function maxWins(){ var m = 0; try { m = parseInt(lsGet("pa_maxwins", 0), 10) || 0; } catch(e){} var w = myWins(); if (w > m){ m = w; try { lsSet("pa_maxwins", m); } catch(e){} } return m; }
 function agentRows(){
   var rows = cloudAgents
-    ? cloudAgents.filter(function(a){ return a.id !== cloudUid; }).map(function(a){ return {name:a.display_name||"Agent", wins:a.wins||0, me:false, avatar:a.avatar_url||""}; })
-    : SEED_AGENTS.map(function(a){ return {name:a.name, wins:a.wins, me:false, avatar:""}; });
-  rows.push({name:(profile.name||"You")+" (You)", wins:myWins(), me:true, avatar:profile.avatar||""});
+    ? cloudAgents.filter(function(a){ return a.id !== cloudUid; }).map(function(a){ return {id:a.id, name:a.display_name||"Agent", wins:a.wins||0, me:false, avatar:a.avatar_url||""}; })
+    : SEED_AGENTS.map(function(a){ return {id:"", name:a.name, wins:a.wins, me:false, avatar:""}; });
+  rows.push({id:cloudUid, name:(profile.name||"You")+" (You)", wins:myWins(), me:true, avatar:profile.avatar||""});
   rows.sort(function(a,b){ return b.wins-a.wins; });
   return rows;
 }
@@ -1121,7 +1132,7 @@ function renderTopAgents(){
   var rows = agentRows().slice(0,5);
   setHtml($("topAgents"), '<div class="card">'+rows.map(function(r,i){
     var t = tierFor(r.wins);
-    return '<div class="leg"><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.name+'</span></div><span class="note">'+r.wins+' winning tickets</span></div>';
+    return '<div class="leg'+(r.id?' agentclick':'')+'"'+(r.id?' data-agent="'+r.id+'"':'')+'><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.name+'</span></div><span class="note">'+r.wins+' winning tickets</span></div>';
   }).join("")+'</div>');
 }
 function renderUpcoming(){
@@ -1911,7 +1922,7 @@ function renderTickets(){
         + '<div data-stepper="'+esc(t.id)+'|'+esc(l.id)+'"></div>'
         + (l.player ? '<div style="padding:2px 0 8px"><button type="button" class="ghostbtn" data-pplay="'+esc(t.id)+'|'+esc(l.id)+'" style="font-size:12px;padding:5px 11px">Play by play - '+esc(l.player)+'</button><div data-pplays="'+esc(t.id)+'|'+esc(l.id)+'"></div></div>' : '');
     }).join("");
-    return '<div class="card" data-ticket="'+t.id+'"><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span>' + res + '</span></div><span class="stampmini">LOCKED IN</span>'+legs+'</div>';
+    return '<div class="card" data-ticket="'+t.id+'"><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span>' + res + '</span></div>' + likeChip(t) + '<span class="stampmini">LOCKED IN</span>'+legs+'</div>';
   }).join("");
   box.querySelectorAll("[data-pplay]").forEach(function(b){ b.addEventListener("click", function(){ togglePlayerPlays(b); }); });
   tickets.forEach(function(t){
@@ -2094,9 +2105,10 @@ function tierCardHTML(t, wins, withBtns, ci){
 
 function renderBoard(){
   renderPickem();
+  renderFollowing();
   var rows = agentRows();
   $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Wins</th></tr>'
-    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b></td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
+    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+(r.id?' class="agentclick" data-agent="'+r.id+'"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b></td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
   var wins = maxWins();
   $("tiers").innerHTML = TIERS.map(function(t){ return tierCardHTML(t, wins, false, charIdxOf()); }).join("");
   var cards = [];
@@ -2554,6 +2566,105 @@ document.addEventListener("click", function(e){
 });
 loadPickemEvent();
 renderPickem();
+/* ---------- social: follows, public picks, ticket likes ---------- */
+var myFollows = lsGet("pa_follows", []);
+var followCounts = {};
+var myLikeCounts = {};
+var feedHtmlCache = "", feedAt = 0, topAt = 0;
+function fpOf(legs){ return (legs || []).map(function(l){ return [l.player || "", l.stat || "", l.dir || "", l.line].join("|"); }).join(";;"); }
+function socialGet(q){ return fetch("/api/social?" + q).then(function(r){ return r.json(); }).catch(function(){ return null; }); }
+function socialPost(b){ return fetch("/api/social", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) }).then(function(r){ return r.json(); }).catch(function(){ return null; }); }
+function loadSocialState(){
+  if (!cloudUid) return;
+  socialGet("state=1&uid=" + encodeURIComponent(cloudUid)).then(function(j){
+    if (j && j.ok) { myFollows = j.following || []; lsSet("pa_follows", myFollows); feedAt = 0; renderFollowing(); }
+  });
+  socialGet("counts=1").then(function(j){ if (j && j.ok) followCounts = j.counts || {}; });
+  loadMyLikes();
+}
+function loadMyLikes(){
+  if (!cloudUid) return;
+  socialGet("picks=" + encodeURIComponent(cloudUid) + "&me=" + encodeURIComponent(cloudUid)).then(function(j){
+    if (j && j.ok) { myLikeCounts = {}; (j.tickets || []).forEach(function(t){ myLikeCounts[fpOf(t.legs)] = t.likes || 0; }); renderTickets(); }
+  });
+}
+function likeChip(t){ var n = myLikeCounts[fpOf(t.legs)] || 0; return n ? '<div class="note" style="margin-top:2px"><span style="color:#ff5d7a">♥</span> ' + n + ' like' + (n === 1 ? "" : "s") + ' on this ticket</div>' : ""; }
+function isFollowing(id){ return myFollows.indexOf(id) > -1; }
+function toggleFollow(id){
+  var on = isFollowing(id);
+  socialPost({ uid: cloudUid, target: id, action: on ? "unfollow" : "follow" }).then(function(j){
+    if (j && j.ok) {
+      if (on) myFollows = myFollows.filter(function(x){ return x !== id; }); else myFollows.push(id);
+      lsSet("pa_follows", myFollows);
+      followCounts[id] = Math.max(0, (followCounts[id] || 0) + (on ? -1 : 1));
+      feedAt = 0;
+      renderBoard();
+      if (window._viewAgentId === id) openAgent(id, true);
+    }
+  });
+}
+function statusChip(st){ return st === "win" ? '<span class="hit">WON</span>' : st === "loss" ? '<span class="miss">LOST</span>' : '<span class="pend">ACTIVE</span>'; }
+function foreignTicketHtml(t, ownerName){
+  var legs = (t.legs || []).map(function(l){
+    return '<div class="leg"><span class="dir ' + (l.dir === "MORE" ? "more" : "less") + '">' + esc(l.dir || "") + '</span><div style="flex:1"><b>' + esc(l.player || "") + '</b> — ' + esc(l.stat || "") + ' ' + (l.line != null ? l.line : "") + '<br><span class="note">' + esc(l.matchup || l.team || "") + (l.starts ? ' · ' + esc(fmtTime(l.starts)) : '') + '</span></div></div>';
+  }).join("");
+  var mine = t.user_id === cloudUid;
+  return '<div class="card" style="margin-top:10px"><div class="row" style="justify-content:space-between;padding-right:108px"><b>' + (ownerName ? esc(ownerName) + ' · ' : '') + 'Ticket · ' + new Date(t.created_at).toLocaleString() + '</b><span>' + statusChip(t.status) + '</span></div><span class="stampmini">LOCKED IN</span>' + legs
+    + '<div style="margin-top:8px">' + (mine ? '<span class="note"><span style="color:#ff5d7a">♥</span> ' + (t.likes || 0) + ' likes</span>' : '<button type="button" class="likebtn' + (t.likedByMe ? ' on' : '') + '" data-like="' + t.id + '"><span class="hrt">♥</span> ' + (t.likes || 0) + '</button>') + '</div></div>';
+}
+function openAgent(id, refresh){
+  window._viewAgentId = id;
+  var dlg = $("viewAgentDlg"); if (!dlg) return;
+  var body = $("viewAgentBody");
+  if (!refresh) { body.innerHTML = '<p class="empty">Loading agent…</p>'; if (!dlg.open) dlg.showModal(); }
+  socialGet("picks=" + encodeURIComponent(id) + "&me=" + encodeURIComponent(cloudUid)).then(function(j){
+    if (!j || !j.ok || !j.profile) { body.innerHTML = '<p class="empty">Could not load this agent.</p>'; return; }
+    var p = j.profile, t = tierFor(p.wins || 0), mine = id === cloudUid;
+    var head = '<div class="row" style="gap:12px;align-items:center"><img src="' + esc(p.avatar_url || "/api/icons?s=192") + '" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:19px;font-weight:900">' + esc(p.display_name || "Agent") + '</div><div class="note">' + t.name + ' · ' + (p.wins || 0) + ' wins · ' + (followCounts[id] || 0) + ' followers' + (p.featured_card ? ' · ' + esc(p.featured_card) : '') + '</div></div><button class="ghostbtn" id="vaClose">Close</button></div>'
+      + (mine ? '<p class="sub" style="margin-top:8px">This is you — exactly what other agents see on your public profile.</p>' : '<div style="margin-top:10px"><button type="button" class="ghostbtn" id="vaFollow" style="font-weight:800;padding:9px 16px;' + (isFollowing(id) ? '' : 'background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none') + '">' + (isFollowing(id) ? '✓ Following — tap to unfollow' : '+ Follow') + '</button></div>');
+    var tk = (j.tickets || []).map(function(t2){ return foreignTicketHtml(t2, null); }).join("");
+    body.innerHTML = head + '<h3 style="margin:16px 0 4px">Their tickets</h3>' + (tk || '<p class="empty">No shared tickets yet.</p>');
+    var cb = $("vaClose"); if (cb) cb.addEventListener("click", function(){ dlg.close(); });
+    var fb = $("vaFollow"); if (fb) fb.addEventListener("click", function(){ toggleFollow(id); });
+  });
+}
+function renderFollowing(){
+  var box = $("followingBox"); if (!box) return;
+  if (!myFollows.length) { box.innerHTML = '<div class="card"><p class="sub" style="margin:0">You are not following anyone yet — tap any agent on the leaderboard or Top Agents to open their profile and follow them.</p></div>'; return; }
+  if (feedHtmlCache && Date.now() - feedAt < 60000) { box.innerHTML = feedHtmlCache; return; }
+  feedAt = Date.now();
+  socialGet("feed=1&uid=" + encodeURIComponent(cloudUid)).then(function(j){
+    if (!j || !j.ok) { box.innerHTML = '<div class="card"><p class="sub" style="margin:0">Could not load your following feed right now.</p></div>'; return; }
+    feedHtmlCache = (!j.items || !j.items.length)
+      ? '<div class="card"><p class="sub" style="margin:0">The agents you follow have not shared any tickets yet.</p></div>'
+      : j.items.map(function(it){ return foreignTicketHtml(it.ticket, it.owner.display_name); }).join("");
+    box.innerHTML = feedHtmlCache;
+  });
+}
+function renderTopTicket(){
+  var box = $("topTicket"); if (!box) return;
+  if (Date.now() - topAt < 5 * 60 * 1000 && box._done) return;
+  topAt = Date.now();
+  socialGet("top=1&me=" + encodeURIComponent(cloudUid)).then(function(j){
+    box._done = true;
+    if (!j || !j.ok || !j.ticket) { box.innerHTML = ""; return; }
+    var t = j.ticket, o = j.owner || {};
+    var legs = (t.legs || []).slice(0, 3).map(function(l){ return esc(l.player || "") + ' ' + (l.dir || "") + ' ' + (l.line != null ? l.line : "") + ' ' + esc(l.stat || ""); }).join(" · ");
+    var more = (t.legs || []).length > 3 ? ' · +' + ((t.legs || []).length - 3) + ' more' : '';
+    box.innerHTML = '<div class="card" style="padding:10px 14px;margin-top:12px"><div class="row" style="gap:9px;align-items:center"><span style="color:#ff5d7a;font-size:16px">♥</span><div style="flex:1;min-width:0"><div style="font-weight:900;font-size:13px;letter-spacing:.6px">TOP TICKET · ' + (t.likes || 0) + ' LIKES</div><div class="note" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (o.avatar_url ? '<img src="' + esc(o.avatar_url) + '" alt="" style="width:16px;height:16px;border-radius:50%;object-fit:cover;vertical-align:-3px;margin-right:5px">' : '') + '<b style="color:#e5e9f2">' + esc(o.display_name || "Agent") + '</b> · ' + statusChip(t.status) + ' · ' + legs + more + '</div></div>' + (o.id && o.id !== cloudUid ? '<button type="button" class="likebtn' + (t.likedByMe ? ' on' : '') + '" data-like="' + t.id + '"><span class="hrt">♥</span> ' + (t.likes || 0) + '</button>' : '<span class="note">♥ ' + (t.likes || 0) + '</span>') + '</div></div>';
+  });
+}
+document.addEventListener("click", function(e){
+  var c = e.target && e.target.closest ? e.target.closest("[data-agent]") : null;
+  if (c) { openAgent(c.getAttribute("data-agent")); return; }
+  var b = e.target && e.target.closest ? e.target.closest("[data-like]") : null;
+  if (!b) return;
+  var on = b.classList.contains("on");
+  socialPost({ uid: cloudUid, ticketId: b.getAttribute("data-like"), action: on ? "unlike" : "like" }).then(function(j){
+    if (j && j.ok) { b.classList.toggle("on", !on); b.innerHTML = '<span class="hrt">♥</span> ' + j.likes; }
+  });
+});
+
 setInterval(function(){ loadPickemEvent(); renderPickem(); }, 30000);
 
 /* ---------- profile + push ---------- */
@@ -2833,6 +2944,7 @@ function fetchBoard(){
 }
 function cloudInit(){
   fetchBoard();
+  loadSocialState();
   fetch("/api/profile?uid="+encodeURIComponent(cloudUid)).then(function(r){ return r.json(); }).then(function(j){
     if (!j || !j.ok) return;
     var restored = false;
@@ -2900,7 +3012,7 @@ function setSport(key){
 })();
 
 /* ---------- init + refresh ---------- */
-function refreshHome(){ renderTopAgents(); renderUpcoming(); renderNews(); renderTicker(); }
+function refreshHome(){ renderTopAgents(); renderUpcoming(); renderNews(); renderTicker(); renderTopTicket(); }
 $("refreshBtn").addEventListener("click", function(){ boardCache = {}; propsCache = {}; refreshHome(); if ($("view-live").classList.contains("on")) renderLive(); if (currentSport!=="all") renderBoards(); });
 $("gameDetail").addEventListener("click", function(e){ var b = e.target && e.target.closest ? e.target.closest(".gcBack") : null; if (b) closeGame(false); });
 var tkR = $("tkRefresh"); if (tkR) tkR.addEventListener("click", function(){ renderTickets(); });
