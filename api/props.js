@@ -257,7 +257,7 @@ module.exports = async (req, res) => {
   const sport = (req.query && req.query.sport) || "";
   if (SPORT_KEYS.indexOf(sport) === -1) { res.status(400).json({ ok: false, error: "unknown sport" }); return; }
   const hit = cache[sport];
-  if (cacheFresh(hit)) { res.status(200).json({ ok: true, configured: true, cached: true, props: hit.props }); return; }
+  if (cacheFresh(hit)) { if (!hit.props.length) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300"); res.status(200).json({ ok: true, configured: true, cached: true, props: hit.props }); return; }
   // Schedule gate: no games today -> no Parlay refresh until the evening,
   // and only one evening check per day for a game-less sport.
   let noGamesMark = null;
@@ -272,7 +272,7 @@ module.exports = async (req, res) => {
   // Budget brake: never let a runaway loop drain the account. Serve the
   // last board we have (even stale) rather than paying for another fetch.
   if (budgetLeft(sport) <= 0) {
-    if (hit) { res.status(200).json({ ok: true, configured: true, cached: true, stale: true, props: hit.props }); return; }
+    if (hit) { if (!hit.props.length) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300"); res.status(200).json({ ok: true, configured: true, cached: true, stale: true, props: hit.props }); return; }
     res.setHeader("Cache-Control", "no-store");
     res.status(200).json({ ok: false, configured: true, error: "daily fetch budget reached for this sport", props: [] });
     return;
@@ -287,7 +287,7 @@ module.exports = async (req, res) => {
     const wasPregame = !!(hit && Date.now() - hit.ts < DAY_TTL);
     if (noGamesMark) noGamesFetch[sport] = noGamesMark;
     cache[sport] = { ts: Date.now(), props, pregameRefreshed: wasPregame };
-    res.status(200).json({ ok: true, configured: true, cached: false, props });
+    if (!props.length) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300"); res.status(200).json({ ok: true, configured: true, cached: false, props });
   } catch (err) {
     res.setHeader("Cache-Control", "no-store");
     res.status(200).json({ ok: false, configured: true, error: String((err && err.message) || err), props: hit ? hit.props : [] });

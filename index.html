@@ -156,6 +156,7 @@ dialog h3{margin:0 0 6px;font-size:18px}
 .hit{color:var(--grn);font-weight:800}.miss{color:var(--red);font-weight:800}.pend{color:var(--gold);font-weight:700}
 .searchbar{margin:0 0 12px}
 .empty{color:var(--mut);font-size:14px;padding:8px 0}
+#sportProps>.empty,#sportProps>#sportNews{grid-column:1/-1}
 details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .hero{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 16px 14px;margin:0 0 12px;cursor:pointer;box-shadow:0 0 0 1px rgba(124,58,237,.25),0 8px 30px rgba(124,58,237,.18);position:relative;overflow:hidden}
 .hero::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--cyan),var(--purp),var(--purp2))}
@@ -483,6 +484,8 @@ function initials(name){ return name.split(/\s+/).map(function(w){return w.charA
 function fetchJson(url){ return fetch(url).then(function(r){ if(!r.ok) throw new Error("http "+r.status); return r.json(); }); }
 function fmtTime(iso){ try { var d = new Date(iso); return d.toLocaleString([], {weekday:"short", hour:"numeric", minute:"2-digit"}); } catch(e){ return ""; } }
 function fmtClock(iso){ try { var d = new Date(iso); return d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); } catch(e){ return ""; } }
+function fmtClockET(iso){ try { var d = new Date(iso); return d.toLocaleTimeString("en-US", {timeZone:"America/New_York", hour:"numeric", minute:"2-digit"}); } catch(e){ return ""; } }
+function fmtDayET(iso){ try { var d = new Date(iso); return d.toLocaleDateString("en-US", {timeZone:"America/New_York", weekday:"short", month:"short", day:"numeric"}); } catch(e){ return ""; } }
 function fmtDay(iso){ try { var d = new Date(iso); return d.toLocaleDateString([], {weekday:"short", month:"short", day:"numeric"}); } catch(e){ return ""; } }
 function roundLine(v){ return Math.round(v*2)/2 - 0.0; }  // nearest .5
 function ymd(d){ return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0"); }
@@ -614,7 +617,7 @@ function propCard(p){
   var banner = (p.img ? '<img src="'+esc(p.img)+'" alt="" loading="lazy" onerror="this.style.display=\'none\';var n=this.nextElementSibling;if(n)n.style.display=\'\'">' : '')
     + '<div class="pinit-big"'+(p.img ? ' style="display:none"' : '')+'>'+esc(initials(p.player))+'</div>';
   var teamLine = [p.team, p.leagueLabel].filter(function(x){ return x; }).join(" · ");
-  var matchLine = [p.matchup, p.starts ? fmtDay(p.starts) : "", p.starts ? fmtClock(p.starts) + " ET" : ""].filter(function(x){ return x; }).join(" · ");
+  var matchLine = [p.matchup, p.starts ? fmtDayET(p.starts) : "", p.starts ? fmtClockET(p.starts) + " ET" : ""].filter(function(x){ return x; }).join(" · ");
   var startsTxt = p.starts ? "TODAY · STARTS " + fmtDay(p.starts) + ", " + fmtClock(p.starts) + (p.matchup ? " · " + p.matchup : "") : "";
   var srcDate = p.starts ? fmtDay(p.starts) + ", " + new Date(p.starts).getFullYear() : "";
   var sub = p.line + " " + p.stat;
@@ -767,6 +770,9 @@ function renderBoards(){
   $("sportTitle").textContent = lg.label + " Props — Today";
   $("propCountPill").textContent = "";
   $("sportProps").innerHTML = '<p class="empty">Loading props…</p>';
+  var pf0 = $("propFilters"); if (pf0) pf0.innerHTML = "";
+  var tf0 = $("teamFilters"); if (tf0) tf0.innerHTML = "";
+  var pwL = $("popWrap"); if (pwL) pwL.style.display = "none";
   buildProps(lg).then(function(ps){
     if (currentSport!==lg.key) return;
     if (!ps.length){
@@ -1014,7 +1020,7 @@ function renderPerf(el, lg, s){
         return {name:c.team.displayName, stat:games+" games won · "+sets+" sets"};
       });
     }
-    var perfHtml = perf.length ? '<div class="row" style="justify-content:space-between;margin-top:12px"><div style="font-size:16px"><b>Top</b> <b style="color:var(--gold)">Performers</b></div><span class="note">Updated '+new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})+'</span></div>' + perf.slice(0,4).map(function(p){ var parts = String(p.name).split(" "); var last = parts[parts.length-1]; return '<div class="row" style="justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span><b>'+esc(p.name)+'</b> <span style="color:var(--purp-lt);font-weight:700">'+esc(last)+'</span></span><span style="color:var(--cyan);font-weight:700;font-size:13px">'+esc(p.stat)+'</span></div>'; }).join("") : "";
+    var perfHtml = perf.length ? '<div class="row" style="justify-content:space-between;margin-top:12px"><div style="font-size:16px"><b>Top</b> <b style="color:var(--gold)">Performers</b></div><span class="note">Updated '+new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})+'</span></div>' + perf.slice(0,4).map(function(p){ var parts = String(p.name).split(" "); var last = parts.length>1 ? parts[parts.length-1] : ""; var first = parts.length>1 ? parts.slice(0,-1).join(" ") : p.name; return '<div class="row" style="justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span><b>'+esc(first)+'</b>'+(last ? ' <span style="color:var(--purp-lt);font-weight:700">'+esc(last)+'</span>' : '')+'</span><span style="color:var(--cyan);font-weight:700;font-size:13px">'+esc(p.stat)+'</span></div>'; }).join("") : "";
     el.innerHTML = '<div class="card"><table class="lb">'+head+rows+'</table>'+perfHtml+'</div>';
   } catch(e) { el.innerHTML = ""; }
 }
@@ -1027,11 +1033,11 @@ function matchName(ts){
 function fmtFullDate(iso){
   try {
     var d = new Date(iso);
-    var wd = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
-    var mons = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-    var day = d.getDate();
+    var wd = d.toLocaleDateString("en-US", {timeZone:"America/New_York", weekday:"short"});
+    var mons = d.toLocaleDateString("en-US", {timeZone:"America/New_York", month:"long"});
+    var day = parseInt(d.toLocaleDateString("en-US", {timeZone:"America/New_York", day:"numeric"}), 10);
     var suf = (day%10===1 && day!==11) ? "st" : (day%10===2 && day!==12) ? "nd" : (day%10===3 && day!==13) ? "rd" : "th";
-    return wd + ", " + mons[d.getMonth()] + " " + day + suf + " at " + fmtClock(iso) + " EST";
+    return wd + ", " + mons + " " + day + suf + " at " + fmtClockET(iso) + " ET";
   } catch(e){ return fmtTime(iso); }
 }
 function gameCard(lg, ev){
