@@ -674,6 +674,7 @@ function ingestProps(lg, rows){
       img: photoCache[(r.player || "").toLowerCase()] || "",
       pct: (r.pct != null ? r.pct : null),
       brk: brk,
+      half: r.half ? 1 : 0,
       src: (r.book && r.book !== "PrizePicks") ? (r.book + " \u00B7 via ESPN") : "PrizePicks \u00B7 via Parlay API"
     });
   });
@@ -695,6 +696,9 @@ function buildProps(lg){
 }
 var brkFetchAt = {};
 function refreshPropsBrk(lg){
+  // Brandon 2026-11-16: NO halftime/break prop checks. Second-half props only
+  // ever show up if the normal timed board refresh brings them on its own.
+  return Promise.resolve(null);
   var sk = PARLAY_KEYS[lg.key]; if (!sk) return Promise.resolve(null);
   var now = Date.now();
   if (brkFetchAt[lg.key] && now - brkFetchAt[lg.key] < 150 * 1000) return Promise.resolve(null);
@@ -859,6 +863,13 @@ function openPlayer(name, leagueKey){
   fillPlayerDlg();
   var d = $("playerDlg"); if (d && !d.open) d.showModal();
 }
+function propCardsGrouped(list){
+  var full = list.filter(function(p){ return !p.half; });
+  var half = list.filter(function(p){ return p.half; });
+  var h = full.map(propCard).join("");
+  if (half.length) h += '<div style="grid-column:1/-1;margin-top:10px;padding:6px 10px;border:1px solid var(--gold);border-radius:9px;color:var(--gold);font-weight:900;letter-spacing:1.2px;font-size:12px">⏱ 1ST HALF PROPS</div>' + half.map(propCard).join("");
+  return h;
+}
 function fillPlayerDlg(){
   if (!dlgPlayer) return;
   var list = (propsCache[dlgPlayer.league]||[]).filter(function(p){ return p.player===dlgPlayer.name; });
@@ -874,8 +885,8 @@ function fillPlayerDlg(){
   body.innerHTML = '<div class="row" style="gap:12px;align-items:center"><img src="' + esc(g.img || "") + '" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:19px;font-weight:900">' + esc(g.player) + '</div><div class="note">' + esc([g.team, g.leagueLabel].filter(function(x){ return x; }).join(" · ")) + ' · ' + showList.length + ' props · PrizePicks</div></div><button class="ghostbtn" id="pdlgClose">Close</button></div>'
     + '<div id="pdlgLive"></div>'
     + (useBrk ? '<p class="sub" style="margin-top:8px;color:var(--gold)">⏸ ' + esc(bmD.detail || "At the break") + ' — fresh props for the next part of the game. Pick before play resumes; they come off the board when it starts.</p>' : (live ? '<p class="sub" style="margin-top:8px">This game is live — props are closed. Props on your locked-in tickets keep tracking in My Tickets.</p>' : ''))
-    + (bmD && !brkList.length && live ? '<p class="sub" style="margin-top:8px">At the break — no new props posted for this player yet. It keeps checking while the break lasts.</p>' : '')
-    + '<div class="pdlgbody' + (closed ? ' closed' : '') + '">' + showList.map(propCard).join("") + '</div>';
+    + (bmD && !brkList.length && live ? '<p class="sub" style="margin-top:8px">At the break — second-half props only show if the regular board refresh brings them.</p>' : '')
+    + '<div class="pdlgbody' + (closed ? ' closed' : '') + '">' + propCardsGrouped(showList) + '</div>';
   if (!closed) bindPicks(body);
   var cb = $("pdlgClose"); if (cb) cb.addEventListener("click", function(){ $("playerDlg").close(); });
   loadLiveForPlayer(g, list);

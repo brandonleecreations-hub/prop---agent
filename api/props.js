@@ -230,6 +230,8 @@ function normalize(rows, keepStarted) {
       const av = typeof priceRaw === "number" ? priceRaw : parseFloat(priceRaw);
       if (isFinite(av) && av !== 0) pct = Math.round((av < 0 ? (-av) / ((-av) + 100) : 100 / (av + 100)) * 1000) / 10;
     }
+    const halfSrc = [row.market, row.market_display_name, row.description, marketKey].join(" ");
+    const half = /1st\s*half|first\s*half|1st-half|\b1h\b/i.test(halfSrc) ? 1 : 0;
     out.push({
       player,
       stat: row.market || statLabel(marketKey, row.market_display_name || row.description),
@@ -239,6 +241,7 @@ function normalize(rows, keepStarted) {
       starts: String(starts || ""),
       book: row.bookmaker_title || row.bookmaker || "PrizePicks",
       pct,
+      half,
     });
   }
   return out;
