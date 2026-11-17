@@ -391,6 +391,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
         </div>
       </div>
       <p class="sub" id="installNote" style="margin:8px 18px 0;color:#cdbcf5">One tap puts Prop Agent on your home screen — its own icon, full screen, opens like a real app.</p>
+      <p style="margin:10px 18px 0;font-size:14.5px;font-weight:800;color:#f5b942">🎁 Share &amp; earn a FREE PACK — once a day, every day. Open it on the Board tab.</p>
       <div style="display:flex;gap:10px;padding:14px 18px 18px;flex-wrap:wrap">
         <button class="ghostbtn" id="installBtn" style="flex:1;min-width:170px;background:linear-gradient(135deg,#f5b942,#d97706);color:#1a1000;border:none;font-weight:900;padding:14px 18px;font-size:15.5px;box-shadow:0 8px 24px rgba(245,185,66,.45)">📲 ADD TO HOME SCREEN</button>
         <button class="ghostbtn" id="shareBtn" style="flex:1;min-width:140px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.4);font-weight:800;padding:14px 18px;font-size:15px">🔗 Share the app</button>
@@ -3280,7 +3281,8 @@ function renderInstall(){
   else { btn.style.display = "none"; note.innerHTML = "Open your browser menu (\u22ee) and tap <b>Install app</b> or <b>Add to Home screen</b> — Prop Agent gets its own icon and opens full screen."; }
 }
 var ib0 = $("installBtn"); if (ib0) ib0.addEventListener("click", function(){ if (!deferredInstall) return; deferredInstall.prompt(); deferredInstall.userChoice.then(function(){ deferredInstall = null; renderInstall(); }); });
-var sb0 = $("shareBtn"); if (sb0) sb0.addEventListener("click", function(){ var url = "https://prop-agent-bre.vercel.app/"; if (navigator.share) { navigator.share({title:"Prop Agent", text:"Prop Agent — real player props, live tickets, 84 collectible agent cards. Get the app:", url:url}).catch(function(){}); } else if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function(){ var o = sb0.textContent; sb0.textContent = "\u2713 Link copied"; setTimeout(function(){ sb0.textContent = o; }, 1800); }); } });
+var grantSharePack = function(){ if (lsGet("pa_share_day", "") !== dayStr()) { lsSet("pa_share_day", dayStr()); var p2 = packsGet(); p2.n = (p2.n || 0) + 1; packsSet(p2); try { renderPacks(); } catch (e) {} return true; } return false; };
+var sb0 = $("shareBtn"); if (sb0) sb0.addEventListener("click", function(){ var url = "https://prop-agent-bre.vercel.app/"; var flashPack = function(){ var o = sb0.textContent; sb0.textContent = "🎁 +1 Free Pack!"; setTimeout(function(){ sb0.textContent = o; }, 1800); }; if (navigator.share) { navigator.share({title:"Prop Agent", text:"Prop Agent — real player props, live tickets, 84 collectible agent cards. Get the app:", url:url}).then(function(){ if (grantSharePack()) flashPack(); }, function(){}); } else if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function(){ if (grantSharePack()) { flashPack(); return; } var o = sb0.textContent; sb0.textContent = "\u2713 Link copied"; setTimeout(function(){ sb0.textContent = o; }, 1800); }); } });
 renderInstall();
 function renderTicker(){
   var wrap = $("tickerWrap"), box = $("yourTicker");
