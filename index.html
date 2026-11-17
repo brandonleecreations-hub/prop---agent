@@ -1993,7 +1993,7 @@ function renderBoard(){
 }
 
 /* ---------- Weekly Pick'em (special card reward) ---------- */
-var WEEKLY_PICKEM = { week: "2026-W47", lgKey: "nfl", eventId: "401873066", starts: "2026-11-20T01:15Z", away: "Indianapolis Colts", home: "Houston Texans", awayShort: "Colts", homeShort: "Texans", note: "Thursday Night Football", cardName: "THE ORACLE", art: "/api/avatars?s=13" };
+var WEEKLY_PICKEM = { week: "2026-W47", lgKey: "nfl", eventId: "401873066", starts: "2026-11-20T01:15Z", away: "Indianapolis Colts", home: "Houston Texans", awayShort: "Colts", homeShort: "Texans", note: "Thursday Night Football", cardName: "THE ORACLE", art: "/api/avatars?s=13", bannerArt: "/api/banners?s=pickem" };
 function specialUnlocked(){ return (lsGet("pa_special", []) || []).indexOf(WEEKLY_PICKEM.week) >= 0; }
 function pickemWhen(){ try { return new Date(WEEKLY_PICKEM.starts).toLocaleString("en-US", { timeZone: "America/Denver", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); } catch(e){ return ""; } }
 function loadPickemEvent(){
@@ -2047,7 +2047,9 @@ function renderPickem(){
     body = artRow + btn("away", cfg.away, ev ? ev.awayLogo : "") + btn("home", cfg.home, ev ? ev.homeLogo : "")
       + '<div class="note" style="margin-top:7px">' + (mine ? 'Pick saved — you can change it until kickoff. It locks the second the game starts.' : 'Tap a team to make your pick. It locks the second the game starts.') + '</div>';
   }
-  var h = '<div class="pickem">' + head + body + '</div>';
+  var h = (state === "pre" && !started)
+    ? '<div class="pickem"><img src="' + cfg.bannerArt + '" alt="" style="width:100%;border-radius:10px;display:block"><div class="pk-title" style="margin-top:10px">' + cfg.awayShort + ' @ ' + cfg.homeShort + '</div><div class="note">' + pickemWhen() + ' MST · ' + cfg.note + '</div>' + body + '</div>'
+    : '<div class="pickem">' + head + body + '</div>';
   boxes.forEach(function(b){ b.innerHTML = h; });
 }
 function specialCardHTML(){
