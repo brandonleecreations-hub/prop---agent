@@ -701,6 +701,34 @@ function togglePick(prop, dir){
 }
 function removeLeg(id){ slip = slip.filter(function(l){ return l.id!==id; }); lsSet("pa_slip", slip); renderAllSlips(); renderBoards(); renderTicker(); refreshPlayerDlg(); updateSlipChip(); }
 var PAYOUTS = {2:3, 3:5, 4:10, 5:20, 6:37.5};
+var DAILY_TICKET_LIMIT = 5;
+function locksToday(){
+  var rec = lsGet("pa_lockday", null);
+  if (!rec || rec.day !== dayStr()) return 0;
+  return rec.n || 0;
+}
+function noteLock(){
+  var rec = lsGet("pa_lockday", null);
+  var n = (rec && rec.day === dayStr()) ? (rec.n || 0) + 1 : 1;
+  lsSet("pa_lockday", { day: dayStr(), n: n });
+}
+function hedgeConflict(){
+  var active = tickets.filter(function(t){ return !t.result; });
+  for (var i = 0; i < slip.length; i++) {
+    var l = slip[i];
+    if (!l.player || !l.stat) continue;
+    for (var j = 0; j < active.length; j++) {
+      var legs = active[j].legs || [];
+      for (var k = 0; k < legs.length; k++) {
+        var o = legs[k];
+        if (o.player && o.stat && o.player.toLowerCase() === l.player.toLowerCase() && o.stat.toLowerCase() === l.stat.toLowerCase() && o.dir !== l.dir) {
+          return l.player + " " + l.stat + " is already " + o.dir + " on an active ticket — you can't lock the opposite pick.";
+        }
+      }
+    }
+  }
+  return "";
+}
 function slipHtml(){
   var n = slip.length;
   var legs = slip.map(function(l){
@@ -708,10 +736,16 @@ function slipHtml(){
   }).join("");
   var mult = PAYOUTS[n] || 0;
   var can = n>=2;
+  var locks = locksToday();
+  var limitHit = locks >= DAILY_TICKET_LIMIT;
+  var hedge = can ? hedgeConflict() : "";
+  var canLock = can && !limitHit && !hedge;
   return '<h3 style="margin:0 0 6px">Your slip ('+n+' pick'+(n===1?"":"s")+')</h3>'
     + (n ? legs : '<p class="empty">No picks yet — tap a sport tab above, then tap MORE or LESS on any prop card. It lands here instantly; tap the same pick again to take it off.</p>')
     + '<div class="row" style="margin-top:12px"><span class="pay">'+(can ? n+' picks — ready to lock in' : 'Pick at least 2 to lock a ticket')+'</span></div>'
-    + '<div style="margin-top:12px"><button class="bigbtn" id="lockBtn" '+(can?"":"disabled")+'>'+(can?"Lock In Ticket":"Lock In (pick 2+ to enable)")+'</button></div>';
+    + '<div class="note" style="margin-top:6px">🎟️ Tickets today: '+locks+' of '+DAILY_TICKET_LIMIT+(limitHit ? ' — daily limit reached, back tomorrow' : '')+'</div>'
+    + (hedge ? '<div class="note" style="margin-top:4px;color:#f87171;font-weight:700">🚫 Anti-hedge: '+esc(hedge)+'</div>' : '')
+    + '<div style="margin-top:12px"><button class="bigbtn" id="lockBtn" '+(canLock?"":"disabled")+'>'+(can ? (limitHit ? "Daily Limit Reached" : (hedge ? "Blocked — Opposite Pick" : "Lock In Ticket")) : "Lock In (pick 2+ to enable)")+'</button></div>';
 }
 function renderSlip(el){
   if (!el) return;
@@ -719,6 +753,8 @@ function renderSlip(el){
   var btn = el.querySelector("#lockBtn");
   el.querySelectorAll("[data-remove]").forEach(function(b){ b.addEventListener("click", function(){ removeLeg(b.getAttribute("data-remove")); }); });
   if (btn) btn.addEventListener("click", function(){
+    if (locksToday() >= DAILY_TICKET_LIMIT || hedgeConflict()) { renderAllSlips(); return; }
+    noteLock();
     tickets.unshift({id:"t"+Date.now(), ts:Date.now(), entry:0, mult:PAYOUTS[slip.length]||0, legs:slip.slice()});
     lsSet("pa_tickets", tickets);
     slip = []; lsSet("pa_slip", slip);
