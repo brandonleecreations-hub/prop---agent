@@ -598,7 +598,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
       <div class="wsub">Tap MORE or LESS.<br>That's the whole game.</div>
     </div>
     <div class="wbeat" id="wBeat3">
-      <div class="wbig">🏆</div>
+      <div class="wringwrap"><div class="wringrays"></div><div class="wringcard2"><img src="/api/avatars?s=14" alt="THE RING chase card"><span class="wshine"></span></div></div>
       <div class="wsub" style="font-size:19px">Win tickets → climb the tiers,<br>open packs, chase <b style="color:#f5c518">THE RING</b>.</div>
       <div class="wsub">Follow your friends. Like their tickets.</div>
       <button type="button" class="bigbtn" id="wStart" style="max-width:280px;margin-top:10px">Start picking →</button>
@@ -639,6 +639,15 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .wprog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#7C3AED,#f5c518)}
 .wprog i.go{animation:wfill 10.6s linear forwards}
 @keyframes wfill{from{width:0}to{width:100%}}
+.wringwrap{position:relative;width:190px;height:238px;flex:none}
+.wringrays{position:absolute;left:50%;top:50%;width:330px;height:330px;transform:translate(-50%,-50%);border-radius:50%;background:repeating-conic-gradient(from 0deg, rgba(245,197,24,.20) 0deg 10deg, transparent 10deg 24deg);animation:wrayspin 12s linear infinite;pointer-events:none}
+@keyframes wrayspin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+.wringcard2{position:relative;width:190px;height:238px;border-radius:14px;border:2px solid #f5c518;box-shadow:0 0 34px rgba(245,197,24,.55),0 18px 34px rgba(0,0,0,.5);overflow:hidden;animation:wringfloat 3.2s ease-in-out infinite}
+.wringcard2 img{width:100%;height:100%;object-fit:cover;display:block}
+@keyframes wringfloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-7px) scale(1.03)}}
+.wshine{position:absolute;inset:0;border-radius:14px;overflow:hidden;pointer-events:none}
+.wshine::after{content:"";position:absolute;top:-20%;bottom:-20%;left:-35%;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:rotate(8deg);animation:wshine 2.8s ease-in-out infinite}
+@keyframes wshine{0%{left:-35%}55%,100%{left:115%}}
 @media (prefers-reduced-motion: reduce){ #welcomePop *{animation:none!important;transition:none!important} }
 </style>
 <script>
