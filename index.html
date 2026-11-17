@@ -1691,7 +1691,7 @@ function renderGameProps(lg, s){
   }
   (inBrk ? refreshPropsBrk(lg).then(function(){ return buildProps(lg); }) : buildProps(lg)).then(function(ps){
     var head = '<div style="font-size:16px;margin-top:14px"><b>Player Props — This Game</b> <span class="note">best on top · tap a player for all their props</span></div>' + (inBrk ? '<p class="sub" style="color:var(--gold);margin-top:6px">⏸ At the break — fresh props just posted for the next part of the game. Pick before play resumes.</p>' : '');
-    if (!ps.length){ box.innerHTML = ""; return; }
+    if (!ps.length){ box.innerHTML = head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'; return; }
     var names = {}, teamNames = {}, teamLast = {};
     try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ (tp.athletes||[]).forEach(function(a){ if (a.athlete && a.athlete.displayName) names[lastNameOf(a.athlete.displayName)] = 1; }); }); } catch(e){}
     cs.forEach(function(c){ if (c.team){ if (c.team.displayName){ teamNames[c.team.displayName.toLowerCase()] = 1; teamLast[lastNameOf(c.team.displayName)] = 1; } if (c.team.shortDisplayName) teamNames[c.team.shortDisplayName.toLowerCase()] = 1; } });
@@ -1702,7 +1702,7 @@ function renderGameProps(lg, s){
       if (p.team && lastWords.length === 2 && lastWords[0] !== lastWords[1] && teamLast[lastNameOf(p.team)]) return true;
       return false;
     });
-    if (!hits.length){ box.innerHTML = ""; return; }
+    if (!hits.length){ box.innerHTML = head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'; return; }
     var gs = sortGroups(playerGroups(hits), "pct");
     /* Compact rows organized by team (Brandon 2026-11-17): small player
        rows under a team header; tap a player for all their props. */
