@@ -1362,9 +1362,12 @@ function fieldSvg(lg, s, comp, cs){
       chart += '<line x1="' + X(lastYl) + '" y1="4" x2="' + X(lastYl) + '" y2="116" stroke="#ffffff" stroke-width="2"/>';
       if (lp2 && lp2.end && lp2.end.down > 0 && isFinite(lp2.end.distance)){ var fdx = X(Math.min(100, lastYl + lp2.end.distance)); if (fdx > 30 && fdx < 330) chart += '<line x1="' + fdx + '" y1="4" x2="' + fdx + '" y2="116" stroke="#f5c518" stroke-width="2.4"/>'; }
       chart += '<circle class="pdot" cx="' + X(lastYl) + '" cy="60" r="11" fill="none" stroke="#f5c518" stroke-width="2"/>';
-      var bd = Math.max(3, pts.length * 0.55);
+      var mpts = [], mxp = -Infinity;
+      pts.forEach(function(yl){ if (yl > mxp) mxp = yl; mpts.push(mxp); });
+      var mpath = mpts.map(function(yl, i){ return (i ? "L" : "M") + X(yl) + " 60"; }).join(" ");
+      var bd = Math.max(3, pts.length * 0.7);
       var bel = window._gcAnimStart ? (((Date.now() - window._gcAnimStart) / 1000) % bd) : 0;
-      chart += '<circle r="6" fill="#f5c518" stroke="#ffffff" stroke-width="1.5"><animateMotion dur="' + bd.toFixed(1) + 's" begin="-' + bel.toFixed(1) + 's" repeatCount="indefinite" path="' + path + '"/></circle>';
+      chart += '<circle r="6" fill="#f5c518" stroke="#ffffff" stroke-width="1.5"><animateMotion dur="' + bd.toFixed(1) + 's" begin="-' + bel.toFixed(1) + 's" repeatCount="indefinite" path="' + mpath + '"/></circle>';
       var ddt2 = (lp2 && lp2.end && lp2.end.downDistanceText) || "";
       var res = drv.displayResult || drv.result || "";
       var info = '<div style="margin-top:8px"><b>' + esc(offAbbr ? offAbbr + " drive" : "Drive") + '</b>' + (drv.description ? ' <span class="note">' + esc(drv.description) + '</span>' : '')
@@ -1712,6 +1715,9 @@ function summaryPlays(s){
     ((s.drives.previous) || []).forEach(function(d){ (d.plays || []).forEach(function(p){ ps.push(p); }); });
     if (s.drives.current && s.drives.current.plays) s.drives.current.plays.forEach(function(p){ ps.push(p); });
   }
+  var seenP = {}, ded = [];
+  ps.forEach(function(p){ var k = p.id || p.sequenceNumber || ((p.text || "") + "|" + ((p.clock && p.clock.displayValue) || "") + "|" + ((p.period && p.period.number) || "")); if (seenP[k]) return; seenP[k] = 1; ded.push(p); });
+  ps = ded;
   if (!ps.length && s && s.commentary && s.commentary.length) ps = s.commentary.map(function(c){ return {text: c.text || "", period: {displayValue: (c.time && c.time.displayValue) || ""}, clock: {displayValue: ""}, scoringPlay: false}; });
   return ps;
 }
