@@ -1501,10 +1501,8 @@ function openGame(key, eventId, isRefresh){
         if (skeys.length) html += '<div style="font-size:16px;margin-top:14px"><b>Team Stats</b></div><table class="lb"><tr><th>' + esc((tstats[0].team && tstats[0].team.displayName) || "") + '</th><th>Stat</th><th>' + esc((tstats[1].team && tstats[1].team.displayName) || "") + '</th></tr>' + skeys.map(function(k){ return '<tr><td>' + esc(byName[k].a||"") + '</td><td class="note">' + esc(byName[k].label) + '</td><td>' + esc(byName[k].b||"") + '</td></tr>'; }).join("") + '</table>';
       }
     }
-      var fmtPlay = function(pl){ var sc = (pl.awayScore != null && pl.homeScore != null) ? ' <span style="color:var(--cyan);font-weight:700;white-space:nowrap">' + esc(pl.awayScore) + '–' + esc(pl.homeScore) + '</span>' : ''; var per = (((pl.period && pl.period.displayValue) || "") + " " + ((pl.clock && pl.clock.displayValue) || "")).trim(); return '<div style="padding:3.5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;line-height:1.35;' + (pl.scoringPlay ? 'border-left:3px solid var(--gold);padding-left:7px' : '') + '"><span style="display:inline-block;background:rgba(124,58,237,.16);border:1px solid rgba(124,58,237,.35);border-radius:6px;padding:0 5px;font-size:10.5px;font-weight:700;white-space:nowrap;margin-right:5px">' + esc(per) + '</span>' + esc(pl.text || pl.shortText || "") + sc + '</div>'; };
-    var rawPlays = (s.plays || []).slice();
-    if (!rawPlays.length && s.commentary && s.commentary.length) rawPlays = s.commentary.map(function(c){ return {text: c.text || "", period: {displayValue: (c.time && c.time.displayValue) || ""}, clock: {displayValue: ""}, scoringPlay: false}; });
-    var plays = rawPlays.slice().reverse();
+      var fmtPlay = function(pl){ var sc = (pl.awayScore != null && pl.homeScore != null) ? ' <span style="color:var(--cyan);font-weight:700;white-space:nowrap">' + esc(pl.awayScore) + '–' + esc(pl.homeScore) + '</span>' : ''; var per = (((pl.period && (pl.period.displayValue || (pl.period.number ? "Q" + pl.period.number : ""))) || "") + " " + ((pl.clock && pl.clock.displayValue) || "")).trim(); return '<div style="padding:3.5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;line-height:1.35;' + (pl.scoringPlay ? 'border-left:3px solid var(--gold);padding-left:7px' : '') + '"><span style="display:inline-block;background:rgba(124,58,237,.16);border:1px solid rgba(124,58,237,.35);border-radius:6px;padding:0 5px;font-size:10.5px;font-weight:700;white-space:nowrap;margin-right:5px">' + esc(per) + '</span>' + esc(pl.text || pl.shortText || "") + sc + '</div>'; };
+    var plays = summaryPlays(s).slice().reverse();
       if (plays.length) html += '<div style="font-size:14px;margin-top:14px"><b>Play by Play</b> <span class="note">ticker - latest first - updates every 30s</span></div><div style="border:1px solid var(--line);border-radius:12px;background:#0d0d13;padding:6px 10px;margin-top:6px">' + plays.slice(0, 15).map(fmtPlay).join("") + (plays.length > 15 ? '<div id="pbpAll" style="display:' + (window._pbpOpen ? '' : 'none') + '">' + plays.slice(15).map(fmtPlay).join("") + '</div>' : '') + '</div>' + (plays.length > 15 ? '<button type="button" class="ghostbtn" id="pbpBtn" style="margin-top:8px;font-size:12px;padding:6px 11px">' + (window._pbpOpen ? 'Show fewer plays' : 'Show all ' + plays.length + ' plays') + '</button>' : '');
     else html += '<div style="font-size:14px;margin-top:14px"><b>Play by Play</b></div><p class="note" style="margin-top:6px">' + (lg.key === "tennis" ? "ESPN does not report point-by-point plays for tennis - live set and game scores are in the Match Tracker above." : "No plays reported yet - they will show here as the game goes.") + '</p>';
     html += '<div id="gameProps"></div></div>';
@@ -1668,6 +1666,16 @@ function summaryForEvent(lg, eventId){
   if (hit && Date.now() - hit.ts < 25000) return Promise.resolve(hit.s);
   return fetchJson(ESPN + lg.sport + "/" + lg.league + "/summary?event=" + encodeURIComponent(eventId)).then(function(s){ sumCacheC[eventId] = { ts: Date.now(), s: s }; return s; });
 }
+function summaryPlays(s){
+  var ps = (s && s.plays) || [];
+  if (!ps.length && s && s.drives){
+    ps = [];
+    ((s.drives.previous) || []).forEach(function(d){ (d.plays || []).forEach(function(p){ ps.push(p); }); });
+    if (s.drives.current && s.drives.current.plays) s.drives.current.plays.forEach(function(p){ ps.push(p); });
+  }
+  if (!ps.length && s && s.commentary && s.commentary.length) ps = s.commentary.map(function(c){ return {text: c.text || "", period: {displayValue: (c.time && c.time.displayValue) || ""}, clock: {displayValue: ""}, scoringPlay: false}; });
+  return ps;
+}
 function playInvolves(pl, l){
   var last = lastNameOf(l.player); if (!last) return false;
   var parts = pl.participants || [];
@@ -1680,7 +1688,7 @@ function playInvolves(pl, l){
 }
 function fmtPlayRow(pl){
   var sc = (pl.awayScore != null && pl.homeScore != null) ? ' <span style="color:var(--cyan);font-weight:700;white-space:nowrap">' + esc(pl.awayScore) + '–' + esc(pl.homeScore) + '</span>' : '';
-  var per = (((pl.period && pl.period.displayValue) || "") + " " + ((pl.clock && pl.clock.displayValue) || "")).trim();
+  var per = (((pl.period && (pl.period.displayValue || (pl.period.number ? "Q" + pl.period.number : ""))) || "") + " " + ((pl.clock && pl.clock.displayValue) || "")).trim();
   return '<div style="padding:3.5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;line-height:1.35"><span style="display:inline-block;background:rgba(124,58,237,.16);border:1px solid rgba(124,58,237,.35);border-radius:6px;padding:0 5px;font-size:10.5px;font-weight:700;white-space:nowrap;margin-right:5px">' + esc(per) + '</span>' + esc(pl.text || pl.shortText || "") + sc + '</div>';
 }
 function togglePlayerPlays(btn){
@@ -1699,7 +1707,7 @@ function togglePlayerPlays(btn){
   findEventForLeg(t, l).then(function(eid){
     if (!eid) { panel.innerHTML = '<p class="note" style="padding:6px 0">Could not find this game on ESPN, so there is no play by play for it.</p>'; return; }
     return summaryForEvent(lg, eid).then(function(s){
-      var mine = (s.plays || []).filter(function(pl){ return playInvolves(pl, l); }).slice(-10).reverse();
+      var mine = summaryPlays(s).filter(function(pl){ return playInvolves(pl, l); }).slice(-10).reverse();
       if (!mine.length) { panel.innerHTML = '<p class="note" style="padding:6px 0">No plays involving ' + esc(l.player) + ' reported yet - they will show here as the game goes.</p>'; return; }
       var comp = (s.header && s.header.competitions && s.header.competitions[0]) || {};
       var cs2 = comp.competitors || [];
