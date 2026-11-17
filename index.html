@@ -521,6 +521,18 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .deckrow .itemhand{flex:1;min-width:0}
 @media (max-height:740px){ .fcard img{height:38px} .fcard.bench img{height:28px} .fcard.active{width:96px} .fcard.bench{width:58px} .ttcell{width:32px;height:32px;font-size:14px} .deck3d{width:44px;height:60px} .pileback{width:34px;height:46px} .cbtn{padding:9px 4px;font-size:14px} .coin3d{width:92px;height:92px} .clashlog{font-size:11.5px} }
 @media (max-height:860px){ .fcard img{height:36px} .fcard.bench img{height:26px} .fcard{width:76px} .fcard.active{width:94px} .fcard.bench{width:55px} .fcnm{font-size:11.5px} .fcst{font-size:10px} .fcpw{font-size:9.5px} .fcatk{font-size:9.5px} .ttcell{width:31px;height:31px;font-size:14px} .deck3d{width:44px;height:60px} .pileback{width:34px;height:46px} .espotcards{min-height:38px} .eorb{width:13px;height:13px} .guidebar{padding:5px 8px;font-size:11.5px} .deckcap{font-size:9.5px;margin-top:4px} .cbtn{padding:9px 4px} .clashlog{font-size:11.5px} .itemcard{width:60px;padding:5px 3px} .itemcard .iic{font-size:19px} .sidetag{font-size:9.5px} .clashround{font-size:13px;margin-bottom:5px} }
+.field3d{flex:none;overflow:hidden}
+.clashpanel{padding:8px}
+.fcard img{height:32px}
+.fcard.bench img{height:24px}
+.fcard{padding:4px}
+.ttcell{width:30px;height:30px}
+.deck3d{width:42px;height:56px}
+.pileback{width:32px;height:44px}
+.espotcards{min-height:36px}
+.itemcard{width:58px}
+.guidebar{padding:5px 8px;font-size:11.5px}
+.sidetag{margin-bottom:3px}
 .zonelab{font-size:9px;font-weight:900;letter-spacing:1.5px;color:#9d94c7;text-align:center;margin-bottom:3px}
 .espot{flex:0 0 auto;text-align:center;width:66px}
 .espotcards{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;align-content:center;min-height:46px;background:rgba(124,58,237,.12);border:1.5px dashed rgba(168,85,247,.6);border-radius:10px;padding:4px 2px;box-shadow:inset 0 3px 10px rgba(0,0,0,.45)}
@@ -3611,7 +3623,7 @@ function itemHTML(){
   var deck = '<div class="deckwrap"><div class="zonelab">DECK</div><div class="deck3d' + shuf + glow + '"><div class="deckback"></div>' + pop + '</div><div class="deckcount">' + CL.myDeck.length + ' left</div></div>';
   var pile = '<div class="pilewrap"><div class="zonelab">DISCARD</div><div class="pileback"></div><div class="deckcount">×' + CL.myPile.length + '</div></div>';
   var handInner = ITEMS_OPEN ? '<div class="itemhand">' + cards + '</div>' : '';
-  return '<div class="itemrow"><div class="itemlab">🎴 YOUR CARDS · 1 item per turn' + (CL.itemUsedRound === CL.round ? ' · <span style="color:#f5b942">played ✓</span>' : '') + '<button class="itog" data-itemtoggle="1">' + (ITEMS_OPEN ? '▾ HIDE ITEMS' : '▸ SHOW ITEMS (' + itemCount("me") + ')') + '</button></div><div class="deckrow">' + deck + espot + '<div class="itemhandwrap">' + handInner + '</div>' + pile + '</div><div class="deckcap" style="text-align:center;margin-top:5px">One deck — 🔮 Energy pays for hits · 🎴 items help · shuffled at the start · draw +2/round · Prop Agent logo card backs</div></div>';
+  return '<div class="itemrow"><div class="itemlab">🎴 YOUR CARDS · 1 item per turn' + (CL.itemUsedRound === CL.round ? ' · <span style="color:#f5b942">played ✓</span>' : '') + '<button class="itog" data-itemtoggle="1">' + (ITEMS_OPEN ? '▾ HIDE ITEMS' : '▸ SHOW ITEMS (' + itemCount("me") + ')') + '</button></div><div class="deckrow">' + deck + espot + '<div class="itemhandwrap">' + handInner + '</div>' + pile + '</div></div>';
 }
 function openItemView(id){
   var it = ITEM_MAP[id]; if (!it || !CL) return;
