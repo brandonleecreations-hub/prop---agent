@@ -83,6 +83,16 @@ module.exports = async (req, res) => {
         headers: sbHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }),
         body: JSON.stringify({ id: id, display_name: name, wins: wins, avatar_url: avatarUrl, featured_card: featuredCard }),
       });
+      if (name !== "Guest Agent") {
+        const cur = await rest("profiles?select=display_name&id=eq." + uid, { headers: sbHeaders() });
+        const curName = (cur.json && cur.json[0] && cur.json[0].display_name) || "";
+        if (name.toLowerCase() !== String(curName).toLowerCase()) {
+          if (!/^[A-Za-z0-9_]{3,20}$/.test(name)) { res.status(200).json({ ok: false, error: "username format" }); return; }
+          const cand = await rest("profiles?select=id,display_name&display_name=ilike." + encodeURIComponent(name), { headers: sbHeaders() });
+          const taken = Array.isArray(cand.json) && cand.json.some((r) => r.id !== uid && String(r.display_name).toLowerCase() === name.toLowerCase());
+          if (taken) { res.status(200).json({ ok: false, error: "username taken" }); return; }
+        }
+      }
       let up = await upsertProfile(uid);
       if (up.status >= 300 && (up.text || "").indexOf("23503") > -1) {
         // Device id is not an auth user yet — create one and adopt its id.
@@ -114,7 +124,7 @@ module.exports = async (req, res) => {
               user_id: uid,
               legs: legs,
               status: ["win", "loss", "pending"].indexOf(t.status) > -1 ? t.status : "pending",
-              is_public: true,
+              is_public: t.is_public !== false,
             };
           })),
         });

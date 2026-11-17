@@ -518,7 +518,8 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <h3>Agent profile</h3>
   <p class="note">Your agent name, tickets, tiers and cards save to your cloud profile (Supabase) and this device, so your progress is backed up and your profile pic shows on the leaderboard.</p>
   <div class="row" style="margin:4px 0 8px"><img id="agAvatarImg" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;display:none"><div><b id="agFeatured">No profile card set</b><br><span class="note">Pick a character below, or set your profile pic from any unlocked card in My Cards (Board tab) — it saves to your cloud profile for everyone to see.</span></div></div>
-  <div class="fld"><label>Agent name</label><input type="text" id="agName" placeholder="e.g. Brandon"></div>
+  <div class="fld"><label>Username</label><input type="text" id="agName" placeholder="e.g. Brandon_23" autocomplete="off"></div>
+  <p class="note" id="agNameHint" style="margin:-4px 0 8px">Pick your own unique username — 3-20 characters, letters, numbers and _ only. It's the name other agents see; your email always stays private.</p>
   <div class="fld"><label>Pick your agent — comic book style</label><div id="agAvatars" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div><p class="note">Your character shows on all your tier cards and becomes your profile pic.</p></div>
   <div class="fld"><label>Account — email &amp; password</label>
     <div id="agAuthOut">
@@ -573,6 +574,47 @@ function lsSet(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(
 var profile  = lsGet("pa_profile", {name:"", email:""});
 var slip     = lsGet("pa_slip", []);              // [{id,player,team,league,stat,line,dir,matchup,starts,src,custom}]
 var tickets  = lsGet("pa_tickets", []);           // [{id,ts,entry,mult,legs:[...],manual:{legId:val}}]
+/* Retention (Brandon 2026-11-16): finished losses auto-delete after 7 days,
+   finished wins after 30 days, so profiles and storage stay lean. Wins are
+   banked (pa_winbank) and their player cards snapshotted (pa_playercards)
+   before deletion, so win totals, tiers and the card collection NEVER drop.
+   Active tickets are never touched. */
+var LOSS_KEEP_MS = 7 * 24 * 3600 * 1000, WIN_KEEP_MS = 30 * 24 * 3600 * 1000;
+function pcKey(l){ return [l.player || "", l.stat || "", l.line, l.dir || ""].join("|"); }
+function cleanupTickets(){
+  var now = Date.now(), changed = false;
+  var bank = parseInt(lsGet("pa_winbank", 0), 10) || 0, lbank = parseInt(lsGet("pa_lossbank", 0), 10) || 0;
+  var snaps = lsGet("pa_playercards", []), seen = {};
+  snaps.forEach(function(l){ seen[pcKey(l)] = 1; });
+  tickets = tickets.filter(function(t){
+    if (!t.result) return true;
+    var age = now - (t.ts || now);
+    if (t.result === "loss" && age > LOSS_KEEP_MS) { changed = true; lbank++; return false; }
+    if (t.result === "win" && age > WIN_KEEP_MS) {
+      changed = true; bank++;
+      (t.legs || []).forEach(function(l){ var k = pcKey(l); if (!seen[k]) { seen[k] = 1; snaps.push({ player: l.player, stat: l.stat, line: l.line, dir: l.dir, team: l.team || "", matchup: l.matchup || "" }); } });
+      return false;
+    }
+    return true;
+  });
+  if (changed) { lsSet("pa_winbank", bank); lsSet("pa_lossbank", lbank); lsSet("pa_playercards", snaps); lsSet("pa_tickets", tickets); }
+  return changed;
+}
+function allPlayerCardLegs(){
+  var seen = {}, out = [];
+  function add(l){ var k = pcKey(l); if (!seen[k]) { seen[k] = 1; out.push(l); } }
+  lsGet("pa_playercards", []).forEach(add);
+  tickets.filter(function(t){ return t.result === "win"; }).forEach(function(t){ (t.legs || []).forEach(add); });
+  return out;
+}
+function myLosses(){ return tickets.filter(function(t){ return t.result === "loss"; }).length + (parseInt(lsGet("pa_lossbank", 0), 10) || 0); }
+function myStreak(){
+  var fin = tickets.filter(function(t){ return t.result === "win" || t.result === "loss"; }).slice().sort(function(a, b){ return (b.ts || 0) - (a.ts || 0); });
+  var n = 0; for (var i = 0; i < fin.length; i++) { if (fin[i].result === "win") n++; else break; } return n;
+}
+function streakBadge(n){ return n >= 3 ? ' <span style="color:#ff9f43;font-weight:900">🔥' + n + '</span>' : ""; }
+function fmtUser(name){ name = String(name || "Agent"); return /^[A-Za-z0-9_]+$/.test(name) ? "@" + name : name; }
+cleanupTickets();
 var manualTr = lsGet("pa_manual", {});            // ticketId -> {legId: currentValue}
 
 /* ---------- tiers ---------- */
@@ -744,6 +786,7 @@ function togglePick(prop, dir){
 }
 function removeLeg(id){ slip = slip.filter(function(l){ return l.id!==id; }); lsSet("pa_slip", slip); renderAllSlips(); renderBoards(); renderTicker(); refreshPlayerDlg(); updateSlipChip(); }
 var PAYOUTS = {2:3, 3:5, 4:10, 5:20, 6:37.5};
+var slipPublic = lsGet("pa_slipub", true) !== false;
 var DAILY_TICKET_LIMIT = 5;
 function locksToday(){
   var rec = lsGet("pa_lockday", null);
@@ -788,6 +831,8 @@ function slipHtml(){
     + '<div class="row" style="margin-top:12px"><span class="pay">'+(can ? n+' picks — ready to lock in' : 'Pick at least 2 to lock a ticket')+'</span></div>'
     + '<div class="note" style="margin-top:6px">🎟️ Tickets today: '+locks+' of '+DAILY_TICKET_LIMIT+(limitHit ? ' — daily limit reached, back tomorrow' : '')+'</div>'
     + (hedge ? '<div class="note" style="margin-top:4px;color:#f87171;font-weight:700">🚫 Anti-hedge: '+esc(hedge)+'</div>' : '')
+    + '<div class="row" style="margin-top:10px;gap:8px"><span class="note">Who can see this slip?</span><button type="button" class="likebtn'+(slipPublic?' on':'')+'" data-slipub="1">🌐 Public</button><button type="button" class="likebtn'+(!slipPublic?' on':'')+'" data-slipub="0">🔒 Private</button></div>'
+    + (slipPublic ? '<div class="note" style="margin-top:4px">Public slips show on your profile — other agents can see and like them.</div>' : '<div class="note" style="margin-top:4px">Private slips stay on your account only — nobody else can see or like them.</div>')
     + '<div style="margin-top:12px"><button class="bigbtn" id="lockBtn" '+(canLock?"":"disabled")+'>'+(can ? (limitHit ? "Daily Limit Reached" : (hedge ? "Blocked — Opposite Pick" : "Lock In Ticket")) : "Lock In (pick 2+ to enable)")+'</button></div>';
 }
 function renderSlip(el){
@@ -795,10 +840,11 @@ function renderSlip(el){
   el.innerHTML = slipHtml();
   var btn = el.querySelector("#lockBtn");
   el.querySelectorAll("[data-remove]").forEach(function(b){ b.addEventListener("click", function(){ removeLeg(b.getAttribute("data-remove")); }); });
+  el.querySelectorAll("[data-slipub]").forEach(function(b){ b.addEventListener("click", function(){ slipPublic = b.getAttribute("data-slipub") === "1"; lsSet("pa_slipub", slipPublic); renderAllSlips(); }); });
   if (btn) btn.addEventListener("click", function(){
     if (locksToday() >= DAILY_TICKET_LIMIT || hedgeConflict()) { renderAllSlips(); return; }
     noteLock();
-    tickets.unshift({id:"t"+Date.now(), ts:Date.now(), entry:0, mult:PAYOUTS[slip.length]||0, legs:slip.slice()});
+    tickets.unshift({id:"t"+Date.now(), ts:Date.now(), entry:0, mult:PAYOUTS[slip.length]||0, pub:slipPublic, legs:slip.slice()});
     lsSet("pa_tickets", tickets);
     slip = []; lsSet("pa_slip", slip);
     playStamp(el);
@@ -1117,13 +1163,13 @@ function findProp(id){
 }
 
 /* ---------- home: top agents / upcoming / news ---------- */
-function myWins(){ return tickets.filter(function(t){ return t.result==="win"; }).length + (parseInt(lsGet("pa_bonuswins", 0), 10) || 0); }
+function myWins(){ return tickets.filter(function(t){ return t.result==="win"; }).length + (parseInt(lsGet("pa_bonuswins", 0), 10) || 0) + (parseInt(lsGet("pa_winbank", 0), 10) || 0); }
 function maxWins(){ var m = 0; try { m = parseInt(lsGet("pa_maxwins", 0), 10) || 0; } catch(e){} var w = myWins(); if (w > m){ m = w; try { lsSet("pa_maxwins", m); } catch(e){} } return m; }
 function agentRows(){
   var rows = cloudAgents
-    ? cloudAgents.filter(function(a){ return a.id !== cloudUid; }).map(function(a){ return {id:a.id, name:a.display_name||"Agent", wins:a.wins||0, me:false, avatar:a.avatar_url||""}; })
-    : SEED_AGENTS.map(function(a){ return {id:"", name:a.name, wins:a.wins, me:false, avatar:""}; });
-  rows.push({id:cloudUid, name:(profile.name||"You")+" (You)", wins:myWins(), me:true, avatar:profile.avatar||""});
+    ? cloudAgents.filter(function(a){ return a.id !== cloudUid; }).map(function(a){ return {id:a.id, name:a.display_name||"Agent", wins:a.wins||0, me:false, avatar:a.avatar_url||"", streak:(typeof agentStreaks !== "undefined" && agentStreaks[a.id]) || 0}; })
+    : SEED_AGENTS.map(function(a){ return {id:"", name:a.name, wins:a.wins, me:false, avatar:"", streak:0}; });
+  rows.push({id:cloudUid, name:(profile.name||"You")+" (You)", wins:myWins(), me:true, avatar:profile.avatar||"", streak:myStreak()});
   rows.sort(function(a,b){ return b.wins-a.wins; });
   return rows;
 }
@@ -1132,7 +1178,7 @@ function renderTopAgents(){
   var rows = agentRows().slice(0,5);
   setHtml($("topAgents"), '<div class="card">'+rows.map(function(r,i){
     var t = tierFor(r.wins);
-    return '<div class="leg'+(r.id?' agentclick':'')+'"'+(r.id?' data-agent="'+r.id+'"':'')+'><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.name+'</span></div><span class="note">'+r.wins+' winning tickets</span></div>';
+    return '<div class="leg'+(r.id?' agentclick':'')+'"'+(r.id?' data-agent="'+r.id+'"':'')+'><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.name+'</span>'+streakBadge(r.streak)+'</div><span class="note">'+r.wins+' winning tickets</span></div>';
   }).join("")+'</div>');
 }
 function renderUpcoming(){
@@ -1922,7 +1968,7 @@ function renderTickets(){
         + '<div data-stepper="'+esc(t.id)+'|'+esc(l.id)+'"></div>'
         + (l.player ? '<div style="padding:2px 0 8px"><button type="button" class="ghostbtn" data-pplay="'+esc(t.id)+'|'+esc(l.id)+'" style="font-size:12px;padding:5px 11px">Play by play - '+esc(l.player)+'</button><div data-pplays="'+esc(t.id)+'|'+esc(l.id)+'"></div></div>' : '');
     }).join("");
-    return '<div class="card" data-ticket="'+t.id+'"><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span>' + res + '</span></div>' + likeChip(t) + '<span class="stampmini">LOCKED IN</span>'+legs+'</div>';
+    return '<div class="card" data-ticket="'+t.id+'"><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span>' + res + (t.pub === false ? ' · 🔒 Private' : '') + '</span></div>' + likeChip(t) + '<span class="stampmini">LOCKED IN</span>'+legs+'</div>';
   }).join("");
   box.querySelectorAll("[data-pplay]").forEach(function(b){ b.addEventListener("click", function(){ togglePlayerPlays(b); }); });
   tickets.forEach(function(t){
@@ -2023,7 +2069,7 @@ async function downloadCard(kind, idx, btn){
     sub = (wins>=t.wins ? "UNLOCKED" : "LOCKED - "+(t.wins-wins)+" WINS TO GO") + (t.rarity ? " \u00b7 " + t.rarity : "");
     foot = "Unlocks at "+t.wins+" winning tickets - you have "+wins;
   } else {
-    var legs=[]; tickets.filter(function(x){ return x.result==="win"; }).forEach(function(x){ x.legs.forEach(function(l){ legs.push(l); }); });
+    var legs=allPlayerCardLegs();
     var l=legs[idx]; if(!l) return;
     accent="#a78bfa"; title=l.player||"Player Card";
     sub=((l.stat||"")+" "+(l.line!=null?l.line:"")+" - "+(l.dir||"")).trim();
@@ -2108,11 +2154,10 @@ function renderBoard(){
   renderFollowing();
   var rows = agentRows();
   $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Wins</th></tr>'
-    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+(r.id?' class="agentclick" data-agent="'+r.id+'"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b></td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
+    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+(r.id?' class="agentclick" data-agent="'+r.id+'"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b>'+streakBadge(r.streak)+'</td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
   var wins = maxWins();
   $("tiers").innerHTML = TIERS.map(function(t){ return tierCardHTML(t, wins, false, charIdxOf()); }).join("");
-  var cards = [];
-  tickets.filter(function(t){ return t.result==="win"; }).forEach(function(t){ t.legs.forEach(function(l){ cards.push(l); }); });
+  var cards = allPlayerCardLegs();
   var cci = cardCharIdx();
   var stripEl = $("cardStrip");
   if (stripEl) stripEl.innerHTML = CHARNAMES.map(function(n, k){ var n1 = k + 1; return '<img src="/api/avatars?s=' + n1 + '" data-ci="' + n1 + '" class="' + (n1 === cci ? 'on' : '') + '" title="' + n + '" alt="' + n + '">'; }).join("");
@@ -2569,6 +2614,7 @@ renderPickem();
 /* ---------- social: follows, public picks, ticket likes ---------- */
 var myFollows = lsGet("pa_follows", []);
 var followCounts = {};
+var agentStreaks = {};
 var myLikeCounts = {};
 var feedHtmlCache = "", feedAt = 0, topAt = 0;
 function fpOf(legs){ return (legs || []).map(function(l){ return [l.player || "", l.stat || "", l.dir || "", l.line].join("|"); }).join(";;"); }
@@ -2580,6 +2626,7 @@ function loadSocialState(){
     if (j && j.ok) { myFollows = j.following || []; lsSet("pa_follows", myFollows); feedAt = 0; renderFollowing(); }
   });
   socialGet("counts=1").then(function(j){ if (j && j.ok) followCounts = j.counts || {}; });
+  socialGet("streaks=1").then(function(j){ if (j && j.ok) { agentStreaks = j.streaks || {}; renderTopAgents(); renderBoard(); } });
   loadMyLikes();
 }
 function loadMyLikes(){
@@ -2609,7 +2656,7 @@ function foreignTicketHtml(t, ownerName){
     return '<div class="leg"><span class="dir ' + (l.dir === "MORE" ? "more" : "less") + '">' + esc(l.dir || "") + '</span><div style="flex:1"><b>' + esc(l.player || "") + '</b> — ' + esc(l.stat || "") + ' ' + (l.line != null ? l.line : "") + '<br><span class="note">' + esc(l.matchup || l.team || "") + (l.starts ? ' · ' + esc(fmtTime(l.starts)) : '') + '</span></div></div>';
   }).join("");
   var mine = t.user_id === cloudUid;
-  return '<div class="card" style="margin-top:10px"><div class="row" style="justify-content:space-between;padding-right:108px"><b>' + (ownerName ? esc(ownerName) + ' · ' : '') + 'Ticket · ' + new Date(t.created_at).toLocaleString() + '</b><span>' + statusChip(t.status) + '</span></div><span class="stampmini">LOCKED IN</span>' + legs
+  return '<div class="card" style="margin-top:10px"><div class="row" style="justify-content:space-between;padding-right:108px"><b>' + (ownerName ? esc(fmtUser(ownerName)) + ' · ' : '') + 'Ticket · ' + new Date(t.created_at).toLocaleString() + '</b><span>' + statusChip(t.status) + '</span></div><span class="stampmini">LOCKED IN</span>' + legs
     + '<div style="margin-top:8px">' + (mine ? '<span class="note"><span style="color:#ff5d7a">♥</span> ' + (t.likes || 0) + ' likes</span>' : '<button type="button" class="likebtn' + (t.likedByMe ? ' on' : '') + '" data-like="' + t.id + '"><span class="hrt">♥</span> ' + (t.likes || 0) + '</button>') + '</div></div>';
 }
 function openAgent(id, refresh){
@@ -2620,10 +2667,17 @@ function openAgent(id, refresh){
   socialGet("picks=" + encodeURIComponent(id) + "&me=" + encodeURIComponent(cloudUid)).then(function(j){
     if (!j || !j.ok || !j.profile) { body.innerHTML = '<p class="empty">Could not load this agent.</p>'; return; }
     var p = j.profile, t = tierFor(p.wins || 0), mine = id === cloudUid;
-    var head = '<div class="row" style="gap:12px;align-items:center"><img src="' + esc(p.avatar_url || "/api/icons?s=192") + '" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:19px;font-weight:900">' + esc(p.display_name || "Agent") + '</div><div class="note">' + t.name + ' · ' + (p.wins || 0) + ' wins · ' + (followCounts[id] || 0) + ' followers' + (p.featured_card ? ' · ' + esc(p.featured_card) : '') + '</div></div><button class="ghostbtn" id="vaClose">Close</button></div>'
+    var st = j.stats || { tickets: 0, wins: p.wins || 0, recordW: 0, recordL: 0, winPct: null, streak: 0, best: 0 };
+    var head = '<div class="row" style="gap:12px;align-items:center"><img src="' + esc(p.avatar_url || "/api/icons?s=192") + '" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:19px;font-weight:900">' + esc(fmtUser(p.display_name || "Agent")) + streakBadge(st.streak) + '</div><div class="note">' + t.name + ' · ' + (p.wins || 0) + ' wins · ' + (followCounts[id] || 0) + ' followers' + (p.featured_card ? ' · ' + esc(p.featured_card) : '') + '</div></div><button class="ghostbtn" id="vaClose">Close</button></div>'
       + (mine ? '<p class="sub" style="margin-top:8px">This is you — exactly what other agents see on your public profile.</p>' : '<div style="margin-top:10px"><button type="button" class="ghostbtn" id="vaFollow" style="font-weight:800;padding:9px 16px;' + (isFollowing(id) ? '' : 'background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none') + '">' + (isFollowing(id) ? '✓ Following — tap to unfollow' : '+ Follow') + '</button></div>');
+    var statsRow = '<div class="row" style="gap:7px;flex-wrap:wrap;margin-top:12px">'
+      + '<span class="badge">🏆 ' + (st.wins || 0) + ' wins</span>'
+      + '<span class="badge">🎟️ ' + (st.tickets || 0) + ' tickets</span>'
+      + '<span class="badge">Record ' + (st.recordW || 0) + 'W–' + (st.recordL || 0) + 'L</span>'
+      + (st.winPct != null ? '<span class="badge">' + st.winPct + '% win rate</span>' : '')
+      + '<span class="badge">' + (st.streak >= 3 ? '🔥 ' : '') + 'Streak ' + (st.streak || 0) + ' · best ' + (st.best || 0) + '</span></div>';
     var tk = (j.tickets || []).map(function(t2){ return foreignTicketHtml(t2, null); }).join("");
-    body.innerHTML = head + '<h3 style="margin:16px 0 4px">Their tickets</h3>' + (tk || '<p class="empty">No shared tickets yet.</p>');
+    body.innerHTML = head + statsRow + '<h3 style="margin:16px 0 4px">Their tickets</h3>' + (tk || '<p class="empty">No shared tickets yet.</p>');
     var cb = $("vaClose"); if (cb) cb.addEventListener("click", function(){ dlg.close(); });
     var fb = $("vaFollow"); if (fb) fb.addEventListener("click", function(){ toggleFollow(id); });
   });
@@ -2651,7 +2705,7 @@ function renderTopTicket(){
     var t = j.ticket, o = j.owner || {};
     var legs = (t.legs || []).slice(0, 3).map(function(l){ return esc(l.player || "") + ' ' + (l.dir || "") + ' ' + (l.line != null ? l.line : "") + ' ' + esc(l.stat || ""); }).join(" · ");
     var more = (t.legs || []).length > 3 ? ' · +' + ((t.legs || []).length - 3) + ' more' : '';
-    box.innerHTML = '<div class="card" style="padding:10px 14px;margin-top:12px"><div class="row" style="gap:9px;align-items:center"><span style="color:#ff5d7a;font-size:16px">♥</span><div style="flex:1;min-width:0"><div style="font-weight:900;font-size:13px;letter-spacing:.6px">TOP TICKET · ' + (t.likes || 0) + ' LIKES</div><div class="note" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (o.avatar_url ? '<img src="' + esc(o.avatar_url) + '" alt="" style="width:16px;height:16px;border-radius:50%;object-fit:cover;vertical-align:-3px;margin-right:5px">' : '') + '<b style="color:#e5e9f2">' + esc(o.display_name || "Agent") + '</b> · ' + statusChip(t.status) + ' · ' + legs + more + '</div></div>' + (o.id && o.id !== cloudUid ? '<button type="button" class="likebtn' + (t.likedByMe ? ' on' : '') + '" data-like="' + t.id + '"><span class="hrt">♥</span> ' + (t.likes || 0) + '</button>' : '<span class="note">♥ ' + (t.likes || 0) + '</span>') + '</div></div>';
+    box.innerHTML = '<div class="card" style="padding:10px 14px;margin-top:12px"><div class="row" style="gap:9px;align-items:center"><span style="color:#ff5d7a;font-size:16px">♥</span><div style="flex:1;min-width:0"><div style="font-weight:900;font-size:13px;letter-spacing:.6px">TOP TICKET · ' + (t.likes || 0) + ' LIKES</div><div class="note" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (o.avatar_url ? '<img src="' + esc(o.avatar_url) + '" alt="" style="width:16px;height:16px;border-radius:50%;object-fit:cover;vertical-align:-3px;margin-right:5px">' : '') + '<b style="color:#e5e9f2">' + esc(fmtUser(o.display_name || "Agent")) + '</b>' + streakBadge(j.streak || 0) + ' · ' + statusChip(t.status) + ' · ' + legs + more + '</div></div>' + (o.id && o.id !== cloudUid ? '<button type="button" class="likebtn' + (t.likedByMe ? ' on' : '') + '" data-like="' + t.id + '"><span class="hrt">♥</span> ' + (t.likes || 0) + '</button>' : '<span class="note">♥ ' + (t.likes || 0) + '</span>') + '</div></div>';
   });
 }
 document.addEventListener("click", function(e){
@@ -2678,14 +2732,44 @@ $("agentBtn").addEventListener("click", function(){
   var ai = $("agAvatarImg"); if (ai) { if (profile.avatar) { ai.src = profile.avatar; ai.style.display = ""; } else ai.style.display = "none"; }
   var af = $("agFeatured"); if (af) af.textContent = String(profile.featured || "").replace(/^[^A-Za-z0-9]+/, "") || "No profile card set";
   var t = tierFor(myWins()), nx = nextTier(myWins());
-  $("agStats").innerHTML = "<span>Tier <b>"+t.name+"</b></span><span>Wins <b>"+myWins()+"</b></span><span>Tickets <b>"+tickets.length+"</b></span>" + (nx ? "<span>Next: <b>"+nx.name+"</b> in "+(nx.wins-myWins())+" wins</span>" : "<span><b>Top tier reached 👑</b></span>");
+  var _w = myWins(), _l = myLosses(), _st = myStreak(), _pct = (_w + _l) ? Math.round(100 * _w / (_w + _l)) : null;
+  $("agStats").innerHTML = "<span>Tier <b>"+t.name+"</b></span><span>Wins <b>"+_w+"</b></span><span>Record <b>"+_w+"W–"+_l+"L</b></span>" + (_pct != null ? "<span>Win rate <b>"+_pct+"%</b></span>" : "") + "<span>Streak <b>"+_st+"</b>"+(_st >= 3 ? " 🔥" : "")+"</span><span>Tickets <b>"+tickets.length+"</b></span>" + (nx ? "<span>Next: <b>"+nx.name+"</b> in "+(nx.wins-myWins())+" wins</span>" : "<span><b>Top tier reached 👑</b></span>");
   renderAuth(); renderAvatarGrid();
   $("agentDlg").showModal();
 });
 $("agClose").addEventListener("click", function(){ $("agentDlg").close(); });
 $("agSave").addEventListener("click", function(){
-  profile.name = $("agName").value.trim(); profile.email = $("agEmail").value.trim();
-  lsSet("pa_profile", profile); refreshAgentBtn(); renderTopAgents(); renderBoard(); cloudSave(); $("agentDlg").close();
+  var nm = $("agName").value.trim();
+  var finishSave = function(){
+    profile.name = nm; profile.email = $("agEmail").value.trim();
+    lsSet("pa_profile", profile); refreshAgentBtn(); renderTopAgents(); renderBoard(); cloudSave(); $("agentDlg").close();
+  };
+  if (nm && nm !== (profile.name || "") && nm !== "Guest Agent") {
+    socialGet("username=" + encodeURIComponent(nm) + "&me=" + encodeURIComponent(cloudUid)).then(function(j){
+      if (j && j.ok && !j.available) {
+        var h = $("agNameHint");
+        if (h) { h.textContent = j.reason === "taken" ? "That username is taken — try another." : "Usernames are 3-20 characters: letters, numbers and _ only."; h.style.color = "#f87171"; }
+        return;
+      }
+      finishSave();
+    });
+  } else finishSave();
+});
+var agNameTimer = null;
+$("agName").addEventListener("input", function(){
+  var h = $("agNameHint"); if (!h) return;
+  var nm = $("agName").value.trim();
+  h.style.color = "";
+  if (!nm || nm === (profile.name || "")) { h.textContent = "Pick your own unique username — 3-20 characters, letters, numbers and _ only. It's the name other agents see; your email always stays private."; return; }
+  if (agNameTimer) clearTimeout(agNameTimer);
+  agNameTimer = setTimeout(function(){
+    socialGet("username=" + encodeURIComponent(nm) + "&me=" + encodeURIComponent(cloudUid)).then(function(j){
+      if (!j || !j.ok) return;
+      if (j.available) { h.textContent = "✓ " + fmtUser(nm) + " is available"; h.style.color = "#4ade80"; }
+      else if (j.reason === "taken") { h.textContent = "That username is taken — try another."; h.style.color = "#f87171"; }
+      else { h.textContent = "Usernames are 3-20 characters: letters, numbers and _ only."; h.style.color = "#f87171"; }
+    });
+  }, 450);
 });
 
 /* ---------- accounts: email + password via Supabase Auth (server proxy) ---------- */
@@ -2922,6 +3006,7 @@ if (!cloudUid) { cloudUid = uuid4(); lsSet("pa_uid", cloudUid); }
 var cloudAgents = null;
 var cloudSaveTimer = null;
 function cloudSave(){
+  if (cleanupTickets()) { renderTickets(); renderBoard(); }
   if (cloudSaveTimer) clearTimeout(cloudSaveTimer);
   cloudSaveTimer = setTimeout(function(){
     fetch("/api/profile", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({
@@ -2930,7 +3015,7 @@ function cloudSave(){
       avatar_url: profile.avatar || "",
       featured_card: profile.featured || "",
       wins: myWins(),
-      tickets: tickets.map(function(t){ return {legs: t.legs, status: t.result || "pending"}; })
+      tickets: tickets.map(function(t){ return {legs: t.legs, status: t.result || "pending", is_public: t.pub !== false}; })
     })}).then(function(r){ return r.json(); }).then(function(j){
       if (j && j.uid && j.uid !== cloudUid) { cloudUid = j.uid; lsSet("pa_uid", cloudUid); }
       fetchBoard();

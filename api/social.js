@@ -55,6 +55,28 @@ module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   if (!SB_URL || !SRK) { res.status(200).json({ ok: false, configured: false }); return; }
   try {
+    if (req.method === "GET" && req.query && req.query.username !== undefined) {
+      const name = String(req.query.username || "");
+      const me = String(req.query.me || "");
+      if (!/^[A-Za-z0-9_]{3,20}$/.test(name)) { res.status(200).json({ ok: true, available: false, reason: "format" }); return; }
+      const cand = await rest("profiles?select=id,display_name&display_name=ilike." + encodeURIComponent(name), { headers: sbHeaders() });
+      const taken = Array.isArray(cand.json) && cand.json.some((r) => r.id !== me && String(r.display_name).toLowerCase() === name.toLowerCase());
+      res.status(200).json({ ok: true, available: !taken, reason: taken ? "taken" : "" });
+      return;
+    }
+    if (req.method === "GET" && req.query && req.query.streaks) {
+      const b = await rest("profiles?select=id&order=wins.desc&limit=50", { headers: sbHeaders() });
+      const ids = Array.isArray(b.json) ? b.json.map((r) => r.id) : [];
+      const out = {};
+      if (ids.length) {
+        const t = await rest("tickets?select=user_id,status,created_at&user_id=in.(" + ids.join(",") + ")&status=in.(win,loss)&order=created_at.desc&limit=1000", { headers: sbHeaders() });
+        const byUser = {};
+        if (Array.isArray(t.json)) t.json.forEach((r) => { (byUser[r.user_id] = byUser[r.user_id] || []).push(r.status); });
+        ids.forEach((id) => { const arr = byUser[id] || []; let n = 0; for (let i = 0; i < arr.length; i++) { if (arr[i] === "win") n++; else break; } out[id] = n; });
+      }
+      res.status(200).json({ ok: true, streaks: out });
+      return;
+    }
     if (req.method === "GET" && req.query && req.query.state) {
       const me = String(req.query.uid || "");
       if (!UUID_RE.test(me)) { res.status(200).json({ ok: false, error: "bad uid" }); return; }
@@ -79,10 +101,30 @@ module.exports = async (req, res) => {
       const me = String(req.query.me || "");
       if (!UUID_RE.test(target)) { res.status(200).json({ ok: false, error: "bad uid" }); return; }
       const p = await rest("profiles?select=" + PROF_SEL + "&id=eq." + target, { headers: sbHeaders() });
+      const prof = (p.json && p.json[0]) || null;
       const t = await rest("tickets?select=id,user_id,legs,status,created_at&user_id=eq." + target + "&is_public=eq.true&order=created_at.desc&limit=50", { headers: sbHeaders() });
+      const all = await rest("tickets?select=status,created_at&user_id=eq." + target + "&order=created_at.asc&limit=1000", { headers: sbHeaders() });
+      const rowsA = Array.isArray(all.json) ? all.json : [];
+      let sw = 0, sl = 0, best = 0, cur = 0;
+      rowsA.forEach((r) => {
+        if (r.status === "win") { sw++; cur++; if (cur > best) best = cur; }
+        else if (r.status === "loss") { sl++; cur = 0; }
+      });
+      let streak = 0;
+      for (let i = rowsA.length - 1; i >= 0; i--) {
+        if (rowsA[i].status === "win") streak++;
+        else if (rowsA[i].status === "loss") break;
+      }
       res.status(200).json({
         ok: true,
-        profile: (p.json && p.json[0]) || null,
+        profile: prof,
+        stats: {
+          tickets: rowsA.length,
+          wins: prof ? (prof.wins || 0) : sw,
+          recordW: sw, recordL: sl,
+          winPct: (sw + sl) ? Math.round(100 * sw / (sw + sl)) : null,
+          streak: streak, best: best,
+        },
         tickets: Array.isArray(t.json) ? t.json.map((x) => shapeTicket(x, me)) : [],
       });
       return;
@@ -119,7 +161,10 @@ module.exports = async (req, res) => {
       });
       if (!best) { res.status(200).json({ ok: true, ticket: null, owner: null }); return; }
       const p = await rest("profiles?select=" + PROF_SEL + "&id=eq." + best.user_id, { headers: sbHeaders() });
-      res.status(200).json({ ok: true, ticket: shapeTicket(best, me), owner: (p.json && p.json[0]) || null });
+      const ot = await rest("tickets?select=status&user_id=eq." + best.user_id + "&status=in.(win,loss)&order=created_at.desc&limit=100", { headers: sbHeaders() });
+      let ostreak = 0;
+      if (Array.isArray(ot.json)) { for (let i = 0; i < ot.json.length; i++) { if (ot.json[i].status === "win") ostreak++; else break; } }
+      res.status(200).json({ ok: true, ticket: shapeTicket(best, me), owner: (p.json && p.json[0]) || null, streak: ostreak });
       return;
     }
     if (req.method === "POST") {
