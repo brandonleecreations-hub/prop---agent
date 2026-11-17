@@ -242,6 +242,9 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .pickbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:#17171f;border:1.5px solid #33333f;color:#fff;border-radius:12px;padding:11px 12px;font-weight:800;font-size:15px;margin-top:8px;cursor:pointer}
 .pickbtn.on{border-color:#f5c518;background:#2a230d;box-shadow:0 0 12px #f5c51844}
 .pickbtn img{width:24px;height:24px;object-fit:contain}
+.specialback{background:radial-gradient(120% 90% at 50% 0%, #3a2c07 0%, #0d0a18 65%);border:2px solid #f5c518}
+.sbring{width:132px;height:132px;border-radius:50%;border:3px solid #f5c518;box-shadow:0 0 22px #f5c51855, inset 0 0 18px #f5c51833;display:flex;align-items:center;justify-content:center;background:#0d0d13}
+.specialback .sbring img{width:104px;height:104px;object-fit:contain;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.08) drop-shadow(0 0 10px rgba(245,197,24,.45))}
 </style>
 </head>
 <body>
@@ -1989,7 +1992,7 @@ function renderBoard(){
   document.querySelectorAll(".setprofs").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); profile.avatar = b.getAttribute("data-avatar") || ""; profile.featured = b.getAttribute("data-featured") || ""; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
   document.querySelectorAll(".dlspecial").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadSpecialCard(b); }); });
   document.querySelectorAll("#cardStrip img").forEach(function(im){ im.addEventListener("click", function(){ localStorage.setItem("pa_cardchar", im.getAttribute("data-ci")); renderBoard(); }); });
-  document.querySelectorAll(".tiercard").forEach(function(c){ c.addEventListener("click", function(){ c.classList.toggle("flipped"); }); });
+  document.querySelectorAll(".tiercard").forEach(function(c){ c.addEventListener("click", function(){ if (c.getAttribute("data-noflip")) return; c.classList.toggle("flipped"); }); });
 }
 
 /* ---------- Weekly Pick'em (special card reward) ---------- */
@@ -2061,7 +2064,11 @@ function specialCardHTML(){
     + '<div class="tierto" style="margin-top:6px">' + (un ? 'Unlocked — in your collection · +1 win added to your tier progress' : 'Call the Weekly Pick\'em game right to unlock this rare card') + '</div>'
     + (un ? '<button class="setprofs mini" data-avatar="' + cfg.art + '" data-featured="Prop Agent · Special Card">Set as profile card</button> <button class="dlspecial mini">Download PNG</button>' : '')
     + '</div><div class="holo" style="--hc:#f5c51859"></div></div>';
-  return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cfg.cardName + ' · SPECIAL EDITION', 'The Weekly Pick\'em reward. Call the featured game before it starts; if your team wins, this card joins your collection and you get +1 win toward your tiers.') + '</div></div>';
+  return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"' + (un ? '' : ' data-noflip="1"') + '><div class="tierinner">' + front + specialBackHTML() + '</div></div>';
+}
+function specialBackHTML(){
+  var cfg = WEEKLY_PICKEM;
+  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512" alt=""></div><div class="bkname" style="color:#f5c518">PROP AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">WEEKLY PICK\'EM · SPECIAL EDITION</div><div class="bksub">' + cfg.awayShort + ' @ ' + cfg.homeShort + ' · ' + pickemWhen() + ' MST<br>Won in the Weekly Pick\'em</div><div class="holo" style="--hc:#f5c51859"></div></div>';
 }
 function downloadSpecialCard(btn){
   var cfg = WEEKLY_PICKEM;
