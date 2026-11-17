@@ -81,6 +81,10 @@ function stampSeen(sport, props) {
   const keys = Object.keys(m);
   if (keys.length > 4000) { const cut = now - 24 * 60 * 60 * 1000; for (const k of keys) if (m[k] < cut) delete m[k]; }
 }
+const prevFetch = {}; // sport -> {ts, keys:Set} — the previous fetch's full row keys.
+                      // A past-start row only counts as a break prop when a fetch
+                      // made AFTER its game started did not list it (proof it was
+                      // posted mid-game). A cold instance has no proof -> shows none.
 const brkLog = {}; // sport -> {day, count} break-check allowance
 function brkBudgetOk(sport) {
   const day = new Date().toISOString().slice(0, 10);
@@ -304,17 +308,20 @@ module.exports = async (req, res) => {
         inflight[sport] = fetchSport(sport, key).finally(() => { delete inflight[sport]; });
       }
       const rows = await inflight[sport];
-      const preSeen = new Set(Object.keys(seenMap[sport] || {}));
-      let props = normalize(rows, true);
-      // Rows whose start already passed survive ONLY if they are genuinely
-      // new (posted after their game started = break props). Old rows and
-      // long-dead rows are dropped, exactly like the normal lane.
-      props = props.filter((p) => {
+      const prev = prevFetch[sport];
+      const fullProps = normalize(rows, true);
+      const fullKeys = new Set(fullProps.map(rowKey));
+      // Rows whose start already passed survive ONLY with proof they were
+      // posted mid-game: a fetch made after their game started (and within
+      // this evening) did not list them. Everything else is dropped,
+      // exactly like the normal lane.
+      let props = fullProps.filter((p) => {
         const t = p.starts ? new Date(p.starts).getTime() : NaN;
         if (!isFinite(t) || t > Date.now() - 10 * 60 * 1000) return true;
         if (t < Date.now() - 4 * 60 * 60 * 1000) return false;
-        return !preSeen.has(rowKey(p));
+        return !!(prev && prev.ts > t + 10 * 60 * 1000 && prev.ts < Date.now() + 1000 && !prev.keys.has(rowKey(p)));
       });
+      prevFetch[sport] = { ts: Date.now(), keys: fullKeys };
       stampSeen(sport, props);
       cache[sport] = { ts: Date.now(), props, pregameRefreshed: true };
       res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=120");
@@ -352,6 +359,7 @@ module.exports = async (req, res) => {
     }
     const rows = await inflight[sport];
     const props = normalize(rows);
+    prevFetch[sport] = { ts: Date.now(), keys: new Set(normalize(rows, true).map(rowKey)) };
     stampSeen(sport, props);
     const wasPregame = !!(hit && Date.now() - hit.ts < DAY_TTL);
     if (noGamesMark) noGamesFetch[sport] = noGamesMark;
