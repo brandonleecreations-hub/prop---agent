@@ -489,11 +489,17 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .coinface{position:absolute;inset:0;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:44px;font-weight:900;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:4px solid #d97706;box-shadow:0 10px 26px rgba(0,0,0,.5),inset 0 0 22px rgba(0,0,0,.25)}
 .coinface.red{background:radial-gradient(circle at 36% 30%,#ffe4e6,#f87171 34%,#dc2626 62%,#991b1b 88%);color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.45)}
 .coinface.blue{background:radial-gradient(circle at 36% 30%,#dbeafe,#60a5fa 34%,#2563eb 62%,#1e3a8a 88%);color:#fff;transform:rotateX(180deg);text-shadow:0 2px 6px rgba(0,0,0,.45)}
+.coinface{box-shadow:0 14px 30px rgba(0,0,0,.55),inset 0 4px 10px rgba(255,255,255,.55),inset 0 -10px 18px rgba(0,0,0,.35),inset 0 0 22px rgba(0,0,0,.25)}
+.coinface::after{content:"";position:absolute;inset:0;border-radius:50%;background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.6) 48%,transparent 64%);background-size:280% 280%;background-position:110% 0;animation:coinshine 2.8s ease-in-out infinite;pointer-events:none}
+@keyframes coinshine{0%{background-position:110% 0}55%,100%{background-position:-30% 0}}
+.coinwrap{position:relative}
+.coinwrap::after{content:"";position:absolute;left:50%;bottom:0;width:124px;height:20px;transform:translateX(-50%);background:radial-gradient(50% 50% at 50% 50%,rgba(0,0,0,.55),transparent 70%);filter:blur(2px);pointer-events:none}
 .coinface span{font-size:12px;letter-spacing:3px;font-weight:900}
 .deckrow{display:flex;gap:10px;align-items:flex-start}
 .deckwrap{position:relative;flex:0 0 auto;text-align:center;width:62px}
 .deck3d{position:relative;width:50px;height:68px;margin:0 auto;transform:perspective(500px) rotateX(6deg) rotateY(-8deg)}
-.deckback{position:absolute;inset:0;border-radius:8px;background:#17102e url(/api/icons?s=192) center/34px no-repeat;border:2px solid #f5b942;box-shadow:3px 3px 0 #241a4a,6px 6px 0 #120b28,0 10px 18px rgba(0,0,0,.5)}
+.deckback{position:absolute;inset:0;border-radius:8px;background:#17102e url(/api/icons?s=192) center/34px no-repeat;border:2px solid #f5b942;box-shadow:3px 3px 0 #241a4a,6px 6px 0 #120b28,0 10px 18px rgba(0,0,0,.5);overflow:hidden}
+.deckback::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%);background-size:250% 250%;background-position:110% 0;animation:coinshine 3.4s ease-in-out infinite}
 .deck3d.shuffling{animation:deckshuffle .9s ease}
 @keyframes deckshuffle{0%,100%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(0deg)}15%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(-5deg) translateX(-3px)}30%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(5deg) translateX(3px)}45%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(-4deg) translateY(-2px)}60%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(4deg)}75%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(-2deg) translateX(-2px)}}
 .deckcount{margin-top:5px;font-size:10px;font-weight:900;letter-spacing:1px;color:#c4b5fd}
@@ -508,17 +514,26 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 @media (max-height:740px){ .fcard img{height:44px} .ttcell{width:32px;height:32px;font-size:14px} .deck3d{width:44px;height:60px} .pileback{width:34px;height:46px} .cbtn{padding:9px 4px;font-size:14px} .coin3d{width:92px;height:92px} .clashlog{font-size:11.5px} }
 .zonelab{font-size:9px;font-weight:900;letter-spacing:1.5px;color:#9d94c7;text-align:center;margin-bottom:3px}
 .espot{flex:0 0 auto;text-align:center;width:66px}
-.espotcards{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;align-content:center;min-height:46px;background:rgba(124,58,237,.12);border:1.5px dashed rgba(168,85,247,.6);border-radius:10px;padding:4px 2px}
+.espotcards{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;align-content:center;min-height:46px;background:rgba(124,58,237,.12);border:1.5px dashed rgba(168,85,247,.6);border-radius:10px;padding:4px 2px;box-shadow:inset 0 3px 10px rgba(0,0,0,.45)}
 .itog{background:linear-gradient(135deg,#7c3aed,#5b21b6);border:1px solid #f5b942;color:#fff;font-weight:900;font-size:10px;border-radius:999px;padding:2px 10px;cursor:pointer;float:right;letter-spacing:.5px}
 .itemhandwrap{flex:1;min-width:0}
-.flipfield{position:relative;overflow:hidden;background:radial-gradient(130% 130% at 50% 0%,#2b1655 0%,#170c33 55%,#0a0618 100%);transform:none}
+#itemPop{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:6;padding:18px}
+.itemview{transform:perspective(600px) rotateX(3deg);width:min(88vw,320px);background:linear-gradient(165deg,#1d1533,#0c0918);border:2px solid var(--ic,#f5b942);border-radius:16px;padding:18px 16px;text-align:center;box-shadow:0 18px 44px rgba(0,0,0,.6),0 0 22px -4px var(--ic,#f5b942);animation:cardpopA .3s cubic-bezier(.2,.9,.3,1.2) both}
+.ivicon{font-size:46px;line-height:1.1}
+.ivname{font-weight:900;font-size:17px;letter-spacing:1px;margin-top:6px}
+.ivdesc{font-size:14.5px;line-height:1.5;color:#e9e4ff;margin-top:8px}
+.ivmeta{font-size:11.5px;color:#9d94c7;margin-top:10px;line-height:1.45}
+.ivstatus{font-size:12.5px;color:#f5b942;font-weight:700;margin-top:8px;line-height:1.45}
+.flipfield{position:relative;overflow:hidden;background:radial-gradient(130% 130% at 50% 0%,#2b1655 0%,#170c33 55%,#0a0618 100%);transform:perspective(760px) rotateX(5deg);transform-origin:50% 100%;box-shadow:inset 0 26px 46px rgba(168,85,247,.28),inset 0 -30px 44px rgba(0,0,0,.5)}
 .flipfield::before{content:"";position:absolute;inset:-10px;background:url(/api/icons?s=512) center/330px no-repeat;opacity:.3;animation:logopulse 3.4s ease-in-out infinite;pointer-events:none}
 @keyframes logopulse{0%,100%{transform:scale(1) rotate(-2deg);opacity:.2}50%{transform:scale(1.08) rotate(2deg);opacity:.34}}
+.flipfield::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.13) 50%,transparent 60%);background-size:260% 100%;background-position:120% 0;animation:fieldshine 3.6s ease-in-out infinite;pointer-events:none}
+@keyframes fieldshine{0%{background-position:120% 0}60%,100%{background-position:-40% 0}}
 .flipfield>*{position:relative;z-index:1}
 .itemrow{margin-top:7px;background:rgba(245,185,66,.07);border:1px solid rgba(245,185,66,.35);border-radius:12px;padding:7px 8px}
 .itemlab{font-size:10.5px;font-weight:900;letter-spacing:.6px;color:#f5d98a;margin-bottom:6px}
 .itemhand{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
-.itemcard{position:relative;width:68px;flex:0 0 auto;padding:7px 4px 6px;border-radius:10px;background:linear-gradient(165deg,#1d1533,#0c0918);border:1.5px solid var(--ic,#f5b942);color:#fff;display:flex;flex-direction:column;align-items:center;gap:2px;overflow:hidden;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.45)}
+.itemcard{position:relative;width:68px;flex:0 0 auto;transform:perspective(420px) rotateX(4deg);transition:transform .15s}padding:7px 4px 6px;border-radius:10px;background:linear-gradient(165deg,#1d1533,#0c0918);border:1.5px solid var(--ic,#f5b942);color:#fff;display:flex;flex-direction:column;align-items:center;gap:2px;overflow:hidden;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.45)}
 .itemcard::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.22) 48%,transparent 62%);transform:translateX(-120%);animation:esheen 3.2s ease-in-out infinite;pointer-events:none}
 .itemcard .iic{font-size:20px;line-height:1}
 .itemcard .inm{font-size:8.5px;font-weight:900;letter-spacing:.3px;text-align:center;line-height:1.25}
@@ -3404,14 +3419,15 @@ function ensureClashPop(){
   var el = document.createElement("div");
   el.id = "clashPop";
   el.addEventListener("pointerdown", function(){ try { if (AC && AC.state === "suspended") AC.resume(); if (lsGet("pa_music", 1) !== 0 && !MUS.on) musicStart(); } catch(e){} });
-  el.innerHTML = '<button id="musBtn" title="Music on/off">' + (lsGet("pa_music", 1) === 0 ? "🔇" : "🎵") + '</button><div class="clashpanel" id="clashPanel"></div><div id="clashZoom"></div>';
+  el.innerHTML = '<button id="musBtn" title="Music on/off">' + (lsGet("pa_music", 1) === 0 ? "🔇" : "🎵") + '</button><div class="clashpanel" id="clashPanel"></div><div id="clashZoom"></div><div id="itemPop"></div>';
   document.body.appendChild(el);
   el.addEventListener("click", function(e){ if (e.target === el) closeClash(); });
   el.querySelector("#musBtn").addEventListener("click", function(e){ e.stopPropagation(); musicToggle(); });
   el.querySelector("#clashZoom").addEventListener("click", function(e){ var card = e.target.closest ? e.target.closest(".tiercard") : null; if (card) card.classList.toggle("flipped"); else closeZoom(); });
+  el.querySelector("#itemPop").addEventListener("click", function(e){ if (e.target === el.querySelector("#itemPop")) closeItemView(); });
 }
 function openClash(){ ensureClashPop(); $("clashPop").classList.add("open"); musicStart(); clashMenu(); }
-function closeClash(){ var p = $("clashPop"); if (p) p.classList.remove("open"); if (CL && CL.ttResolve) CL.ttResolve(-1); if (CL && CL.abResolve) CL.abResolve(""); musicStop(); closeZoom(); CL = null; renderClash(); renderPacks(); }
+function closeClash(){ var p = $("clashPop"); if (p) p.classList.remove("open"); if (CL && CL.ttResolve) CL.ttResolve(-1); if (CL && CL.abResolve) CL.abResolve(""); musicStop(); closeZoom(); closeItemView(); CL = null; renderClash(); renderPacks(); }
 function clashPanel(html){ var p = $("clashPanel"); if (p) { p.innerHTML = html; p.scrollTop = 0; } }
 function clashMenu(){
   CL = null;
@@ -3583,6 +3599,21 @@ function itemHTML(){
   var handInner = ITEMS_OPEN ? '<div class="itemhand">' + cards + '</div>' : '';
   return '<div class="itemrow"><div class="itemlab">🎴 YOUR CARDS · 1 item per turn' + (CL.itemUsedRound === CL.round ? ' · <span style="color:#f5b942">played ✓</span>' : '') + '<button class="itog" data-itemtoggle="1">' + (ITEMS_OPEN ? '▾ HIDE ITEMS' : '▸ SHOW ITEMS (' + itemCount("me") + ')') + '</button></div><div class="deckrow">' + deck + espot + '<div class="itemhandwrap">' + handInner + '</div>' + pile + '</div><div class="deckcap" style="text-align:center;margin-top:5px">One deck — 🔮 Energy pays for hits · 🎴 items help · shuffled at the start · draw +2/round · Prop Agent logo card backs</div></div>';
 }
+function openItemView(id){
+  var it = ITEM_MAP[id]; if (!it || !CL) return;
+  var pop = document.getElementById("itemPop"); if (!pop) return;
+  var held = CL.myHand.filter(function(x){ return x === id; }).length;
+  var why = itemPlayable("me", id);
+  var canPlay = !CL.busy && !CL.over && !CL.placing && !CL.abilityPick && CL.phase !== "flip" && CL.itemUsedRound !== CL.round && why === "";
+  var status = "";
+  if (CL.itemUsedRound === CL.round) status = "You already played an item this turn — 1 per turn.";
+  else if (why) status = "Can't play right now: " + why + ".";
+  else if (!canPlay) status = "Wait for your turn to play it.";
+  pop.innerHTML = '<div class="itemview" style="--ic:' + it.color + '"><div class="ivicon">' + it.icon + '</div><div class="ivname">' + it.name + '</div><div class="ivdesc">' + it.desc + '</div><div class="ivmeta">In your hand: ×' + held + ' · Play 1 per turn, then it goes to the discard pile.</div>' + (status ? '<div class="ivstatus">' + status + '</div>' : '') + '<div class="clashbtns"><button class="cbtn atk" data-playitem="' + id + '"' + (canPlay ? '' : ' disabled') + '>▶ PLAY ITEM</button><button class="cbtn def" data-itemclose="1">CLOSE</button></div></div>';
+  pop.style.display = "flex";
+  sfx("click");
+}
+function closeItemView(){ var pop = document.getElementById("itemPop"); if (pop) { pop.style.display = "none"; pop.innerHTML = ""; } }
 async function flipResolve(call){
   if (!CL || CL.phase !== "flip" || CL.flip) return;
   var B = CL;
@@ -3637,7 +3668,7 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
     if (CL.abilityPick) hint = "🏆 You won the grid! Tap one glowing ABILITY card to use it.";
     else if (CL.placing === "me") hint = "👇 You landed a hit! Tap a glowing square to place your ✖.";
     else if (CL.placing === "cpu") hint = "Watch out — the CPU is placing its ⭕.";
-    else if (!CL.busy && CL.itemUsedRound !== CL.round && CL.myHand.length) hint = "\uD83C\uDCB4 Play ONE item card first if it helps \u2014 they glow. Then \u2694\uFE0F ATTACK or \uD83D\uDEE1\uFE0F DEFEND. You draw +2 cards every round.";
+    else if (!CL.busy && CL.itemUsedRound !== CL.round && CL.myHand.length) hint = "\uD83C\uDCB4 Tap an item card to READ exactly what it does, then \u25B6 PLAY it \u2014 glowing cards are playable. Then \u2694\uFE0F ATTACK or \uD83D\uDEE1\uFE0F DEFEND. You draw +2 cards every round.";
     else if (!CL.busy && energyCount("me") < hitCost(me)) hint = "\uD83D\uDD2E Not enough Energy cards for " + fName(me) + " (needs \u00D7" + hitCost(me) + ") \u2014 \uD83D\uDEE1\uFE0F DEFEND or \uD83D\uDD01 TAG while you draw. You draw +2 cards every round.";
     else if (!CL.busy) hint = "👉 Your move: ⚔️ ATTACK to clash · 🛡️ DEFEND blocks a hit · 🔁 TAG swaps fighters. Tap any card to zoom in and read its power.";
     if (hint) guide = '<div class="guidebar"><span>' + hint + '</span><button class="guideoff" data-guideoff="1">✕ Guide off</button></div>';
@@ -3812,8 +3843,10 @@ document.addEventListener("click", function(e){
   var t;
   if ((t = e.target.closest("[data-clashnow]"))) { sfx("click"); openClash(); return; }
   var itg = e.target.closest("[data-itemtoggle]"); if (itg) { ITEMS_OPEN = !ITEMS_OPEN; sfx("click"); clashArena(); return; }
+  var pi = e.target.closest("[data-playitem]"); if (pi) { var pid = pi.getAttribute("data-playitem"); closeItemView(); useItem(pid); return; }
+  var ic = e.target.closest("[data-itemclose]"); if (ic) { closeItemView(); return; }
   var fc = e.target.closest("[data-flipcall]"); if (fc) { flipResolve(fc.getAttribute("data-flipcall")); return; }
-  var itc = e.target.closest("[data-item]"); if (itc) { useItem(itc.getAttribute("data-item")); return; }
+  var itc = e.target.closest("[data-item]"); if (itc) { openItemView(itc.getAttribute("data-item")); return; }
   var cell = e.target.closest("[data-ttcell]"); if (cell) { ttPlace(parseInt(cell.getAttribute("data-ttcell"), 10)); return; }
   var ab = e.target.closest("[data-ability]"); if (ab) { abPick(ab.getAttribute("data-ability")); return; }
   var zc = e.target.closest("[data-zci]"); if (zc) { clashZoom(parseInt(zc.getAttribute("data-zci"), 10), parseInt(zc.getAttribute("data-zti"), 10)); return; }
