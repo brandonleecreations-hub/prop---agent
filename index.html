@@ -168,8 +168,6 @@ dialog h3{margin:0 0 6px;font-size:18px}
 .drvpath{stroke-dasharray:7 6;animation:drvmarch 2.2s linear infinite}
 @keyframes drvmarch{to{stroke-dashoffset:-13}}
 @keyframes pdotA{0%{opacity:.95}100%{opacity:.05}}
-.tball{position:absolute;width:13px;height:13px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fef08a,#f5c518 60%,#b45309);box-shadow:0 0 10px #f5c518aa;animation:rally 3.4s ease-in-out infinite alternate;z-index:3}
-@keyframes rally{0%{left:11%;top:28%}30%{top:64%}55%{left:85%;top:34%}80%{top:58%}100%{left:11%;top:28%}}
 .livedot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#f43f5e;box-shadow:0 0 8px #f43f5e;animation:pdotA 1.2s ease-in-out infinite alternate}
 details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .hero{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 16px 14px;margin:0 0 12px;cursor:pointer;box-shadow:0 0 0 1px rgba(124,58,237,.25),0 8px 30px rgba(124,58,237,.18);position:relative;overflow:hidden}
@@ -1441,8 +1439,8 @@ function tennisSvg(lg, s, comp, cs, live){
     + '<rect x="15" y="35" width="270" height="100" fill="none" stroke="#e5e9f2" stroke-width="1.4"/>'
     + '<line x1="105" y1="35" x2="105" y2="135" stroke="#e5e9f2" stroke-width="1.4"/><line x1="195" y1="35" x2="195" y2="135" stroke="#e5e9f2" stroke-width="1.4"/>'
     + '<line x1="105" y1="85" x2="195" y2="85" stroke="#e5e9f2" stroke-width="1.4"/>'
-    + '<line x1="150" y1="8" x2="150" y2="162" stroke="#f5c518" stroke-width="3" stroke-dasharray="5 3"/></svg>'
-    + (live ? '<span class="tball"></span>' : '') + '</div>'
+    + '<line x1="150" y1="8" x2="150" y2="162" stroke="#f5c518" stroke-width="3" stroke-dasharray="5 3"/>' + (live ? '<g><circle r="7" fill="#f5c518" opacity=".35"/><circle r="4.5" fill="#fde68a" stroke="#f5c518" stroke-width="2"/><animateMotion dur="3.6s" repeatCount="indefinite" path="M33 48 L255 58 L40 108 L262 100 L33 48"/></g>' : '') + '</svg>'
+    + '</div>'
     + (sets ? '<div class="note" style="margin-top:6px">Sets: ' + esc(sets) + '</div>' : '');
 }
 function trackerHtml(lg, s, comp, cs){
