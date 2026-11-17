@@ -461,6 +461,35 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .fcnm{font-weight:900;font-size:11.5px;margin-top:5px;line-height:1.15}
 .fcst{font-weight:800;font-size:11px}
 .fcpw{color:#f5b942;font-weight:800;font-size:10.5px;margin-top:1px}
+.fcatk{color:#c4b5fd;font-weight:800;font-size:10px;margin-top:1px}
+.atkchip{display:inline-block;background:linear-gradient(135deg,#4c1d95,#7C3AED);border:1px solid #a78bfa;color:#fff;font-weight:900;font-size:10px;letter-spacing:.5px;padding:3px 8px;border-radius:999px;box-shadow:0 0 8px rgba(167,139,250,.45)}
+.atkchip.alt{background:#17122b;color:#c4b5fd}
+.energyrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(124,58,237,.10);border:1px solid rgba(167,139,250,.4);border-radius:12px;padding:8px 10px;margin-top:9px}
+.ehand{display:flex;gap:5px;flex-wrap:wrap}
+.ecard{position:relative;width:40px;height:54px;border-radius:7px;background:linear-gradient(160deg,#241545,#120a26);border:1.5px solid #a78bfa;overflow:hidden;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;box-shadow:0 4px 10px rgba(0,0,0,.4),0 0 10px rgba(167,139,250,.35)}
+.ecard::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(216,180,254,.35) 48%,transparent 62%);transform:translateX(-120%);animation:esheen 2.8s ease-in-out infinite}
+@keyframes esheen{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}
+.eorb{width:19px;height:19px;border-radius:50%;background:radial-gradient(circle at 34% 32%,#fff 0%,#d8b4fe 26%,#a855f7 55%,#6d28d9 82%,#3b0764 100%);box-shadow:0 0 12px 3px rgba(192,132,252,.75),inset 0 0 6px rgba(255,255,255,.5);animation:epulse 1.7s ease-in-out infinite}
+@keyframes epulse{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+.ecard .elab{font-size:5.8px;font-weight:900;letter-spacing:.6px;color:#e9d5ff;text-align:center;line-height:1.25}
+.ecard.dead{filter:grayscale(.8) brightness(.6);border-color:#555}
+.ecard.dead .eorb{animation:none}
+.ediscard{display:flex;align-items:center;gap:6px;color:#9aa7bd;font-size:10px;font-weight:800}
+.emore{font-weight:900;color:#c4b5fd;font-size:13px}
+.enone{color:#9aa7bd;font-size:11.5px;font-weight:700}
+.ecost{flex:1 1 150px;color:#d9d2f5;font-size:11.5px;line-height:1.4}
+.coinwrap{display:flex;justify-content:center;padding:20px 0 8px;perspective:700px}
+.coin3d{position:relative;width:118px;height:118px;transform-style:preserve-3d}
+.coin3d.idle{animation:coinidle 5s linear infinite}
+@keyframes coinidle{from{transform:rotateX(0deg)}to{transform:rotateX(360deg)}}
+.coin3d.flipping.heads{animation:flipH 1.5s cubic-bezier(.25,.7,.3,1) forwards}
+.coin3d.flipping.tails{animation:flipT 1.5s cubic-bezier(.25,.7,.3,1) forwards}
+@keyframes flipH{from{transform:rotateX(0deg)}to{transform:rotateX(1800deg)}}
+@keyframes flipT{from{transform:rotateX(0deg)}to{transform:rotateX(1980deg)}}
+.coinface{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:900;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:4px solid #d97706;box-shadow:0 10px 26px rgba(0,0,0,.5),inset 0 0 22px rgba(0,0,0,.25)}
+.coinface.heads{background:radial-gradient(circle at 36% 32%,#fef3c7,#f5b942 58%,#b45309);color:#7c2d12}
+.coinface.tails{background:radial-gradient(circle at 36% 32%,#e9d5ff,#7C3AED 58%,#3b0764);color:#f5d0fe;transform:rotateX(180deg)}
+@media (prefers-reduced-motion: reduce){.eorb,.ecard::after,.coin3d.idle{animation:none}}
 .pips{display:flex;gap:4px;justify-content:center;margin-top:4px}
 .pips i{width:14px;height:8px;border-radius:4px;background:#2fbf71;display:block}
 .pips i.hit{background:#e5484d}
@@ -2638,12 +2667,13 @@ function tierCardHTML(t, wins, withBtns, ci){
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:' + t.color + '">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:' + t.color + '">' + t.rarity + '</span></div>'
     + '<div style="margin-top:5px;font-weight:900;font-size:12.5px;color:#f5b942">\u26A1 ' + pw.name + ' <span style="color:#9aa7bd;font-weight:700;font-size:10px;letter-spacing:1px">' + pw.style + '</span></div>'
     + '<div class="tierto" style="margin-top:2px">' + pw.desc + '</div>'
+    + '<div style="margin-top:5px"><span class="atkchip">\uD83D\uDD2E ENERGY ATTACK ' + (ti + 2) + '</span> <span class="atkchip alt">Hit cost \u00D7' + Math.ceil((ti + 2) / 2) + '</span></div>'
     + '<div class="tierto" style="margin-top:6px">' + (un ? 'Unlocked — in your collection' : (t.wins - wins) + ' winning ticket' + ((t.wins - wins) === 1 ? '' : 's') + ' to go') + (ci ? '' : ' · Pick your agent in your profile') + '</div>'
     + (withBtns && un ? (setProfBtn(art || '/api/icons?s=512', cname + ' · ' + t.name + ' Card') + dlBtn('tier', ti, ci)) : '')
     + '</div>'
     + (ti >= 5 ? '<div class="tcspark"></div>' : '')
     + '<div class="holo" style="--hc:' + t.color + '59"></div></div>';
-  return '<div class="tiercard' + (ti === 6 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · ' + t.name + ' · ' + t.rarity, pw.name + ' \u2014 ' + pw.desc + '<br><br>Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits. This is also your Grid Clash battle card.') + '</div></div>';
+  return '<div class="tiercard' + (ti === 6 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · ' + t.name + ' · ' + t.rarity, pw.name + ' \u2014 ' + pw.desc + '<br><br>Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits. Grid Clash: ENERGY ATTACK ' + (ti + 2) + ' — landing a hit costs ' + Math.ceil((ti + 2) / 2) + ' energy cards.') + '</div></div>';
 }
 
 function cardSec(id, title, count, inner, openDefault){
@@ -3104,6 +3134,8 @@ function renderClash(){
 
 function mkFighter(ci, ti){ return { ci: ci, ti: ti, hits: 0, used: {} }; }
 function fStar(f){ return f.ti + 1; }
+function atkOf(f){ return f.ti + 2; }
+function hitCost(f){ return Math.ceil(atkOf(f) / 2); }
 function fName(f){ return CHARNAMES[f.ci - 1]; }
 function fAlive(f){ return f.hits < 2; }
 function teamHits(pair){ return pair[0].hits + pair[1].hits; }
@@ -3349,18 +3381,18 @@ function clashMenu(){
   CL = null;
   var b = battlesGet(), lad = ladderGet();
   clashPanel('<div class="clashttl">⚔️ AGENT CLASH</div>'
-    + '<div class="clashsub">Pick 2 battle cards — a Starter and a Tag Partner. Every round: <b>ATTACK</b> ⚔️, <b>DEFEND</b> 🛡️ or <b>TAG</b> 🔁. Land a hit, place your ✖ on the Clash Grid — 3 in a row wins an ability. Two hits and a card is out.</div>'
+    + '<div class="clashsub">Pick 2 battle cards — a Starter and a Tag Partner. A 🪙 coin flip decides who strikes first. Every turn you choose <b>ATTACK</b> ⚔️ or <b>DEFEND</b> 🛡️ (or 🔁 TAG). Landing a hit costs 🔮 ENERGY ATTACK cards — collect +1 every turn, spent ones go to the discard pile. Land a hit, place your ✖ on the Clash Grid — 3 in a row wins an ability. Two hits and a card is out.</div>'
     + '<button class="clashbig" data-clashmode="quick">⚡ QUICK CLASH<span>Friendly fight — CPU cards match your tiers, never stronger</span></button>'
     + '<button class="clashbig gold" data-clashmode="ladder">🏆 LADDER' + (lad >= 7 ? ' — CHAMPION 🏆' : ' — BOSS ' + (lad + 1) + ' OF 7') + '<span>' + (lad >= 7 ? 'Every boss beaten. Replay Boss 7 for coins.' : 'Beat bosses in order. Boss ' + (lad + 1) + ' pays ' + (10 + (lad + 1) * 5) + ' 🪙') + '</span></button>'
     + '<div class="clashmeta">🪙 <b>' + coinsGet() + '</b> Clash Coins · Record <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b><br>Wins pay Clash Coins — spend them on packs (1 pack = ' + CLASH_PACK_COST + ' 🪙, in My Packs below)</div>'
     + '<div class="clashmeta">🏆 <b>One ladder everywhere:</b> your ' + maxWins() + ' tier wins \u2014 from prop tickets, plus every battle win \u2014 unlock these tier cards \u2014 the same cards you battle with \u2014 AND the foil tiers inside packs. Clash Coins buy those same packs too.</div>'
-    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>⭐ Stars = your card\'s tier — higher total wins the round.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Holding two-in-a-row on the grid gives +1★ until it breaks.<br>🛡️ Defend: your power stays off — but if you lose the round, NO hit lands.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>'
+    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>🪙 <b>Coin flip first:</b> call HEADS or TAILS — winner gets First Strike (+1★ in Round 1) and +1 Energy.<br>⭐ Stars = your card\'s tier — higher total wins the round.<br>🔮 <b>ENERGY ATTACK:</b> every card has an Attack of at least 2, printed on the card. Landing a hit costs Energy Attack cards (also printed) — you gain +1 energy every turn, spent energy goes to the discard pile. Not enough energy? The hit fizzles — defend or tag while you collect!<br>🛡️ <b>Fair defense:</b> every turn you can DEFEND instead of attacking — a defended hit is fully blocked and costs the attacker nothing. The CPU plays by the exact same rules.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Holding two-in-a-row on the grid gives +1★ until it breaks.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>'
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>');
 }
 function clashSetup(mode){
   var boss = mode === "ladder" ? Math.min(ladderGet() + 1, 7) : 0;
-  CL = { mode: mode, boss: boss, sel: 0, mine: [null, null], cpu: null, myActive: 0, cpuActive: 0, round: 1, busy: false, over: false, tagged: false, lastHit: null, lastWin: null, log: [], grid: ["", "", "", "", "", "", "", "", ""], myBonus: 0, cpuBonus: 0, myGuard: 0, cpuGuard: 0, myTemp: 0, cpuTemp: 0, placing: null, abilityPick: null, ttLine: null, ttResolve: null, abResolve: null };
+  CL = { mode: mode, boss: boss, sel: 0, mine: [null, null], cpu: null, myActive: 0, cpuActive: 0, round: 1, busy: false, over: false, tagged: false, lastHit: null, lastWin: null, log: [], grid: ["", "", "", "", "", "", "", "", ""], myBonus: 0, cpuBonus: 0, myGuard: 0, cpuGuard: 0, myTemp: 0, cpuTemp: 0, placing: null, abilityPick: null, ttLine: null, ttResolve: null, abResolve: null, phase: null, flip: null, firstStrike: null, myEnergy: 2, cpuEnergy: 2, myDiscard: 0, cpuDiscard: 0 };
   clashPickRender();
 }
 function clashPickRender(){
@@ -3370,7 +3402,7 @@ function clashPickRender(){
     var f = CL.mine[s];
     slots += '<div class="pickslot' + (CL.sel === s ? ' on' : '') + '" data-pickslot="' + s + '">'
       + '<div class="pickrole">' + (s === 0 ? '⭐ STARTER' : '🔁 TAG PARTNER') + '</div>'
-      + (f ? '<img src="/api/battle?s=' + f.ci + '" alt=""><div class="picknm">' + fName(f) + '</div><div class="pickpw" style="color:' + TIERS[f.ti].color + '">' + TIERS[f.ti].name + ' ' + "★".repeat(f.ti + 1) + '</div><div class="pickpw2">⚡ ' + POWERS[f.ci - 1].name + '</div><div class="pickpw3">' + POWERS[f.ci - 1].desc + '</div><span class="readbtn slotread" data-readcard="' + f.ci + '">🔍</span>'
+      + (f ? '<img src="/api/battle?s=' + f.ci + '" alt=""><div class="picknm">' + fName(f) + '</div><div class="pickpw" style="color:' + TIERS[f.ti].color + '">' + TIERS[f.ti].name + ' ' + "★".repeat(f.ti + 1) + '</div><div class="pickpw2">⚡ ' + POWERS[f.ci - 1].name + '</div><div class="pickpw3">' + POWERS[f.ci - 1].desc + '</div><div class="pickpw2" style="color:#c4b5fd">\uD83D\uDD2E ENERGY ATTACK ' + (f.ti + 2) + ' · cost \u00D7' + Math.ceil((f.ti + 2) / 2) + '</div><span class="readbtn slotread" data-readcard="' + f.ci + '">🔍</span>'
            : '<div class="pickempty">Tap an agent below</div>')
       + '</div>';
   }
@@ -3413,8 +3445,33 @@ function clashCpuPair(){
 function clashStartFight(){
   CL.cpu = clashCpuPair();
   CL.myActive = 0; CL.cpuActive = 0; CL.round = 1; CL.busy = false; CL.over = false; CL.tagged = false; CL.lastHit = null; CL.lastWin = null; CL.grid = ["", "", "", "", "", "", "", "", ""]; CL.myBonus = 0; CL.cpuBonus = 0; CL.myGuard = 0; CL.cpuGuard = 0; CL.myTemp = 0; CL.cpuTemp = 0; CL.placing = null; CL.abilityPick = null; CL.ttLine = null; CL.ttResolve = null; CL.abResolve = null;
+  CL.phase = "flip"; CL.flip = null; CL.firstStrike = null; CL.myEnergy = 2; CL.cpuEnergy = 2; CL.myDiscard = 0; CL.cpuDiscard = 0;
   CL.log = ["🥊 " + fName(CL.mine[0]) + " & " + fName(CL.mine[1]) + " vs " + fName(CL.cpu[0]) + " & " + fName(CL.cpu[1]) + " — FIGHT!"];
   clashArena();
+}
+async function flipResolve(call){
+  if (!CL || CL.phase !== "flip" || CL.flip) return;
+  var B = CL;
+  var result = Math.random() < 0.5 ? "heads" : "tails";
+  CL.flip = { call: call, result: result, winner: call === result ? "me" : "cpu" };
+  sfx("coin");
+  clashArena();
+  await clashSleep(1600);
+  if (CL !== B || CL.over) return;
+  CL.firstStrike = CL.flip.winner;
+  if (CL.flip.winner === "me") { CL.myEnergy++; CL.log.push("\uD83E\uDE99 " + result.toUpperCase() + "! You called " + call.toUpperCase() + " \u2014 YOU go first! First Strike +1\u2605 in Round 1 and +1 \uD83D\uDD2E Energy."); }
+  else { CL.cpuEnergy++; CL.log.push("\uD83E\uDE99 " + result.toUpperCase() + "! You called " + call.toUpperCase() + " \u2014 CPU goes first. First Strike +1\u2605 in Round 1 and +1 \uD83D\uDD2E Energy for them."); }
+  CL.phase = null;
+  sfx("charge");
+  clashArena();
+}
+function energyHTML(){
+  var me = CL.mine[CL.myActive];
+  var orbs = "", n = Math.min(CL.myEnergy, 8);
+  for (var i = 0; i < n; i++) orbs += '<span class="ecard"><span class="eorb"></span><span class="elab">ENERGY<br>ATTACK</span></span>';
+  if (CL.myEnergy > 8) orbs += '<span class="emore">+' + (CL.myEnergy - 8) + '</span>';
+  if (!CL.myEnergy) orbs = '<span class="enone">No energy \u2014 collect +1 each round</span>';
+  return '<div class="energyrow"><div class="ehand">' + orbs + '</div><div class="ediscard"><span class="ecard dead"><span class="eorb"></span></span><span>DISCARD \u00D7' + CL.myDiscard + '</span></div><div class="ecost">Landing a hit with <b>' + fName(me) + '</b> costs \uD83D\uDD2E\u00D7' + hitCost(me) + ' energy \u2014 spent cards go to the discard pile.</div></div>';
 }
 function pipsHTML(f){ return '<span class="pips">' + (f.hits >= 1 ? '<i class="hit"></i>' : '<i></i>') + (f.hits >= 2 ? '<i class="hit"></i>' : '<i></i>') + '</span>'; }
 function fighterHTML(f, active, extra){
@@ -3423,11 +3480,18 @@ function fighterHTML(f, active, extra){
     + '<img src="/api/battle?s=' + f.ci + '" alt="">'
     + '<div class="fcnm">' + fName(f) + '</div>'
     + '<div class="fcst" style="color:' + t.color + '">' + t.name + ' ' + "★".repeat(f.ti + 1) + '</div>'
-    + '<div class="fcpw">⚡ ' + POWERS[f.ci - 1].name + '</div>' + pipsHTML(f)
+    + '<div class="fcpw">⚡ ' + POWERS[f.ci - 1].name + '</div><div class="fcatk">\uD83D\uDD2E ATK ' + atkOf(f) + ' · cost \u00D7' + hitCost(f) + '</div>' + pipsHTML(f)
     + (fAlive(f) ? '' : '<div class="kotag">ELIMINATED</div>')
     + '</div>';
 }
 function clashArena(){
+  if (CL.phase === "flip") {
+    var fl = CL.flip, inner;
+    if (!fl) inner = '<div class="coinwrap"><div class="coin3d idle"><div class="coinface heads">\u2605</div><div class="coinface tails">\u2726</div></div></div><div class="clashsub" style="text-align:center">\uD83E\uDE99 <b>COIN FLIP</b> \u2014 call it! Winner strikes first in Round 1 (+1\u2605) and gets +1 \uD83D\uDD2E Energy Attack card.</div><div class="clashbtns"><button class="cbtn atk" data-flipcall="heads">\uD83E\uDE99 HEADS</button><button class="cbtn def" data-flipcall="tails">\uD83E\uDE99 TAILS</button></div>';
+    else inner = '<div class="coinwrap"><div class="coin3d flipping ' + fl.result + '"><div class="coinface heads">\u2605</div><div class="coinface tails">\u2726</div></div></div><div class="clashsub" style="text-align:center">You called <b>' + fl.call.toUpperCase() + '</b> \u2014 flipping\u2026</div>';
+    clashPanel('<div class="clashround">\uD83E\uDE99 COIN FLIP \u2014 WHO GOES FIRST?</div><div class="field3d">' + inner + '</div><button class="openbtn" data-clashquit="1" style="width:100%;margin-top:8px">Quit battle</button>');
+    return;
+  }
   var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
   var cp = CL.cpu[CL.cpuActive], cpp = CL.cpu[1 - CL.cpuActive];
   var logHtml = CL.log.slice(-3).map(function(l){ return '<div class="clashlog">' + l + '</div>'; }).join("");
@@ -3445,18 +3509,20 @@ function clashArena(){
     if (CL.abilityPick) hint = "🏆 You won the grid! Tap one glowing ABILITY card to use it.";
     else if (CL.placing === "me") hint = "👇 You landed a hit! Tap a glowing square to place your ✖.";
     else if (CL.placing === "cpu") hint = "Watch out — the CPU is placing its ⭕.";
+    else if (!CL.busy && CL.myEnergy < hitCost(me)) hint = "\uD83D\uDD2E Not enough Energy for " + fName(me) + " (needs \u00D7" + hitCost(me) + ") \u2014 \uD83D\uDEE1\uFE0F DEFEND or \uD83D\uDD01 TAG while you collect. You gain +1 Energy every round.";
     else if (!CL.busy) hint = "👉 Your move: ⚔️ ATTACK to clash · 🛡️ DEFEND blocks a hit · 🔁 TAG swaps fighters. Tap any card to zoom in and read its power.";
     if (hint) guide = '<div class="guidebar"><span>' + hint + '</span><button class="guideoff" data-guideoff="1">✕ Guide off</button></div>';
   }
   var phase = !CL.busy && !CL.over && !CL.placing && !CL.abilityPick;
   clashPanel('<div class="clashround">' + (CL.mode === "ladder" ? '🏆 BOSS ' + CL.boss + ' · ' : '') + 'ROUND ' + CL.round + '</div>'
     + guide
-    + '<div class="field3d"><div class="side cpu"><div class="sidetag">CPU</div><div class="frow">' + fighterHTML(cp, true, cpExtra) + fighterHTML(cpp, false, "") + '</div></div>'
+    + '<div class="field3d"><div class="side cpu"><div class="sidetag">CPU \u00B7 \uD83D\uDD2E\u00D7' + CL.cpuEnergy + ' \u00B7 DISCARD \u00D7' + CL.cpuDiscard + '</div><div class="frow">' + fighterHTML(cp, true, cpExtra) + fighterHTML(cpp, false, "") + '</div></div>'
     + '<div class="clashmid"><span class="vsbadge">VS</span>' + ttHTML() + '<div class="clashnums" id="clashNums"></div>' + intel + logHtml + '</div>'
-    + '<div class="side me"><div class="sidetag">YOU</div><div class="frow">' + fighterHTML(me, true, meExtra) + fighterHTML(mp, false, "") + '</div></div></div>'
+    + '<div class="side me"><div class="sidetag">YOU \u00B7 \uD83D\uDD2E\u00D7' + CL.myEnergy + ' \u00B7 DISCARD \u00D7' + CL.myDiscard + '</div><div class="frow">' + fighterHTML(me, true, meExtra) + fighterHTML(mp, false, "") + '</div></div></div>'
+    + energyHTML()
     + abilityHTML()
     + '<div class="clashbtns">'
-    + '<button class="cbtn atk' + (phase && g ? ' guideglow' : '') + '" data-clashact="atk"' + (CL.busy || CL.over ? ' disabled' : '') + '>⚔️ ATTACK</button>'
+    + '<button class="cbtn atk' + (phase && g ? ' guideglow' : '') + '" data-clashact="atk"' + (CL.busy || CL.over ? ' disabled' : '') + '>⚔️ ATTACK \uD83D\uDD2E\u00D7' + hitCost(me) + '</button>'
     + '<button class="cbtn def" data-clashact="def"' + (CL.busy || CL.over ? ' disabled' : '') + '>🛡️ DEFEND</button>'
     + '<button class="cbtn tag" data-clashact="tag"' + (CL.busy || CL.over || CL.tagged || !fAlive(mp) ? ' disabled' : '') + '>🔁 TAG</button>'
     + '</div>'
@@ -3471,6 +3537,11 @@ function cpuPlan(){
   if (fAlive(p) && a.hits === 1 && p.hits === 0 && r < 0.35) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.log.push("🔁 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + "!"); return; }
   if (a.hits === 1 && r < 0.30) CL.cpuStance = "def";
   else if (r < 0.10) CL.cpuStance = "def";
+  if (CL.cpuStance === "atk" && !CL.cpuTagged && CL.cpuEnergy < hitCost(CL.cpu[CL.cpuActive])) {
+    var pp = CL.cpu[1 - CL.cpuActive];
+    if (fAlive(pp) && hitCost(pp) <= CL.cpuEnergy && Math.random() < 0.5) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.log.push("\uD83D\uDD01 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + " \u2014 saving energy!"); }
+    else if (Math.random() < 0.55) { CL.cpuStance = "def"; CL.log.push("\uD83D\uDEE1\uFE0F CPU defends \u2014 collecting energy."); }
+  }
 }
 function clashSleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
 function applyHit(side, hits, target, targetStance, foe){
@@ -3501,6 +3572,8 @@ async function clashRound(stance){
   var myGrid = ttBonus(CL.grid, "X"), cpGrid = ttBonus(CL.grid, "O");
   var myTotal = myEff.star + myGrid + (CL.myBonus || 0) + (CL.myTemp || 0);
   var cpTotal = cpEff.star + cpGrid + (CL.cpuBonus || 0) + (CL.cpuTemp || 0);
+  if (CL.round === 1 && CL.firstStrike === "me") { myTotal += 1; CL.log.push("\uD83E\uDE99 FIRST STRIKE +1\u2605 \u2014 you won the coin flip!"); }
+  if (CL.round === 1 && CL.firstStrike === "cpu") { cpTotal += 1; CL.log.push("\uD83E\uDE99 CPU FIRST STRIKE +1\u2605 \u2014 they won the coin flip."); }
   await clashSleep(650);
   if (CL !== B) return;
   CL.myTemp = 0; CL.cpuTemp = 0;
@@ -3530,19 +3603,35 @@ async function clashRound(stance){
       loseF = loser === "me" ? me : cp; winF = loser === "me" ? cp : me;
       loseStance = loser === "me" ? stance : CL.cpuStance;
     }
-    var res = applyHit(loser, hits, loseF, loseStance, winF);
-    var landed = res === "hit";
+    var winSide = loser === "me" ? "cpu" : "me";
+    var cost = hitCost(winF);
+    var poolKey = winSide === "me" ? "myEnergy" : "cpuEnergy";
+    var disKey = winSide === "me" ? "myDiscard" : "cpuDiscard";
+    var landedHits = 0, res = "";
+    if (loseStance === "def") { res = applyHit(loser, hits, loseF, loseStance, winF); }
+    else {
+      for (var hi = 0; hi < hits; hi++) {
+        if (!fAlive(loseF)) break;
+        if (CL[poolKey] < cost) { CL.log.push("\u2728 " + fName(winF) + "'s hit FIZZLES \u2014 not enough ENERGY ATTACK cards! (needs \uD83D\uDD2E\u00D7" + cost + ", has " + CL[poolKey] + ")"); res = "fizzle"; break; }
+        var r1 = applyHit(loser, 1, loseF, loseStance, winF);
+        res = r1;
+        if (r1 === "hit") { CL[poolKey] -= cost; CL[disKey] += cost; landedHits++; CL.log.push("\uD83D\uDD2E " + (winSide === "me" ? "You spend" : "CPU spends") + " " + cost + " Energy Attack \u2192 discard pile. (" + CL[poolKey] + " energy left)"); }
+        else break;
+      }
+    }
+    var landed = landedHits > 0;
     CL.lastHit = landed ? loser : null;
-    CL.lastWin = landed ? (loser === "me" ? "cpu" : "me") : loser;
-    if (landed) { await doMarks(loser === "me" ? "cpu" : "me", hits, B); if (CL !== B) return; }
-    else if (res === "def") { CL.log.push("✖ Blocked hit — but the round winner claims a grid square!"); await doMarks(loser === "me" ? "cpu" : "me", 1, B); if (CL !== B) return; }
+    CL.lastWin = landed ? winSide : loser;
+    if (landed) { await doMarks(winSide, landedHits, B); if (CL !== B) return; }
+    else if (res === "def") { CL.log.push("✖ Blocked hit — but the round winner claims a grid square!"); await doMarks(winSide, 1, B); if (CL !== B) return; }
+    else if (res === "fizzle") { CL.log.push("✖ No hit — but the round winner still claims a grid square!"); await doMarks(winSide, 1, B); if (CL !== B) return; }
   }
   else if (tied) { await doTieMarks(B); if (CL !== B) return; }
   await clashSleep(450);
   if (CL !== B) return;
   var ended = clashCheckEnd();
   CL.round++; CL.tagged = false; CL.busy = false;
-  if (!ended) clashArena();
+  if (!ended) { CL.myEnergy++; CL.cpuEnergy++; CL.log.push("\uD83D\uDD2E +1 Energy Attack card each \u2014 Round " + CL.round + "!"); clashArena(); }
 }
 function clashCheckEnd(){
   [["mine", "myActive"], ["cpu", "cpuActive"]].forEach(function(pr){
@@ -3586,6 +3675,7 @@ function clashBuyPack(){
 document.addEventListener("click", function(e){
   var t;
   if ((t = e.target.closest("[data-clashnow]"))) { sfx("click"); openClash(); return; }
+  var fc = e.target.closest("[data-flipcall]"); if (fc) { flipResolve(fc.getAttribute("data-flipcall")); return; }
   var cell = e.target.closest("[data-ttcell]"); if (cell) { ttPlace(parseInt(cell.getAttribute("data-ttcell"), 10)); return; }
   var ab = e.target.closest("[data-ability]"); if (ab) { abPick(ab.getAttribute("data-ability")); return; }
   var zc = e.target.closest("[data-zci]"); if (zc) { clashZoom(parseInt(zc.getAttribute("data-zci"), 10), parseInt(zc.getAttribute("data-zti"), 10)); return; }
