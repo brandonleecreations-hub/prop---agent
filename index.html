@@ -585,7 +585,7 @@ function ingestProps(lg, rows){
       img: photoCache[(r.player || "").toLowerCase()] || "",
       pct: (r.pct != null ? r.pct : null),
       brk: brk,
-      src: "PrizePicks \u00B7 via Parlay API"
+      src: (r.book && r.book !== "PrizePicks") ? (r.book + " \u00B7 via ESPN") : "PrizePicks \u00B7 via Parlay API"
     });
   });
   out.forEach(function(p){ var k = p.player.toLowerCase(); if (!p.team && teamCache[k]) p.team = teamCache[k]; if (!p.athleteId && aidCache[k]) p.athleteId = aidCache[k]; });
