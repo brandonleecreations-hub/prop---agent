@@ -1972,7 +1972,7 @@ function renderInstall(){
   var card = $("installCard"); if (!card) return;
   var standalone = false;
   try { standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true; } catch(e){}
-  if (standalone) { card.style.display = "none"; return; }
+  if (standalone) { card.style.display = ""; var bS = $("installBtn"), nS = $("installNote"); if (bS) { bS.style.display = ""; bS.textContent = "✓ ON YOUR HOME SCREEN"; } if (nS) nS.textContent = "You're using the installed app — its own icon, full screen. Send it to a friend with Share below."; return; }
   card.style.display = "";
   var btn = $("installBtn"), note = $("installNote");
   if (deferredInstall) { btn.style.display = ""; note.textContent = "One tap and Prop Agent lands on your home screen — its own icon, full screen, no browser bars."; }
