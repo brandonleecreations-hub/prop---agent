@@ -274,7 +274,6 @@ const ESPN_PATHS = {
 };
 const schedCache = {}; // sport -> {ts, games}
 const SCHED_TTL = 60 * 60 * 1000;
-const noGamesFetch = {}; // sport -> ET date of the day's one evening no-games fetch
 
 async function gamesToday(sport) {
   const hit = schedCache[sport];
@@ -692,19 +691,16 @@ module.exports = async (req, res) => {
     return;
   }
   if (cacheFresh(hit)) { if (!hit.props.length) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300"); res.status(200).json({ ok: true, configured: true, cached: true, props: hit.props }); return; }
-  // Schedule gate: no games today -> no Parlay refresh until the evening,
-  // and only one evening check per day for a game-less sport.
-  let noGamesMark = null;
+  // Schedule gate (Brandon 2026-11-17, ALL sports): gamesToday() is
+  // state-aware -- it counts only games still upcoming ("pre") or live
+  // ("in") today. If there are none, NO Parlay pull happens for this
+  // sport, all day: the board is served from cache (free), and a pull
+  // can only ever fire when a game is actually coming up or on. The
+  // old one-evening-look-ahead exception is removed for every sport.
   if (!(await gamesToday(sport))) {
-    // Brandon 2026-11-17: NFL pulls ONLY on days with an NFL game --
-    // the one evening look-ahead other sports get does not apply to
-    // the NFL, so a game-less NFL day spends zero credits, all day.
-    if (etHour() < 18 || noGamesFetch[sport] === etToday() || sport === "americanfootball_nfl") {
-      res.setHeader("Cache-Control", "public, s-maxage=900, stale-while-revalidate=900");
-      res.status(200).json({ ok: true, configured: true, noGames: true, props: hit ? hit.props : [] });
-      return;
-    }
-    noGamesMark = etToday();
+    res.setHeader("Cache-Control", "public, s-maxage=900, stale-while-revalidate=900");
+    res.status(200).json({ ok: true, configured: true, noGames: true, props: hit ? hit.props : [] });
+    return;
   }
   // Shared cache + global budget: when the Supabase props_cache table is
   // reachable it governs paid fetches (see the sb* helpers). sbRow ===
@@ -758,7 +754,6 @@ module.exports = async (req, res) => {
     prevFetch[sport] = { ts: Date.now(), keys: new Set(normalize(rows, true).map(rowKey)) };
     stampSeen(sport, props);
     const wasPregame = !!(hit && Date.now() - hit.ts < DAY_TTL);
-    if (noGamesMark) noGamesFetch[sport] = noGamesMark;
     cache[sport] = { ts: Date.now(), props, pregameRefreshed: wasPregame, espnFallback: espnFb };
     if (sbClaimed) { await sbCachePut(sport, parlayProps, ((rows.pagesUsed || 1) * 3), sbClaimed.reserved); sbClaimed = null; }
     if (!props.length || espnFb) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300"); res.status(200).json({ ok: true, configured: true, cached: false, fallback: espnFb ? "espn" : undefined, props });
