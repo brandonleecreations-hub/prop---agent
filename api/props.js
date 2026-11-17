@@ -310,7 +310,31 @@ function etToday() {
   catch (e) { return new Date().toISOString().slice(0, 10); }
 }
 
-async function fetchSport(sport, key) {
+// Key failover (Brandon 2026-11-17): several Parlay keys may be
+// configured -- PARLAY_API_KEY_2 / PARLEY_API_KEY_2 are the backup slots.
+// A fetch tries the keys in order; a key that answers CREDIT_LIMIT_REACHED
+// (or any 403) is marked dead for the rest of the ET day and skipped, so a
+// drained key costs at most one wasted (free) 403 call per instance per
+// day and the backup key takes over automatically. Failover changes WHO
+// pays, never how much: the shared daily credit budget still governs how
+// often fetches happen at all.
+const deadKeys = {}; // last-6-chars of key -> ET day it ran dry
+function keyAlive(k) { return deadKeys[String(k).slice(-6)] !== etToday(); }
+async function fetchSport(sport, keys) {
+  const list = (Array.isArray(keys) ? keys : [keys]).filter(Boolean);
+  let lastErr = null;
+  for (const k of list) {
+    if (!keyAlive(k)) continue;
+    try { return await fetchSportWithKey(sport, k); }
+    catch (e) {
+      lastErr = e;
+      if (/CREDIT_LIMIT_REACHED|http 403/i.test(String((e && e.message) || e))) { deadKeys[String(k).slice(-6)] = etToday(); continue; }
+      throw e;
+    }
+  }
+  throw lastErr || new Error("no parlay key available");
+}
+async function fetchSportWithKey(sport, key) {
   const base = "https://parlay-api.com/v1/sports/" + encodeURIComponent(sport) + "/props";
   let offset = 0, rows = [], guard = 0;
   while (guard < 2) {
@@ -591,8 +615,8 @@ async function espnFallback(sport, mode) {
 module.exports = async (req, res) => {
   res.setHeader("Content-Type", "application/json");
   res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=39600");
-  const key = process.env.PARLAY_API_KEY || process.env.PARLEY_API_KEY || process.env.PRIZEPICKS_FEED_API_KEY || process.env.PRIZEPICKS_API_KEY || process.env.PARLAY_KEY;
-  if (!key) { res.setHeader("Cache-Control", "no-store"); res.status(200).json({ ok: false, configured: false, props: [] }); return; }
+  const keys = [process.env.PARLAY_API_KEY, process.env.PARLEY_API_KEY, process.env.PARLAY_API_KEY_2, process.env.PARLEY_API_KEY_2, process.env.PRIZEPICKS_FEED_API_KEY, process.env.PRIZEPICKS_API_KEY, process.env.PARLAY_KEY].filter((v, i, a) => !!v && a.indexOf(v) === i);
+  if (!keys.length) { res.setHeader("Cache-Control", "no-store"); res.status(200).json({ ok: false, configured: false, props: [] }); return; }
   const sport = (req.query && req.query.sport) || "";
   if (SPORT_KEYS.indexOf(sport) === -1) { res.status(400).json({ ok: false, error: "unknown sport" }); return; }
   const hit = cache[sport];
@@ -617,7 +641,7 @@ module.exports = async (req, res) => {
     try {
       if (!inflight[sport]) {
         noteBrk(sport); noteFetch(sport);
-        inflight[sport] = fetchSport(sport, key).finally(() => { delete inflight[sport]; });
+        inflight[sport] = fetchSport(sport, keys).finally(() => { delete inflight[sport]; });
       }
       const rows = await inflight[sport];
       const prev = prevFetch[sport];
@@ -702,7 +726,7 @@ module.exports = async (req, res) => {
   try {
     if (!inflight[sport]) {
       noteFetch(sport);
-      inflight[sport] = fetchSport(sport, key).finally(() => { delete inflight[sport]; });
+      inflight[sport] = fetchSport(sport, keys).finally(() => { delete inflight[sport]; });
     }
     const rows = await inflight[sport];
     let props = normalize(rows);
