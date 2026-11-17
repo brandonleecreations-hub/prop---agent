@@ -2502,6 +2502,13 @@ async function downloadTradingCard(ti, ci, btn){
   var rw = ctx.measureText(t.rarity).width + 30;
   rrC(ctx, W - 62 - rw, 618, rw, 36, 18); ctx.fillStyle = accent; ctx.fill();
   ctx.fillStyle = "#0a0a10"; ctx.font = "900 19px system-ui, sans-serif"; ctx.textAlign = "center"; ctx.fillText(t.rarity, W - 62 - rw / 2, 643);
+  var pwD = POWERS[ci - 1] || POWERS[0];
+  ctx.textAlign = "left"; ctx.fillStyle = "#f5b942"; ctx.font = "900 21px system-ui, sans-serif";
+  ctx.fillText("\u26A1 " + pwD.name + " \u00B7 " + pwD.style, 62, 694);
+  ctx.fillStyle = "#d4d4d8"; ctx.font = "500 17px system-ui, sans-serif";
+  var dwords = String(pwD.desc).split(/\s+/), dline = "", dyy = 722;
+  for (var dwi = 0; dwi < dwords.length; dwi++){ var dtry = dline ? dline + " " + dwords[dwi] : dwords[dwi]; if (ctx.measureText(dtry).width > W - 124 && dline){ ctx.fillText(dline, 62, dyy); dyy += 22; dline = dwords[dwi]; if (dyy > 744) break; } else dline = dtry; }
+  if (dline && dyy <= 744) ctx.fillText(dline, 62, dyy);
   ctx.textAlign = "left"; ctx.fillStyle = "#a1a1aa"; ctx.font = "500 19px system-ui, sans-serif";
   ctx.fillText(un ? "Unlocked — in your collection" : ("Unlocks at " + t.wins + " winning tickets — you have " + wins), 62, 762);
   ctx.textAlign = "center"; ctx.fillStyle = "#fff"; ctx.font = "800 22px system-ui, sans-serif"; ctx.fillText("P R O P   A G E N T", W / 2, 838);
@@ -2611,42 +2618,20 @@ function tierCardHTML(t, wins, withBtns, ci){
   var stars = "★".repeat(ti + 1);
   var gems = ti >= 3 ? ' <span style="color:' + t.color + '">◆</span>' : '';
   var glow = ti >= 3 ? (", 0 0 " + (12 + ti * 4) + "px " + t.color + "59") : "";
+  var pw = POWERS[(ci || 1) - 1] || POWERS[0];
   var bw = ti >= 4 ? 3 : 2;
   var front = '<div class="flipfront" style="border:' + bw + 'px solid ' + t.color + ';--tc:' + t.color + ';box-shadow:0 12px 26px rgba(0,0,0,.38)' + glow + ', inset 0 1px 0 rgba(255,255,255,.05)">'
     + '<div class="tcplate"><span class="tcname">' + cname + gems + '</span><span class="tcno">' + numTxt + '</span></div>'
     + '<div class="tcwin">' + (art ? '<img class="cardart" src="' + esc(art) + '" alt="">' : '<div class="cardart ph" style="color:' + t.color + '">' + t.name.charAt(0) + '</div>') + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:' + t.color + '">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:' + t.color + '">' + t.rarity + '</span></div>'
+    + '<div style="margin-top:5px;font-weight:900;font-size:12.5px;color:#f5b942">\u26A1 ' + pw.name + ' <span style="color:#9aa7bd;font-weight:700;font-size:10px;letter-spacing:1px">' + pw.style + '</span></div>'
+    + '<div class="tierto" style="margin-top:2px">' + pw.desc + '</div>'
     + '<div class="tierto" style="margin-top:6px">' + (un ? 'Unlocked — in your collection' : (t.wins - wins) + ' winning ticket' + ((t.wins - wins) === 1 ? '' : 's') + ' to go') + (ci ? '' : ' · Pick your agent in your profile') + '</div>'
     + (withBtns && un ? (setProfBtn(art || '/api/icons?s=512', cname + ' · ' + t.name + ' Card') + dlBtn('tier', ti, ci)) : '')
     + '</div>'
     + (ti >= 5 ? '<div class="tcspark"></div>' : '')
     + '<div class="holo" style="--hc:' + t.color + '59"></div></div>';
-  return '<div class="tiercard' + (ti === 6 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · ' + t.name + ' · ' + t.rarity, 'Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits.') + '</div></div>';
-}
-
-function battleCardHTML(t, wins, ci){
-  var un = wins >= t.wins;
-  var ti = TIERS.indexOf(t);
-  ci = ci || charIdxOf();
-  var art = "/api/battle?s=" + ci;
-  var cname = ci >= 1 ? CHARNAMES[ci - 1] : "YOUR AGENT";
-  var num = ci >= 1 ? ((ci - 1) * 7 + ti + 1) : 0;
-  var numTxt = num ? ("\u2694 B-" + ("00" + num).slice(-3)) : "\u2694 BATTLE";
-  var stars = "\u2605".repeat(ti + 1);
-  var pw = POWERS[(ci || 1) - 1] || POWERS[0];
-  var glow = ti >= 3 ? (", 0 0 " + (12 + ti * 4) + "px " + t.color + "59") : "";
-  var bw = ti >= 4 ? 3 : 2;
-  var front = '<div class="flipfront" style="border:' + bw + 'px solid ' + t.color + ';--tc:' + t.color + ';box-shadow:0 12px 26px rgba(0,0,0,.38)' + glow + ', inset 0 1px 0 rgba(255,255,255,.05)">'
-    + '<div class="tcplate"><span class="tcname">' + cname + '</span><span class="tcno">' + numTxt + '</span></div>'
-    + '<div class="tcwin"><img class="cardart" src="' + art + '" alt="">' + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
-    + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:' + t.color + '">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:' + t.color + '">' + t.rarity + '</span></div>'
-    + '<div style="margin-top:5px;font-weight:900;font-size:12.5px;color:#f5b942">\u26A1 ' + pw.name + ' <span style="color:#9aa7bd;font-weight:700;font-size:10px;letter-spacing:1px">' + pw.style + '</span></div>'
-    + '<div class="tierto" style="margin-top:2px">' + pw.desc + '</div>'
-    + (un ? '' : '<div class="tierto" style="margin-top:3px">' + (t.wins - wins) + ' winning ticket' + ((t.wins - wins) === 1 ? '' : 's') + ' to go</div>')
-    + '</div>'
-    + (ti >= 5 ? '<div class="tcspark"></div>' : '')
-    + '<div class="holo" style="--hc:' + t.color + '59"></div></div>';
-  return '<div class="tiercard' + (ti === 6 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' \u00B7 ' + t.name + ' Battle Card', pw.name + ' \u2014 ' + pw.desc + '<br><br>Agent Clash: clash = stars + power + grid. Land hits to place marks - 3 in a row wins an ability. Powers live on battle cards only.') + '</div></div>';
+  return '<div class="tiercard' + (ti === 6 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · ' + t.name + ' · ' + t.rarity, pw.name + ' \u2014 ' + pw.desc + '<br><br>Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits. This is also your Grid Clash battle card.') + '</div></div>';
 }
 
 function cardSec(id, title, count, inner, openDefault){
@@ -2667,7 +2652,6 @@ function renderBoard(){
   var stripEl = $("cardStrip");
   if (stripEl) stripEl.innerHTML = CHARNAMES.map(function(n, k){ var n1 = k + 1; return '<img src="/api/battle?s=' + n1 + '" data-ci="' + n1 + '" class="' + (n1 === cci ? 'on' : '') + '" title="' + n + '" alt="' + n + '">'; }).join("");
   var tierCards = TIERS.map(function(t){ return tierCardHTML(t, wins, true, cci); }).join("");
-  var battleCardsOnly = TIERS.map(function(t){ return battleCardHTML(t, wins, cci); }).join("");
   var playerCards = cards.map(function(l, li){
     var photo = photoCache[(l.player || "").toLowerCase()] || "";
     var front = '<div class="flipfront" style="border:2px solid #a78bfa;--tc:#a78bfa">'
@@ -2687,8 +2671,7 @@ function renderBoard(){
   var unlockedN = TIERS.filter(function(t){ return wins >= t.wins; }).length;
   var specN = (specialUnlocked() ? 1 : 0) + (lsGet("pa_ring", 0) ? 1 : 0);
   $("myCards").innerHTML =
-    cardSec("tier", "🃏 TIER CARDS — " + CHARNAMES[cci - 1], unlockedN + " of 7 unlocked", tierCards, true)
-    + cardSec("battle", "\u2694\uFE0F BATTLE CARDS — Grid Clash", unlockedN + " of 7 unlocked", battleCardsOnly, true)
+    cardSec("tier", "🃏 TIER CARDS — " + CHARNAMES[cci - 1], unlockedN + " of 7 unlocked \u00B7 Grid Clash cards", tierCards, true)
     + (cards.length ? cardSec("player", "🏆 PLAYER CARDS — winning tickets", cards.length + " earned", playerCards, false) : "")
     + cardSec("stamps", "🌟 GOLD FOIL STAMPS — 1 in ~7 packs", stampsGet().length + " of 12", stampCardsOnly, false)
     + (fl0.length ? cardSec("foils", "✨ FOIL CARDS — from packs", fl0.length + " pulled", foilCardsOnly, false) : "")
@@ -3289,7 +3272,7 @@ function guideOn(){ return lsGet("pa_guide", 1) !== 0; }
 function clashZoom(ci, ti){
   ensureClashPop();
   var z = $("clashZoom"); if (!z) return;
-  z.innerHTML = '<div class="zoomcard">' + battleCardHTML(TIERS[ti], 999, ci) + '</div><div class="zoomhint">Tap the card to flip it · tap outside to close</div>';
+  z.innerHTML = '<div class="zoomcard">' + tierCardHTML(TIERS[ti], 999, false, ci) + '</div><div class="zoomhint">Tap the card to flip it · tap outside to close</div>';
   z.classList.add("open");
   sfx("click");
 }
@@ -3352,7 +3335,7 @@ function clashMenu(){
     + '<button class="clashbig" data-clashmode="quick">⚡ QUICK CLASH<span>Friendly fight — CPU cards match your tiers, never stronger</span></button>'
     + '<button class="clashbig gold" data-clashmode="ladder">🏆 LADDER' + (lad >= 7 ? ' — CHAMPION 🏆' : ' — BOSS ' + (lad + 1) + ' OF 7') + '<span>' + (lad >= 7 ? 'Every boss beaten. Replay Boss 7 for coins.' : 'Beat bosses in order. Boss ' + (lad + 1) + ' pays ' + (10 + (lad + 1) * 5) + ' 🪙') + '</span></button>'
     + '<div class="clashmeta">🪙 <b>' + coinsGet() + '</b> Clash Coins · Record <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b><br>Wins pay Clash Coins — spend them on packs (1 pack = ' + CLASH_PACK_COST + ' 🪙, in My Packs below)</div>'
-    + '<div class="clashmeta">🏆 <b>One ladder everywhere:</b> your ' + maxWins() + ' tier wins \u2014 from prop tickets, plus every battle win \u2014 unlock these battle cards AND the foil tiers inside packs. Clash Coins buy those same packs too.</div>'
+    + '<div class="clashmeta">🏆 <b>One ladder everywhere:</b> your ' + maxWins() + ' tier wins \u2014 from prop tickets, plus every battle win \u2014 unlock these tier cards \u2014 the same cards you battle with \u2014 AND the foil tiers inside packs. Clash Coins buy those same packs too.</div>'
     + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>⭐ Stars = your card\'s tier — higher total wins the round.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Holding two-in-a-row on the grid gives +1★ until it breaks.<br>🛡️ Defend: your power stays off — but if you lose the round, NO hit lands.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Soft jazz plays while you battle — the 🎵 button (top right) mutes it.</div></details>'
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>');
