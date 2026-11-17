@@ -1,4 +1,4 @@
-// Prop Agent — closed-app win/loss alerts.
+// Prop Agent — closed-app alerts: ticket-start reminders + win/loss results.
 // Grades pending Supabase tickets against final ESPN box scores and sends a
 // web-push to the owner's saved subscriptions when a ticket settles.
 // Triggered on a schedule by Muse's checker (Vercel Hobby crons are
@@ -66,7 +66,7 @@ module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   const dry = !!(req.query && req.query.dry);
   if (!SB_URL || !SRK) { res.status(200).json({ ok: false, configured: false }); return; }
-  const report = { ok: true, dry, pending: 0, finalized: 0, pushed: 0, skipped: 0, errors: [] };
+  const report = { ok: true, dry, pending: 0, finalized: 0, pushed: 0, skipped: 0, startEligible: 0, startPushed: 0, errors: [] };
   try {
     const tix = await rest("tickets?select=id,user_id,legs,created_at&status=eq.pending&order=created_at.asc&limit=100", { headers: sbHeaders() });
     const rows = Array.isArray(tix.json) ? tix.json : [];
@@ -81,6 +81,43 @@ module.exports = async (req, res) => {
     const pub = process.env.VAPID_PUBLIC_KEY, priv = process.env.VAPID_PRIVATE_KEY, subj = process.env.VAPID_SUBJECT;
     if (pub && priv && subj) {
       try { webpush = require("web-push"); webpush.setVapidDetails(subj, pub, priv); } catch (e) { webpush = null; }
+    }
+
+    // ---- Ticket-start alerts: one push shortly before a ticket's first game.
+    // Eligible when the earliest leg starts within the next 30 minutes (the
+    // checker runs every 15 min, so users get roughly a 15-30 min heads-up).
+    // Stamped once via legs[0].__startAlerted so it can never fire twice.
+    const nowMs = Date.now();
+    for (const row of rows) {
+      const legs = Array.isArray(row.legs) ? row.legs : [];
+      if (!legs.length || !legs[0] || legs[0].__startAlerted) continue;
+      const starts = legs.map((l) => new Date((l && l.starts) || 0).getTime()).filter(Boolean);
+      if (!starts.length) continue;
+      const first = Math.min.apply(null, starts);
+      if (first < nowMs - 5 * 60000 || first > nowMs + 30 * 60000) continue;
+      report.startEligible++;
+      const userSubs = subsByUser[row.user_id] || [];
+      if (!userSubs.length || !webpush) continue;
+      if (!dry) {
+        const stamped = legs.map((l, i) => i === 0 ? Object.assign({}, l, { __startAlerted: first }) : l);
+        await rest("tickets?id=eq." + row.id, { method: "PATCH", headers: sbHeaders({ Prefer: "return=minimal" }), body: JSON.stringify({ legs: stamped }) });
+        row.legs = stamped;
+      }
+      const firstLeg = legs.find((l) => new Date((l && l.starts) || 0).getTime() === first) || legs[0];
+      let when = "";
+      try { when = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }).format(new Date(first)) + " ET"; } catch (e) {}
+      const title = "Your Prop Agent ticket starts soon";
+      const body = (firstLeg.player ? firstLeg.player + " " + (firstLeg.dir || "") + " " + firstLeg.line + " " + firstLeg.stat + " \u2014 " : "") + "first game starts " + (when || "shortly") + ". " + legs.length + (legs.length === 1 ? " pick" : " picks") + " on this ticket.";
+      for (const s of userSubs) {
+        try {
+          await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify({ title, body, url: "/" }));
+          report.startPushed++;
+        } catch (e) {
+          if (e && (e.statusCode === 404 || e.statusCode === 410)) {
+            if (!dry) await rest("push_subscriptions?id=eq." + s.id, { method: "DELETE", headers: sbHeaders({ Prefer: "return=minimal" }) });
+          } else if (report.errors.length < 5) report.errors.push(String((e && e.message) || e).slice(0, 120));
+        }
+      }
     }
 
     const sbCache = {}, sumCache = {};
