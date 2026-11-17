@@ -3172,7 +3172,7 @@ function clashCheckEnd(){
   });
   var myOut = !fAlive(CL.mine[0]) && !fAlive(CL.mine[1]);
   var cpuOut = !fAlive(CL.cpu[0]) && !fAlive(CL.cpu[1]);
-  if (myOut || cpuOut) { clashFinish(!cpuOut); return true; }
+  if (myOut || cpuOut) { clashFinish(cpuOut); return true; }
   return false;
 }
 function clashFinish(won){
