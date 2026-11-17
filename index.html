@@ -2116,14 +2116,14 @@ function renderPickem(){
   boxes.forEach(function(b){ b.innerHTML = h; });
 }
 /* ---------- packs: daily / share / ticket wins -> foil cards + THE RING ---------- */
-function packsGet(){ return lsGet("pa_packs", { n: 0, g: 0 }); }
+function packsGet(){ var p = lsGet("pa_packs", { n: 0, g: 0 }); if (p.g) { p.n = (p.n || 0) + p.g; p.g = 0; lsSet("pa_packs", p); } return p; }
 function packsSet(p){ lsSet("pa_packs", p); }
 function foilsGet(){ return lsGet("pa_foils", []); }
 function dayStr(){ var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
 function maxTierIdx(){ var w = maxWins(), idx = 0; TIERS.forEach(function(t, i){ if (w >= t.wins) idx = i; }); return idx; }
 function awardTicketPack(t){
   var p = packsGet();
-  if (t.legs && t.legs.length >= 4) p.g = (p.g || 0) + 1; else p.n = (p.n || 0) + 1;
+  if (t.legs && t.legs.length >= 4) p.n = (p.n || 0) + 2; else p.n = (p.n || 0) + 1;
   packsSet(p);
 }
 function renderPacks(){
@@ -2135,15 +2135,14 @@ function renderPacks(){
   box.innerHTML = '<div class="packpromo">'
     + '<div style="display:flex;gap:12px;align-items:center"><img class="packimg" src="/api/banners?s=pack" alt="">'
     + '<div><div style="font-weight:900;font-size:17px">🎁 1 FREE PACK <span style="color:#f5c518">EVERY DAY</span></div>'
-    + '<div class="note" style="margin-top:3px">Every pack: <b style="color:#fff">3 foil cards</b>. Gold packs guarantee a foil of your highest tier. And hiding in about 1 pack in 100… <b style="color:#f5c518">THE RING 🏆</b> — signed, one of a kind, the rarest card in the game.</div></div></div>'
+    + '<div class="note" style="margin-top:3px">Every pack: <b style="color:#fff">3 foil cards</b>. Big ticket wins (4+ picks) earn 2 packs. And hiding in about 1 pack in 100… <b style="color:#f5c518">THE RING 🏆</b> — signed, one of a kind, the rarest card in the game.</div></div></div>'
     + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'
     + (claimed ? '<button class="openbtn" disabled>✓ Free pack claimed — back tomorrow</button>' : '<button class="openbtn gold" data-claimpack="1">🎁 CLAIM FREE PACK</button>')
     + '<button class="openbtn" data-openpack="n"' + ((p.n || 0) > 0 ? '' : ' disabled') + '>Open Pack · ' + (p.n || 0) + '</button>'
-    + '<button class="openbtn gold" data-openpack="g"' + ((p.g || 0) > 0 ? '' : ' disabled') + '>Open Gold Pack · ' + (p.g || 0) + '</button>'
     + (shared ? '<button class="openbtn" disabled>✓ Shared today</button>' : '<button class="openbtn" data-sharepack="1">🔗 Share &amp; Earn a Pack</button>')
     + '<button class="openbtn" data-demopack="1" style="background:#17171f;border:1px solid #7C3AED">▶ Demo Pull</button>'
     + '</div>'
-    + '<div class="note" style="margin-top:9px">Win a ticket → +1 pack (4+ picks → Gold Pack). Foils collected: <b style="color:#f5c518">' + foils.length + '</b> · ' + (lsGet("pa_ring", 0) ? '🏆 THE RING: <b style="color:#f5c518">PULLED!</b>' : 'THE RING: still hiding…') + '</div>'
+    + '<div class="note" style="margin-top:9px">Win a ticket → +1 pack (4+ picks → 2 packs). Foils collected: <b style="color:#f5c518">' + foils.length + '</b> · ' + (lsGet("pa_ring", 0) ? '🏆 THE RING: <b style="color:#f5c518">PULLED!</b>' : 'THE RING: still hiding…') + '</div>'
     + '</div>';
 }
 function ringBackHTML(){
@@ -2277,15 +2276,14 @@ document.addEventListener("click", function(e){
   document.getElementById("cardPop").classList.add("open");
 });
 /* ---------- pack opening overlay ---------- */
-function pullPack(kind, demo){
+function pullPack(demo){
   var maxTi = maxTierIdx();
   var isRing = false;
-  if (demo) isRing = true; else if (!lsGet("pa_ring", 0) && Math.random() < (kind === "g" ? 0.04 : 0.01)) isRing = true;
+  if (demo) isRing = true; else if (!lsGet("pa_ring", 0) && Math.random() < 0.01) isRing = true;
   var pulls = [];
   for (var i = 0; i < 3; i++){
     var ci = 1 + Math.floor(Math.random() * 12);
     var ti = Math.floor(Math.random() * (maxTi + 1));
-    if (kind === "g" && i === 2) ti = maxTi;
     pulls.push({ ci: ci, ti: ti });
   }
   if (isRing) { if (!demo) lsSet("pa_ring", 1); pulls[2] = { ring: true }; }
@@ -2340,18 +2338,18 @@ function ensurePackPop(){
     }, 560);
   });
 }
-function openPackPop(kind, demo){
+function openPackPop(demo){
   if (!demo) {
     var p = packsGet();
-    if (kind === "g") { if (!(p.g > 0)) return; p.g--; } else { if (!(p.n > 0)) return; p.n--; }
+    if (!(p.n > 0)) return; p.n--;
     packsSet(p); renderPacks();
   }
-  window._packPulls = pullPack(kind, demo); window._packOpened = false; window._packDemo = !!demo;
+  window._packPulls = pullPack(demo); window._packOpened = false; window._packDemo = !!demo;
   ensurePackPop();
   var stage = $("packStage"), cards = $("packCards"), cap = $("packCap");
   cards.innerHTML = ""; cards.style.display = "none";
   stage.style.display = "block"; stage.classList.remove("torn");
-  stage.innerHTML = '<img src="/api/banners?s=pack" alt=""' + (kind === "g" ? ' style="border:3px solid #f5c518"' : '') + '><div style="font-weight:900;margin-top:10px;color:#f5c518;letter-spacing:1px">' + (demo ? "DEMO PACK" : (kind === "g" ? "GOLD PACK" : "PROP AGENT PACK")) + '</div><div class="note">Tap to open</div>';
+  stage.innerHTML = '<img src="/api/banners?s=pack" alt=""><div style="font-weight:900;margin-top:10px;color:#f5c518;letter-spacing:1px">' + (demo ? "DEMO PACK" : "PROP AGENT PACK") + '</div><div class="note">Tap to open</div>';
   cap.textContent = "";
   $("packPop").classList.add("open");
 }
@@ -2362,9 +2360,9 @@ document.addEventListener("click", function(e){
     if (lsGet("pa_daily_day", "") !== dayStr()) { lsSet("pa_daily_day", dayStr()); var p = packsGet(); p.n = (p.n || 0) + 1; packsSet(p); }
     renderPacks();
   } else if (c.hasAttribute("data-openpack")) {
-    openPackPop(c.getAttribute("data-openpack"));
+    openPackPop(false);
   } else if (c.hasAttribute("data-demopack")) {
-    openPackPop("n", true);
+    openPackPop(true);
   } else if (c.hasAttribute("data-sharepack")) {
     var grant = function(){ if (lsGet("pa_share_day", "") !== dayStr()) { lsSet("pa_share_day", dayStr()); var p2 = packsGet(); p2.n = (p2.n || 0) + 1; packsSet(p2); } renderPacks(); };
     if (navigator.share) { navigator.share({ title: "Prop Agent", text: "Play Prop Agent — real PrizePicks props, live tickets and collectible agent cards:", url: "https://prop-agent-bre.vercel.app/" }).then(grant).catch(function(){}); }
