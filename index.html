@@ -3263,14 +3263,14 @@ function renderInstall(){
   var card = $("installCard"); if (!card) return;
   var standalone = false;
   try { standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true; } catch(e){}
-  if (standalone) { card.style.display = ""; var bS = $("installBtn"), nS = $("installNote"); if (bS) bS.style.display = ""; if (nS) nS.textContent = "You're using the installed app \u2014 it's already on your home screen. Know someone who'd want it? Send them Prop Agent with the share button below."; return; }
+  if (standalone) { card.style.display = ""; var bS = $("installBtn"), nS = $("installNote"); if (bS) bS.style.display = "none"; if (nS) nS.textContent = "You're using the installed app. Know someone who'd want it? Send them Prop Agent with the share button below."; return; }
   card.style.display = "";
   var btn = $("installBtn"), note = $("installNote");
   if (deferredInstall) { btn.style.display = ""; note.textContent = "One tap and Prop Agent lands on your home screen — its own icon, full screen, no browser bars."; }
-  else if (/iphone|ipad|ipod/i.test(navigator.userAgent || "")) { btn.style.display = ""; note.innerHTML = "On iPhone: tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b> — Prop Agent gets its own icon and opens full screen."; }
-  else { btn.style.display = ""; note.innerHTML = "Open your browser menu (\u22ee) and tap <b>Install app</b> or <b>Add to Home screen</b> — Prop Agent gets its own icon and opens full screen."; }
+  else if (/iphone|ipad|ipod/i.test(navigator.userAgent || "")) { btn.style.display = "none"; note.innerHTML = "On iPhone: tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b> — Prop Agent gets its own icon and opens full screen."; }
+  else { btn.style.display = "none"; note.innerHTML = "Open your browser menu (\u22ee) and tap <b>Install app</b> or <b>Add to Home screen</b> — Prop Agent gets its own icon and opens full screen."; }
 }
-var ib0 = $("installBtn"); if (ib0) ib0.addEventListener("click", function(){ if (deferredInstall) { deferredInstall.prompt(); deferredInstall.userChoice.then(function(){ deferredInstall = null; renderInstall(); }); return; } var nI = $("installNote"); var stI = false; try { stI = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true; } catch(e){} if (nI) nI.innerHTML = stI ? "\u2713 Prop Agent is already on your home screen \u2014 you're using the installed app right now." : "Open your browser menu (\u22ee) and tap <b>Install app</b> or <b>Add to Home screen</b> \u2014 Prop Agent gets its own icon and opens full screen."; });
+var ib0 = $("installBtn"); if (ib0) ib0.addEventListener("click", function(){ if (!deferredInstall) return; deferredInstall.prompt(); deferredInstall.userChoice.then(function(){ deferredInstall = null; renderInstall(); }); });
 var sb0 = $("shareBtn"); if (sb0) sb0.addEventListener("click", function(){ var url = "https://prop-agent-bre.vercel.app/"; if (navigator.share) { navigator.share({title:"Prop Agent", text:"Prop Agent — real player props, live tickets, 84 collectible agent cards. Get the app:", url:url}).catch(function(){}); } else if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function(){ var o = sb0.textContent; sb0.textContent = "\u2713 Link copied"; setTimeout(function(){ sb0.textContent = o; }, 1800); }); } });
 renderInstall();
 function renderTicker(){
