@@ -1499,11 +1499,14 @@ function openGame(key, eventId, isRefresh){
         var skeys = Object.keys(byName).filter(function(k){ return byName[k].b != null; }).slice(0,10);
         if (skeys.length) html += '<div style="font-size:16px;margin-top:14px"><b>Team Stats</b></div><table class="lb"><tr><th>' + esc((tstats[0].team && tstats[0].team.displayName) || "") + '</th><th>Stat</th><th>' + esc((tstats[1].team && tstats[1].team.displayName) || "") + '</th></tr>' + skeys.map(function(k){ return '<tr><td>' + esc(byName[k].a||"") + '</td><td class="note">' + esc(byName[k].label) + '</td><td>' + esc(byName[k].b||"") + '</td></tr>'; }).join("") + '</table>';
       }
-      var plays = (s.plays || []).slice(-15).reverse();
-      if (plays.length) html += '<div style="font-size:16px;margin-top:14px"><b>Play by Play</b></div>' + plays.map(function(pl){ var sc = (pl.awayScore != null && pl.homeScore != null) ? ' <span style="color:var(--cyan);font-weight:700;white-space:nowrap">' + esc(pl.awayScore) + '–' + esc(pl.homeScore) + '</span>' : ''; return '<div style="padding:6px 0;border-bottom:1px solid var(--line);' + (pl.scoringPlay ? 'border-left:3px solid var(--gold);padding-left:8px' : '') + '"><span class="note">' + esc(((pl.period && pl.period.displayValue)||"") + " " + ((pl.clock && pl.clock.displayValue)||"")) + '</span> ' + esc(pl.text || pl.shortText || "") + sc + '</div>'; }).join("");
+      var fmtPlay = function(pl){ var sc = (pl.awayScore != null && pl.homeScore != null) ? ' <span style="color:var(--cyan);font-weight:700;white-space:nowrap">' + esc(pl.awayScore) + '–' + esc(pl.homeScore) + '</span>' : ''; return '<div style="padding:6px 0;border-bottom:1px solid var(--line);' + (pl.scoringPlay ? 'border-left:3px solid var(--gold);padding-left:8px' : '') + '"><span class="note">' + esc(((pl.period && pl.period.displayValue)||"") + " " + ((pl.clock && pl.clock.displayValue)||"")) + '</span> ' + esc(pl.text || pl.shortText || "") + sc + '</div>'; };
+      var plays = (s.plays || []).slice().reverse();
+      if (plays.length) html += '<div style="font-size:16px;margin-top:14px"><b>Play by Play</b> <span class="note">latest first - updates every 30s</span></div>' + plays.slice(0, 15).map(fmtPlay).join("") + (plays.length > 15 ? '<div id="pbpAll" style="display:none">' + plays.slice(15).map(fmtPlay).join("") + '</div><button type="button" class="ghostbtn" id="pbpBtn" style="margin-top:8px;font-size:12.5px;padding:7px 12px">Show all ' + plays.length + ' plays</button>' : '');
     }
     html += '<div id="gameProps"></div></div>';
     $("gameDetail").innerHTML = '<button class="gcBack" type="button">← All games</button>' + html;
+    var pbpBtn = $("pbpBtn");
+    if (pbpBtn) pbpBtn.addEventListener("click", function(){ var all = $("pbpAll"); if (!all) return; var open = all.style.display !== "none"; all.style.display = open ? "none" : ""; pbpBtn.textContent = open ? "Show all plays" : "Show fewer plays"; });
     var gtEl = $("gameTracker"), gpEl = $("gameProps");
     if (gtEl && gpEl && gtEl.parentNode) gtEl.parentNode.insertBefore(gpEl, gtEl.nextSibling);
     renderGameProps(lg, s);
@@ -1613,6 +1616,71 @@ function gradeTicket(t){
     return map;
   });
 }
+var legEventCache = {}; // tid|lid -> eventId|null
+var sumCacheC = {}; // eventId -> {ts, s}
+function findEventForLeg(t, l){
+  var key = t.id + "|" + l.id;
+  if (key in legEventCache) return Promise.resolve(legEventCache[key]);
+  if (l.eventId) { legEventCache[key] = String(l.eventId); return Promise.resolve(legEventCache[key]); }
+  var lg = leagueByKey(l.league);
+  if (!lg || !l.starts) { legEventCache[key] = null; return Promise.resolve(null); }
+  var url = ESPN + lg.sport + "/" + lg.league + "/scoreboard?dates=" + ymd(new Date(l.starts)) + "&limit=100";
+  return fetchJson(url).then(function(j){
+    var evs = j.events || [];
+    var lt = (l.team || "").toLowerCase(), best = null;
+    evs.forEach(function(ev){
+      var cs = ((ev.competitions || [])[0] || {}).competitors || [];
+      var has = cs.some(function(c){ var tn = (c.team && (c.team.displayName || c.team.shortDisplayName)) || ""; tn = tn.toLowerCase(); return tn && lt && (tn === lt || tn.indexOf(lt) > -1 || lt.indexOf(tn) > -1); });
+      if (has) best = ev;
+    });
+    if (!best && l.matchup){ var mu = l.matchup.toLowerCase(); evs.forEach(function(ev){ if ((ev.name || "").toLowerCase() === mu) best = ev; }); }
+    if (!best && evs.length === 1) best = evs[0];
+    legEventCache[key] = best ? String(best.id) : null;
+    return legEventCache[key];
+  }).catch(function(){ legEventCache[key] = null; return null; });
+}
+function summaryForEvent(lg, eventId){
+  var hit = sumCacheC[eventId];
+  if (hit && Date.now() - hit.ts < 25000) return Promise.resolve(hit.s);
+  return fetchJson(ESPN + lg.sport + "/" + lg.league + "/summary?event=" + encodeURIComponent(eventId)).then(function(s){ sumCacheC[eventId] = { ts: Date.now(), s: s }; return s; });
+}
+function playInvolves(pl, l){
+  var last = lastNameOf(l.player); if (!last) return false;
+  var parts = pl.participants || [];
+  for (var i = 0; i < parts.length; i++){
+    var a = parts[i].athlete || {};
+    if (l.athleteId && String(a.id || "") === String(l.athleteId)) return true;
+    if (a.displayName && lastNameOf(a.displayName) === last) return true;
+  }
+  return (pl.text || pl.shortText || "").toLowerCase().indexOf(last) > -1;
+}
+function fmtPlayRow(pl){
+  var sc = (pl.awayScore != null && pl.homeScore != null) ? ' <span style="color:var(--cyan);font-weight:700;white-space:nowrap">' + esc(pl.awayScore) + '–' + esc(pl.homeScore) + '</span>' : '';
+  return '<div style="padding:5px 0;border-bottom:1px solid var(--line)"><span class="note">' + esc(((pl.period && pl.period.displayValue) || "") + " " + ((pl.clock && pl.clock.displayValue) || "")) + '</span> ' + esc(pl.text || pl.shortText || "") + sc + '</div>';
+}
+function togglePlayerPlays(btn){
+  var key = btn.getAttribute("data-pplay");
+  var parts = key.split("|");
+  var t = tickets.find(function(x){ return x.id === parts[0]; });
+  var l = t && t.legs.find(function(x){ return x.id === parts[1]; });
+  var panel = document.querySelector('[data-pplays="' + key + '"]');
+  if (!t || !l || !panel) return;
+  if (panel.getAttribute("data-open") === "1"){ panel.innerHTML = ""; panel.removeAttribute("data-open"); btn.textContent = "Play by play - " + l.player; return; }
+  panel.setAttribute("data-open", "1");
+  btn.textContent = "Hide plays - " + l.player;
+  panel.innerHTML = '<p class="note" style="padding:6px 0">Loading plays for ' + esc(l.player) + '...</p>';
+  var lg = leagueByKey(l.league);
+  if (!lg) { panel.innerHTML = '<p class="note" style="padding:6px 0">Play by play is not available for this leg.</p>'; return; }
+  findEventForLeg(t, l).then(function(eid){
+    if (!eid) { panel.innerHTML = '<p class="note" style="padding:6px 0">Could not find this game on ESPN, so there is no play by play for it.</p>'; return; }
+    return summaryForEvent(lg, eid).then(function(s){
+      var mine = (s.plays || []).filter(function(pl){ return playInvolves(pl, l); }).slice(-10).reverse();
+      if (!mine.length) { panel.innerHTML = '<p class="note" style="padding:6px 0">No plays involving ' + esc(l.player) + ' reported yet - they will show here as the game goes.</p>'; return; }
+      panel.innerHTML = '<div style="border-left:2px solid var(--purp);padding-left:10px;margin:4px 0 8px">' + mine.map(fmtPlayRow).join("") + '</div>';
+    });
+  }).catch(function(){ panel.innerHTML = '<p class="note" style="padding:6px 0">Play by play could not load right now.</p>'; });
+}
+
 function renderTickets(){
   var box = $("myTickets");
   if (!tickets.length) { box.innerHTML = '<div class="card" style="text-align:center;padding:26px 18px"><div style="font-size:21px;font-weight:800">No tickets yet</div><p class="sub" style="margin:10px auto 16px;max-width:420px">Build your first one from your own slip — add the lines your site shows you, pick More or Less on each, and lock it in. It takes about 20 seconds.</p><button class="ghostbtn" id="tkBuild" style="background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none;font-weight:800;padding:12px 20px">+ Build a ticket</button></div>'; var tb = $("tkBuild"); if (tb) tb.addEventListener("click", function(){ showView("build"); }); return; }
@@ -1620,10 +1688,12 @@ function renderTickets(){
     var res = t.result==="win" ? ' <span class="hit">· WON</span>' : t.result==="loss" ? ' <span class="miss">· LOST</span>' : ' <span class="pend">· LIVE / PENDING</span>';
     var legs = t.legs.map(function(l){
       return '<div class="leg"><span class="dir '+(l.dir==="MORE"?"more":"less")+'">'+l.dir+'</span><div style="flex:1"><b>'+esc(l.player)+'</b> — '+esc(l.stat)+' '+l.line+'<br><span class="note">'+esc(l.matchup||l.team||"")+(l.starts?' · '+esc(fmtTime(l.starts)):"")+' · '+esc(l.src)+'</span></div><span data-grade="'+esc(t.id)+'|'+esc(l.id)+'"><span class="pend">…</span></span></div>'
-        + '<div data-stepper="'+esc(t.id)+'|'+esc(l.id)+'"></div>';
+        + '<div data-stepper="'+esc(t.id)+'|'+esc(l.id)+'"></div>'
+        + (l.starts && l.league ? '<div style="padding:2px 0 8px"><button type="button" class="ghostbtn" data-pplay="'+esc(t.id)+'|'+esc(l.id)+'" style="font-size:12px;padding:5px 11px">Play by play - '+esc(l.player)+'</button><div data-pplays="'+esc(t.id)+'|'+esc(l.id)+'"></div></div>' : '');
     }).join("");
     return '<div class="card" data-ticket="'+t.id+'"><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span>' + res + '</span></div><span class="stampmini">LOCKED IN</span>'+legs+'</div>';
   }).join("");
+  box.querySelectorAll("[data-pplay]").forEach(function(b){ b.addEventListener("click", function(){ togglePlayerPlays(b); }); });
   tickets.forEach(function(t){
     gradeTicket(t).then(function(map){
       t.legs.forEach(function(l){
