@@ -158,7 +158,7 @@ dialog h3{margin:0 0 6px;font-size:18px}
 .hit{color:var(--grn);font-weight:800}.miss{color:var(--red);font-weight:800}.pend{color:var(--gold);font-weight:700}
 .searchbar{margin:0 0 12px}
 .empty{color:var(--mut);font-size:14px;padding:8px 0}
-#sportProps>.empty,#sportProps>#sportNews{grid-column:1/-1}
+#sportProps>.empty,#sportProps>#sportNews,#sportProps>#sportGames{grid-column:1/-1}
 .trk{position:relative;border:1px solid var(--line);border-radius:14px;padding:10px;margin-top:12px;background:radial-gradient(120% 140% at 50% 0%,#1d1440 0%,#0d0a1a 70%)}
 .trk svg{display:block;width:100%;height:auto}
 .trkLbl{font-size:11px;font-weight:800;letter-spacing:1.4px;color:var(--mut);text-transform:uppercase}
@@ -831,6 +831,38 @@ function renderSportNews(lg){
     done(html);
   }).catch(function(){ done(""); });
 }
+function renderSportGames(lg){
+  var box = $("sportGames"); if (!box) return;
+  var jobs;
+  if (lg.key === "tennis"){
+    var wtaLg = {key:"tennisw", label:"Tennis", sport:"tennis", league:"wta"};
+    jobs = Promise.all([
+      getScoreboard(lg, 2).then(function(ev){ ev.forEach(function(e){ e._tour = "ATP"; }); return ev; }).catch(function(){ return []; }),
+      getScoreboard(wtaLg, 2).then(function(ev){ ev.forEach(function(e){ e._tour = "WTA"; }); return ev; }).catch(function(){ return []; })
+    ]).then(function(rr){ return rr[0].concat(rr[1]); });
+  } else {
+    jobs = getScoreboard(lg, 2).catch(function(){ return []; });
+  }
+  jobs.then(function(evs){
+    if (currentSport !== lg.key) return;
+    var b2 = $("sportGames"); if (!b2) return;
+    var live = [], fut = [];
+    (evs || []).forEach(function(ev){
+      var st = ev.status && ev.status.type && ev.status.type.state;
+      if (st === "in") live.push(ev);
+      else if (st === "pre") fut.push(ev);
+    });
+    fut.sort(function(a, b){ return new Date(a.date) - new Date(b.date); });
+    fut = fut.slice(0, 24);
+    if (!live.length && !fut.length){ b2.innerHTML = ""; return; }
+    var word = lg.key === "tennis" ? "match" : "game";
+    var html = "";
+    if (live.length) html += '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Live ' + (word === "match" ? "Matches" : "Games") + '</h2><span style="color:var(--purp-lt);font-weight:700">' + live.length + ' ' + word + (live.length === 1 ? "" : "s") + '</span></div>' + live.map(function(ev){ return gameCard(lg, ev); }).join("");
+    if (fut.length) html += '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Upcoming ' + (word === "match" ? "Matches" : "Games") + '</h2><span style="color:var(--purp-lt);font-weight:700">' + fut.length + ' ' + word + (fut.length === 1 ? "" : "s") + '</span></div>' + fut.map(function(ev){ return gameCard(lg, ev); }).join("");
+    b2.innerHTML = html;
+    b2.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); showView("live"); window._gameFrom = "sport"; openGame(p[0], p[1]); }); });
+  }).catch(function(){});
+}
 function renderBoards(){
   var lg = leagueByKey(currentSport);
   if (!lg){ currentSport = "nba"; lg = leagueByKey("nba"); }
@@ -844,7 +876,7 @@ function renderBoards(){
     if (currentSport!==lg.key) return;
     if (!ps.length){
       if (propsConfigured === false) $("sportProps").innerHTML = '<p class="empty">Props are almost ready — the PrizePicks feed key is being connected. Scores, news and tickets all work meanwhile.</p>';
-      else { $("sportProps").innerHTML = '<p class="empty">No '+esc(lg.label)+' props on the board right now — games with props will appear here.</p><div id="sportNews"></div>'; renderSportNews(lg); }
+      else { $("sportProps").innerHTML = '<p class="empty">No '+esc(lg.label)+' props on the board right now — games with props will appear here.</p><div id="sportGames"></div><div id="sportNews"></div>'; renderSportNews(lg); renderSportGames(lg); }
       var pw0 = $("popWrap"); if (pw0) pw0.style.display = "none";
       getScoreboard(lg, 1).then(function(){
         var bmE = breakMap[lg.key] || {};
@@ -1392,7 +1424,7 @@ function closeGame(silent){
   window._openGame = null;
   var gd = $("gameDetail"); if (gd) gd.innerHTML = "";
   ["liveCenter","liveTabs","liveStatus"].forEach(function(id){ var el = $(id); if (el) el.style.display = ""; });
-  if (!silent){ if (dest === "home") showView("home"); else { renderLive(); if (window._liveScrollY != null) window.scrollTo(0, window._liveScrollY); } }
+  if (!silent){ if (dest === "home") showView("home"); else if (dest === "sport") { showView("sport"); renderBoards(); } else { renderLive(); if (window._liveScrollY != null) window.scrollTo(0, window._liveScrollY); } }
 }
 function openGame(key, eventId, isRefresh){
   window._openGame = {key: key, eventId: eventId};
