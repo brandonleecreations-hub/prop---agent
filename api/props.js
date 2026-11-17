@@ -89,6 +89,66 @@ function noteFetch(sport) {
   fetchLog[sport].count++;
 }
 
+// Schedule gate (Brandon 2026-11-16): before paying for a Parlay refresh,
+// check the sport's ESPN schedule (free). If the sport has NO games today
+// that are upcoming or in progress, don't refresh its props at all until
+// the evening (18:00 ET), when tomorrow's slate starts posting — and even
+// then only once that day. The gate fails OPEN: any ESPN error, or a
+// schedule shape we don't recognize, means "allow the fetch".
+const ESPN_PATHS = {
+  basketball_nba: "basketball/nba",
+  basketball_ncaab: "basketball/mens-college-basketball",
+  basketball_wncaab: "basketball/womens-college-basketball",
+  basketball_wnba: "basketball/wnba",
+  americanfootball_nfl: "football/nfl",
+  americanfootball_ncaaf: "football/college-football",
+  icehockey_nhl: "hockey/nhl",
+  baseball_mlb: "baseball/mlb",
+  tennis_atp: "tennis/atp",
+  tennis_wta: "tennis/wta",
+};
+const schedCache = {}; // sport -> {ts, games}
+const SCHED_TTL = 60 * 60 * 1000;
+const noGamesFetch = {}; // sport -> ET date of the day's one evening no-games fetch
+
+async function gamesToday(sport) {
+  const hit = schedCache[sport];
+  if (hit && Date.now() - hit.ts < SCHED_TTL) return hit.games;
+  let games = true; // fail open
+  try {
+    const path = ESPN_PATHS[sport];
+    if (path) {
+      const r = await fetch("https://site.api.espn.com/apis/site/v2/sports/" + path + "/scoreboard");
+      if (r.ok) {
+        const data = await r.json();
+        const evs = Array.isArray(data.events) ? data.events : [];
+        if (evs.length) {
+          const anyState = evs.some((e) => e && e.status && e.status.type && e.status.type.state);
+          games = !anyState || evs.some((e) => {
+            const st = e && e.status && e.status.type && e.status.type.state;
+            return st === "pre" || st === "in";
+          });
+        } else {
+          games = false; // a real, empty schedule: no games today
+        }
+      }
+    }
+  } catch (e) { games = true; }
+  schedCache[sport] = { ts: Date.now(), games };
+  return games;
+}
+
+function etHour() {
+  try {
+    const h = parseInt(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", hour12: false }).format(new Date()), 10);
+    return isFinite(h) ? h : 12;
+  } catch (e) { return 12; }
+}
+function etToday() {
+  try { return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()); }
+  catch (e) { return new Date().toISOString().slice(0, 10); }
+}
+
 async function fetchSport(sport, key) {
   const base = "https://parlay-api.com/v1/sports/" + encodeURIComponent(sport) + "/props";
   let offset = 0, rows = [], guard = 0;
@@ -164,9 +224,9 @@ const PREGAME_WINDOW = 2 * 60 * 60 * 1000;
 function cacheFresh(hit) {
   if (!hit) return false;
   const age = Date.now() - hit.ts;
-  // An empty board (e.g. pulled between slates) only stays fresh ~10 min,
-  // so the next posted props land quickly instead of riding the 11h cache.
-  if (!hit.props.length) return age < 10 * 60 * 1000;
+  // An empty board stays fresh 30 min: the fewest refreshes that still
+  // catch newly posted props reasonably soon (Brandon 2026-11-16).
+  if (!hit.props.length) return age < 30 * 60 * 1000;
   // Most-recent rule: if every game on the cached board has already started,
   // the board is yesterday's news — a newer slate may be posted, so refresh
   // (at most once per 30 min) instead of riding the 11h cache into empty.
@@ -198,6 +258,17 @@ module.exports = async (req, res) => {
   if (SPORT_KEYS.indexOf(sport) === -1) { res.status(400).json({ ok: false, error: "unknown sport" }); return; }
   const hit = cache[sport];
   if (cacheFresh(hit)) { res.status(200).json({ ok: true, configured: true, cached: true, props: hit.props }); return; }
+  // Schedule gate: no games today -> no Parlay refresh until the evening,
+  // and only one evening check per day for a game-less sport.
+  let noGamesMark = null;
+  if (!(await gamesToday(sport))) {
+    if (etHour() < 18 || noGamesFetch[sport] === etToday()) {
+      res.setHeader("Cache-Control", "public, s-maxage=900, stale-while-revalidate=900");
+      res.status(200).json({ ok: true, configured: true, noGames: true, props: hit ? hit.props : [] });
+      return;
+    }
+    noGamesMark = etToday();
+  }
   // Budget brake: never let a runaway loop drain the account. Serve the
   // last board we have (even stale) rather than paying for another fetch.
   if (budgetLeft(sport) <= 0) {
@@ -214,6 +285,7 @@ module.exports = async (req, res) => {
     const rows = await inflight[sport];
     const props = normalize(rows);
     const wasPregame = !!(hit && Date.now() - hit.ts < DAY_TTL);
+    if (noGamesMark) noGamesFetch[sport] = noGamesMark;
     cache[sport] = { ts: Date.now(), props, pregameRefreshed: wasPregame };
     res.status(200).json({ ok: true, configured: true, cached: false, props });
   } catch (err) {

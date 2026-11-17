@@ -440,7 +440,7 @@ var LEAGUES = [
   {key:"nfl",   label:"NFL",               sport:"football",    league:"nfl",              cats:[["Passing Yards","passingYards","pass"],["Rushing Yards","rushingYards","rush"],["Receiving Yards","receivingYards","receiv"]]},
   {key:"cfb",   label:"College Football",  sport:"football",    league:"college-football", cats:[["Passing Yards","passingYards","pass"],["Rushing Yards","rushingYards","rush"],["Receiving Yards","receivingYards","receiv"]]},
   {key:"cbb",   label:"College Basketball",sport:"basketball",  league:"mens-college-basketball", cats:[["Points","pointsPerGame","point"],["Rebounds","reboundsPerGame","rebound"],["Assists","assistsPerGame","assist"]]},
-  {key:"wbb",   label:"Women's Basketball",sport:"basketball",  league:"womens-college-basketball", cats:[["Points","pointsPerGame","point"],["Rebounds","reboundsPerGame","rebound"],["Assists","assistsPerGame","assist"]]},
+  {key:"wbb",   label:"Women's College Basketball",sport:"basketball",  league:"womens-college-basketball", cats:[["Points","pointsPerGame","point"],["Rebounds","reboundsPerGame","rebound"],["Assists","assistsPerGame","assist"]]},
   {key:"tennis",label:"Tennis",            sport:"tennis",      league:"atp",              cats:[]},
   {key:"nhl",   label:"NHL",               sport:"hockey",      league:"nhl",              cats:[["Points","points","point"],["Goals","goals","goal"],["Assists","assists","assist"]]},
   {key:"mlb",   label:"MLB",               sport:"baseball",    league:"mlb",              cats:[]}
@@ -749,6 +749,18 @@ function updateSlipChip(){
 var currentSport = "all";
 var boardStat = "all";
 var liveFilter = "all";
+var sportNewsCache = {};
+function renderSportNews(lg){
+  if (!lg.sport || !lg.league) return;
+  var done = function(html){ if (currentSport===lg.key){ var b = $("sportNews"); if (b) b.innerHTML = html; } };
+  if (sportNewsCache[lg.key]){ done(sportNewsCache[lg.key]); return; }
+  fetchJson(ESPN+lg.sport+"/"+lg.league+"/news?limit=6").then(function(r){
+    var arts = (r && r.articles) || [];
+    var html = arts.length ? '<div class="card" style="margin-top:12px"><div style="font-weight:800;margin-bottom:6px">Latest '+esc(lg.label)+' News</div>' + arts.map(function(a){ return articleHtml(a, []); }).join("") + '</div>' : "";
+    sportNewsCache[lg.key] = html;
+    done(html);
+  }).catch(function(){ done(""); });
+}
 function renderBoards(){
   var lg = leagueByKey(currentSport);
   if (!lg){ currentSport = "nba"; lg = leagueByKey("nba"); }
@@ -759,7 +771,7 @@ function renderBoards(){
     if (currentSport!==lg.key) return;
     if (!ps.length){
       if (propsConfigured === false) $("sportProps").innerHTML = '<p class="empty">Props are almost ready — the PrizePicks feed key is being connected. Scores, news and tickets all work meanwhile.</p>';
-      else $("sportProps").innerHTML = '<p class="empty">No '+esc(lg.label)+' props on the board right now — games with props will appear here.</p>';
+      else { $("sportProps").innerHTML = '<p class="empty">No '+esc(lg.label)+' props on the board right now — games with props will appear here.</p><div id="sportNews"></div>'; renderSportNews(lg); }
       var pw0 = $("popWrap"); if (pw0) pw0.style.display = "none";
       return;
     }
