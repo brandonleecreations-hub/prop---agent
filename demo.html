@@ -116,7 +116,7 @@
     <div class="collrow" id="coll"><span class="empty">No foils yet — open a pack.</span></div>
   </div>
 
-  <p class="note">This demo works exactly like the real game: every pack holds 3 foil cards, duplicates don't stack, and THE RING — the signed, one-of-a-kind chase card — hides in about 1 pack in 100. The <b style="color:#f5c518">Demo Chase Pull</b> button guarantees a Ring pull in this demo so you can see the celebration — in the real game there is no chase pack: THE RING hides in regular packs.<br><br>Play the real thing: <a href="https://prop-agent-bre.vercel.app/">prop-agent-bre.vercel.app</a> — Board tab → 🎁 My Packs (there's a Demo Pull button there too).</p>
+  <p class="note">This demo works exactly like the real game: every pack holds 3 foil cards, duplicates don't stack. Gold foil cards (Gold tier and up) hide in packs too — a little tough to pull, about 1 slot in 8 — and THE RING — the signed, one-of-a-kind chase card — hides in about 1 pack in 100. The <b style="color:#f5c518">Demo Chase Pull</b> button guarantees a Ring pull in this demo so you can see the celebration — in the real game there is no chase pack: THE RING hides in regular packs.<br><br>Play the real thing: <a href="https://prop-agent-bre.vercel.app/">prop-agent-bre.vercel.app</a> — Board tab → 🎁 My Packs (there's a Demo Pull button there too).</p>
 </div>
 
 <div id="pullView">
@@ -150,16 +150,19 @@ var TIERS = [
 ];
 var opened = 0, foilCount = 0, ringPulled = false, owned = {}, busy = false;
 
-function pickTier() {
-  var tot = TIERS.reduce(function(a, t){ return a + t.w; }, 0), r = Math.random() * tot;
-  for (var i = 0; i < TIERS.length; i++) { r -= TIERS[i].w; if (r <= 0) return i; }
-  return 0;
+function pickBase() {
+  var r = Math.random();
+  if (r < 0.45) return 0; if (r < 0.78) return 1; return 2;
+}
+function pickPremium() {
+  var r = Math.random();
+  if (r < 0.55) return 3; if (r < 0.80) return 4; if (r < 0.93) return 5; return 6;
 }
 function pullPack(chase) {
   var pulls = [], seen = {};
   var isRing = chase || (!ringPulled && Math.random() < 0.01);
   for (var i = 0; i < 3; i++) {
-    pulls.push({ ci: 1 + Math.floor(Math.random() * 12), ti: pickTier() });
+    pulls.push({ ci: 1 + Math.floor(Math.random() * 12), ti: Math.random() < 0.12 ? pickPremium() : pickBase() });
   }
   if (isRing) { pulls[2] = { ring: true }; ringPulled = true; }
   pulls.forEach(function(pu) {
@@ -194,7 +197,7 @@ function openPack(chase) {
     reveal.innerHTML = pulls.map(function(pu, i) {
       if (pu.ring) return '<div class="revealcard ringcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's,1.05s"><img src="/api/avatars?s=14" alt="" style="height:122px"><div class="rvinfo"><b style="color:#f5c518">🏆 THE RING</b><br>SIGNED · ONE OF A KIND</div></div>';
       var t = TIERS[pu.ti];
-      return '<div class="revealcard' + (i === 2 ? ' bestcard' : '') + '" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's"><img src="/api/avatars?s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + NAMES[pu.ci - 1] + '</b><br><span style="color:' + t.c + ';font-weight:800">✨ ' + t.n + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
+      return '<div class="revealcard' + (i === 2 || pu.ti >= 3 ? ' bestcard' : '') + '" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's"><img src="/api/avatars?s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + NAMES[pu.ci - 1] + '</b><br><span style="color:' + t.c + ';font-weight:800">✨ ' + t.n + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
     }).join("");
     var newN = pulls.filter(function(pu){ return !pu.ring && !pu.dup; }).length;
     var dupN = pulls.filter(function(pu){ return pu.dup; }).length;

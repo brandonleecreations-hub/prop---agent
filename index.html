@@ -477,7 +477,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <p class="sub">Climb the ladder by locking winning tickets. A win counts only when every leg on the ticket hits.</p>
     <div class="grid" id="tiers"></div>
     <h2>🎁 My Packs</h2>
-    <p class="sub">One FREE pack every day — plus earn more by winning tickets and sharing the app. Every pack holds 3 foil cards… and one pack in a hundred hides THE RING 🏆</p>
+    <p class="sub">One FREE pack every day — plus earn more by winning tickets and sharing the app. Every pack holds 3 foil cards. Gold foil cards (Gold tier &amp; up) hide in packs too — a little tough to pull, about 1 slot in 8… and one pack in a hundred hides THE RING 🏆</p>
     <div id="packsBox"></div>
     <h2>🃏 My Cards</h2>
     <p class="sub">Your collection — player cards from winning tickets and your tier cards. Tap a card to flip it over.</p>
@@ -2336,6 +2336,7 @@ document.addEventListener("click", function(e){
   document.getElementById("cardPop").classList.add("open");
 });
 /* ---------- pack opening overlay ---------- */
+function drawPremiumTier(){ var r = Math.random(); if (r < 0.55) return 3; if (r < 0.80) return 4; if (r < 0.93) return 5; return 6; }
 function pullPack(demo){
   var maxTi = maxTierIdx();
   var isRing = false;
@@ -2343,7 +2344,7 @@ function pullPack(demo){
   var pulls = [];
   for (var i = 0; i < 3; i++){
     var ci = 1 + Math.floor(Math.random() * 12);
-    var ti = Math.floor(Math.random() * (maxTi + 1));
+    var ti = Math.random() < 0.12 ? drawPremiumTier() : Math.floor(Math.random() * (maxTi + 1));
     pulls.push({ ci: ci, ti: ti });
   }
   if (isRing) { if (!demo) lsSet("pa_ring", 1); pulls[2] = { ring: true }; }
@@ -2368,8 +2369,8 @@ function ensurePullView(){
   var el = document.createElement("div");
   el.id = "pullView";
   el.innerHTML = '<div class="popwrap" id="pullViewWrap"><div class="popinner">'
-    + '<div class="popface popfront" id="pullViewFront"></div>'
-    + '<div class="popface popback" id="pullViewBack"></div>'
+    + '<div class="popface front" id="pullViewFront"></div>'
+    + '<div class="popface back" id="pullViewBack"></div>'
     + '</div></div>'
     + '<div class="note" style="text-align:center;margin-top:10px">Tap the card to flip it</div>'
     + '<button class="mini" id="pullViewClose" style="background:#17171f;border:1px solid #33333f;color:#fff;padding:9px 18px;border-radius:10px;font-weight:800;margin-top:8px">✕ Close</button>';
@@ -2384,12 +2385,12 @@ function viewPulledCard(i){
   var front = document.getElementById("pullViewFront"), back = document.getElementById("pullViewBack");
   document.getElementById("pullViewWrap").classList.remove("flipped");
   if (pu.ring) {
-    front.innerHTML = '<img class="popart" src="/api/avatars?s=14" alt=""><div class="popplate">THE RING</div><div class="poppill">🏆 CHASE · SIGNED · ONE OF A KIND</div>';
-    back.innerHTML = ringBackHTML();
+    front.innerHTML = '<img src="/api/avatars?s=14" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">THE RING</b><span class="rarpill" style="background:#f5c518;color:#1a1405">🏆 CHASE</span></div>';
+    back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">PROP AGENT</b><div style="color:#f5c518;letter-spacing:1.5px;font-weight:800;font-size:12px">THE RING · CHAMPIONSHIP EDITION</div><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">Signed · One of a Kind<br>The rarest pull in the game</div>';
   } else {
     var t = TIERS[pu.ti], cname = CHARNAMES[pu.ci - 1];
-    front.innerHTML = '<img class="popart" src="/api/avatars?s=' + pu.ci + '" alt=""><div class="popplate">' + cname + '</div><div class="poppill">✨ ' + t.name.toUpperCase() + ' FOIL</div>';
-    back.innerHTML = cardBackHTML(cname + ' · FOIL', t.name + ' tier gold foil edition<br>Pulled from a Prop Agent pack.');
+    front.innerHTML = '<img src="/api/avatars?s=' + pu.ci + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + cname + '</b><span class="rarpill" style="background:#f5c518;color:#1a1405">✨ ' + t.name.toUpperCase() + ' FOIL</span></div>';
+    back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">PROP AGENT</b><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">' + cname + ' · FOIL<br>' + t.name + ' tier gold foil edition<br>Pulled from a Prop Agent pack.</div>';
   }
   document.getElementById("pullView").classList.add("open");
 }
@@ -2426,12 +2427,13 @@ function ensurePackPop(){
       cards.innerHTML = pulls.map(function(pu, i){
         if (pu.ring) return '<div class="revealcard ringcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's,1.05s;width:118px;cursor:pointer"><img src="/api/avatars?s=14" alt="" style="height:118px"><div class="rvinfo"><b style="color:#f5c518">🏆 THE RING</b><br>SIGNED · ONE OF A KIND</div></div>';
         var t = TIERS[pu.ti];
-        return '<div class="revealcard' + (i === 2 ? ' bestcard' : '') + '" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer"><img src="/api/avatars?s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">✨ ' + t.name + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
+        return '<div class="revealcard' + (i === 2 || pu.ti >= 3 ? ' bestcard' : '') + '" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer"><img src="/api/avatars?s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">✨ ' + t.name + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
       }).join("");
       var newN = pulls.filter(function(pu){ return !pu.ring && !pu.dup; }).length;
       var dupN = pulls.filter(function(pu){ return pu.dup; }).length;
+      var premN = pulls.filter(function(pu){ return !pu.ring && pu.ti >= 3 && !pu.dup; }).length;
       if (pulls.some(function(pu){ return pu.ring; })) { cap.textContent = window._packDemo ? "DEMO — that's the chase celebration! Nothing was saved." : "🏆 YOU PULLED THE RING!! Signed, one of a kind — the rarest card in the game!"; ringCelebration(); }
-      else cap.textContent = (window._packDemo ? "DEMO — " : "") + newN + " new foil card" + (newN === 1 ? "" : "s") + " added to My Cards ✨" + (dupN ? " · " + dupN + " duplicate" + (dupN === 1 ? "" : "s") + " not saved" : "");
+      else cap.textContent = (window._packDemo ? "DEMO — " : "") + newN + " new foil card" + (newN === 1 ? "" : "s") + " added to My Cards ✨" + (dupN ? " · " + dupN + " duplicate" + (dupN === 1 ? "" : "s") + " not saved" : "") + (premN ? " · ✨ " + premN + " GOLD FOIL" + (premN === 1 ? "" : "S") + "!" : "");
     }, 1030);
   });
 }
