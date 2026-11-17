@@ -55,7 +55,8 @@ module.exports = async (req, res) => {
   if (!SB_URL || !SRK) { res.status(200).json({ ok: false, configured: false }); return; }
   try {
     if (req.method === "GET" && req.query && req.query.board) {
-      const r = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card&order=wins.desc&limit=50", { headers: sbHeaders() });
+      let r = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card,battle_w,battle_l&order=wins.desc&limit=50", { headers: sbHeaders() });
+      if (r.status !== 200) r = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card&order=wins.desc&limit=50", { headers: sbHeaders() });
       res.status(200).json({ ok: r.status === 200, board: Array.isArray(r.json) ? r.json : [] });
       return;
     }

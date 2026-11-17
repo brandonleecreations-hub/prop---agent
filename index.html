@@ -182,6 +182,17 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .clashad .clashbtn:active{transform:translateY(4px);box-shadow:0 2px 0 #3b1470, 0 6px 12px rgba(0,0,0,.5)}
 .caspark{position:absolute;font-size:13px;pointer-events:none;animation:sparkfloat 2.8s ease-in-out infinite;z-index:1}
 @keyframes sparkfloat{0%,100%{transform:translateY(0) scale(1);opacity:.9}50%{transform:translateY(-6px) scale(1.25);opacity:1}}
+.clashlb{margin:-4px 0 12px;background:linear-gradient(120deg,rgba(27,15,56,.92),rgba(18,8,31,.92));border:1px solid rgba(245,185,66,.5);border-radius:12px;padding:8px 11px}
+.clashlb-t{font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:11px;letter-spacing:.8px;color:#f5c518;margin-bottom:5px}
+.clashlb-r{display:flex;align-items:center;gap:7px;font-size:12.5px;padding:2.5px 0;color:#e8e4f5}
+.clashlb-r.me{color:#ffd94d;font-weight:800}
+.clashlb-rk{width:16px;text-align:center;font-weight:900;color:#a78bfa}
+.clashlb-r.me .clashlb-rk{color:#f5c518}
+.clashlb-r img{width:19px;height:19px;border-radius:50%;object-fit:cover}
+.clashlb-nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clashlb-w{font-weight:800;color:#9aa7bd}
+.clashlb-r.me .clashlb-w{color:#ffd94d}
+.clashlb-none{font-size:12px;color:#9aa7bd}
 .agentpick{position:relative;transform:perspective(600px) rotateX(4deg);box-shadow:0 8px 16px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.18);transition:transform .15s ease}
 .agentpick.on{transform:perspective(600px) rotateX(0deg) scale(1.06)}
 .pickgrid{perspective:700px}
@@ -3074,6 +3085,16 @@ function clashGrant(n){
   if (g > 0) { lsSet("pa_coinday", { day: dayStr(), n: clashEarnToday() + g }); coinsSet(coinsGet() + g); cloudSave(); }
   return g;
 }
+function clashLbHtml(){
+  var mine = battlesGet();
+  var list = [];
+  if (cloudAgents) cloudAgents.forEach(function(a){ var w = a.battle_w || 0, l = a.battle_l || 0; if (a.id === cloudUid) { w = Math.max(w, mine.w || 0); l = Math.max(l, mine.l || 0); } if (w > 0) list.push({ name: a.display_name || "Agent", w: w, l: l, avatar: a.avatar_url || "", me: a.id === cloudUid }); });
+  if (!list.some(function(c){ return c.me; }) && (mine.w || 0) > 0) list.push({ name: profile.name || "You", w: mine.w || 0, l: mine.l || 0, avatar: profile.avatar || "", me: true });
+  list.sort(function(a, b){ return b.w - a.w || a.l - b.l; });
+  list = list.slice(0, 5);
+  if (!list.length) return '<div class="clashlb"><div class="clashlb-t">\uD83C\uDFC6 TOP CLASHERS \u2014 most Grid Clash wins</div><div class="clashlb-none">No battle wins yet \u2014 be the first on this board!</div></div>';
+  return '<div class="clashlb"><div class="clashlb-t">\uD83C\uDFC6 TOP CLASHERS \u2014 most Grid Clash wins</div>' + list.map(function(c, i){ return '<div class="clashlb-r' + (c.me ? ' me' : '') + '"><span class="clashlb-rk">' + (i + 1) + '</span>' + (c.avatar ? '<img src="' + esc(c.avatar) + '" alt="">' : '') + '<span class="clashlb-nm">' + esc(c.name) + (c.me ? ' (You)' : '') + '</span><span class="clashlb-w">' + c.w + 'W \u2013 ' + c.l + 'L</span></div>'; }).join("") + '</div>';
+}
 function renderClash(){
   var box = $("clashBox"); if (!box) return;
   var b = battlesGet(), lad = ladderGet();
@@ -3083,7 +3104,7 @@ function renderClash(){
     + '<span class="cavs">VS</span>'
     + '<img class="caface r" src="/api/battle?s=1" alt="">'
     + '<button class="clashbtn" data-clashnow="1">\u2694\uFE0F CLASH NOW</button>'
-    + '<span class="coinpill">\uD83E\uDE99 ' + coinsGet() + '</span><span class="caspark" style="left:36%;top:5px">✨</span><span class="caspark" style="right:27%;bottom:4px;animation-delay:1.3s">⚡</span></div>';
+    + '<span class="coinpill">\uD83E\uDE99 ' + coinsGet() + '</span><span class="caspark" style="left:36%;top:5px">✨</span><span class="caspark" style="right:27%;bottom:4px;animation-delay:1.3s">⚡</span></div>' + clashLbHtml();
 }
 
 function mkFighter(ci, ti){ return { ci: ci, ti: ti, hits: 0, used: {} }; }
@@ -3547,7 +3568,7 @@ function clashFinish(won){
     if (CL.bwPoint) { lsSet("pa_battlewins", (parseInt(lsGet("pa_battlewins", 0), 10) || 0) + 1); lsSet("pa_battleday", { day: dayStr(), n: bwToday + 1 }); }
     if (CL.mode === "ladder" && CL.boss === ladderGet() + 1 && CL.boss <= 7) lsSet("pa_ladder", CL.boss);
     cloudSave();
-  }
+  } else cloudSave();
   renderClash(); renderPacks();
   clashPanel('<div class="clashresult">' + (won ? '<div class="reswin">🏆 VICTORY!</div>' : '<div class="reslose">DEFEAT</div>')
     + '<div class="clashsub">' + (won ? 'Your pair takes the night! ' + (earned > 0 ? '<b style="color:#f5c518">+' + earned + ' 🪙 Clash Coins</b>' + (capped ? ' (daily coin cap hit — more tomorrow)' : '') : '<b>Daily coin cap reached — wins pay again tomorrow.</b>') : 'The CPU pair takes this one. Watch their powers, time your tags, and run it back.') + '</div>'
