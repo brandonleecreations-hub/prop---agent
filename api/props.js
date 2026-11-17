@@ -254,6 +254,9 @@ function cacheFresh(hit) {
   // An empty board stays fresh 30 min: the fewest refreshes that still
   // catch newly posted props reasonably soon (Brandon 2026-11-16).
   if (!hit.props.length) return age < 30 * 60 * 1000;
+  // ESPN fallback boards also stay fresh only 30 min, so the moment Parlay
+  // posts the real PrizePicks props they take the board back.
+  if (hit.espnFallback) return age < 30 * 60 * 1000;
   // Most-recent rule: if every game on the cached board has already started,
   // the board is yesterday's news — a newer slate may be posted, so refresh
   // (at most once per 30 min) instead of riding the 11h cache into empty.
@@ -274,6 +277,176 @@ function cacheFresh(hit) {
     return true;
   }
   return false;
+}
+
+
+// ---- ESPN fallback (Brandon 2026-11-16): Parlay stays the primary source.
+// When a Parlay pull comes back EMPTY for a sport with games on, fill the
+// board from ESPN's odds feed (DraftKings prop bets via the ESPN core API)
+// for UPCOMING games, so the board is never blank while real lines exist.
+// The break lane uses the same feed for games sitting at a break when
+// PrizePicks has not posted 2nd-half props. Fallback rows carry
+// book:"DraftKings" so the app labels them honestly ("DraftKings - via ESPN").
+const CORE = "https://sports.core.api.espn.com/v2/sports/";
+const SITE = "https://site.api.espn.com/apis/site/v2/sports/";
+const rosterCache = {}; // path|teamId -> {ts, map}
+const sbEvCache = {}; // sport -> {ts, events}
+const ESPN_STAT = {
+  "3-Point Field Goals": "3-Pointers Made",
+  "Passing Touchdowns": "Passing TDs",
+  "Rushing Touchdowns": "Rushing TDs",
+  "Receiving Touchdowns": "Receiving TDs",
+  "Points, Rebounds, and Assists": "Pts + Reb + Ast",
+  "Points and Rebounds": "Pts + Reb",
+  "Points and Assists": "Pts + Ast",
+  "Assists and Rebounds": "Reb + Ast",
+  "Points + Rebounds + Assists": "Pts + Reb + Ast",
+  "Points + Rebounds": "Pts + Reb",
+  "Points + Assists": "Pts + Ast",
+  "Rebounds + Assists": "Reb + Ast",
+};
+function espnStatLabel(name) {
+  const raw = String(name || "");
+  const s = raw.replace(/^Total /, "");
+  return ESPN_STAT[s] || ESPN_STAT[raw] || s || "Prop";
+}
+function amToProb(a) {
+  const v = parseFloat(a);
+  if (!isFinite(v) || v === 0) return null;
+  return v < 0 ? (-v) / ((-v) + 100) : 100 / (v + 100);
+}
+async function jget(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error("espn http " + r.status);
+  return r.json();
+}
+async function scoreboardEvents(sport) {
+  const hit = sbEvCache[sport];
+  if (hit && Date.now() - hit.ts < 5 * 60 * 1000) return hit.events;
+  let events = [];
+  try {
+    const path = ESPN_PATHS[sport];
+    if (path) {
+      const j = await jget(SITE + path + "/scoreboard?limit=100");
+      events = Array.isArray(j.events) ? j.events : [];
+    }
+  } catch (e) {}
+  sbEvCache[sport] = { ts: Date.now(), events };
+  return events;
+}
+async function rosterMap(path, teamId) {
+  const k = path + "|" + teamId;
+  const hit = rosterCache[k];
+  if (hit && Date.now() - hit.ts < 6 * 60 * 60 * 1000) return hit.map;
+  const map = {};
+  try {
+    const j = await jget(SITE + path + "/teams/" + teamId + "/roster");
+    const flat = [];
+    for (const a of j.athletes || []) {
+      if (a && a.displayName) flat.push(a);
+      else if (a && Array.isArray(a.items)) for (const b of a.items) flat.push(b);
+    }
+    for (const a of flat) if (a && a.id && a.displayName) map[String(a.id)] = a.displayName;
+  } catch (e) {}
+  rosterCache[k] = { ts: Date.now(), map };
+  return map;
+}
+async function espnGameProps(sport, ev) {
+  const path = ESPN_PATHS[sport];
+  if (!path || !ev) return [];
+  const corePath = path.replace("/", "/leagues/");
+  const comp = ev.competitions && ev.competitions[0];
+  if (!comp) return [];
+  const teams = (comp.competitors || []).map((c) => ({
+    id: c.team && c.team.id,
+    name: (c.team && (c.team.displayName || c.team.shortDisplayName)) || "",
+    homeAway: c.homeAway,
+  }));
+  const athletes = {};
+  for (const t of teams) {
+    if (!t.id) continue;
+    const m = await rosterMap(path, t.id);
+    for (const id in m) athletes[id] = { name: m[id], team: t.name };
+  }
+  if (!Object.keys(athletes).length) return [];
+  let provId = null;
+  try {
+    const oj = await jget(CORE + corePath + "/events/" + ev.id + "/competitions/" + ev.id + "/odds");
+    const it = (oj.items || [])[0];
+    if (it && it.provider && it.provider.id) provId = it.provider.id;
+  } catch (e) {}
+  if (!provId) return [];
+  const groups = {}; // athleteId|typeName -> {lineStr: [americanPrices]}
+  let page = 1, count = Infinity;
+  while (page <= 6 && (page - 1) * 100 < count) {
+    let pj = null;
+    try { pj = await jget(CORE + corePath + "/events/" + ev.id + "/competitions/" + ev.id + "/odds/" + provId + "/propBets?limit=100&page=" + page); } catch (e) { break; }
+    count = pj.count || 0;
+    const items = pj.items || [];
+    if (!items.length) break;
+    for (const it of items) {
+      const tval = it.current && it.current.target && it.current.target.value;
+      if (typeof tval !== "number" || !isFinite(tval)) continue;
+      const tname = (it.type && it.type.name) || "";
+      if (!tname || /milestone/i.test(tname)) continue;
+      const aref = (it.athlete && it.athlete.$ref) || "";
+      const aid = (aref.split("/athletes/")[1] || "").split("?")[0];
+      if (!aid || !athletes[aid]) continue;
+      const g = groups[aid + "|" + tname] = groups[aid + "|" + tname] || {};
+      (g[String(tval)] = g[String(tval)] || []).push(it.odds && it.odds.american && it.odds.american.value);
+    }
+    page++;
+  }
+  const away = teams.find((t) => t.homeAway === "away"), home = teams.find((t) => t.homeAway === "home");
+  const matchup = away && home ? away.name + " @ " + home.name : (ev.name || "");
+  const rows = [];
+  for (const gk in groups) {
+    const parts = gk.split("|");
+    const aid = parts[0], tname = parts.slice(1).join("|");
+    let best = null;
+    for (const lk in groups[gk]) {
+      const prices = groups[gk][lk].map(amToProb).filter((v) => v != null);
+      let bal = 0.5, pct = 50;
+      if (prices.length >= 2) { const s = prices[0] + prices[1]; pct = Math.round(1000 * prices[0] / s) / 10; bal = Math.abs(prices[0] / s - 0.5); }
+      else if (prices.length === 1) { pct = Math.round(prices[0] * 1000) / 10; bal = Math.abs(prices[0] - 0.5); }
+      if (!best || bal < best.bal) best = { line: parseFloat(lk), pct, bal };
+    }
+    if (!best) continue;
+    rows.push({
+      player: athletes[aid].name,
+      stat: espnStatLabel(tname),
+      line: Math.round(best.line * 100) / 100,
+      team: athletes[aid].team,
+      matchup: String(matchup || ""),
+      starts: String(ev.date || ""),
+      book: "DraftKings",
+      pct: best.pct,
+    });
+  }
+  return rows;
+}
+async function espnFallback(sport, mode) {
+  const evs = await scoreboardEvents(sport);
+  const now = Date.now();
+  let targets = [];
+  if (mode === "break") {
+    targets = evs.filter((ev) => {
+      const t = ev.status && ev.status.type;
+      if (!t || t.state !== "in") return false;
+      const s = (t.detail || "") + " " + (t.shortDetail || "");
+      return /HALFTIME|END_PERIOD|INTERMISSION/i.test(t.name || "") || /halftime|intermission|end of (1st|2nd|3rd|4th)/i.test(s);
+    }).slice(0, 3);
+  } else {
+    targets = evs.filter((ev) => {
+      const t = ev.status && ev.status.type;
+      return t && t.state === "pre" && new Date(ev.date || 0).getTime() > now - 10 * 60 * 1000;
+    }).slice(0, 4);
+  }
+  let out = [];
+  for (const ev of targets) {
+    try { out = out.concat(await espnGameProps(sport, ev)); } catch (e) {}
+  }
+  return out.slice(0, 400);
 }
 
 module.exports = async (req, res) => {
@@ -321,6 +494,13 @@ module.exports = async (req, res) => {
         if (t < Date.now() - 4 * 60 * 60 * 1000) return false;
         return !!(prev && prev.ts > t + 10 * 60 * 1000 && prev.ts < Date.now() + 1000 && !prev.keys.has(rowKey(p)));
       });
+      // ESPN break fallback: no genuinely-new PrizePicks break props ->
+      // pull live lines from ESPN for the games sitting at a break.
+      const hasBrk = props.some((p) => { const t = p.starts ? new Date(p.starts).getTime() : NaN; return isFinite(t) && t <= Date.now() - 10 * 60 * 1000; });
+      if (!hasBrk) {
+        const fb = await espnFallback(sport, "break").catch(() => []);
+        if (fb.length) props = props.concat(fb);
+      }
       prevFetch[sport] = { ts: Date.now(), keys: fullKeys };
       stampSeen(sport, props);
       cache[sport] = { ts: Date.now(), props, pregameRefreshed: true };
@@ -358,14 +538,29 @@ module.exports = async (req, res) => {
       inflight[sport] = fetchSport(sport, key).finally(() => { delete inflight[sport]; });
     }
     const rows = await inflight[sport];
-    const props = normalize(rows);
+    let props = normalize(rows);
+    let espnFb = false;
+    if (!props.length) {
+      const fb = await espnFallback(sport, "pre").catch(() => []);
+      if (fb.length) { props = fb; espnFb = true; }
+    }
     prevFetch[sport] = { ts: Date.now(), keys: new Set(normalize(rows, true).map(rowKey)) };
     stampSeen(sport, props);
     const wasPregame = !!(hit && Date.now() - hit.ts < DAY_TTL);
     if (noGamesMark) noGamesFetch[sport] = noGamesMark;
-    cache[sport] = { ts: Date.now(), props, pregameRefreshed: wasPregame };
-    if (!props.length) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300"); res.status(200).json({ ok: true, configured: true, cached: false, props });
+    cache[sport] = { ts: Date.now(), props, pregameRefreshed: wasPregame, espnFallback: espnFb };
+    if (!props.length || espnFb) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300"); res.status(200).json({ ok: true, configured: true, cached: false, fallback: espnFb ? "espn" : undefined, props });
   } catch (err) {
+    if (!hit || !hit.props.length) {
+      const fb = await espnFallback(sport, "pre").catch(() => []);
+      if (fb.length) {
+        stampSeen(sport, fb);
+        cache[sport] = { ts: Date.now(), props: fb, pregameRefreshed: false, espnFallback: true };
+        res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300");
+        res.status(200).json({ ok: true, configured: true, cached: false, fallback: "espn", props: fb });
+        return;
+      }
+    }
     res.setHeader("Cache-Control", "no-store");
     res.status(200).json({ ok: false, configured: true, error: String((err && err.message) || err), props: hit ? hit.props : [] });
   }
