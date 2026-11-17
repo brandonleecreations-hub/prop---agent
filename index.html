@@ -1669,14 +1669,14 @@ function renderUpcoming(){
       var PRIO = {nfl:0, nba:1, nhl:2, cfb:3, cbb:4, wbb:5, mlb:6, tennis:7};
       var ranked = liveAll.slice().sort(function(x, y){ return (PRIO[x.lg.key] != null ? PRIO[x.lg.key] : 9) - (PRIO[y.lg.key] != null ? PRIO[y.lg.key] : 9); });
       var picks = [];
-      ranked.forEach(function(g){ if (picks.length < 2 && !picks.some(function(p){ return p.lg.key === g.lg.key; })) picks.push(g); });
-      if (picks.length < 2) ranked.forEach(function(g){ if (picks.length < 2 && picks.indexOf(g) === -1) picks.push(g); });
+      ranked.forEach(function(g){ if (picks.length < 4 && !picks.some(function(p){ return p.lg.key === g.lg.key; })) picks.push(g); });
+      if (picks.length < 4) ranked.forEach(function(g){ if (picks.length < 4 && picks.indexOf(g) === -1) picks.push(g); });
       var heroSig = picks.map(function(g){ var tt = eventTeams(g.ev); var st2 = g.ev.status && g.ev.status.type || {}; return g.ev.id + ":" + tt.map(function(x){ return x.score||""; }).join("-") + ":" + (st2.shortDetail||""); }).join(",");
       var heroChanged = heroSig !== window._heroSig;
       if (heroChanged) window._heroSig = heroSig;
       if (hero && heroChanged) {
         if (!picks.length) { hero.innerHTML = ""; }
-        else if (picks.length === 2) {
+        else if (picks.length >= 2) {
           var miniHero = function(g){
             var ts = eventTeams(g.ev);
             var st = g.ev.status && g.ev.status.type || {};
