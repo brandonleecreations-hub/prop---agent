@@ -161,6 +161,39 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 #myCards .tiercard.lgnd .tcwin::after{animation-duration:2.1s}
 #myCards .tcspark{animation:sparkdrift 4.5s ease-in-out infinite alternate}
 @keyframes sparkdrift{from{transform:translateY(0)}to{transform:translateY(-7px)}}
+.agentpick{position:relative}
+.readbtn{position:absolute;top:4px;right:4px;background:rgba(10,6,20,.82);border:1px solid #7C3AED;border-radius:50%;width:22px;height:22px;font-size:11px;display:flex;align-items:center;justify-content:center;z-index:2}
+.pickpw3{font-size:10.5px;color:#c9c9d6;line-height:1.35;margin-top:2px}
+.ttwrap{text-align:center;margin:2px 0 4px}
+.ttt{display:grid;grid-template-columns:repeat(3,42px);gap:5px;justify-content:center;transform:perspective(520px) rotateX(7deg)}
+.ttcell{width:42px;height:42px;border-radius:9px;border:2px solid rgba(255,255,255,.28);background:linear-gradient(160deg,#2e8f47,#14532a);box-shadow:inset 0 2px 0 rgba(255,255,255,.35), inset 0 -6px 10px rgba(0,0,0,.4), 0 4px 8px rgba(0,0,0,.4);font-size:19px;font-weight:900;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.ttcell:disabled{cursor:default;opacity:1}
+.ttcell.x{color:#e9d5ff;text-shadow:0 0 9px #a855f7}
+.ttcell.o{color:#fde68a;text-shadow:0 0 9px #f59e0b}
+.ttcell.win{border-color:#f5c518;box-shadow:0 0 15px rgba(245,197,24,.95), inset 0 2px 0 rgba(255,255,255,.35)}
+.ttcell.has{animation:ttpop .25s ease}
+@keyframes ttpop{from{transform:scale(.55)}to{transform:scale(1)}}
+.ttmsg{font-size:11px;color:#e9d5ff;margin-top:6px;text-shadow:0 1px 4px #000;font-weight:700}
+.abwrap{margin:10px 0 4px}
+.abttl{font-weight:900;font-size:13px;color:#f5c518;text-align:center;margin-bottom:7px;letter-spacing:.5px}
+.abrow{display:flex;gap:8px}
+.abcard{flex:1;background:linear-gradient(165deg,#17102b,#0a0616);border:2px solid var(--ab,#f5b942);border-radius:12px;padding:9px 7px;color:#fff;cursor:pointer;text-align:center;box-shadow:0 0 14px -2px var(--ab,#f5b942), inset 0 1px 0 rgba(255,255,255,.15);animation:abin .35s cubic-bezier(.2,.9,.3,1.3) both}
+.abcard:nth-child(2){animation-delay:.07s}
+.abcard:nth-child(3){animation-delay:.14s}
+@keyframes abin{from{opacity:0;transform:translateY(12px) scale(.9)}to{opacity:1;transform:none}}
+.abic{display:block;font-size:25px}
+.abnm{display:block;font-weight:900;font-size:11.5px;letter-spacing:.6px;margin-top:3px;color:var(--ab,#f5b942)}
+.abds{display:block;font-size:10px;color:#c9c9d6;margin-top:3px;line-height:1.35}
+.guidebar{display:flex;gap:8px;align-items:center;background:linear-gradient(90deg,rgba(245,185,66,.20),rgba(124,58,237,.20));border:1px solid #f5b942;border-radius:10px;padding:7px 10px;font-size:12px;margin-bottom:9px;line-height:1.45}
+.guideoff{margin-left:auto;flex:0 0 auto;background:none;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;font-size:10.5px;padding:3px 8px;cursor:pointer}
+.guideglow{animation:guidepulse 1.1s ease-in-out infinite !important}
+@keyframes guidepulse{0%,100%{box-shadow:0 0 0 0 rgba(245,185,66,0)}50%{box-shadow:0 0 16px 3px rgba(245,185,66,.75)}}
+#musBtn{position:absolute;top:10px;right:12px;z-index:6;width:38px;height:38px;border-radius:50%;background:#1d1430;border:1px solid #7C3AED;font-size:17px;cursor:pointer;color:#fff}
+#clashZoom{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,8,16,.94);z-index:7;padding:18px}
+#clashZoom.open{display:flex}
+#clashZoom .zoomcard{width:min(76vw,290px)}
+#clashZoom .tiercard{min-height:0}
+.zoomhint{margin-top:12px;font-size:12px;color:#9aa7bd}
 .field3d{position:relative;border-radius:14px;padding:12px 9px 10px;margin-bottom:10px;overflow:hidden;background:repeating-linear-gradient(90deg,#1e6031 0 36px,#277a3d 36px 72px);box-shadow:inset 0 0 0 2px rgba(255,255,255,.14), inset 0 -30px 44px rgba(0,0,0,.42), inset 0 22px 34px rgba(0,0,0,.30);transform:perspective(760px) rotateX(3deg);transform-origin:50% 100%}
 .field3d::before{content:"";position:absolute;inset:0;background:radial-gradient(85% 62% at 50% 38%,rgba(255,255,255,.17),transparent 62%);pointer-events:none}
 .field3d::after{content:"";position:absolute;left:5%;right:5%;top:50%;height:2px;background:rgba(255,255,255,.38);border-radius:2px;pointer-events:none}
@@ -2513,11 +2546,11 @@ var CHARNAMES = ["THE CLOSER","THE BOSS","THE OPERATOR","ALL-AMERICAN","THE DEAL
 var POWERS = [
   {name:"CLUTCH TIME", style:"ATTACK", desc:"+1 star when any card is one hit from elimination."},
   {name:"AUTHORITY", style:"CONTROL", desc:"Enemy powers don't work against her."},
-  {name:"INTEL", style:"TRICK", desc:"See the enemy die roll before you choose Attack or Defend."},
+  {name:"INTEL", style:"TRICK", desc:"See where the CPU will place its next grid mark."},
   {name:"HAIL MARY", style:"LUCK", desc:"Once per battle, a round he lost counts as a win instead."},
   {name:"NEGOTIATOR", style:"TRICK", desc:"Tied clashes count as wins for his card."},
   {name:"FINE PRINT", style:"CONTROL", desc:"Enemies facing her fight at -1 star."},
-  {name:"HOME RUN", style:"ATTACK", desc:"A winning roll with a 6 in it deals 2 hits."},
+  {name:"HOME RUN", style:"ATTACK", desc:"Winning a round by 3+ stars deals 2 hits."},
   {name:"FAST BREAK", style:"ATTACK", desc:"+1 star in the opening round of every battle."},
   {name:"RALLY", style:"COMEBACK", desc:"+1 star for every hit his team is behind."},
   {name:"STAR POWER", style:"ATTACK", desc:"+1 star in every single clash."},
@@ -2575,7 +2608,7 @@ function battleCardHTML(t, wins, ci){
     + '</div>'
     + (ti >= 5 ? '<div class="tcspark"></div>' : '')
     + '<div class="holo" style="--hc:' + t.color + '59"></div></div>';
-  return '<div class="tiercard' + (ti === 6 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' \u00B7 ' + t.name + ' Battle Card', pw.name + ' \u2014 ' + pw.desc + '<br><br>Agent Clash: clash = stars + dice + power. Two hits and a card is out. Powers live on battle cards only.') + '</div></div>';
+  return '<div class="tiercard' + (ti === 6 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' \u00B7 ' + t.name + ' Battle Card', pw.name + ' \u2014 ' + pw.desc + '<br><br>Agent Clash: clash = stars + power + grid. Land hits to place marks - 3 in a row wins an ability. Powers live on battle cards only.') + '</div></div>';
 }
 
 function renderBoard(){
@@ -2981,12 +3014,15 @@ function sfx(kind){ try {
   else if (kind === "win") { [523, 659, 784, 1047].forEach(function(f, i){ tone(f, f, 0.17, "triangle", 0.45, i * 0.09); }); }
   else if (kind === "lose") { [392, 330, 262].forEach(function(f, i){ tone(f, f, 0.2, "triangle", 0.38, i * 0.11); }); }
   else if (kind === "coin") { tone(1320, 1320, 0.07, "square", 0.28); tone(1760, 1760, 0.15, "square", 0.28, 0.07); }
+  else if (kind === "mark") tone(520, 880, 0.09, "triangle", 0.42);
+  else if (kind === "gridwin") { [660, 880, 1320].forEach(function(f, i){ tone(f, f, 0.16, "triangle", 0.42, i * 0.08); }); }
+  else if (kind === "ability") tone(240, 1250, 0.2, "sawtooth", 0.22);
+  else if (kind === "heal") tone(520, 790, 0.3, "sine", 0.32);
 } catch(e){} }
 
 /* ---------- AGENT CLASH — card battle game (Brandon, 2026-11-17) ---------- */
 var CLASH_PACK_COST = 50;
 var CLASH_DAILY_CAP = 100;
-var DICE_FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
 function coinsGet(){ var n = parseInt(lsGet("pa_coins", 0), 10); return isNaN(n) ? 0 : n; }
 function coinsSet(n){ lsSet("pa_coins", Math.max(0, Math.floor(n))); }
 function battlesGet(){ return lsGet("pa_battles", { w: 0, l: 0 }); }
@@ -3027,37 +3063,241 @@ function effStar(f, foe, myPair, foePair, stance, foeStance){
   }
   return { star: star, notes: notes };
 }
-function rollChain(first){
-  var rolls = [], total = 0, r = (first != null ? first : 1 + Math.floor(Math.random() * 6));
-  for (var i = 0; i < 5; i++) { rolls.push(r); total += r; if (r !== 6) break; r = 1 + Math.floor(Math.random() * 6); }
-  return { total: total, rolls: rolls, had6: rolls.indexOf(6) >= 0 };
+/* ---------- CLASH GRID — tic-tac-toe abilities (replaces dice) ---------- */
+var TT_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+var TT_POS = ["top-left", "top", "top-right", "left", "CENTER", "right", "bottom-left", "bottom", "bottom-right"];
+function ttWinner(g){ for (var i = 0; i < TT_LINES.length; i++) { var L = TT_LINES[i]; if (g[L[0]] && g[L[0]] === g[L[1]] && g[L[1]] === g[L[2]]) return { who: g[L[0]], line: L }; } return null; }
+function ttThreat(g, mark){ var n = 0; TT_LINES.forEach(function(L){ var a = g[L[0]], b = g[L[1]], c = g[L[2]]; var mine = (a === mark) + (b === mark) + (c === mark); var empty = (a === "") + (b === "") + (c === ""); if (mine === 2 && empty === 1) n++; }); return n; }
+function ttBonus(g, mark){ return ttThreat(g, mark) > 0 ? 1 : 0; }
+function ttPick(g, mark){
+  var foe = mark === "X" ? "O" : "X";
+  function winMove(m){ for (var i = 0; i < 9; i++) { if (g[i] === "") { var t = g.slice(); t[i] = m; if (ttWinner(t)) return i; } } return -1; }
+  var w = winMove(mark); if (w >= 0) return w;
+  var b = winMove(foe); if (b >= 0) return b;
+  if (g[4] === "") return 4;
+  var i, t;
+  for (i = 0; i < 9; i++) { if (g[i] === "") { t = g.slice(); t[i] = mark; if (ttThreat(t, mark) >= 2) return i; } }
+  for (i = 0; i < 9; i++) { if (g[i] === "") { t = g.slice(); t[i] = foe; if (ttThreat(t, foe) >= 2) return i; } }
+  var corners = [0, 2, 6, 8].filter(function(x){ return g[x] === ""; });
+  if (corners.length) return corners[Math.floor(Math.random() * corners.length)];
+  var sides = [1, 3, 5, 7].filter(function(x){ return g[x] === ""; });
+  if (sides.length) return sides[0];
+  return g.indexOf("");
 }
+var ABILITIES = [
+  { id: "overdrive", icon: "⭐", name: "OVERDRIVE", color: "#f5b942", desc: "+1 star for the rest of the battle" },
+  { id: "sneak", icon: "💥", name: "SNEAK STRIKE", color: "#ff5470", desc: "Free hit on the enemy's active card" },
+  { id: "heal", icon: "❤️", name: "SECOND WIND", color: "#2fbf71", desc: "Heal 1 hit from your most-hurt fighter" },
+  { id: "guard", icon: "🛡️", name: "IRON GUARD", color: "#7dd3fc", desc: "Block the next 2 hits against your team" },
+  { id: "momentum", icon: "🔥", name: "MOMENTUM", color: "#ff8a3d", desc: "+2 stars on your next round" },
+  { id: "headstart", icon: "🎯", name: "HEAD START", color: "#b26bff", desc: "Place 2 free marks on the fresh grid" }
+];
+function abilityName(id){ var n = id; ABILITIES.forEach(function(x){ if (x.id === id) n = x.name; }); return n; }
+function dealAbilities(side){
+  var mine = side === "me";
+  var pair = mine ? CL.mine : CL.cpu;
+  var bonus = mine ? (CL.myBonus || 0) : (CL.cpuBonus || 0);
+  var guard = mine ? (CL.myGuard || 0) : (CL.cpuGuard || 0);
+  var pool = ABILITIES.filter(function(a){
+    if (a.id === "heal") return pair.some(function(f){ return fAlive(f) && f.hits > 0; });
+    if (a.id === "overdrive") return bonus < 2;
+    if (a.id === "guard") return guard < 2;
+    return true;
+  });
+  var deal = [];
+  while (deal.length < 3 && pool.length) { var i = Math.floor(Math.random() * pool.length); deal.push(pool.splice(i, 1)[0].id); }
+  return deal;
+}
+function cpuAbilityPick(deal){
+  var foeActive = CL.mine[CL.myActive];
+  var hurt = CL.cpu.some(function(f){ return fAlive(f) && f.hits > 0; });
+  if (deal.indexOf("sneak") >= 0 && foeActive.hits === 1) return "sneak";
+  if (deal.indexOf("heal") >= 0 && hurt) return "heal";
+  if (deal.indexOf("overdrive") >= 0 && CL.round <= 6) return "overdrive";
+  if (deal.indexOf("guard") >= 0 && CL.cpu[CL.cpuActive].hits === 1) return "guard";
+  if (deal.indexOf("momentum") >= 0) return "momentum";
+  if (deal.indexOf("sneak") >= 0) return "sneak";
+  return deal[0];
+}
+function ttPlace(i){ if (CL && CL.ttResolve) { var r = CL.ttResolve; CL.ttResolve = null; sfx("click"); r(i); } }
+function abPick(id){ if (CL && CL.abResolve) { var r = CL.abResolve; CL.abResolve = null; sfx("click"); r(id); } }
+async function placeOne(side, B){
+  var mark = side === "me" ? "X" : "O";
+  if (side === "me") {
+    CL.placing = "me"; clashArena();
+    var i = await new Promise(function(res){ CL.ttResolve = res; });
+    CL.ttResolve = null; CL.placing = null;
+    if (i == null || i < 0 || CL !== B) return;
+    if (CL.grid[i] !== "") i = CL.grid.indexOf("");
+    if (i < 0) return;
+    CL.grid[i] = mark; sfx("mark"); clashArena();
+  } else {
+    CL.placing = "cpu"; clashArena();
+    await clashSleep(600);
+    if (CL !== B) return;
+    var j = ttPick(CL.grid, mark);
+    if (j >= 0) { CL.grid[j] = mark; sfx("mark"); }
+    CL.placing = null; clashArena();
+  }
+}
+async function gridResolve(B){
+  var w = ttWinner(CL.grid);
+  if (w) {
+    CL.ttLine = w.line; sfx("gridwin");
+    CL.log.push(w.who === "X" ? "🏆 YOU WIN THE GRID!" : "🏆 CPU WINS THE GRID!");
+    clashArena();
+    await clashSleep(950);
+    if (CL !== B) return;
+    CL.grid = ["", "", "", "", "", "", "", "", ""]; CL.ttLine = null;
+    await doAbility(w.who === "X" ? "me" : "cpu", B);
+    return;
+  }
+  if (CL.grid.indexOf("") < 0) {
+    CL.log.push("🌀 Grid full — nobody took it. Fresh grid!");
+    CL.grid = ["", "", "", "", "", "", "", "", ""];
+    clashArena();
+  }
+}
+async function doMarks(side, n, B){
+  for (var k = 0; k < n; k++) {
+    if (CL !== B || CL.over) return;
+    if (CL.grid.indexOf("") < 0) return;
+    await placeOne(side, B);
+    if (CL !== B) return;
+    await gridResolve(B);
+    if (CL !== B) return;
+  }
+}
+async function doTieMarks(B){
+  await placeOne("me", B);
+  if (CL !== B) return;
+  await gridResolve(B);
+  if (CL !== B) return;
+  if (CL.grid.indexOf("") < 0) return;
+  await placeOne("cpu", B);
+  if (CL !== B) return;
+  await gridResolve(B);
+}
+async function doAbility(side, B){
+  var deal = dealAbilities(side);
+  if (!deal.length) return;
+  if (side === "me") {
+    CL.abilityPick = deal; clashArena(); sfx("ability");
+    var id = await new Promise(function(res){ CL.abResolve = res; });
+    CL.abResolve = null; CL.abilityPick = null;
+    if (!id || CL !== B) { clashArena(); return; }
+    await applyAbility("me", id, B);
+  } else {
+    await clashSleep(650);
+    if (CL !== B) return;
+    var pick = cpuAbilityPick(deal);
+    CL.log.push("🏆 CPU takes " + abilityName(pick) + "!");
+    await applyAbility("cpu", pick, B);
+  }
+  if (CL === B) clashArena();
+}
+async function applyAbility(side, id, B){
+  var mine = side === "me";
+  var myPair = mine ? CL.mine : CL.cpu;
+  var foeActive = mine ? CL.cpu[CL.cpuActive] : CL.mine[CL.myActive];
+  sfx("ability");
+  if (id === "overdrive") { if (mine) CL.myBonus = Math.min(2, (CL.myBonus || 0) + 1); else CL.cpuBonus = Math.min(2, (CL.cpuBonus || 0) + 1); CL.log.push("⭐ " + (mine ? "Your" : "CPU") + " OVERDRIVE — +1★ for the rest of the battle!"); }
+  else if (id === "momentum") { if (mine) CL.myTemp = 2; else CL.cpuTemp = 2; CL.log.push("🔥 " + (mine ? "Your" : "CPU") + " MOMENTUM — +2★ next round!"); }
+  else if (id === "guard") { if (mine) CL.myGuard = Math.min(2, (CL.myGuard || 0) + 2); else CL.cpuGuard = Math.min(2, (CL.cpuGuard || 0) + 2); CL.log.push("🛡️ " + (mine ? "Your" : "CPU") + " IRON GUARD — next 2 hits blocked!"); }
+  else if (id === "heal") { var hurt = null; myPair.forEach(function(f){ if (fAlive(f) && f.hits > 0 && (!hurt || f.hits > hurt.hits)) hurt = f; }); if (hurt) { hurt.hits -= 1; sfx("heal"); CL.log.push("❤️ SECOND WIND — " + fName(hurt) + " heals a hit!"); } }
+  else if (id === "sneak") { if (fAlive(foeActive)) { foeActive.hits = Math.min(2, foeActive.hits + 1); sfx(foeActive.hits >= 2 ? "ko" : "hit"); CL.log.push("💥 SNEAK STRIKE — " + fName(foeActive) + " takes a free hit!" + (foeActive.hits >= 2 ? " ELIMINATED!" : "")); } }
+  else if (id === "headstart") { CL.log.push("🎯 " + (mine ? "Your" : "CPU") + " HEAD START — 2 free marks!"); clashArena(); for (var k = 0; k < 2; k++) { if (CL !== B) return; if (CL.grid.indexOf("") < 0) break; await placeOne(side, B); if (CL !== B) return; } }
+  clashArena();
+}
+function ttHTML(){
+  var cells = "";
+  for (var i = 0; i < 9; i++) {
+    var v = CL.grid[i];
+    var win = CL.ttLine && CL.ttLine.indexOf(i) >= 0;
+    cells += '<button class="ttcell' + (v ? ' has ' + (v === "X" ? "x" : "o") : '') + (win ? ' win' : '') + (CL.placing === "me" && !v && guideOn() ? ' guideglow' : '') + '" data-ttcell="' + i + '"' + (CL.placing === "me" && !v ? '' : ' disabled') + '>' + (v === "X" ? "✖" : (v === "O" ? "⭕" : "")) + '</button>';
+  }
+  var msg = CL.abilityPick ? "🏆 GRID WON!" : (CL.placing === "me" ? "Your ✖ — tap a square!" : (CL.placing === "cpu" ? "CPU places its ⭕…" : "Land a hit → place a ✖ · 3 in a row = ABILITY"));
+  return '<div class="ttwrap"><div class="ttt">' + cells + '</div><div class="ttmsg">' + msg + '</div></div>';
+}
+function abilityHTML(){
+  if (!CL.abilityPick) return "";
+  var cards = CL.abilityPick.map(function(id){ var a = null; ABILITIES.forEach(function(x){ if (x.id === id) a = x; }); if (!a) return ""; return '<button class="abcard' + (guideOn() ? ' guideglow' : '') + '" data-ability="' + id + '" style="--ab:' + a.color + '"><span class="abic">' + a.icon + '</span><span class="abnm">' + a.name + '</span><span class="abds">' + a.desc + '</span></button>'; }).join("");
+  return '<div class="abwrap"><div class="abttl">🏆 GRID WON — PICK YOUR ABILITY</div><div class="abrow">' + cards + '</div></div>';
+}
+function guideOn(){ return lsGet("pa_guide", 1) !== 0; }
+function clashZoom(ci, ti){
+  ensureClashPop();
+  var z = $("clashZoom"); if (!z) return;
+  z.innerHTML = '<div class="zoomcard">' + battleCardHTML(TIERS[ti], 999, ci) + '</div><div class="zoomhint">Tap the card to flip it · tap outside to close</div>';
+  z.classList.add("open");
+  sfx("click");
+}
+function closeZoom(){ var z = $("clashZoom"); if (z) { z.classList.remove("open"); z.innerHTML = ""; } }
+/* ---------- soft jazz loop — 3 synthesized songs, arcade style ---------- */
+var MUS = { on: false, timer: null, track: 0, beat: 0, bus: null };
+var JAZZ = [
+  { bpm: 78, chords: [[261.63, 329.63, 392.00, 493.88], [220.00, 261.63, 329.63, 392.00], [174.61, 220.00, 261.63, 329.63], [196.00, 246.94, 293.66, 392.00]], bass: [130.81, 110.00, 87.31, 98.00] },
+  { bpm: 86, chords: [[293.66, 369.99, 440.00, 523.25], [246.94, 293.66, 369.99, 440.00], [196.00, 246.94, 293.66, 369.99], [220.00, 261.63, 329.66, 440.00]], bass: [146.83, 123.47, 98.00, 110.00] },
+  { bpm: 70, chords: [[233.08, 293.66, 349.23, 440.00], [196.00, 233.08, 293.66, 349.23], [155.56, 196.00, 233.08, 293.66], [174.61, 220.00, 261.63, 349.23]], bass: [116.54, 98.00, 77.78, 87.31] }
+];
+function musBus(){ if (!AC) return null; if (!MUS.bus) { MUS.bus = AC.createGain(); MUS.bus.gain.value = 0.05; MUS.bus.connect(AC.destination); } return MUS.bus; }
+function jazzTone(f, dur, vol, type){ try { var bus = musBus(); if (!bus || !AC) return; var t = AC.currentTime; var o = AC.createOscillator(), g = AC.createGain(); o.type = type || "triangle"; o.frequency.value = f; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.09); g.gain.exponentialRampToValueAtTime(0.001, t + dur); o.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.05); } catch(e){} }
+function musicTick(){
+  if (!MUS.on || !AC) return;
+  var song = JAZZ[MUS.track % JAZZ.length];
+  var bar = Math.floor(MUS.beat / 4) % 4, b = MUS.beat % 4;
+  var chord = song.chords[bar];
+  if (b === 0) { chord.forEach(function(f){ jazzTone(f, 2.6, 0.15, "triangle"); }); jazzTone(song.bass[bar], 1.4, 0.5, "sine"); }
+  if (b === 2) jazzTone(song.bass[bar] * 1.5, 0.9, 0.3, "sine");
+  jazzTone(6800, 0.03, 0.045, "square");
+  if (b === 3 && Math.random() < 0.5) jazzTone(chord[Math.floor(Math.random() * chord.length)] * 2, 0.5, 0.05, "sine");
+  MUS.beat++;
+  if (MUS.beat >= 64) { MUS.beat = 0; MUS.track++; if (MUS.timer) { clearInterval(MUS.timer); MUS.timer = setInterval(musicTick, Math.round(60000 / JAZZ[MUS.track % JAZZ.length].bpm)); } }
+}
+function musicStart(){
+  try {
+    if (lsGet("pa_music", 1) === 0) return;
+    if (!window.AudioContext && !window.webkitAudioContext) return;
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === "suspended") AC.resume();
+    if (MUS.on) return;
+    MUS.on = true; MUS.beat = 0;
+    MUS.timer = setInterval(musicTick, Math.round(60000 / JAZZ[MUS.track % JAZZ.length].bpm));
+    musicTick();
+  } catch(e){}
+}
+function musicStop(){ MUS.on = false; if (MUS.timer) { clearInterval(MUS.timer); MUS.timer = null; } }
+function musicToggle(){ var on = lsGet("pa_music", 1) !== 0; lsSet("pa_music", on ? 0 : 1); if (on) musicStop(); else musicStart(); var b = $("musBtn"); if (b) b.textContent = on ? "🔇" : "🎵"; }
+
 var CL = null;
 function ensureClashPop(){
   if (document.getElementById("clashPop")) return;
   var el = document.createElement("div");
   el.id = "clashPop";
-  el.innerHTML = '<div class="clashpanel" id="clashPanel"></div>';
+  el.innerHTML = '<button id="musBtn" title="Music on/off">' + (lsGet("pa_music", 1) === 0 ? "🔇" : "🎵") + '</button><div class="clashpanel" id="clashPanel"></div><div id="clashZoom"></div>';
   document.body.appendChild(el);
   el.addEventListener("click", function(e){ if (e.target === el) closeClash(); });
+  el.querySelector("#musBtn").addEventListener("click", function(e){ e.stopPropagation(); musicToggle(); });
+  el.querySelector("#clashZoom").addEventListener("click", function(e){ var card = e.target.closest ? e.target.closest(".tiercard") : null; if (card) card.classList.toggle("flipped"); else closeZoom(); });
 }
-function openClash(){ ensureClashPop(); $("clashPop").classList.add("open"); clashMenu(); }
-function closeClash(){ var p = $("clashPop"); if (p) p.classList.remove("open"); CL = null; renderClash(); renderPacks(); }
+function openClash(){ ensureClashPop(); $("clashPop").classList.add("open"); musicStart(); clashMenu(); }
+function closeClash(){ var p = $("clashPop"); if (p) p.classList.remove("open"); if (CL && CL.ttResolve) CL.ttResolve(-1); if (CL && CL.abResolve) CL.abResolve(""); musicStop(); closeZoom(); CL = null; renderClash(); renderPacks(); }
 function clashPanel(html){ var p = $("clashPanel"); if (p) { p.innerHTML = html; p.scrollTop = 0; } }
 function clashMenu(){
   CL = null;
   var b = battlesGet(), lad = ladderGet();
   clashPanel('<div class="clashttl">⚔️ AGENT CLASH</div>'
-    + '<div class="clashsub">Pick 2 battle cards — a Starter and a Tag Partner. Every round: <b>ATTACK</b> 🎲, <b>DEFEND</b> 🛡️ or <b>TAG</b> 🔁. Two hits and a card is out. Last pair standing wins.</div>'
+    + '<div class="clashsub">Pick 2 battle cards — a Starter and a Tag Partner. Every round: <b>ATTACK</b> ⚔️, <b>DEFEND</b> 🛡️ or <b>TAG</b> 🔁. Land a hit, place your ✖ on the Clash Grid — 3 in a row wins an ability. Two hits and a card is out.</div>'
     + '<button class="clashbig" data-clashmode="quick">⚡ QUICK CLASH<span>Friendly fight — CPU cards match your tiers, never stronger</span></button>'
     + '<button class="clashbig gold" data-clashmode="ladder">🏆 LADDER' + (lad >= 7 ? ' — CHAMPION 🏆' : ' — BOSS ' + (lad + 1) + ' OF 7') + '<span>' + (lad >= 7 ? 'Every boss beaten. Replay Boss 7 for coins.' : 'Beat bosses in order. Boss ' + (lad + 1) + ' pays ' + (10 + (lad + 1) * 5) + ' 🪙') + '</span></button>'
     + '<div class="clashmeta">🪙 <b>' + coinsGet() + '</b> Clash Coins · Record <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b><br>Wins pay Clash Coins — spend them on packs (1 pack = ' + CLASH_PACK_COST + ' 🪙, in My Packs below)</div>'
-    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>⭐ Stars = your card\'s tier — they start every clash.<br>🎲 Attack rolls a die and adds it. A rolled 6 EXPLODES — roll again and add it!<br>🛡️ Defend rolls no die and your power stays off — but if you lose the round, NO hit lands.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>⚡ Every agent has a power — it\'s printed on their battle card.</div></details>'
+    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>⭐ Stars = your card\'s tier — higher total wins the round.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Holding two-in-a-row on the grid gives +1★ until it breaks.<br>🛡️ Defend: your power stays off — but if you lose the round, NO hit lands.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Soft jazz plays while you battle — the 🎵 button (top right) mutes it.</div></details>'
+    + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>');
 }
 function clashSetup(mode){
   var boss = mode === "ladder" ? Math.min(ladderGet() + 1, 7) : 0;
-  CL = { mode: mode, boss: boss, sel: 0, mine: [null, null], cpu: null, myActive: 0, cpuActive: 0, round: 1, busy: false, over: false, tagged: false, intelDie: null, lastHit: null, lastWin: null, log: [] };
+  CL = { mode: mode, boss: boss, sel: 0, mine: [null, null], cpu: null, myActive: 0, cpuActive: 0, round: 1, busy: false, over: false, tagged: false, lastHit: null, lastWin: null, log: [], grid: ["", "", "", "", "", "", "", "", ""], myBonus: 0, cpuBonus: 0, myGuard: 0, cpuGuard: 0, myTemp: 0, cpuTemp: 0, placing: null, abilityPick: null, ttLine: null, ttResolve: null, abResolve: null };
   clashPickRender();
 }
 function clashPickRender(){
@@ -3067,7 +3307,7 @@ function clashPickRender(){
     var f = CL.mine[s];
     slots += '<div class="pickslot' + (CL.sel === s ? ' on' : '') + '" data-pickslot="' + s + '">'
       + '<div class="pickrole">' + (s === 0 ? '⭐ STARTER' : '🔁 TAG PARTNER') + '</div>'
-      + (f ? '<img src="/api/battle?s=' + f.ci + '" alt=""><div class="picknm">' + fName(f) + '</div><div class="pickpw" style="color:' + TIERS[f.ti].color + '">' + TIERS[f.ti].name + ' ' + "★".repeat(f.ti + 1) + '</div><div class="pickpw2">⚡ ' + POWERS[f.ci - 1].name + '</div>'
+      + (f ? '<img src="/api/battle?s=' + f.ci + '" alt=""><div class="picknm">' + fName(f) + '</div><div class="pickpw" style="color:' + TIERS[f.ti].color + '">' + TIERS[f.ti].name + ' ' + "★".repeat(f.ti + 1) + '</div><div class="pickpw2">⚡ ' + POWERS[f.ci - 1].name + '</div><div class="pickpw3">' + POWERS[f.ci - 1].desc + '</div>'
            : '<div class="pickempty">Tap an agent below</div>')
       + '</div>';
   }
@@ -3075,7 +3315,7 @@ function clashPickRender(){
   for (var ci = 1; ci <= 12; ci++) {
     var taken = (CL.mine[0] && CL.mine[0].ci === ci) || (CL.mine[1] && CL.mine[1].ci === ci);
     var isSel = CL.mine[CL.sel] && CL.mine[CL.sel].ci === ci;
-    grid += '<button class="agentpick' + (isSel ? ' on' : '') + '" data-pickagent="' + ci + '"' + (taken && !isSel ? ' disabled' : '') + '><img src="/api/battle?s=' + ci + '" alt=""><span>' + CHARNAMES[ci - 1].replace("THE ", "") + '</span></button>';
+    grid += '<button class="agentpick' + (isSel ? ' on' : '') + '" data-pickagent="' + ci + '"' + (taken && !isSel ? ' disabled' : '') + '><img src="/api/battle?s=' + ci + '" alt=""><span>' + CHARNAMES[ci - 1].replace("THE ", "") + '</span><span class="readbtn" data-readcard="' + ci + '" title="Read the full card">🔍</span></button>';
   }
   grid += '</div>';
   var tiers = "";
@@ -3087,7 +3327,7 @@ function clashPickRender(){
   }
   var ready = CL.mine[0] && CL.mine[1];
   clashPanel('<div class="clashttl">' + (CL.mode === "ladder" ? '🏆 LADDER — BOSS ' + CL.boss : '⚡ QUICK CLASH') + '</div>'
-    + '<div class="clashsub">Build your pair. The CPU matches your tiers — a fair fight.</div>'
+    + '<div class="clashsub">Build your pair. The CPU matches your tiers — a fair fight. Tap 🔍 on any agent to read their full card first.</div>'
     + '<div class="pickslots">' + slots + '</div>' + grid + tiers
     + '<button class="clashbig gold" data-clashfight="1"' + (ready ? '' : ' disabled') + '>🥊 FIGHT!<span>' + (ready ? 'Your pair is ready' : 'Pick both fighters first') + '</span></button>'
     + '<button class="openbtn" data-clashmenu="1" style="width:100%;margin-top:8px">← Back</button>');
@@ -3109,14 +3349,14 @@ function clashCpuPair(){
 }
 function clashStartFight(){
   CL.cpu = clashCpuPair();
-  CL.myActive = 0; CL.cpuActive = 0; CL.round = 1; CL.busy = false; CL.over = false; CL.tagged = false; CL.intelDie = null; CL.lastHit = null; CL.lastWin = null;
+  CL.myActive = 0; CL.cpuActive = 0; CL.round = 1; CL.busy = false; CL.over = false; CL.tagged = false; CL.lastHit = null; CL.lastWin = null; CL.grid = ["", "", "", "", "", "", "", "", ""]; CL.myBonus = 0; CL.cpuBonus = 0; CL.myGuard = 0; CL.cpuGuard = 0; CL.myTemp = 0; CL.cpuTemp = 0; CL.placing = null; CL.abilityPick = null; CL.ttLine = null; CL.ttResolve = null; CL.abResolve = null;
   CL.log = ["🥊 " + fName(CL.mine[0]) + " & " + fName(CL.mine[1]) + " vs " + fName(CL.cpu[0]) + " & " + fName(CL.cpu[1]) + " — FIGHT!"];
   clashArena();
 }
 function pipsHTML(f){ return '<span class="pips">' + (f.hits >= 1 ? '<i class="hit"></i>' : '<i></i>') + (f.hits >= 2 ? '<i class="hit"></i>' : '<i></i>') + '</span>'; }
 function fighterHTML(f, active, extra){
   var t = TIERS[f.ti];
-  return '<div class="fcard' + (active ? ' active' : ' bench') + (fAlive(f) ? '' : ' ko') + (extra || '') + '" style="border-color:' + t.color + '">'
+  return '<div class="fcard' + (active ? ' active' : ' bench') + (fAlive(f) ? '' : ' ko') + (extra || '') + '" data-zci="' + f.ci + '" data-zti="' + f.ti + '" style="border-color:' + t.color + '">'
     + '<img src="/api/battle?s=' + f.ci + '" alt="">'
     + '<div class="fcnm">' + fName(f) + '</div>'
     + '<div class="fcst" style="color:' + t.color + '">' + t.name + ' ' + "★".repeat(f.ti + 1) + '</div>'
@@ -3129,23 +3369,38 @@ function clashArena(){
   var cp = CL.cpu[CL.cpuActive], cpp = CL.cpu[1 - CL.cpuActive];
   var logHtml = CL.log.slice(-3).map(function(l){ return '<div class="clashlog">' + l + '</div>'; }).join("");
   var intel = "";
-  if (!CL.busy && !CL.over && me.ci === 3 && cp.ci !== 2) {
-    if (CL.intelDie == null) CL.intelDie = 1 + Math.floor(Math.random() * 6);
-    intel = '<div class="intel">🛰️ INTEL — The Operator reads it: if the CPU attacks, its die shows <b>' + CL.intelDie + '</b></div>';
+  if (!CL.busy && !CL.over && me.ci === 3 && cp.ci !== 2 && CL.grid.indexOf("") >= 0) {
+    var want = ttPick(CL.grid, "O");
+    if (want >= 0) intel = '<div class="intel">🛰️ INTEL — The Operator reads it: if the CPU places a mark, it wants the <b>' + TT_POS[want] + '</b> square</div>';
   }
   var meExtra = CL.lastHit === "me" ? " hitshake" : (CL.lastWin === "me" ? " lunge" : "");
   var cpExtra = CL.lastHit === "cpu" ? " hitshake" : (CL.lastWin === "cpu" ? " lunge" : "");
+  var g = guideOn();
+  var guide = "";
+  if (g && !CL.over) {
+    var hint = "";
+    if (CL.abilityPick) hint = "🏆 You won the grid! Tap one glowing ABILITY card to use it.";
+    else if (CL.placing === "me") hint = "👇 You landed a hit! Tap a glowing square to place your ✖.";
+    else if (CL.placing === "cpu") hint = "Watch out — the CPU is placing its ⭕.";
+    else if (!CL.busy) hint = "👉 Your move: ⚔️ ATTACK to clash · 🛡️ DEFEND blocks a hit · 🔁 TAG swaps fighters. Tap any card to zoom in and read its power.";
+    if (hint) guide = '<div class="guidebar"><span>' + hint + '</span><button class="guideoff" data-guideoff="1">✕ Guide off</button></div>';
+  }
+  var phase = !CL.busy && !CL.over && !CL.placing && !CL.abilityPick;
   clashPanel('<div class="clashround">' + (CL.mode === "ladder" ? '🏆 BOSS ' + CL.boss + ' · ' : '') + 'ROUND ' + CL.round + '</div>'
+    + guide
     + '<div class="field3d"><div class="side cpu"><div class="sidetag">CPU</div><div class="frow">' + fighterHTML(cp, true, cpExtra) + fighterHTML(cpp, false, "") + '</div></div>'
-    + '<div class="clashmid"><span class="vsbadge">VS</span><div class="dice"><span class="die me" id="dieMe">🎲</span><span class="die cpu" id="dieCpu">🎲</span></div><div class="clashnums" id="clashNums"></div>' + intel + logHtml + '</div>'
+    + '<div class="clashmid"><span class="vsbadge">VS</span>' + ttHTML() + '<div class="clashnums" id="clashNums"></div>' + intel + logHtml + '</div>'
     + '<div class="side me"><div class="sidetag">YOU</div><div class="frow">' + fighterHTML(me, true, meExtra) + fighterHTML(mp, false, "") + '</div></div></div>'
+    + abilityHTML()
     + '<div class="clashbtns">'
-    + '<button class="cbtn atk" data-clashact="atk"' + (CL.busy || CL.over ? ' disabled' : '') + '>🎲 ATTACK</button>'
+    + '<button class="cbtn atk' + (phase && g ? ' guideglow' : '') + '" data-clashact="atk"' + (CL.busy || CL.over ? ' disabled' : '') + '>⚔️ ATTACK</button>'
     + '<button class="cbtn def" data-clashact="def"' + (CL.busy || CL.over ? ' disabled' : '') + '>🛡️ DEFEND</button>'
     + '<button class="cbtn tag" data-clashact="tag"' + (CL.busy || CL.over || CL.tagged || !fAlive(mp) ? ' disabled' : '') + '>🔁 TAG</button>'
     + '</div>'
-    + '<button class="openbtn" data-clashquit="1" style="width:100%;margin-top:8px"' + (CL.busy ? ' disabled' : '') + '>Quit battle</button>');
+    + '<button class="openbtn" data-clashquit="1" style="width:100%;margin-top:8px"' + (CL.busy ? ' disabled' : '') + '>Quit battle</button>'
+    + (g ? '' : '<button class="openbtn" data-guideon="1" style="width:100%;margin-top:6px">❓ Turn guide on</button>'));
 }
+
 function cpuPlan(){
   var a = CL.cpu[CL.cpuActive], p = CL.cpu[1 - CL.cpuActive];
   CL.cpuStance = "atk"; CL.cpuTagged = false;
@@ -3156,19 +3411,21 @@ function cpuPlan(){
 }
 function clashSleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
 function applyHit(side, hits, target, targetStance, foe){
-  if (targetStance === "def") { sfx("block"); CL.log.push("🛡️ BLOCKED! " + fName(target) + " defended — no hit."); return false; }
-  if (target.ci === 11 && CL.round === 1 && targetStance === "atk" && foe.ci !== 2) { CL.log.push("🎾 ACE SERVE! " + fName(target) + " is untouchable in round 1 — no hit!"); sfx("block"); return false; }
-  if (target.ci === 12 && !target.used.island && targetStance === "atk" && foe.ci !== 2) { target.used.island = 1; CL.log.push("🌴 ISLAND CALM! " + fName(target) + " blocks the hit."); sfx("block"); return false; }
+  if (targetStance === "def") { sfx("block"); CL.log.push("🛡️ BLOCKED! " + fName(target) + " defended — no hit."); return "def"; }
+  var gk = side === "me" ? "myGuard" : "cpuGuard";
+  if ((CL[gk] || 0) > 0) { CL[gk]--; sfx("block"); CL.log.push("🛡️ IRON GUARD! " + fName(target) + "'s team blocks the hit! (" + CL[gk] + " left)"); return "save"; }
+  if (target.ci === 11 && CL.round === 1 && targetStance === "atk" && foe.ci !== 2) { CL.log.push("🎾 ACE SERVE! " + fName(target) + " is untouchable in round 1 — no hit!"); sfx("block"); return "save"; }
+  if (target.ci === 12 && !target.used.island && targetStance === "atk" && foe.ci !== 2) { target.used.island = 1; CL.log.push("🌴 ISLAND CALM! " + fName(target) + " blocks the hit."); sfx("block"); return "save"; }
   target.hits = Math.min(2, target.hits + hits); sfx(target.hits >= 2 ? "ko" : "hit");
   CL.log.push((side === "me" ? "💥 Your " : "💥 CPU's ") + fName(target) + " takes " + (hits > 1 ? "2 HITS!" : "a hit!") + (target.hits >= 2 ? " ELIMINATED!" : ""));
-  return true;
+  return "hit";
 }
 async function clashRound(stance){
   if (!CL || CL.busy || CL.over) return;
   var B = CL;
   if (stance === "tag") {
     if (CL.tagged || !fAlive(CL.mine[1 - CL.myActive])) return;
-    CL.myActive = 1 - CL.myActive; CL.tagged = true; sfx("tag"); CL.intelDie = null; CL.lastHit = null; CL.lastWin = null;
+    CL.myActive = 1 - CL.myActive; CL.tagged = true; sfx("tag"); CL.lastHit = null; CL.lastWin = null;
     CL.log.push("🔁 You tag in " + fName(CL.mine[CL.myActive]) + "!");
     clashArena(); return;
   }
@@ -3178,36 +3435,27 @@ async function clashRound(stance){
   var me = CL.mine[CL.myActive], cp = CL.cpu[CL.cpuActive];
   var myEff = effStar(me, cp, CL.mine, CL.cpu, stance, CL.cpuStance);
   var cpEff = effStar(cp, me, CL.cpu, CL.mine, CL.cpuStance, stance);
-  var dieMe = $("dieMe"), dieCpu = $("dieCpu");
-  if (dieMe) dieMe.classList.add("rolling");
-  if (dieCpu) dieCpu.classList.add("rolling");
-  var tumble = setInterval(function(){
-    if (dieMe) dieMe.textContent = DICE_FACES[Math.floor(Math.random() * 6)];
-    if (dieCpu) dieCpu.textContent = DICE_FACES[Math.floor(Math.random() * 6)];
-  }, 80);
+  var myGrid = ttBonus(CL.grid, "X"), cpGrid = ttBonus(CL.grid, "O");
+  var myTotal = myEff.star + myGrid + (CL.myBonus || 0) + (CL.myTemp || 0);
+  var cpTotal = cpEff.star + cpGrid + (CL.cpuBonus || 0) + (CL.cpuTemp || 0);
   await clashSleep(650);
-  if (CL !== B) { clearInterval(tumble); return; }
-  clearInterval(tumble);
-  var myRoll = stance === "atk" ? rollChain() : { total: 0, rolls: [], had6: false };
-  var cpRoll = CL.cpuStance === "atk" ? rollChain(CL.intelDie != null && me.ci === 3 ? CL.intelDie : null) : { total: 0, rolls: [], had6: false };
-  CL.intelDie = null;
-  if (dieMe) { dieMe.classList.remove("rolling"); dieMe.textContent = stance === "atk" ? DICE_FACES[myRoll.rolls[0] - 1] : "🛡️"; dieMe.classList.add("land"); }
-  if (dieCpu) { dieCpu.classList.remove("rolling"); dieCpu.textContent = CL.cpuStance === "atk" ? DICE_FACES[cpRoll.rolls[0] - 1] : "🛡️"; dieCpu.classList.add("land"); }
-  var myTotal = myEff.star + myRoll.total, cpTotal = cpEff.star + cpRoll.total;
+  if (CL !== B) return;
+  CL.myTemp = 0; CL.cpuTemp = 0;
   var nums = $("clashNums");
-  if (nums) nums.innerHTML = '<b class="me">' + myTotal + '</b><span>★ ' + myEff.star + (stance === "atk" ? ' + 🎲 ' + myRoll.rolls.join("+") : ' · defending') + '</span><i>vs</i><span>★ ' + cpEff.star + (CL.cpuStance === "atk" ? ' + 🎲 ' + cpRoll.rolls.join("+") : ' · defending') + '</span><b class="cpu">' + cpTotal + '</b>';
+  if (nums) nums.innerHTML = '<b class="me">' + myTotal + '</b><span>★ ' + myEff.star + (myGrid ? ' + ⚡grid 1' : '') + (CL.myBonus ? ' + ⭐ ' + CL.myBonus : '') + (stance === "def" ? ' · defending' : '') + '</span><i>vs</i><span>★ ' + cpEff.star + (cpGrid ? ' + ⚡grid 1' : '') + (CL.cpuBonus ? ' + ⭐ ' + CL.cpuBonus : '') + (CL.cpuStance === "def" ? ' · defending' : '') + '</span><b class="cpu">' + cpTotal + '</b>';
   myEff.notes.concat(cpEff.notes).forEach(function(n){ CL.log.push(n); });
-  if (myRoll.rolls.length > 1) CL.log.push("💥 YOUR 6 EXPLODES! Dice total " + myRoll.total + "!");
-  if (cpRoll.rolls.length > 1) CL.log.push("💥 CPU's 6 EXPLODES! Dice total " + cpRoll.total + "!");
+  if (myGrid) CL.log.push("⚡ GRID THREAT +1★ — your two-in-a-row is live!");
+  if (cpGrid) CL.log.push("⚡ CPU GRID THREAT +1★!");
   await clashSleep(950);
   if (CL !== B) return;
-  var loser = null, hits = 1;
-  if (myTotal > cpTotal) { loser = "cpu"; if (me.ci === 7 && myRoll.had6 && powerActive(me, cp, stance)) { hits = 2; CL.log.push("⚾ HOME RUN! The 6 makes it 2 HITS!"); } }
-  else if (cpTotal > myTotal) { loser = "me"; if (cp.ci === 7 && cpRoll.had6 && powerActive(cp, me, CL.cpuStance)) { hits = 2; CL.log.push("⚾ CPU HOME RUN! 2 HITS!"); } }
+  var loser = null, hits = 1, tied = false;
+  var margin = Math.abs(myTotal - cpTotal);
+  if (myTotal > cpTotal) { loser = "cpu"; if (me.ci === 7 && margin >= 3 && powerActive(me, cp, stance)) { hits = 2; CL.log.push("⚾ HOME RUN! Won by 3+ — 2 HITS!"); } }
+  else if (cpTotal > myTotal) { loser = "me"; if (cp.ci === 7 && margin >= 3 && powerActive(cp, me, CL.cpuStance)) { hits = 2; CL.log.push("⚾ CPU HOME RUN! 2 HITS!"); } }
   else {
     if (me.ci === 5 && powerActive(me, cp, stance)) { loser = "cpu"; CL.log.push("🤝 TIE — but your NEGOTIATOR takes the round!"); }
     else if (cp.ci === 5 && powerActive(cp, me, CL.cpuStance)) { loser = "me"; CL.log.push("🤝 TIE — CPU's NEGOTIATOR takes the round!"); }
-    else CL.log.push("🤝 Clash tied — nobody takes a hit.");
+    else { CL.log.push("🤝 Clash tied — nobody takes a hit, but BOTH sides claim a square."); tied = true; }
   }
   if (loser) {
     var loseF = loser === "me" ? me : cp, winF = loser === "me" ? cp : me;
@@ -3219,10 +3467,14 @@ async function clashRound(stance){
       loseF = loser === "me" ? me : cp; winF = loser === "me" ? cp : me;
       loseStance = loser === "me" ? stance : CL.cpuStance;
     }
-    var landed = applyHit(loser, hits, loseF, loseStance, winF);
+    var res = applyHit(loser, hits, loseF, loseStance, winF);
+    var landed = res === "hit";
     CL.lastHit = landed ? loser : null;
     CL.lastWin = landed ? (loser === "me" ? "cpu" : "me") : loser;
+    if (landed) { await doMarks(loser === "me" ? "cpu" : "me", hits, B); if (CL !== B) return; }
+    else if (res === "def") { CL.log.push("✖ Blocked hit — but the round winner claims a grid square!"); await doMarks(loser === "me" ? "cpu" : "me", 1, B); if (CL !== B) return; }
   }
+  else if (tied) { await doTieMarks(B); if (CL !== B) return; }
   await clashSleep(450);
   if (CL !== B) return;
   var ended = clashCheckEnd();
@@ -3269,6 +3521,12 @@ function clashBuyPack(){
 document.addEventListener("click", function(e){
   var t;
   if ((t = e.target.closest("[data-clashnow]"))) { sfx("click"); openClash(); return; }
+  var cell = e.target.closest("[data-ttcell]"); if (cell) { ttPlace(parseInt(cell.getAttribute("data-ttcell"), 10)); return; }
+  var ab = e.target.closest("[data-ability]"); if (ab) { abPick(ab.getAttribute("data-ability")); return; }
+  var zc = e.target.closest("[data-zci]"); if (zc) { clashZoom(parseInt(zc.getAttribute("data-zci"), 10), parseInt(zc.getAttribute("data-zti"), 10)); return; }
+  var rc = e.target.closest("[data-readcard]"); if (rc) { var rci = parseInt(rc.getAttribute("data-readcard"), 10); var rti = maxTierIdx(); if (CL) { for (var si = 0; si < 2; si++) if (CL.mine[si] && CL.mine[si].ci === rci) rti = CL.mine[si].ti; } clashZoom(rci, rti); return; }
+  if (e.target.closest("[data-guideoff]")) { lsSet("pa_guide", 0); if (CL && CL.cpu) clashArena(); else if (CL) clashPickRender(); else clashMenu(); return; }
+  if (e.target.closest("[data-guideon]")) { lsSet("pa_guide", 1); if (CL && CL.cpu) clashArena(); else if (CL) clashPickRender(); else clashMenu(); return; }
   if ((t = e.target.closest("[data-clashclose]"))) { closeClash(); return; }
   if ((t = e.target.closest("[data-clashmenu]"))) { clashMenu(); return; }
   if ((t = e.target.closest("[data-clashmode]"))) { clashSetup(t.getAttribute("data-clashmode")); return; }
