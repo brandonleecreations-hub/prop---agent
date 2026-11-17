@@ -1993,7 +1993,7 @@ function renderBoard(){
 }
 
 /* ---------- Weekly Pick'em (special card reward) ---------- */
-var WEEKLY_PICKEM = { week: "2026-W47", lgKey: "nfl", eventId: "401873066", starts: "2026-11-20T01:15Z", away: "Indianapolis Colts", home: "Houston Texans", awayShort: "Colts", homeShort: "Texans", note: "Thursday Night Football", cardName: "THE ORACLE", art: "/api/avatars?s=13", bannerArt: "/api/banners?s=pickem" };
+var WEEKLY_PICKEM = { week: "2026-W47", lgKey: "nfl", eventId: "401873066", starts: "2026-11-20T01:15Z", away: "Indianapolis Colts", home: "Houston Texans", awayShort: "Colts", homeShort: "Texans", note: "Thursday Night Football", cardName: "PROP AGENT", art: "/api/avatars?s=13", bannerArt: "/api/banners?s=pickem" };
 function specialUnlocked(){ return (lsGet("pa_special", []) || []).indexOf(WEEKLY_PICKEM.week) >= 0; }
 function pickemWhen(){ try { return new Date(WEEKLY_PICKEM.starts).toLocaleString("en-US", { timeZone: "America/Denver", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); } catch(e){ return ""; } }
 function loadPickemEvent(){
@@ -2059,7 +2059,7 @@ function specialCardHTML(){
     + '<div class="tcwin"><img class="cardart" src="' + cfg.art + '" alt="">' + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">WEEKLY PICK\'EM</span><span class="rarpill" style="background:#f5c518;color:#1a1405">SPECIAL EDITION</span></div>'
     + '<div class="tierto" style="margin-top:6px">' + (un ? 'Unlocked — in your collection · +1 win added to your tier progress' : 'Call the Weekly Pick\'em game right to unlock this rare card') + '</div>'
-    + (un ? '<button class="setprofs mini" data-avatar="' + cfg.art + '" data-featured="The Oracle · Special Card">Set as profile card</button> <button class="dlspecial mini">Download PNG</button>' : '')
+    + (un ? '<button class="setprofs mini" data-avatar="' + cfg.art + '" data-featured="Prop Agent · Special Card">Set as profile card</button> <button class="dlspecial mini">Download PNG</button>' : '')
     + '</div><div class="holo" style="--hc:#f5c51859"></div></div>';
   return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cfg.cardName + ' · SPECIAL EDITION', 'The Weekly Pick\'em reward. Call the featured game before it starts; if your team wins, this card joins your collection and you get +1 win toward your tiers.') + '</div></div>';
 }
@@ -2083,7 +2083,7 @@ function downloadSpecialCard(btn){
     ctx.fillStyle = "#9aa7bd"; ctx.font = "600 21px system-ui, sans-serif";
     ctx.fillText("PROP AGENT", W / 2, 855);
     cv.toBlob(function(bl){
-      var a = document.createElement("a"); a.href = URL.createObjectURL(bl); a.download = "the-oracle-special-card.png"; a.click();
+      var a = document.createElement("a"); a.href = URL.createObjectURL(bl); a.download = "prop-agent-special-card.png"; a.click();
       setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
       if (btn){ btn.textContent = "Saved ✓"; setTimeout(function(){ btn.textContent = "Download PNG"; }, 1600); }
     });
