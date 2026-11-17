@@ -144,7 +144,7 @@ async function gamesToday(sport) {
   try {
     const path = ESPN_PATHS[sport];
     if (path) {
-      const r = await fetch("https://site.api.espn.com/apis/site/v2/sports/" + path + "/scoreboard");
+      const r = await fetch("https://site.api.espn.com/apis/site/v2/sports/" + path + "/scoreboard?dates=" + etToday().replace(/-/g, ""));
       if (r.ok) {
         const data = await r.json();
         const evs = Array.isArray(data.events) ? data.events : [];
@@ -330,7 +330,7 @@ async function scoreboardEvents(sport) {
   try {
     const path = ESPN_PATHS[sport];
     if (path) {
-      const j = await jget(SITE + path + "/scoreboard?limit=100");
+      const j = await jget(SITE + path + "/scoreboard?dates=" + etToday().replace(/-/g, "") + "&limit=100");
       events = Array.isArray(j.events) ? j.events : [];
     }
   } catch (e) {}
