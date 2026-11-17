@@ -696,7 +696,10 @@ module.exports = async (req, res) => {
   // and only one evening check per day for a game-less sport.
   let noGamesMark = null;
   if (!(await gamesToday(sport))) {
-    if (etHour() < 18 || noGamesFetch[sport] === etToday()) {
+    // Brandon 2026-11-17: NFL pulls ONLY on days with an NFL game --
+    // the one evening look-ahead other sports get does not apply to
+    // the NFL, so a game-less NFL day spends zero credits, all day.
+    if (etHour() < 18 || noGamesFetch[sport] === etToday() || sport === "americanfootball_nfl") {
       res.setHeader("Cache-Control", "public, s-maxage=900, stale-while-revalidate=900");
       res.status(200).json({ ok: true, configured: true, noGames: true, props: hit ? hit.props : [] });
       return;
