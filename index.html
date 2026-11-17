@@ -165,8 +165,8 @@ dialog h3{margin:0 0 6px;font-size:18px}
 .wpbar{display:flex;height:12px;border-radius:999px;overflow:hidden;background:#262040;margin-top:6px}
 .wpbar>i{display:block;height:100%;transition:width .8s ease}
 .pdot{animation:pdotA 1.5s ease-out infinite}
-.drvpath{stroke-dasharray:7 6;animation:drvmarch 1.1s linear infinite}
-@keyframes drvmarch{to{stroke-dashoffset:-26}}
+.drvpath{stroke-dasharray:7 6;animation:drvmarch 2.2s linear infinite}
+@keyframes drvmarch{to{stroke-dashoffset:-13}}
 @keyframes pdotA{0%{opacity:.95}100%{opacity:.05}}
 .tball{position:absolute;width:13px;height:13px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fef08a,#f5c518 60%,#b45309);box-shadow:0 0 10px #f5c518aa;animation:rally 3.4s ease-in-out infinite alternate;z-index:3}
 @keyframes rally{0%{left:11%;top:28%}30%{top:64%}55%{left:85%;top:34%}80%{top:58%}100%{left:11%;top:28%}}
@@ -1364,7 +1364,9 @@ function fieldSvg(lg, s, comp, cs){
       chart += '<line x1="' + X(lastYl) + '" y1="4" x2="' + X(lastYl) + '" y2="116" stroke="#ffffff" stroke-width="2"/>';
       if (lp2 && lp2.end && lp2.end.down > 0 && isFinite(lp2.end.distance)){ var fdx = X(Math.min(100, lastYl + lp2.end.distance)); if (fdx > 30 && fdx < 330) chart += '<line x1="' + fdx + '" y1="4" x2="' + fdx + '" y2="116" stroke="#f5c518" stroke-width="2.4"/>'; }
       chart += '<circle class="pdot" cx="' + X(lastYl) + '" cy="60" r="11" fill="none" stroke="#f5c518" stroke-width="2"/>';
-      chart += '<circle r="6" fill="#f5c518" stroke="#ffffff" stroke-width="1.5"><animateMotion dur="' + Math.max(3, pts.length * 0.55).toFixed(1) + 's" repeatCount="indefinite" path="' + path + '"/></circle>';
+      var bd = Math.max(3, pts.length * 0.55);
+      var bel = window._gcAnimStart ? (((Date.now() - window._gcAnimStart) / 1000) % bd) : 0;
+      chart += '<circle r="6" fill="#f5c518" stroke="#ffffff" stroke-width="1.5"><animateMotion dur="' + bd.toFixed(1) + 's" begin="-' + bel.toFixed(1) + 's" repeatCount="indefinite" path="' + path + '"/></circle>';
       var ddt2 = (lp2 && lp2.end && lp2.end.downDistanceText) || "";
       var res = drv.displayResult || drv.result || "";
       var info = '<div style="margin-top:8px"><b>' + esc(offAbbr ? offAbbr + " drive" : "Drive") + '</b>' + (drv.description ? ' <span class="note">' + esc(drv.description) + '</span>' : '')
@@ -1470,8 +1472,10 @@ function closeGame(silent){
 }
 function openGame(key, eventId, isRefresh){
   window._openGame = {key: key, eventId: eventId};
+  var keepY = isRefresh ? (window.scrollY || 0) : 0;
   if (!isRefresh){
     window._pbpOpen = false;
+    window._gcAnimStart = Date.now();
     window._liveScrollY = window.scrollY || 0;
     ["liveCenter","liveTabs","liveStatus"].forEach(function(id){ var el = $(id); if (el) el.style.display = "none"; });
     var gd0 = $("gameDetail");
@@ -1539,12 +1543,13 @@ function openGame(key, eventId, isRefresh){
     }
       var fmtPlay = function(pl){ var sc = (pl.awayScore != null && pl.homeScore != null) ? ' <span style="color:var(--cyan);font-weight:700;white-space:nowrap">' + esc(pl.awayScore) + '–' + esc(pl.homeScore) + '</span>' : ''; var per = (((pl.period && (pl.period.displayValue || (pl.period.number ? "Q" + pl.period.number : ""))) || "") + " " + ((pl.clock && pl.clock.displayValue) || "")).trim(); return '<div style="padding:3.5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;line-height:1.35;' + (pl.scoringPlay ? 'border-left:3px solid var(--gold);padding-left:7px' : '') + '"><span style="display:inline-block;background:rgba(124,58,237,.16);border:1px solid rgba(124,58,237,.35);border-radius:6px;padding:0 5px;font-size:10.5px;font-weight:700;white-space:nowrap;margin-right:5px">' + esc(per) + '</span>' + esc(pl.text || pl.shortText || "") + sc + '</div>'; };
     var plays = summaryPlays(s).slice().reverse();
-      if (plays.length) html += '<div style="font-size:14px;margin-top:14px"><b>Play by Play</b> <span class="note">ticker - latest first - updates every 30s</span></div><div style="border:1px solid var(--line);border-radius:12px;background:#0d0d13;padding:6px 10px;margin-top:6px">' + plays.slice(0, 15).map(fmtPlay).join("") + (plays.length > 15 ? '<div id="pbpAll" style="display:' + (window._pbpOpen ? '' : 'none') + '">' + plays.slice(15).map(fmtPlay).join("") + '</div>' : '') + '</div>' + (plays.length > 15 ? '<button type="button" class="ghostbtn" id="pbpBtn" style="margin-top:8px;font-size:12px;padding:6px 11px">' + (window._pbpOpen ? 'Show fewer plays' : 'Show all ' + plays.length + ' plays') + '</button>' : '');
+      if (plays.length) html += '<div style="font-size:14px;margin-top:14px"><b>Play by Play</b> <span class="note">ticker - latest first - updates every 30s</span></div><div style="border:1px solid var(--line);border-radius:12px;background:#0d0d13;padding:6px 10px;margin-top:6px">' + plays.slice(0, 15).map(fmtPlay).join("") + (plays.length > 15 ? '<div id="pbpAll" style="display:' + (window._pbpOpen ? '' : 'none') + '">' + (window._pbpOpen ? plays.slice(15).map(fmtPlay).join("") : "") + '</div>' : '') + '</div>' + (plays.length > 15 ? '<button type="button" class="ghostbtn" id="pbpBtn" style="margin-top:8px;font-size:12px;padding:6px 11px">' + (window._pbpOpen ? 'Show fewer plays' : 'Show all ' + plays.length + ' plays') + '</button>' : '');
     else html += '<div style="font-size:14px;margin-top:14px"><b>Play by Play</b></div><p class="note" style="margin-top:6px">' + (lg.key === "tennis" ? "ESPN does not report point-by-point plays for tennis - live set and game scores are in the Match Tracker above." : "No plays reported yet - they will show here as the game goes.") + '</p>';
     html += '<div id="gameProps"></div></div>';
     $("gameDetail").innerHTML = '<button class="gcBack" type="button">← All games</button>' + html;
+    if (isRefresh && keepY) window.scrollTo(0, keepY);
     var pbpBtn = $("pbpBtn");
-    if (pbpBtn) pbpBtn.addEventListener("click", function(){ var all = $("pbpAll"); if (!all) return; var open = all.style.display !== "none"; all.style.display = open ? "none" : ""; window._pbpOpen = !open; pbpBtn.textContent = open ? "Show all plays" : "Show fewer plays"; });
+    if (pbpBtn) pbpBtn.addEventListener("click", function(){ var all = $("pbpAll"); if (!all) return; var open = all.style.display !== "none"; if (!open && !all.innerHTML) all.innerHTML = plays.slice(15).map(fmtPlay).join(""); all.style.display = open ? "none" : ""; window._pbpOpen = !open; pbpBtn.textContent = open ? "Show all plays" : "Show fewer plays"; });
     var gtEl = $("gameTracker"), gpEl = $("gameProps");
     if (gtEl && gpEl && gtEl.parentNode) gtEl.parentNode.insertBefore(gpEl, gtEl.nextSibling);
     renderGameProps(lg, s);
