@@ -452,10 +452,17 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .side{margin-top:10px}
 .sidetag{font-size:11px;font-weight:900;letter-spacing:2px;color:#9aa7bd}
 .side.me .sidetag{color:#f5b942}
-.frow{display:flex;gap:10px;align-items:flex-end}
-.fcard{width:98px;border:3px solid #888;border-radius:12px;background:#12101d;padding:6px;text-align:center;position:relative;flex:none}
-.fcard.active{width:132px}
-.fcard img{width:100%;height:56px;object-fit:cover;border-radius:8px;display:block}
+.frow{display:flex;gap:6px;align-items:flex-end;justify-content:center}
+.fcard{width:84px;border:3px solid #888;border-radius:12px;background:#12101d;padding:5px;text-align:center;position:relative;flex:none}
+.fcard.active{width:104px}
+.fcard.bench{width:64px;margin-left:-4px;transform:perspective(520px) rotate(-10deg) rotateX(3deg);transform-origin:50% 100%;opacity:.94}
+.fcard.bench img{height:34px}
+.fcard.bench .fcnm{font-size:10px}
+.fcard.bench .fcst{font-size:9px}
+.fcard.bench .fcpw{font-size:8.5px}
+.fcard.bench .fcatk{font-size:8.5px}
+.fcard.bench .pip{width:9px;height:9px}
+.fcard img{width:100%;height:46px;object-fit:cover;border-radius:8px;display:block}
 .fcard.active img{height:98px}
 .fcard.ko{filter:grayscale(1);opacity:.55}
 .fcnm{font-weight:900;font-size:11.5px;margin-top:5px;line-height:1.15}
@@ -511,7 +518,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .energychip{display:inline-flex;align-items:center;gap:5px;background:#1b1038;border:1.5px solid #7c3aed;border-radius:999px;padding:3px 10px 3px 4px;font-weight:900;font-size:11.5px;color:#e9e4ff}
 .energychip .eorb{width:20px;height:20px}
 .deckrow .itemhand{flex:1;min-width:0}
-@media (max-height:740px){ .fcard img{height:44px} .ttcell{width:32px;height:32px;font-size:14px} .deck3d{width:44px;height:60px} .pileback{width:34px;height:46px} .cbtn{padding:9px 4px;font-size:14px} .coin3d{width:92px;height:92px} .clashlog{font-size:11.5px} }
+@media (max-height:740px){ .fcard img{height:38px} .fcard.bench img{height:28px} .fcard.active{width:96px} .fcard.bench{width:58px} .ttcell{width:32px;height:32px;font-size:14px} .deck3d{width:44px;height:60px} .pileback{width:34px;height:46px} .cbtn{padding:9px 4px;font-size:14px} .coin3d{width:92px;height:92px} .clashlog{font-size:11.5px} }
 .zonelab{font-size:9px;font-weight:900;letter-spacing:1.5px;color:#9d94c7;text-align:center;margin-bottom:3px}
 .espot{flex:0 0 auto;text-align:center;width:66px}
 .espotcards{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;align-content:center;min-height:46px;background:rgba(124,58,237,.12);border:1.5px dashed rgba(168,85,247,.6);border-radius:10px;padding:4px 2px;box-shadow:inset 0 3px 10px rgba(0,0,0,.45)}
