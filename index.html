@@ -157,6 +157,16 @@ dialog h3{margin:0 0 6px;font-size:18px}
 .searchbar{margin:0 0 12px}
 .empty{color:var(--mut);font-size:14px;padding:8px 0}
 #sportProps>.empty,#sportProps>#sportNews{grid-column:1/-1}
+.trk{position:relative;border:1px solid var(--line);border-radius:14px;padding:10px;margin-top:12px;background:radial-gradient(120% 140% at 50% 0%,#1d1440 0%,#0d0a1a 70%)}
+.trk svg{display:block;width:100%;height:auto}
+.trkLbl{font-size:11px;font-weight:800;letter-spacing:1.4px;color:var(--mut);text-transform:uppercase}
+.wpbar{display:flex;height:12px;border-radius:999px;overflow:hidden;background:#262040;margin-top:6px}
+.wpbar>i{display:block;height:100%;transition:width .8s ease}
+.pdot{animation:pdotA 1.5s ease-out infinite}
+@keyframes pdotA{0%{opacity:.95}100%{opacity:.05}}
+.tball{position:absolute;width:13px;height:13px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fef08a,#f5c518 60%,#b45309);box-shadow:0 0 10px #f5c518aa;animation:rally 3.4s ease-in-out infinite alternate;z-index:3}
+@keyframes rally{0%{left:11%;top:28%}30%{top:64%}55%{left:85%;top:34%}80%{top:58%}100%{left:11%;top:28%}}
+.livedot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#f43f5e;box-shadow:0 0 8px #f43f5e;animation:pdotA 1.2s ease-in-out infinite alternate}
 details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .hero{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 16px 14px;margin:0 0 12px;cursor:pointer;box-shadow:0 0 0 1px rgba(124,58,237,.25),0 8px 30px rgba(124,58,237,.18);position:relative;overflow:hidden}
 .hero::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--cyan),var(--purp),var(--purp2))}
@@ -461,12 +471,12 @@ var manualTr = lsGet("pa_manual", {});            // ticketId -> {legId: current
 /* ---------- tiers ---------- */
 var TIERS = [
   {name:"Rookie",   emoji:"🌱", wins:0,  color:"#9aa7bd", rarity:"COMMON"},
-  {name:"Bronze",   emoji:"🥉", wins:3,  color:"#d08a4e", rarity:"RARE"},
-  {name:"Silver",   emoji:"🥈", wins:8,  color:"#e5e9f2", rarity:"SUPER RARE"},
-  {name:"Gold",     emoji:"🥇", wins:15, color:"#f5b942", rarity:"EPIC"},
-  {name:"Platinum", emoji:"💠", wins:25, color:"#4fe3c1", rarity:"LEGENDARY"},
-  {name:"Diamond",  emoji:"💎", wins:40, color:"#7dd3fc", rarity:"MYTHIC"},
-  {name:"Legend",   emoji:"👑", wins:60, color:"#b26bff", rarity:"ULTIMATE"}
+  {name:"Bronze",   emoji:"🥉", wins:5,  color:"#d08a4e", rarity:"RARE"},
+  {name:"Silver",   emoji:"🥈", wins:10,  color:"#e5e9f2", rarity:"SUPER RARE"},
+  {name:"Gold",     emoji:"🥇", wins:20, color:"#f5b942", rarity:"EPIC"},
+  {name:"Platinum", emoji:"💠", wins:30, color:"#4fe3c1", rarity:"LEGENDARY"},
+  {name:"Diamond",  emoji:"💎", wins:45, color:"#7dd3fc", rarity:"MYTHIC"},
+  {name:"Legend",   emoji:"👑", wins:65, color:"#b26bff", rarity:"ULTIMATE"}
 ];
 function tierFor(wins){ var t = TIERS[0]; for (var i=0;i<TIERS.length;i++) if (wins>=TIERS[i].wins) t = TIERS[i]; return t; }
 function nextTier(wins){ for (var i=0;i<TIERS.length;i++) if (wins<TIERS[i].wins) return TIERS[i]; return null; }
@@ -835,6 +845,7 @@ function findProp(id){
 
 /* ---------- home: top agents / upcoming / news ---------- */
 function myWins(){ return tickets.filter(function(t){ return t.result==="win"; }).length; }
+function maxWins(){ var m = 0; try { m = parseInt(lsGet("pa_maxwins", 0), 10) || 0; } catch(e){} var w = myWins(); if (w > m){ m = w; try { lsSet("pa_maxwins", m); } catch(e){} } return m; }
 function agentRows(){
   var rows = cloudAgents
     ? cloudAgents.filter(function(a){ return a.id !== cloudUid; }).map(function(a){ return {name:a.display_name||"Agent", wins:a.wins||0, me:false, avatar:a.avatar_url||""}; })
@@ -1058,7 +1069,7 @@ function gameCard(lg, ev){
     var sfmt = function(c){ return (c.linescores||[]).map(function(x){ return x.displayValue; }).join(" vs "); };
     extra = '<div class="note" style="margin-top:6px">Sets: '+esc(sfmt(cs[0]))+' vs '+esc(sfmt(cs[1]))+' · '+esc(detail)+' · Point score not reported by ESPN</div>';
   }
-  var sub = lg.key==="tennis" && live ? "Tap for the full match tracker — sets, games, point & serve →" : "Tap for team stats, player stats & plays →";
+  var sub = "Tap for the game center — props, live tracker, stats & play-by-play →";
   return '<div class="card game" data-game="'+lg.key+'|'+(ev._tour ? ev._tour.toLowerCase()+":" : "")+ev.id+'" style="cursor:pointer"><div class="row" style="justify-content:space-between"><span class="note" style="text-transform:uppercase;letter-spacing:1px">'+esc(leagueLine)+'</span><span class="note">'+esc(right)+'</span></div><div style="margin-top:6px">'+rows+'</div>'+extra+'<div class="note" style="margin-top:6px">'+sub+'</div></div>';
 }
 
@@ -1117,18 +1128,157 @@ function renderLive(){
 }
 function renderGameProps(lg, s){
   var box = $("gameProps"); if (!box) return;
+  var comp = (s.header && s.header.competitions || [])[0] || {};
+  var cs = comp.competitors || [];
+  var st = comp.status && comp.status.type || {};
+  if (st.state === "in"){
+    var lt = liveTeamsByLeague[lg.key] = liveTeamsByLeague[lg.key] || {};
+    cs.forEach(function(c){ var det = st.shortDetail || st.detail || "LIVE"; if (c.team){ if (c.team.displayName) lt[c.team.displayName.toLowerCase()] = {detail: det}; if (c.team.shortDisplayName) lt[c.team.shortDisplayName.toLowerCase()] = {detail: det}; } });
+  }
   buildProps(lg).then(function(ps){
-    if (!ps.length) return;
-    var names = {};
+    var head = '<div style="font-size:16px;margin-top:14px"><b>Player Props — This Game</b> <span class="note">best on top · tap a player for all their props</span></div>';
+    if (!ps.length){ box.innerHTML = head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'; return; }
+    var names = {}, teamNames = {}, teamLast = {};
     try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ (tp.athletes||[]).forEach(function(a){ if (a.athlete && a.athlete.displayName) names[lastNameOf(a.athlete.displayName)] = 1; }); }); } catch(e){}
-    try { var comp = (s.header && s.header.competitions || [])[0] || {}; (comp.competitors||[]).forEach(function(c){ if (c.team && c.team.displayName) names[lastNameOf(c.team.displayName)] = 1; }); } catch(e){}
-    var hits = ps.filter(function(p){ return names[lastNameOf(p.player)]; }).slice(0, 12);
-    if (!hits.length) return;
-    box.innerHTML = '<div style="font-size:16px;margin-top:14px"><b>Props in this game</b> <span class="note">— tap MORE / LESS to add to your slip</span></div>' + hits.map(propCard).join("");
-    bindPicks(box);
+    cs.forEach(function(c){ if (c.team){ if (c.team.displayName){ teamNames[c.team.displayName.toLowerCase()] = 1; teamLast[lastNameOf(c.team.displayName)] = 1; } if (c.team.shortDisplayName) teamNames[c.team.shortDisplayName.toLowerCase()] = 1; } });
+    var lastWords = Object.keys(teamLast);
+    var hits = ps.filter(function(p){
+      if (p.team && teamNames[p.team.toLowerCase()]) return true;
+      if (names[lastNameOf(p.player)]) return true;
+      if (p.team && lastWords.length === 2 && lastWords[0] !== lastWords[1] && teamLast[lastNameOf(p.team)]) return true;
+      return false;
+    });
+    if (!hits.length){ box.innerHTML = head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'; return; }
+    var gs = sortGroups(playerGroups(hits), "pct");
+    box.innerHTML = head + '<div class="pgrid" style="margin-top:8px">' + gs.map(tileHtml).join("") + '</div>';
+    bindTiles(box);
   }).catch(function(){});
 }
-function openGame(key, eventId){
+
+/* ---------- game center: animated court/field tracker (Google-style) ---------- */
+function wpHtml(s, cs){
+  var wp = s.winprobability || [];
+  if (!wp.length || !cs || cs.length < 2) return "";
+  var hm = cs.filter(function(c){ return c.homeAway === "home"; })[0], aw = cs.filter(function(c){ return c.homeAway === "away"; })[0];
+  if (!hm || !aw) return "";
+  var last = wp[wp.length - 1];
+  var hp = Math.round(((last && last.homeWinPercentage) || 0) * 100);
+  var ha = (hm.team && hm.team.abbreviation) || "HOME", aa = (aw.team && aw.team.abbreviation) || "AWAY";
+  var step = Math.max(1, Math.ceil(wp.length / 48)), pts = [];
+  for (var i = 0; i < wp.length; i += step){ var p = wp[i]; pts.push((i / Math.max(1, wp.length - 1) * 100).toFixed(1) + "," + (26 - (p.homeWinPercentage || 0) * 24).toFixed(1)); }
+  pts.push("100," + (26 - ((last && last.homeWinPercentage) || 0) * 24).toFixed(1));
+  return '<div style="margin-top:10px"><div class="row" style="justify-content:space-between"><span class="trkLbl">Win probability</span><span class="note">' + esc(aa) + ' ' + (100 - hp) + '% · ' + esc(ha) + ' ' + hp + '%</span></div>'
+    + '<div class="wpbar"><i style="width:' + (100 - hp) + '%;background:#38bdf8"></i><i style="width:' + hp + '%;background:var(--purp2)"></i></div>'
+    + '<svg viewBox="0 0 100 28" preserveAspectRatio="none" style="width:100%;height:30px;margin-top:4px"><line x1="0" y1="14" x2="100" y2="14" stroke="#ffffff22" stroke-width="0.7"/><polyline fill="none" stroke="#f5c518" stroke-width="1.6" points="' + pts.join(" ") + '"/></svg></div>';
+}
+function courtSvg(s){
+  var plays = (s.plays || []).filter(function(p){ return p.shootingPlay && p.coordinate && isFinite(p.coordinate.x) && isFinite(p.coordinate.y) && Math.abs(p.coordinate.x) < 100 && Math.abs(p.coordinate.y) < 100; }).slice(-50);
+  var dots = plays.map(function(p, i){
+    var cx = (p.coordinate.x * 6).toFixed(0), cy = (p.coordinate.y * 6).toFixed(0);
+    var made = (p.scoreValue || 0) > 0;
+    var c = '<circle cx="' + cx + '" cy="' + cy + '" r="4" fill="' + (made ? '#f5c518' : 'none') + '" stroke="' + (made ? '#f5c518' : '#94a3b8') + '" stroke-width="1.6" opacity="' + (made ? '0.95' : '0.75') + '"/>';
+    if (i === plays.length - 1) c += '<circle class="pdot" cx="' + cx + '" cy="' + cy + '" r="9" fill="none" stroke="#f5c518" stroke-width="2"/>';
+    return c;
+  }).join("");
+  return '<svg viewBox="0 0 300 282"><rect x="2" y="2" width="296" height="278" rx="6" fill="#141033" stroke="#7C3AED" stroke-width="2"/>'
+    + '<rect x="102" y="2" width="96" height="114" fill="#1d1440" stroke="#a78bfa" stroke-width="1.6"/>'
+    + '<circle cx="150" cy="116" r="36" fill="none" stroke="#a78bfa" stroke-width="1.6"/>'
+    + '<path d="M18,2 L18,84 A142.5,142.5 0 0 1 282,84 L282,2" fill="none" stroke="#a78bfa" stroke-width="1.6"/>'
+    + '<line x1="126" y1="24" x2="174" y2="24" stroke="#f5c518" stroke-width="2.4"/><circle cx="150" cy="31.5" r="5" fill="none" stroke="#f5c518" stroke-width="2.2"/>'
+    + '<circle cx="150" cy="280" r="36" fill="none" stroke="#a78bfa" stroke-width="1.6"/>'
+    + dots + '</svg>';
+}
+function fieldSvg(lg, s, comp, cs){
+  var sit = s.situation || comp.situation || {};
+  var hm = cs.filter(function(c){ return c.homeAway === "home"; })[0], aw = cs.filter(function(c){ return c.homeAway === "away"; })[0];
+  var ha = (hm && hm.team && hm.team.abbreviation) || "", aa = (aw && aw.team && aw.team.abbreviation) || "";
+  var lines = "";
+  for (var i = 1; i < 10; i++){ var x = 30 + i * 30; lines += '<line x1="' + x + '" y1="6" x2="' + x + '" y2="114" stroke="' + (i === 5 ? '#f5c51888' : '#ffffff2e') + '" stroke-width="' + (i === 5 ? 2 : 1.2) + '"/>'; }
+  var ball = "";
+  var ddt = sit.downDistanceText || "";
+  var m = /at ([A-Z]{2,4}) (\d{1,2})/.exec(ddt);
+  if (m){
+    var num = parseInt(m[2], 10), pos = null;
+    if (m[1] === ha) pos = 30 + (100 - num) * 3;
+    else if (m[1] === aa) pos = 30 + num * 3;
+    if (pos != null){
+      ball = '<line x1="' + pos + '" y1="4" x2="' + pos + '" y2="116" stroke="#ffffff" stroke-width="2"/>';
+      if (isFinite(sit.distance)){
+        var possHome = sit.possession && hm && String(sit.possession) === String(hm.team && hm.team.id);
+        var fd = possHome ? pos - sit.distance * 3 : pos + sit.distance * 3;
+        if (fd > 30 && fd < 330) ball += '<line x1="' + fd + '" y1="4" x2="' + fd + '" y2="116" stroke="#f5c518" stroke-width="2.4"/>';
+      }
+      ball += '<circle class="pdot" cx="' + pos + '" cy="60" r="11" fill="none" stroke="#f5c518" stroke-width="2"/><circle cx="' + pos + '" cy="60" r="5.5" fill="#f5c518"/>';
+    }
+  }
+  return '<svg viewBox="0 0 360 120"><rect x="2" y="2" width="356" height="116" rx="6" fill="#0f2a1a" stroke="#22c55e" stroke-width="2"/>'
+    + '<rect x="2" y="2" width="30" height="116" fill="#38bdf833"/><rect x="328" y="2" width="30" height="116" fill="#7C3AED33"/>'
+    + lines + ball
+    + '<text x="17" y="66" fill="#7dd3fc" font-size="11" font-weight="800" text-anchor="middle">' + esc(aa) + '</text>'
+    + '<text x="343" y="66" fill="#c4b5fd" font-size="11" font-weight="800" text-anchor="middle">' + esc(ha) + '</text></svg>'
+    + (ddt ? '<div style="margin-top:8px"><b>' + esc(ddt) + '</b>' + (sit.isRedZone ? ' <span class="badge" style="background:#b91c1c;color:#fff">RED ZONE</span>' : '') + '</div>' : '');
+}
+function diamondSvg(s, comp){
+  var sit = s.situation || comp.situation || {};
+  var base = function(occ, cx, cy){ return '<rect x="' + (cx - 9) + '" y="' + (cy - 9) + '" width="18" height="18" rx="2" transform="rotate(45 ' + cx + ' ' + cy + ')" fill="' + (occ ? '#f5c518' : '#1d1440') + '" stroke="#a78bfa" stroke-width="1.8"/>'; };
+  var outs = sit.outs || 0, od = "";
+  for (var i = 0; i < 3; i++) od += '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;background:' + (i < outs ? '#f43f5e' : '#ffffff26') + '"></span>';
+  var bat = sit.batter && sit.batter.athlete && (sit.batter.athlete.shortName || sit.batter.athlete.displayName);
+  var pit = sit.pitcher && sit.pitcher.athlete && (sit.pitcher.athlete.shortName || sit.pitcher.athlete.displayName);
+  return '<svg viewBox="0 0 200 175"><rect x="2" y="2" width="196" height="171" rx="10" fill="#0f2a1a" stroke="#22c55e" stroke-width="2"/>'
+    + '<path d="M100,152 L158,94 L100,36 L42,94 Z" fill="#14532d" stroke="#ffffff38" stroke-width="1.4"/>'
+    + '<circle cx="100" cy="106" r="9" fill="#a16207" stroke="#ffffff38"/>'
+    + base(sit.onSecond, 100, 36) + base(sit.onFirst, 158, 94) + base(sit.onThird, 42, 94)
+    + '<path d="M92,152 L108,152 L104,162 L96,162 Z" fill="#e5e9f2"/></svg>'
+    + '<div class="row" style="justify-content:space-between;margin-top:8px"><span>' + od + '<span class="note">' + outs + ' out' + (outs === 1 ? '' : 's') + '</span></span>'
+    + '<span class="note">Count ' + (sit.balls != null ? sit.balls : '–') + '–' + (sit.strikes != null ? sit.strikes : '–') + '</span></div>'
+    + ((bat || pit) ? '<div class="note" style="margin-top:4px">' + (pit ? 'P: ' + esc(pit) : '') + (bat && pit ? ' · ' : '') + (bat ? 'AB: ' + esc(bat) : '') + '</div>' : '');
+}
+function rinkSvg(s){
+  var plays = (s.plays || []).filter(function(p){ return p.coordinate && isFinite(p.coordinate.x) && isFinite(p.coordinate.y) && Math.abs(p.coordinate.x) <= 100 && Math.abs(p.coordinate.y) <= 45 && ((p.type && /shot|goal/i.test(p.type.text || "")) || p.scoringPlay); }).slice(-40);
+  var dots = plays.map(function(p, i){
+    var cx = ((p.coordinate.x + 100) * 1.5).toFixed(0), cy = ((p.coordinate.y + 42.5) / 85 * 128).toFixed(0);
+    var goal = (p.scoreValue || 0) > 0 || p.scoringPlay;
+    var c = '<circle cx="' + cx + '" cy="' + cy + '" r="3.6" fill="' + (goal ? '#f5c518' : 'none') + '" stroke="' + (goal ? '#f5c518' : '#94a3b8') + '" stroke-width="1.5" opacity="0.85"/>';
+    if (i === plays.length - 1) c += '<circle class="pdot" cx="' + cx + '" cy="' + cy + '" r="8" fill="none" stroke="#f5c518" stroke-width="2"/>';
+    return c;
+  }).join("");
+  var fc = [[62, 32], [62, 96], [238, 32], [238, 96]].map(function(pt){ return '<circle cx="' + pt[0] + '" cy="' + pt[1] + '" r="12" fill="none" stroke="#f43f5e55" stroke-width="1.4"/>'; }).join("");
+  return '<svg viewBox="0 0 300 128"><rect x="2" y="2" width="296" height="124" rx="26" fill="#0d1b2e" stroke="#7dd3fc" stroke-width="2"/>'
+    + '<line x1="150" y1="2" x2="150" y2="126" stroke="#f43f5e88" stroke-width="2.4"/><line x1="105" y1="2" x2="105" y2="126" stroke="#38bdf866" stroke-width="5"/><line x1="195" y1="2" x2="195" y2="126" stroke="#38bdf866" stroke-width="5"/>'
+    + '<circle cx="150" cy="64" r="17" fill="none" stroke="#38bdf8" stroke-width="1.6"/>' + fc + dots + '</svg>';
+}
+function tennisSvg(lg, s, comp, cs, live){
+  var sets = cs.map(function(c){ return (c.linescores || []).map(function(x){ return x.displayValue; }).join(" "); }).join("  ·  ");
+  return '<div style="position:relative"><svg viewBox="0 0 300 170"><rect x="4" y="4" width="292" height="162" rx="8" fill="#123524" stroke="#22c55e" stroke-width="2"/>'
+    + '<rect x="15" y="15" width="270" height="140" fill="none" stroke="#e5e9f2" stroke-width="1.8"/>'
+    + '<rect x="15" y="35" width="270" height="100" fill="none" stroke="#e5e9f2" stroke-width="1.4"/>'
+    + '<line x1="105" y1="35" x2="105" y2="135" stroke="#e5e9f2" stroke-width="1.4"/><line x1="195" y1="35" x2="195" y2="135" stroke="#e5e9f2" stroke-width="1.4"/>'
+    + '<line x1="105" y1="85" x2="195" y2="85" stroke="#e5e9f2" stroke-width="1.4"/>'
+    + '<line x1="150" y1="8" x2="150" y2="162" stroke="#f5c518" stroke-width="3" stroke-dasharray="5 3"/></svg>'
+    + (live ? '<span class="tball"></span>' : '') + '</div>'
+    + (sets ? '<div class="note" style="margin-top:6px">Sets: ' + esc(sets) + '</div>' : '');
+}
+function trackerHtml(lg, s, comp, cs){
+  try {
+    var st = comp.status && comp.status.type || {};
+    var live = st.state === "in";
+    var inner = "";
+    if (lg.key === "nba" || lg.key === "cbb" || lg.key === "wbb") inner = courtSvg(s);
+    else if (lg.key === "nfl" || lg.key === "cfb") inner = fieldSvg(lg, s, comp, cs);
+    else if (lg.key === "mlb") inner = diamondSvg(s, comp);
+    else if (lg.key === "nhl") inner = rinkSvg(s);
+    else if (lg.key === "tennis") inner = tennisSvg(lg, s, comp, cs, live);
+    if (!inner) return "";
+    var plays = s.plays || [];
+    var lastTxt = "";
+    if (plays.length && lg.key !== "tennis"){ var lp = plays[plays.length - 1]; lastTxt = '<div class="note" style="margin-top:8px">Last play: ' + esc(lp.text || lp.shortText || "") + ' <span style="white-space:nowrap">(' + esc(((lp.period && lp.period.displayValue) || "") + " " + ((lp.clock && lp.clock.displayValue) || "")) + ')</span></div>'; }
+    return '<div class="trk" id="gameTracker"><div class="row" style="justify-content:space-between;margin-bottom:8px"><span class="trkLbl">' + (live ? '<span class="livedot"></span> ' : '') + 'Live Tracker</span><span class="note">' + esc(st.shortDetail || st.detail || "") + '</span></div>' + inner + lastTxt + wpHtml(s, cs) + '</div>';
+  } catch(e){ return ""; }
+}
+
+function openGame(key, eventId, isRefresh){
+  window._openGame = {key: key, eventId: eventId};
   var lg = leagueByKey(key);
   var tourLg = lg.league, eid = String(eventId);
   var ci = eid.indexOf(":");
@@ -1156,6 +1306,7 @@ function openGame(key, eventId){
         return '<tr><td>' + esc((c.team && c.team.displayName) || "") + '</td>' + cells + '<td style="color:var(--purp-lt);font-weight:800">' + esc(c.score!=null ? c.score : "") + '</td></tr>';
       }).join("") + '</table>';
     }
+    html += trackerHtml(lg, s, comp, cs);
     if (isT){
       var setNo = Math.max(1, nper);
       var chips = '<span class="badge">Set ' + setNo + '</span>';
@@ -1183,13 +1334,15 @@ function openGame(key, eventId){
         var skeys = Object.keys(byName).filter(function(k){ return byName[k].b != null; }).slice(0,10);
         if (skeys.length) html += '<div style="font-size:16px;margin-top:14px"><b>Team Stats</b></div><table class="lb"><tr><th>' + esc((tstats[0].team && tstats[0].team.displayName) || "") + '</th><th>Stat</th><th>' + esc((tstats[1].team && tstats[1].team.displayName) || "") + '</th></tr>' + skeys.map(function(k){ return '<tr><td>' + esc(byName[k].a||"") + '</td><td class="note">' + esc(byName[k].label) + '</td><td>' + esc(byName[k].b||"") + '</td></tr>'; }).join("") + '</table>';
       }
-      var plays = (s.plays || []).slice(-8).reverse();
-      if (plays.length) html += '<div style="font-size:16px;margin-top:14px"><b>Latest Plays</b></div>' + plays.map(function(pl){ return '<div style="padding:6px 0;border-bottom:1px solid var(--line)"><span class="note">' + esc(((pl.period && pl.period.displayValue)||"") + " " + ((pl.clock && pl.clock.displayValue)||"")) + '</span> ' + esc(pl.text || pl.shortText || "") + '</div>'; }).join("");
+      var plays = (s.plays || []).slice(-15).reverse();
+      if (plays.length) html += '<div style="font-size:16px;margin-top:14px"><b>Play by Play</b></div>' + plays.map(function(pl){ var sc = (pl.awayScore != null && pl.homeScore != null) ? ' <span style="color:var(--cyan);font-weight:700;white-space:nowrap">' + esc(pl.awayScore) + '–' + esc(pl.homeScore) + '</span>' : ''; return '<div style="padding:6px 0;border-bottom:1px solid var(--line);' + (pl.scoringPlay ? 'border-left:3px solid var(--gold);padding-left:8px' : '') + '"><span class="note">' + esc(((pl.period && pl.period.displayValue)||"") + " " + ((pl.clock && pl.clock.displayValue)||"")) + '</span> ' + esc(pl.text || pl.shortText || "") + sc + '</div>'; }).join("");
     }
     html += '<div id="gameProps"></div></div>';
     $("gameDetail").innerHTML = html;
+    var gtEl = $("gameTracker"), gpEl = $("gameProps");
+    if (gtEl && gpEl && gtEl.parentNode) gtEl.parentNode.insertBefore(gpEl, gtEl.nextSibling);
     renderGameProps(lg, s);
-    $("gameDetail").scrollIntoView({behavior:"smooth"});
+    if (!isRefresh) $("gameDetail").scrollIntoView({behavior:"smooth"});
   }).catch(function(){ $("gameDetail").innerHTML = '<div class="card"><p class="err">Couldn\'t load that game\'s details from ESPN.</p></div>'; });
 }
 
@@ -1488,7 +1641,7 @@ function renderBoard(){
   var rows = agentRows();
   $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Wins</th></tr>'
     + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b></td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
-  var wins = myWins();
+  var wins = maxWins();
   $("tiers").innerHTML = TIERS.map(function(t){ return tierCardHTML(t, wins, false, charIdxOf()); }).join("");
   var cards = [];
   tickets.filter(function(t){ return t.result==="win"; }).forEach(function(t){ t.legs.forEach(function(l){ cards.push(l); }); });
@@ -1897,7 +2050,7 @@ renderBoard();
 cloudInit();
 showView("home");
 if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").catch(function(){}); }
-setInterval(function(){ boardCache = {}; refreshHome(); if ($("view-live").classList.contains("on")) renderLive(); }, 30000);
+setInterval(function(){ boardCache = {}; refreshHome(); if ($("view-live").classList.contains("on")){ renderLive(); if (window._openGame) openGame(window._openGame.key, window._openGame.eventId, true); } }, 30000);
 setInterval(function(){ propsCache = {}; if (currentSport!=="all") renderBoards(); }, 30*60*1000);
 </script>
 <button id="slipChip" type="button"></button>
