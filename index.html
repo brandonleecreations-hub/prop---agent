@@ -91,6 +91,7 @@ input[type=number]{width:110px}
 .gteam{font-weight:700;font-size:15px}
 .gscore{font-weight:800;font-size:17px;font-variant-numeric:tabular-nums}
 .tlogo{object-fit:contain;vertical-align:middle;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.gcBack{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:999px;padding:8px 15px;font-size:13.5px;font-weight:800;cursor:pointer;margin:0 0 10px}
 .gstat{color:var(--mut);font-size:12.5px;text-align:right}
 .news a{display:block;color:var(--txt);font-weight:600;font-size:14.5px;padding:7px 0;border-bottom:1px solid var(--line)}
 .news a:last-child{border-bottom:none}
@@ -1310,8 +1311,21 @@ function trackerHtml(lg, s, comp, cs){
   } catch(e){ return ""; }
 }
 
+function closeGame(silent){
+  window._openGame = null;
+  var gd = $("gameDetail"); if (gd) gd.innerHTML = "";
+  ["liveCenter","liveTabs","liveStatus"].forEach(function(id){ var el = $(id); if (el) el.style.display = ""; });
+  if (!silent){ renderLive(); if (window._liveScrollY != null) window.scrollTo(0, window._liveScrollY); }
+}
 function openGame(key, eventId, isRefresh){
   window._openGame = {key: key, eventId: eventId};
+  if (!isRefresh){
+    window._liveScrollY = window.scrollY || 0;
+    ["liveCenter","liveTabs","liveStatus"].forEach(function(id){ var el = $(id); if (el) el.style.display = "none"; });
+    var gd0 = $("gameDetail");
+    if (gd0) gd0.innerHTML = '<button class="gcBack" type="button">← All games</button><div class="card"><p class="empty">Loading Game Center…</p></div>';
+    window.scrollTo(0, 0);
+  }
   var lg = leagueByKey(key);
   var tourLg = lg.league, eid = String(eventId);
   var ci = eid.indexOf(":");
@@ -1374,12 +1388,12 @@ function openGame(key, eventId, isRefresh){
       if (plays.length) html += '<div style="font-size:16px;margin-top:14px"><b>Play by Play</b></div>' + plays.map(function(pl){ var sc = (pl.awayScore != null && pl.homeScore != null) ? ' <span style="color:var(--cyan);font-weight:700;white-space:nowrap">' + esc(pl.awayScore) + '–' + esc(pl.homeScore) + '</span>' : ''; return '<div style="padding:6px 0;border-bottom:1px solid var(--line);' + (pl.scoringPlay ? 'border-left:3px solid var(--gold);padding-left:8px' : '') + '"><span class="note">' + esc(((pl.period && pl.period.displayValue)||"") + " " + ((pl.clock && pl.clock.displayValue)||"")) + '</span> ' + esc(pl.text || pl.shortText || "") + sc + '</div>'; }).join("");
     }
     html += '<div id="gameProps"></div></div>';
-    $("gameDetail").innerHTML = html;
+    $("gameDetail").innerHTML = '<button class="gcBack" type="button">← All games</button>' + html;
     var gtEl = $("gameTracker"), gpEl = $("gameProps");
     if (gtEl && gpEl && gtEl.parentNode) gtEl.parentNode.insertBefore(gpEl, gtEl.nextSibling);
     renderGameProps(lg, s);
-    if (!isRefresh) $("gameDetail").scrollIntoView({behavior:"smooth"});
-  }).catch(function(){ $("gameDetail").innerHTML = '<div class="card"><p class="err">Couldn\'t load that game\'s details from ESPN.</p></div>'; });
+    /* Game Center opens instantly at the top — no scrolling. */
+  }).catch(function(){ $("gameDetail").innerHTML = '<button class="gcBack" type="button">← All games</button><div class="card"><p class="err">Couldn\'t load that game\'s details from ESPN.</p></div>'; });
 }
 
 /* ---------- search + custom legs ---------- */
@@ -2001,6 +2015,7 @@ function cloudInit(){
 
 /* ---------- navigation ---------- */
 function showView(name){
+  if (window._openGame) closeGame(true);
   document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("on"); });
   var el = $("view-"+name); if (el) el.classList.add("on");
   var navName = name==="sport" ? "home" : name;
@@ -2048,6 +2063,7 @@ function setSport(key){
 /* ---------- init + refresh ---------- */
 function refreshHome(){ renderTopAgents(); renderUpcoming(); renderNews(); renderTicker(); }
 $("refreshBtn").addEventListener("click", function(){ boardCache = {}; propsCache = {}; refreshHome(); if ($("view-live").classList.contains("on")) renderLive(); if (currentSport!=="all") renderBoards(); });
+$("gameDetail").addEventListener("click", function(e){ var b = e.target && e.target.closest ? e.target.closest(".gcBack") : null; if (b) closeGame(false); });
 var tkR = $("tkRefresh"); if (tkR) tkR.addEventListener("click", function(){ renderTickets(); });
 refreshAgentBtn();
 renderAllSlips();
