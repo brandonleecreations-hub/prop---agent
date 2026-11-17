@@ -161,7 +161,13 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 #myCards .tiercard.lgnd .tcwin::after{animation-duration:2.1s}
 #myCards .tcspark{animation:sparkdrift 4.5s ease-in-out infinite alternate}
 @keyframes sparkdrift{from{transform:translateY(0)}to{transform:translateY(-7px)}}
-.agentpick{position:relative}
+.agentpick{position:relative;transform:perspective(600px) rotateX(4deg);box-shadow:0 8px 16px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.18);transition:transform .15s ease}
+.agentpick.on{transform:perspective(600px) rotateX(0deg) scale(1.06)}
+.pickgrid{perspective:700px}
+.pickslot{position:relative;transform:perspective(700px) rotateX(3deg);box-shadow:0 10px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.15)}
+.slotread{top:6px;right:6px}
+#clashZoom .zoomcard{animation:zoomin .28s cubic-bezier(.2,.9,.3,1.35) both}
+@keyframes zoomin{from{opacity:0;transform:perspective(700px) rotateX(10deg) scale(.82)}to{opacity:1;transform:none}}
 .readbtn{position:absolute;top:4px;right:4px;background:rgba(10,6,20,.82);border:1px solid #7C3AED;border-radius:50%;width:22px;height:22px;font-size:11px;display:flex;align-items:center;justify-content:center;z-index:2}
 .pickpw3{font-size:10.5px;color:#c9c9d6;line-height:1.35;margin-top:2px}
 .ttwrap{text-align:center;margin:2px 0 4px}
@@ -3307,7 +3313,7 @@ function clashPickRender(){
     var f = CL.mine[s];
     slots += '<div class="pickslot' + (CL.sel === s ? ' on' : '') + '" data-pickslot="' + s + '">'
       + '<div class="pickrole">' + (s === 0 ? '⭐ STARTER' : '🔁 TAG PARTNER') + '</div>'
-      + (f ? '<img src="/api/battle?s=' + f.ci + '" alt=""><div class="picknm">' + fName(f) + '</div><div class="pickpw" style="color:' + TIERS[f.ti].color + '">' + TIERS[f.ti].name + ' ' + "★".repeat(f.ti + 1) + '</div><div class="pickpw2">⚡ ' + POWERS[f.ci - 1].name + '</div><div class="pickpw3">' + POWERS[f.ci - 1].desc + '</div>'
+      + (f ? '<img src="/api/battle?s=' + f.ci + '" alt=""><div class="picknm">' + fName(f) + '</div><div class="pickpw" style="color:' + TIERS[f.ti].color + '">' + TIERS[f.ti].name + ' ' + "★".repeat(f.ti + 1) + '</div><div class="pickpw2">⚡ ' + POWERS[f.ci - 1].name + '</div><div class="pickpw3">' + POWERS[f.ci - 1].desc + '</div><span class="readbtn slotread" data-readcard="' + f.ci + '">🔍</span>'
            : '<div class="pickempty">Tap an agent below</div>')
       + '</div>';
   }
