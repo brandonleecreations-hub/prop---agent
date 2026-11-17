@@ -136,6 +136,52 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .tcwin .cardart.ph{display:flex;height:100%}
 .tcinfo{margin-top:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);border-radius:9px;padding:7px 9px;text-align:left}
 .tcspark{position:absolute;inset:0;pointer-events:none;opacity:.55;background-image:radial-gradient(2px 2px at 18% 26%,#fff 50%,transparent 52%),radial-gradient(1.6px 1.6px at 68% 16%,#fff 50%,transparent 52%),radial-gradient(2px 2px at 86% 60%,#fff 50%,transparent 52%),radial-gradient(1.5px 1.5px at 38% 82%,#fff 50%,transparent 52%),radial-gradient(1.8px 1.8px at 55% 44%,#fff 50%,transparent 52%)}
+#myCards{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
+#myCards .tiercard{min-height:0;filter:drop-shadow(0 14px 14px rgba(0,0,0,.45))}
+#myCards .flipfront{padding:8px}
+#myCards .flipback img{width:74px;height:74px}
+#myCards .tcname{font-size:11px}
+#myCards .tcno{font-size:9px}
+#myCards .tcplate{padding:4px 7px;margin-bottom:6px}
+#myCards .tcinfo{padding:6px 7px;margin-top:6px}
+#myCards .tierto{font-size:10.5px;line-height:1.4}
+#myCards .rarpill{font-size:8.5px;padding:3px 6px}
+#myCards .tcwin{box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), inset 0 -18px 24px rgba(0,0,0,.35)}
+#myCards .tiercard{animation:cardin .55s cubic-bezier(.2,.8,.3,1.2) both}
+#myCards .tiercard:nth-child(3n){animation-delay:.06s}
+#myCards .tiercard:nth-child(4n){animation-delay:.12s}
+@keyframes cardin{from{opacity:0;transform:translateY(16px) scale(.94)}to{opacity:1;transform:none}}
+#myCards .tcwin .cardart{animation:artzoom 6s ease-in-out infinite alternate}
+@keyframes artzoom{from{transform:scale(1)}to{transform:scale(1.13)}}
+#myCards .tcwin::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.30) 48%,transparent 62%);background-size:250% 100%;background-position:120% 0;animation:winshine 3.8s ease-in-out infinite;pointer-events:none;z-index:2}
+@keyframes winshine{0%,100%{background-position:120% 0}50%{background-position:-20% 0}}
+#myCards .tiercard.unlocked .flipfront{animation:cardglow 3s ease-in-out infinite}
+@keyframes cardglow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.14)}}
+#myCards .tiercard.lgnd .flipfront{animation:cardglow 1.6s ease-in-out infinite}
+#myCards .tiercard.lgnd .tcwin::after{animation-duration:2.1s}
+#myCards .tcspark{animation:sparkdrift 4.5s ease-in-out infinite alternate}
+@keyframes sparkdrift{from{transform:translateY(0)}to{transform:translateY(-7px)}}
+.field3d{position:relative;border-radius:14px;padding:12px 9px 10px;margin-bottom:10px;overflow:hidden;background:repeating-linear-gradient(90deg,#1e6031 0 36px,#277a3d 36px 72px);box-shadow:inset 0 0 0 2px rgba(255,255,255,.14), inset 0 -30px 44px rgba(0,0,0,.42), inset 0 22px 34px rgba(0,0,0,.30);transform:perspective(760px) rotateX(3deg);transform-origin:50% 100%}
+.field3d::before{content:"";position:absolute;inset:0;background:radial-gradient(85% 62% at 50% 38%,rgba(255,255,255,.17),transparent 62%);pointer-events:none}
+.field3d::after{content:"";position:absolute;left:5%;right:5%;top:50%;height:2px;background:rgba(255,255,255,.38);border-radius:2px;pointer-events:none}
+.field3d .side{position:relative;z-index:1}
+.field3d .clashmid{position:relative;z-index:1}
+.field3d .sidetag{text-shadow:0 2px 6px rgba(0,0,0,.7)}
+.fcard{transform:perspective(520px) rotateX(3deg);box-shadow:0 14px 22px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.16)}
+.clashad{position:relative;display:flex;align-items:center;gap:10px;border-radius:14px;padding:10px 12px;margin-bottom:12px;overflow:hidden;background:linear-gradient(100deg,#1b0f38,#3d1472 48%,#12081f);border:2px solid #f5b942;box-shadow:0 0 20px rgba(245,185,66,.35)}
+.clashad::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.22) 48%,transparent 64%);background-size:250% 100%;background-position:120% 0;animation:winshine 4.2s ease-in-out infinite;pointer-events:none}
+.clashad .caface{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid #f5b942;flex:0 0 auto;animation:artzoom 5s ease-in-out infinite alternate}
+.clashad .caface.r{border-color:#a78bfa}
+.clashad .cainfo{flex:1 1 auto;min-width:0;position:relative;z-index:1}
+.clashad .catitle{font-weight:900;font-size:16.5px;letter-spacing:.6px;color:#fff;text-shadow:0 0 12px rgba(245,185,66,.65)}
+.clashad .casub{font-size:11.5px;color:#d9c8ff;margin-top:1px}
+.clashad .carec{font-size:11px;color:#9aa7bd;margin-top:2px}
+.clashad .cavs{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe259,#f5b942 60%,#b97e10);color:#231600;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px rgba(245,185,66,.8);animation:cavspulse 1.6s ease-in-out infinite;position:relative;z-index:1}
+@keyframes cavspulse{0%,100%{transform:scale(1)}50%{transform:scale(1.16)}}
+.clashad .clashbtn{flex:0 0 auto;position:relative;z-index:1;animation:btnpulse 1.8s ease-in-out infinite}
+@keyframes btnpulse{0%,100%{box-shadow:0 0 0 rgba(245,185,66,0)}50%{box-shadow:0 0 20px rgba(245,185,66,.85)}}
+.clashad .coinpill{position:absolute;top:7px;right:9px;z-index:1}
+@media (prefers-reduced-motion: reduce){#myCards .tiercard,#myCards .tcwin .cardart,#myCards .tcwin::after,#myCards .tiercard.unlocked .flipfront,#myCards .tcspark,.clashad::after,.clashad .caface,.clashad .cavs,.clashad .clashbtn{animation:none}}
 .charstrip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px}
 .charstrip img{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid var(--line);cursor:pointer;flex:0 0 auto}
 .charstrip img.on{border-color:#a78bfa;box-shadow:0 0 12px rgba(124,58,237,.8)}
@@ -2369,7 +2415,7 @@ async function downloadTradingCard(ti, ci, btn){
   ctx.fillText(cname, 62, 86);
   ctx.textAlign = "right"; ctx.fillStyle = accent; ctx.font = "800 24px system-ui, sans-serif";
   ctx.fillText("№ " + num + " / 084", W - 62, 86);
-  var ph = await loadImgC("/api/avatars?s=" + ci, false);
+  var ph = await loadImgC("/api/battle?s=" + ci, false);
   ctx.save(); rrC(ctx, 42, 126, W - 84, 448, 14); ctx.clip();
   if (ph){ try { if (!un) ctx.filter = "grayscale(85%) brightness(.55)"; } catch(e){}
     var sc = Math.max((W - 84) / ph.width, 448 / ph.height); var dw = ph.width * sc, dh = ph.height * sc;
@@ -2462,7 +2508,7 @@ async function downloadCard(kind, idx, btn){
   } catch(e){ if (btn) btn.textContent="Could not save - screenshot it"; }
 }
 /* ---------- collectible cards: your character, rarity per tier ---------- */
-function charArt(){ var c = (profile && profile.char) || ""; return /^(\/api\/avatars\?s=|https?:)/.test(c) ? c : ""; }
+function charArt(){ var c = (profile && profile.char) || ""; return /^(\/api\/(avatars|battle)\?s=|https?:)/.test(c) ? c : ""; }
 var CHARNAMES = ["THE CLOSER","THE BOSS","THE OPERATOR","ALL-AMERICAN","THE DEALMAKER","THE EXECUTIVE","THE SLUGGER","THE PLAYMAKER","THE CAPTAIN","THE FRANCHISE","THE ACE","THE ISLANDER"];
 var POWERS = [
   {name:"CLUTCH TIME", style:"ATTACK", desc:"+1 star when any card is one hit from elimination."},
@@ -2487,7 +2533,7 @@ function tierCardHTML(t, wins, withBtns, ci){
   var un = wins >= t.wins;
   var ti = TIERS.indexOf(t);
   ci = ci || charIdxOf();
-  var art = ci >= 1 ? "/api/avatars?s=" + ci : charArt();
+  var art = ci >= 1 ? "/api/battle?s=" + ci : charArt();
   var cname = ci >= 1 ? CHARNAMES[ci - 1] : "YOUR AGENT";
   var num = ci >= 1 ? ((ci - 1) * 7 + ti + 1) : 0;
   var numTxt = num ? ("№ " + ("00" + num).slice(-3) + " / 084") : "№ —";
@@ -2504,7 +2550,7 @@ function tierCardHTML(t, wins, withBtns, ci){
     + '</div>'
     + (ti >= 5 ? '<div class="tcspark"></div>' : '')
     + '<div class="holo" style="--hc:' + t.color + '59"></div></div>';
-  return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · ' + t.name + ' · ' + t.rarity, 'Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits.') + '</div></div>';
+  return '<div class="tiercard' + (ti === 6 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · ' + t.name + ' · ' + t.rarity, 'Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits.') + '</div></div>';
 }
 
 function battleCardHTML(t, wins, ci){
@@ -2529,7 +2575,7 @@ function battleCardHTML(t, wins, ci){
     + '</div>'
     + (ti >= 5 ? '<div class="tcspark"></div>' : '')
     + '<div class="holo" style="--hc:' + t.color + '59"></div></div>';
-  return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' \u00B7 ' + t.name + ' Battle Card', pw.name + ' \u2014 ' + pw.desc + '<br><br>Agent Clash: clash = stars + dice + power. Two hits and a card is out. Powers live on battle cards only.') + '</div></div>';
+  return '<div class="tiercard' + (ti === 6 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' \u00B7 ' + t.name + ' Battle Card', pw.name + ' \u2014 ' + pw.desc + '<br><br>Agent Clash: clash = stars + dice + power. Two hits and a card is out. Powers live on battle cards only.') + '</div></div>';
 }
 
 function renderBoard(){
@@ -2543,7 +2589,7 @@ function renderBoard(){
   var cards = allPlayerCardLegs();
   var cci = cardCharIdx();
   var stripEl = $("cardStrip");
-  if (stripEl) stripEl.innerHTML = CHARNAMES.map(function(n, k){ var n1 = k + 1; return '<img src="/api/avatars?s=' + n1 + '" data-ci="' + n1 + '" class="' + (n1 === cci ? 'on' : '') + '" title="' + n + '" alt="' + n + '">'; }).join("");
+  if (stripEl) stripEl.innerHTML = CHARNAMES.map(function(n, k){ var n1 = k + 1; return '<img src="/api/battle?s=' + n1 + '" data-ci="' + n1 + '" class="' + (n1 === cci ? 'on' : '') + '" title="' + n + '" alt="' + n + '">'; }).join("");
   var tierCards = TIERS.map(function(t){ return tierCardHTML(t, wins, true, cci); }).join("");
   var battleHtml = '<div style="grid-column:1/-1" class="note">\u2694\uFE0F BATTLE CARDS \u2014 Agent Clash \u00B7 every tier, tier-color borders \u00B7 powers fight in battles</div>' + TIERS.map(function(t){ return battleCardHTML(t, wins, cci); }).join("");
   var playerCards = cards.map(function(l, li){
@@ -2660,7 +2706,7 @@ function renderPacks(){
     + (claimed ? '<button class="openbtn" disabled>✓ Free pack claimed — back tomorrow</button>' : '<button class="openbtn gold" data-claimpack="1">🎁 CLAIM FREE PACK</button>')
     + '<button class="openbtn" data-openpack="n"' + ((p.n || 0) > 0 ? '' : ' disabled') + '>Open Pack · ' + (p.n || 0) + '</button>'
     + (shared ? '<button class="openbtn" disabled>✓ Shared today</button>' : '<button class="openbtn" data-sharepack="1">🔗 Share &amp; Earn a Pack</button>')
-    + '<button class="openbtn" data-demopack="1" style="background:#17171f;border:1px solid #7C3AED">▶ Demo Pull</button>'
+    
     + '<button class="openbtn" data-buypack="1"' + (coinsGet() >= CLASH_PACK_COST ? '' : ' disabled') + '>🪙 Buy a Pack · ' + CLASH_PACK_COST + ' Coins</button>'
     + '</div>'
     + '<div class="note" style="margin-top:9px">Win a ticket → +1 pack (4+ picks → 2 packs). Foils collected: <b style="color:#f5c518">' + foils.length + '</b> · Gold stamps: <b style="color:#f5c518">' + stampsGet().length + ' of 12</b> · ' + (lsGet("pa_ring", 0) ? '🏆 THE RING: <b style="color:#f5c518">PULLED!</b>' : 'THE RING: still hiding…') + '</div>'
@@ -2677,10 +2723,10 @@ function stampCardHTML(ci){
   var un = stampsGet().indexOf(ci) >= 0, cname = CHARNAMES[ci - 1];
   var front = '<div class="flipfront" style="border:3px solid #f5c518;--tc:#f5c518;box-shadow:0 12px 26px rgba(0,0,0,.38),0 0 22px #f5c51859, inset 0 1px 0 rgba(255,255,255,.05)">'
     + '<div class="tcplate"><span class="tcname">' + cname + '</span><span class="tcno">🌟 STAMP</span></div>'
-    + '<div class="tcwin"><img class="cardart" src="/api/avatars?s=' + ci + '" alt="">' + (un ? '<span class="stampbadge">FOIL</span>' : '<div class="lockveil">LOCKED</div>') + '</div>'
+    + '<div class="tcwin"><img class="cardart" src="/api/battle?s=' + ci + '" alt="">' + (un ? '<span class="stampbadge">FOIL</span>' : '<div class="lockveil">LOCKED</div>') + '</div>'
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">GOLD FOIL STAMP</span><span class="rarpill" style="background:#f5c518;color:#1a1405">STAMP EDITION</span></div>'
     + '<div class="tierto" style="margin-top:6px">' + (un ? 'You pulled the gold foil stamp edition of ' + cname + '.' : 'The gold foil stamp edition of ' + cname + ' — hiding in about 1 pack in 10.') + '</div>'
-    + (un ? '<div style="display:flex;gap:6px;margin-top:8px"><button class="mini setprofs" data-avatar="/api/avatars?s=' + ci + '" data-featured="' + cname + ' · Gold Foil Stamp">Set as profile card</button><button class="mini dlstamp" data-ci="' + ci + '">Download PNG</button></div>' : '')
+    + (un ? '<div style="display:flex;gap:6px;margin-top:8px"><button class="mini setprofs" data-avatar="/api/battle?s=' + ci + '" data-featured="' + cname + ' · Gold Foil Stamp">Set as profile card</button><button class="mini dlstamp" data-ci="' + ci + '">Download PNG</button></div>' : '')
     + '</div><div class="foilshine"></div></div>';
   return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"' + (un ? '' : ' data-noflip="1"') + '><div class="tierinner">' + front + stampBackHTML(ci) + '</div></div>';
 }
@@ -2707,7 +2753,7 @@ function downloadStampCard(ci, btn){
     var a = document.createElement("a"); a.download = "gold-stamp-" + ci + ".png"; a.href = cv.toDataURL("image/png"); a.click();
     if (btn) { var o = btn.textContent; btn.textContent = "Saved ✓"; setTimeout(function(){ btn.textContent = o; }, 1600); }
   };
-  img.src = "/api/avatars?s=" + ci;
+  img.src = "/api/battle?s=" + ci;
 }
 function ringCardHTML(){
   var un = !!lsGet("pa_ring", 0);
@@ -2726,7 +2772,7 @@ function foilCardHTML(t, ci){
   var stars = ""; for (var s = 0; s < ti + 1; s++) stars += "★";
   var front = '<div class="flipfront" style="border:2px solid ' + t.color + ';--tc:' + t.color + ';box-shadow:0 12px 26px rgba(0,0,0,.38),0 0 16px ' + t.color + '47, inset 0 1px 0 rgba(255,255,255,.05)">'
     + '<div class="tcplate"><span class="tcname">' + cname + '</span><span class="tcno">✨ FOIL</span></div>'
-    + '<div class="tcwin"><img class="cardart" src="/api/avatars?s=' + ci + '" alt=""></div>'
+    + '<div class="tcwin"><img class="cardart" src="/api/battle?s=' + ci + '" alt=""></div>'
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:#f5c518;color:#1a1405">FOIL</span></div>'
     + '<div class="tierto" style="margin-top:6px">Gold foil edition — pulled from a pack</div>'
     + '</div><div class="foilshine"></div></div>';
@@ -2865,7 +2911,7 @@ function stampCelebration(ci){
   var old = document.getElementById("stampCel"); if (old) old.remove();
   var el = document.createElement("div");
   el.id = "stampCel";
-  el.innerHTML = '<div class="celrays"></div><div class="celcard" style="position:relative"><img src="/api/avatars?s=' + ci + '" alt=""><span class="stampbadge" style="font-size:14px;padding:6px 11px">FOIL</span></div><div class="celtitle">🌟 GOLD FOIL STAMP!</div><div class="celsub">' + CHARNAMES[ci - 1].toUpperCase() + ' · Stamp Edition · One of 12</div><div class="celtap">Tap anywhere to collect</div>';
+  el.innerHTML = '<div class="celrays"></div><div class="celcard" style="position:relative"><img src="/api/battle?s=' + ci + '" alt=""><span class="stampbadge" style="font-size:14px;padding:6px 11px">FOIL</span></div><div class="celtitle">🌟 GOLD FOIL STAMP!</div><div class="celsub">' + CHARNAMES[ci - 1].toUpperCase() + ' · Stamp Edition · One of 12</div><div class="celtap">Tap anywhere to collect</div>';
   document.body.appendChild(el);
   requestAnimationFrame(function(){ el.classList.add("open"); });
   el.addEventListener("click", function(){ el.classList.remove("open"); setTimeout(function(){ el.remove(); }, 250); });
@@ -2904,7 +2950,7 @@ function viewPulledCard(i){
   if (pu.stamp) {
     front.style.borderColor = "#f5c518";
     var sname = CHARNAMES[pu.ci - 1];
-    front.innerHTML = '<img src="/api/avatars?s=' + pu.ci + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><span class="stampbadge" style="font-size:14px;padding:6px 11px">FOIL</span><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + sname + '</b><span class="rarpill" style="background:#f5c518;color:#1a1405">🌟 GOLD STAMP</span></div>';
+    front.innerHTML = '<img src="/api/battle?s=' + pu.ci + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><span class="stampbadge" style="font-size:14px;padding:6px 11px">FOIL</span><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + sname + '</b><span class="rarpill" style="background:#f5c518;color:#1a1405">🌟 GOLD STAMP</span></div>';
     back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">PROP AGENT</b><div style="color:#f5c518;letter-spacing:1.5px;font-weight:800;font-size:12px">' + sname.toUpperCase() + ' · GOLD FOIL STAMP</div><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">Gold foil stamp edition<br>One stamp card for every agent</div>';
   } else if (pu.ring) {
     front.style.borderColor = "#f5c518";
@@ -2913,11 +2959,30 @@ function viewPulledCard(i){
   } else {
     var t = TIERS[pu.ti], cname = CHARNAMES[pu.ci - 1];
     front.style.borderColor = t.color;
-    front.innerHTML = '<img src="/api/avatars?s=' + pu.ci + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + cname + '</b><span class="rarpill" style="background:#f5c518;color:#1a1405">✨ ' + t.name.toUpperCase() + ' FOIL</span></div>';
+    front.innerHTML = '<img src="/api/battle?s=' + pu.ci + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + cname + '</b><span class="rarpill" style="background:#f5c518;color:#1a1405">✨ ' + t.name.toUpperCase() + ' FOIL</span></div>';
     back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">PROP AGENT</b><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">' + cname + ' · FOIL<br>' + t.name + ' tier gold foil edition<br>Pulled from a Prop Agent pack.</div>';
   }
   document.getElementById("pullView").classList.add("open");
 }
+/* ---------- SOUND FX (synthesized, no audio files) ---------- */
+var AC = null;
+function sfx(kind){ try {
+  if (!window.AudioContext && !window.webkitAudioContext) return;
+  AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+  if (AC.state === "suspended") AC.resume();
+  var t = AC.currentTime, g = AC.createGain(); g.connect(AC.destination); g.gain.value = 0.15;
+  function tone(f0, f1, dur, type, vol, when){ var o = AC.createOscillator(), gn = AC.createGain(); o.type = type || "sine"; var s = t + (when || 0); o.frequency.setValueAtTime(f0, s); if (f1 && f1 !== f0) o.frequency.exponentialRampToValueAtTime(Math.max(f1, 1), s + dur); gn.gain.setValueAtTime(vol || 0.5, s); gn.gain.exponentialRampToValueAtTime(0.001, s + dur); o.connect(gn); gn.connect(g); o.start(s); o.stop(s + dur + 0.03); }
+  if (kind === "click") tone(660, 660, 0.06, "triangle", 0.4);
+  else if (kind === "charge") { tone(170, 740, 0.62, "sawtooth", 0.22); tone(85, 370, 0.62, "square", 0.10); }
+  else if (kind === "hit") { tone(160, 55, 0.18, "square", 0.6); tone(95, 45, 0.22, "sine", 0.7); }
+  else if (kind === "block") { tone(1250, 900, 0.10, "triangle", 0.4); tone(700, 700, 0.09, "square", 0.18, 0.05); }
+  else if (kind === "ko") { tone(620, 75, 0.5, "sawtooth", 0.38); tone(310, 40, 0.55, "square", 0.2, 0.03); }
+  else if (kind === "tag") tone(500, 920, 0.13, "triangle", 0.35);
+  else if (kind === "win") { [523, 659, 784, 1047].forEach(function(f, i){ tone(f, f, 0.17, "triangle", 0.45, i * 0.09); }); }
+  else if (kind === "lose") { [392, 330, 262].forEach(function(f, i){ tone(f, f, 0.2, "triangle", 0.38, i * 0.11); }); }
+  else if (kind === "coin") { tone(1320, 1320, 0.07, "square", 0.28); tone(1760, 1760, 0.15, "square", 0.28, 0.07); }
+} catch(e){} }
+
 /* ---------- AGENT CLASH — card battle game (Brandon, 2026-11-17) ---------- */
 var CLASH_PACK_COST = 50;
 var CLASH_DAILY_CAP = 100;
@@ -2936,16 +3001,15 @@ function clashGrant(n){
 function renderClash(){
   var box = $("clashBox"); if (!box) return;
   var b = battlesGet(), lad = ladderGet();
-  box.innerHTML = '<div class="clashpromo">'
-    + '<div style="display:flex;gap:12px;align-items:center"><div class="clashbadge">⚔️</div>'
-    + '<div><div style="font-weight:900;font-size:17px">AGENT CLASH <span style="color:#f5c518">— CARD BATTLES</span></div>'
-    + '<div class="note" style="margin-top:3px">Your battle cards, your stars. Dice, powers, tags and defense — beat the CPU pair, climb the ladder, earn <b style="color:#f5c518">🪙 Clash Coins</b> and spend them on packs.</div></div></div>'
-    + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center">'
-    + '<button class="openbtn gold" data-clashnow="1" style="font-size:16px;padding:12px 22px">⚔️ CLASH NOW</button>'
-    + '<span class="coinpill">🪙 ' + coinsGet() + '</span>'
-    + '<span class="note">Battle Record: <b style="color:#fff">' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b> · Ladder: <b style="color:#fff">' + (lad >= 7 ? '🏆 CHAMPION' : 'Boss ' + (lad + 1) + ' of 7') + '</b></span>'
-    + '</div></div>';
+  box.innerHTML = '<div class="clashad">'
+    + '<img class="caface l" src="/api/battle?s=10" alt="">'
+    + '<div class="cainfo"><div class="catitle">\u2694\uFE0F AGENT CLASH</div><div class="casub">Card battles \u00B7 win \uD83E\uDE99 Clash Coins \u00B7 buy packs</div><div class="carec">Battle Record: ' + b.w + 'W \u2013 ' + b.l + 'L \u00B7 ' + (lad >= 7 ? '\uD83C\uDFC6 LADDER CHAMPION' : 'Ladder: Boss ' + (lad + 1) + ' of 7') + '</div></div>'
+    + '<span class="cavs">VS</span>'
+    + '<img class="caface r" src="/api/battle?s=1" alt="">'
+    + '<button class="clashbtn" data-clashnow="1">\u2694\uFE0F CLASH NOW</button>'
+    + '<span class="coinpill">\uD83E\uDE99 ' + coinsGet() + '</span></div>';
 }
+
 function mkFighter(ci, ti){ return { ci: ci, ti: ti, hits: 0, used: {} }; }
 function fStar(f){ return f.ti + 1; }
 function fName(f){ return CHARNAMES[f.ci - 1]; }
@@ -3072,9 +3136,9 @@ function clashArena(){
   var meExtra = CL.lastHit === "me" ? " hitshake" : (CL.lastWin === "me" ? " lunge" : "");
   var cpExtra = CL.lastHit === "cpu" ? " hitshake" : (CL.lastWin === "cpu" ? " lunge" : "");
   clashPanel('<div class="clashround">' + (CL.mode === "ladder" ? '🏆 BOSS ' + CL.boss + ' · ' : '') + 'ROUND ' + CL.round + '</div>'
-    + '<div class="side cpu"><div class="sidetag">CPU</div><div class="frow">' + fighterHTML(cp, true, cpExtra) + fighterHTML(cpp, false, "") + '</div></div>'
+    + '<div class="field3d"><div class="side cpu"><div class="sidetag">CPU</div><div class="frow">' + fighterHTML(cp, true, cpExtra) + fighterHTML(cpp, false, "") + '</div></div>'
     + '<div class="clashmid"><span class="vsbadge">VS</span><div class="dice"><span class="die me" id="dieMe">🎲</span><span class="die cpu" id="dieCpu">🎲</span></div><div class="clashnums" id="clashNums"></div>' + intel + logHtml + '</div>'
-    + '<div class="side me"><div class="sidetag">YOU</div><div class="frow">' + fighterHTML(me, true, meExtra) + fighterHTML(mp, false, "") + '</div></div>'
+    + '<div class="side me"><div class="sidetag">YOU</div><div class="frow">' + fighterHTML(me, true, meExtra) + fighterHTML(mp, false, "") + '</div></div></div>'
     + '<div class="clashbtns">'
     + '<button class="cbtn atk" data-clashact="atk"' + (CL.busy || CL.over ? ' disabled' : '') + '>🎲 ATTACK</button>'
     + '<button class="cbtn def" data-clashact="def"' + (CL.busy || CL.over ? ' disabled' : '') + '>🛡️ DEFEND</button>'
@@ -3092,10 +3156,10 @@ function cpuPlan(){
 }
 function clashSleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
 function applyHit(side, hits, target, targetStance, foe){
-  if (targetStance === "def") { CL.log.push("🛡️ BLOCKED! " + fName(target) + " defended — no hit."); return false; }
-  if (target.ci === 11 && CL.round === 1 && targetStance === "atk" && foe.ci !== 2) { CL.log.push("🎾 ACE SERVE! " + fName(target) + " is untouchable in round 1 — no hit!"); return false; }
-  if (target.ci === 12 && !target.used.island && targetStance === "atk" && foe.ci !== 2) { target.used.island = 1; CL.log.push("🌴 ISLAND CALM! " + fName(target) + " blocks the hit."); return false; }
-  target.hits = Math.min(2, target.hits + hits);
+  if (targetStance === "def") { sfx("block"); CL.log.push("🛡️ BLOCKED! " + fName(target) + " defended — no hit."); return false; }
+  if (target.ci === 11 && CL.round === 1 && targetStance === "atk" && foe.ci !== 2) { CL.log.push("🎾 ACE SERVE! " + fName(target) + " is untouchable in round 1 — no hit!"); sfx("block"); return false; }
+  if (target.ci === 12 && !target.used.island && targetStance === "atk" && foe.ci !== 2) { target.used.island = 1; CL.log.push("🌴 ISLAND CALM! " + fName(target) + " blocks the hit."); sfx("block"); return false; }
+  target.hits = Math.min(2, target.hits + hits); sfx(target.hits >= 2 ? "ko" : "hit");
   CL.log.push((side === "me" ? "💥 Your " : "💥 CPU's ") + fName(target) + " takes " + (hits > 1 ? "2 HITS!" : "a hit!") + (target.hits >= 2 ? " ELIMINATED!" : ""));
   return true;
 }
@@ -3104,11 +3168,11 @@ async function clashRound(stance){
   var B = CL;
   if (stance === "tag") {
     if (CL.tagged || !fAlive(CL.mine[1 - CL.myActive])) return;
-    CL.myActive = 1 - CL.myActive; CL.tagged = true; CL.intelDie = null; CL.lastHit = null; CL.lastWin = null;
+    CL.myActive = 1 - CL.myActive; CL.tagged = true; sfx("tag"); CL.intelDie = null; CL.lastHit = null; CL.lastWin = null;
     CL.log.push("🔁 You tag in " + fName(CL.mine[CL.myActive]) + "!");
     clashArena(); return;
   }
-  CL.busy = true; CL.lastHit = null; CL.lastWin = null;
+  CL.busy = true; CL.lastHit = null; CL.lastWin = null; sfx("charge");
   cpuPlan();
   clashArena();
   var me = CL.mine[CL.myActive], cp = CL.cpu[CL.cpuActive];
@@ -3176,14 +3240,14 @@ function clashCheckEnd(){
   return false;
 }
 function clashFinish(won){
-  CL.over = true;
+  CL.over = true; sfx(won ? "win" : "lose");
   var b = battlesGet();
   if (won) b.w = (b.w || 0) + 1; else b.l = (b.l || 0) + 1;
   lsSet("pa_battles", b);
   var earned = 0, capped = false;
   if (won) {
     var pay = CL.mode === "ladder" ? 10 + CL.boss * 5 : 10;
-    earned = clashGrant(pay); capped = earned < pay;
+    earned = clashGrant(pay); capped = earned < pay; if (earned > 0) setTimeout(function(){ sfx("coin"); }, 550);
     if (CL.mode === "ladder" && CL.boss === ladderGet() + 1 && CL.boss <= 7) lsSet("pa_ladder", CL.boss);
     cloudSave();
   }
@@ -3198,13 +3262,13 @@ function clashFinish(won){
 }
 function clashBuyPack(){
   if (coinsGet() < CLASH_PACK_COST) return;
-  coinsSet(coinsGet() - CLASH_PACK_COST);
+  coinsSet(coinsGet() - CLASH_PACK_COST); sfx("coin");
   var p = packsGet(); p.n = (p.n || 0) + 1; packsSet(p);
   cloudSave(); renderPacks(); renderClash();
 }
 document.addEventListener("click", function(e){
   var t;
-  if ((t = e.target.closest("[data-clashnow]"))) { openClash(); return; }
+  if ((t = e.target.closest("[data-clashnow]"))) { sfx("click"); openClash(); return; }
   if ((t = e.target.closest("[data-clashclose]"))) { closeClash(); return; }
   if ((t = e.target.closest("[data-clashmenu]"))) { clashMenu(); return; }
   if ((t = e.target.closest("[data-clashmode]"))) { clashSetup(t.getAttribute("data-clashmode")); return; }
@@ -3250,9 +3314,9 @@ function ensurePackPop(){
       cards.style.display = "flex";
       cards.innerHTML = pulls.map(function(pu, i){
         if (pu.ring) return '<div class="revealcard ringcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's,1.05s;width:118px;cursor:pointer"><img src="/api/avatars?s=14" alt="" style="height:118px"><div class="rvinfo"><b style="color:#f5c518">🏆 THE RING</b><br>SIGNED · ONE OF A KIND</div></div>';
-        if (pu.stamp) return '<div class="revealcard stampcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer;width:112px"><div style="position:relative"><img src="/api/avatars?s=' + pu.ci + '" alt="" style="height:112px;width:100%;object-fit:cover;display:block"><span class="stampbadge">FOIL</span></div><div class="rvinfo"><b style="color:#f5c518">🌟 ' + CHARNAMES[pu.ci - 1] + '</b><br>GOLD FOIL STAMP' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
+        if (pu.stamp) return '<div class="revealcard stampcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer;width:112px"><div style="position:relative"><img src="/api/battle?s=' + pu.ci + '" alt="" style="height:112px;width:100%;object-fit:cover;display:block"><span class="stampbadge">FOIL</span></div><div class="rvinfo"><b style="color:#f5c518">🌟 ' + CHARNAMES[pu.ci - 1] + '</b><br>GOLD FOIL STAMP' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
         var t = TIERS[pu.ti];
-        return '<div class="revealcard' + (i === 2 || pu.ti >= 3 ? ' bestcard' : '') + '" data-view="' + i + '" style="border-color:' + t.color + ';--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer"><img src="/api/avatars?s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">✨ ' + t.name + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
+        return '<div class="revealcard' + (i === 2 || pu.ti >= 3 ? ' bestcard' : '') + '" data-view="' + i + '" style="border-color:' + t.color + ';--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer"><img src="/api/battle?s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">✨ ' + t.name + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
       }).join("");
       var newN = pulls.filter(function(pu){ return !pu.ring && !pu.stamp && !pu.dup; }).length;
       var dupN = pulls.filter(function(pu){ return pu.dup; }).length;
@@ -3572,7 +3636,7 @@ function renderAvatarGrid(){
   var cur = (profile && profile.char) || "";
   g.innerHTML = "";
   for (var i = 1; i <= 12; i++) { (function(n){
-    var u = "/api/avatars?s=" + n;
+    var u = "/api/battle?s=" + n;
     var im = document.createElement("img");
     im.src = u; im.alt = "Character " + n; im.loading = "lazy";
     im.style.cssText = "width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;cursor:pointer;border:3px solid " + (cur === u ? "#7C3AED" : "rgba(255,255,255,.08)");
