@@ -1435,6 +1435,7 @@ function closeGame(silent){
 function openGame(key, eventId, isRefresh){
   window._openGame = {key: key, eventId: eventId};
   if (!isRefresh){
+    window._pbpOpen = false;
     window._liveScrollY = window.scrollY || 0;
     ["liveCenter","liveTabs","liveStatus"].forEach(function(id){ var el = $(id); if (el) el.style.display = "none"; });
     var gd0 = $("gameDetail");
@@ -1499,14 +1500,14 @@ function openGame(key, eventId, isRefresh){
         var skeys = Object.keys(byName).filter(function(k){ return byName[k].b != null; }).slice(0,10);
         if (skeys.length) html += '<div style="font-size:16px;margin-top:14px"><b>Team Stats</b></div><table class="lb"><tr><th>' + esc((tstats[0].team && tstats[0].team.displayName) || "") + '</th><th>Stat</th><th>' + esc((tstats[1].team && tstats[1].team.displayName) || "") + '</th></tr>' + skeys.map(function(k){ return '<tr><td>' + esc(byName[k].a||"") + '</td><td class="note">' + esc(byName[k].label) + '</td><td>' + esc(byName[k].b||"") + '</td></tr>'; }).join("") + '</table>';
       }
-      var fmtPlay = function(pl){ var sc = (pl.awayScore != null && pl.homeScore != null) ? ' <span style="color:var(--cyan);font-weight:700;white-space:nowrap">' + esc(pl.awayScore) + '–' + esc(pl.homeScore) + '</span>' : ''; return '<div style="padding:6px 0;border-bottom:1px solid var(--line);' + (pl.scoringPlay ? 'border-left:3px solid var(--gold);padding-left:8px' : '') + '"><span class="note">' + esc(((pl.period && pl.period.displayValue)||"") + " " + ((pl.clock && pl.clock.displayValue)||"")) + '</span> ' + esc(pl.text || pl.shortText || "") + sc + '</div>'; };
+      var fmtPlay = function(pl){ var sc = (pl.awayScore != null && pl.homeScore != null) ? ' <span style="color:var(--cyan);font-weight:700;white-space:nowrap">' + esc(pl.awayScore) + '–' + esc(pl.homeScore) + '</span>' : ''; var per = (((pl.period && pl.period.displayValue) || "") + " " + ((pl.clock && pl.clock.displayValue) || "")).trim(); return '<div style="padding:3.5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;line-height:1.35;' + (pl.scoringPlay ? 'border-left:3px solid var(--gold);padding-left:7px' : '') + '"><span style="display:inline-block;background:rgba(124,58,237,.16);border:1px solid rgba(124,58,237,.35);border-radius:6px;padding:0 5px;font-size:10.5px;font-weight:700;white-space:nowrap;margin-right:5px">' + esc(per) + '</span>' + esc(pl.text || pl.shortText || "") + sc + '</div>'; };
       var plays = (s.plays || []).slice().reverse();
-      if (plays.length) html += '<div style="font-size:16px;margin-top:14px"><b>Play by Play</b> <span class="note">latest first - updates every 30s</span></div>' + plays.slice(0, 15).map(fmtPlay).join("") + (plays.length > 15 ? '<div id="pbpAll" style="display:none">' + plays.slice(15).map(fmtPlay).join("") + '</div><button type="button" class="ghostbtn" id="pbpBtn" style="margin-top:8px;font-size:12.5px;padding:7px 12px">Show all ' + plays.length + ' plays</button>' : '');
+      if (plays.length) html += '<div style="font-size:14px;margin-top:14px"><b>Play by Play</b> <span class="note">ticker - latest first - updates every 30s</span></div><div style="border:1px solid var(--line);border-radius:12px;background:#0d0d13;padding:6px 10px;margin-top:6px">' + plays.slice(0, 15).map(fmtPlay).join("") + (plays.length > 15 ? '<div id="pbpAll" style="display:' + (window._pbpOpen ? '' : 'none') + '">' + plays.slice(15).map(fmtPlay).join("") + '</div>' : '') + '</div>' + (plays.length > 15 ? '<button type="button" class="ghostbtn" id="pbpBtn" style="margin-top:8px;font-size:12px;padding:6px 11px">' + (window._pbpOpen ? 'Show fewer plays' : 'Show all ' + plays.length + ' plays') + '</button>' : '');
     }
     html += '<div id="gameProps"></div></div>';
     $("gameDetail").innerHTML = '<button class="gcBack" type="button">← All games</button>' + html;
     var pbpBtn = $("pbpBtn");
-    if (pbpBtn) pbpBtn.addEventListener("click", function(){ var all = $("pbpAll"); if (!all) return; var open = all.style.display !== "none"; all.style.display = open ? "none" : ""; pbpBtn.textContent = open ? "Show all plays" : "Show fewer plays"; });
+    if (pbpBtn) pbpBtn.addEventListener("click", function(){ var all = $("pbpAll"); if (!all) return; var open = all.style.display !== "none"; all.style.display = open ? "none" : ""; window._pbpOpen = !open; pbpBtn.textContent = open ? "Show all plays" : "Show fewer plays"; });
     var gtEl = $("gameTracker"), gpEl = $("gameProps");
     if (gtEl && gpEl && gtEl.parentNode) gtEl.parentNode.insertBefore(gpEl, gtEl.nextSibling);
     renderGameProps(lg, s);
@@ -1623,21 +1624,41 @@ function findEventForLeg(t, l){
   if (key in legEventCache) return Promise.resolve(legEventCache[key]);
   if (l.eventId) { legEventCache[key] = String(l.eventId); return Promise.resolve(legEventCache[key]); }
   var lg = leagueByKey(l.league);
-  if (!lg || !l.starts) { legEventCache[key] = null; return Promise.resolve(null); }
-  var url = ESPN + lg.sport + "/" + lg.league + "/scoreboard?dates=" + ymd(new Date(l.starts)) + "&limit=100";
-  return fetchJson(url).then(function(j){
-    var evs = j.events || [];
-    var lt = (l.team || "").toLowerCase(), best = null;
-    evs.forEach(function(ev){
-      var cs = ((ev.competitions || [])[0] || {}).competitors || [];
-      var has = cs.some(function(c){ var tn = (c.team && (c.team.displayName || c.team.shortDisplayName)) || ""; tn = tn.toLowerCase(); return tn && lt && (tn === lt || tn.indexOf(lt) > -1 || lt.indexOf(tn) > -1); });
-      if (has) best = ev;
-    });
-    if (!best && l.matchup){ var mu = l.matchup.toLowerCase(); evs.forEach(function(ev){ if ((ev.name || "").toLowerCase() === mu) best = ev; }); }
-    if (!best && evs.length === 1) best = evs[0];
-    legEventCache[key] = best ? String(best.id) : null;
-    return legEventCache[key];
-  }).catch(function(){ legEventCache[key] = null; return null; });
+  if (!lg) { legEventCache[key] = null; return Promise.resolve(null); }
+  var team = l.team || teamCache[(l.player || "").toLowerCase()] || "";
+  var base = l.starts ? new Date(l.starts) : new Date(t.ts || Date.now());
+  var dates = [ymd(base), ymd(new Date(base.getTime() + 86400000)), ymd(new Date())].filter(function(v, i, arr){ return arr.indexOf(v) === i; });
+  var teamP = Promise.resolve(team);
+  if (!team && l.player){
+    teamP = fetchJson("https://site.api.espn.com/apis/search/v2?query=" + encodeURIComponent(l.player) + "&limit=5").then(function(r){
+      var found = "";
+      try { (r.results || []).forEach(function(g){ (g.contents || []).forEach(function(c){
+        if (c.type === "player" && (c.displayName || "").toLowerCase() === l.player.toLowerCase()){
+          if (c.subtitle) found = c.subtitle;
+          var mm = /a:(\d+)/.exec(c.uid || ""); if (mm && !l.athleteId) { l.athleteId = mm[1]; aidCache[l.player.toLowerCase()] = mm[1]; lsSet("pa_aids", aidCache); }
+        } }); }); } catch(e){}
+      if (found) { teamCache[l.player.toLowerCase()] = found; lsSet("pa_teams", teamCache); }
+      return found;
+    }).catch(function(){ return ""; });
+  }
+  return teamP.then(function(tm){
+    team = tm || team;
+    if (!team) { legEventCache[key] = null; return null; }
+    var lt = team.toLowerCase();
+    var tryDate = function(di){
+      if (di >= dates.length) return Promise.resolve(null);
+      return fetchJson(ESPN + lg.sport + "/" + lg.league + "/scoreboard?dates=" + dates[di] + "&limit=300").then(function(j){
+        var evs = j.events || [], best = null;
+        evs.forEach(function(ev){
+          var cs = ((ev.competitions || [])[0] || {}).competitors || [];
+          var has = cs.some(function(c){ var tn = ((c.team && (c.team.displayName || c.team.shortDisplayName)) || "").toLowerCase(); return tn && (tn === lt || tn.indexOf(lt) > -1 || lt.indexOf(tn) > -1); });
+          if (has) best = ev;
+        });
+        return best ? String(best.id) : tryDate(di + 1);
+      }).catch(function(){ return tryDate(di + 1); });
+    };
+    return tryDate(0).then(function(eid){ legEventCache[key] = eid; return eid; });
+  });
 }
 function summaryForEvent(lg, eventId){
   var hit = sumCacheC[eventId];
@@ -1656,7 +1677,8 @@ function playInvolves(pl, l){
 }
 function fmtPlayRow(pl){
   var sc = (pl.awayScore != null && pl.homeScore != null) ? ' <span style="color:var(--cyan);font-weight:700;white-space:nowrap">' + esc(pl.awayScore) + '–' + esc(pl.homeScore) + '</span>' : '';
-  return '<div style="padding:5px 0;border-bottom:1px solid var(--line)"><span class="note">' + esc(((pl.period && pl.period.displayValue) || "") + " " + ((pl.clock && pl.clock.displayValue) || "")) + '</span> ' + esc(pl.text || pl.shortText || "") + sc + '</div>';
+  var per = (((pl.period && pl.period.displayValue) || "") + " " + ((pl.clock && pl.clock.displayValue) || "")).trim();
+  return '<div style="padding:3.5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;line-height:1.35"><span style="display:inline-block;background:rgba(124,58,237,.16);border:1px solid rgba(124,58,237,.35);border-radius:6px;padding:0 5px;font-size:10.5px;font-weight:700;white-space:nowrap;margin-right:5px">' + esc(per) + '</span>' + esc(pl.text || pl.shortText || "") + sc + '</div>';
 }
 function togglePlayerPlays(btn){
   var key = btn.getAttribute("data-pplay");
@@ -1676,7 +1698,10 @@ function togglePlayerPlays(btn){
     return summaryForEvent(lg, eid).then(function(s){
       var mine = (s.plays || []).filter(function(pl){ return playInvolves(pl, l); }).slice(-10).reverse();
       if (!mine.length) { panel.innerHTML = '<p class="note" style="padding:6px 0">No plays involving ' + esc(l.player) + ' reported yet - they will show here as the game goes.</p>'; return; }
-      panel.innerHTML = '<div style="border-left:2px solid var(--purp);padding-left:10px;margin:4px 0 8px">' + mine.map(fmtPlayRow).join("") + '</div>';
+      var comp = (s.header && s.header.competitions && s.header.competitions[0]) || {};
+      var cs2 = comp.competitors || [];
+      var scoreLine = cs2.length === 2 ? (((cs2[0].team && (cs2[0].team.shortDisplayName || cs2[0].team.displayName)) || "") + " " + (cs2[0].score != null ? cs2[0].score : "") + " - " + (cs2[1].score != null ? cs2[1].score : "") + " " + ((cs2[1].team && (cs2[1].team.shortDisplayName || cs2[1].team.displayName)) || "")) : "";
+      panel.innerHTML = '<div style="border:1px solid var(--line);border-radius:12px;background:#0d0d13;padding:7px 10px;margin:4px 0 8px"><div style="font-size:10.5px;letter-spacing:1.1px;color:#c4b5fd;font-weight:800;margin-bottom:3px">' + esc((l.player + " - " + l.dir + " " + l.line + " " + l.stat).toUpperCase()) + (scoreLine ? ' - ' + esc(scoreLine.toUpperCase()) : '') + '</div>' + mine.map(fmtPlayRow).join("") + '</div>';
     });
   }).catch(function(){ panel.innerHTML = '<p class="note" style="padding:6px 0">Play by play could not load right now.</p>'; });
 }
@@ -1689,7 +1714,7 @@ function renderTickets(){
     var legs = t.legs.map(function(l){
       return '<div class="leg"><span class="dir '+(l.dir==="MORE"?"more":"less")+'">'+l.dir+'</span><div style="flex:1"><b>'+esc(l.player)+'</b> — '+esc(l.stat)+' '+l.line+'<br><span class="note">'+esc(l.matchup||l.team||"")+(l.starts?' · '+esc(fmtTime(l.starts)):"")+' · '+esc(l.src)+'</span></div><span data-grade="'+esc(t.id)+'|'+esc(l.id)+'"><span class="pend">…</span></span></div>'
         + '<div data-stepper="'+esc(t.id)+'|'+esc(l.id)+'"></div>'
-        + (l.starts && l.league ? '<div style="padding:2px 0 8px"><button type="button" class="ghostbtn" data-pplay="'+esc(t.id)+'|'+esc(l.id)+'" style="font-size:12px;padding:5px 11px">Play by play - '+esc(l.player)+'</button><div data-pplays="'+esc(t.id)+'|'+esc(l.id)+'"></div></div>' : '');
+        + (l.player ? '<div style="padding:2px 0 8px"><button type="button" class="ghostbtn" data-pplay="'+esc(t.id)+'|'+esc(l.id)+'" style="font-size:12px;padding:5px 11px">Play by play - '+esc(l.player)+'</button><div data-pplays="'+esc(t.id)+'|'+esc(l.id)+'"></div></div>' : '');
     }).join("");
     return '<div class="card" data-ticket="'+t.id+'"><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span>' + res + '</span></div><span class="stampmini">LOCKED IN</span>'+legs+'</div>';
   }).join("");
