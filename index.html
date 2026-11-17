@@ -3289,25 +3289,29 @@ function clashZoom(ci, ti){
   sfx("click");
 }
 function closeZoom(){ var z = $("clashZoom"); if (z) { z.classList.remove("open"); z.innerHTML = ""; } }
-/* ---------- arcade music — 3 synthesized chiptune songs ---------- */
+/* ---------- smooth beats — 3 synthesized chill songs ---------- */
 var MUS = { on: false, timer: null, track: 0, beat: 0, bus: null };
 var SONGS = [
-  { bpm: 124, chords: [[261.63, 329.63, 392.00], [349.23, 440.00, 523.25], [392.00, 493.88, 587.33], [440.00, 523.25, 659.25]], roots: [130.81, 174.61, 196.00, 220.00], mel: [523.25, 659.25, 783.99, 659.25, 880.00, 783.99, 659.25, 587.33, 659.25, 783.99, 880.00, 783.99, 659.25, 587.33, 523.25, 0] },
-  { bpm: 132, chords: [[440.00, 523.25, 659.25], [440.00, 523.25, 659.25], [349.23, 440.00, 523.25], [392.00, 493.88, 587.33]], roots: [220.00, 220.00, 174.61, 196.00], mel: [880.00, 1046.50, 987.77, 880.00, 783.99, 880.00, 659.25, 0, 698.46, 880.00, 783.99, 659.25, 587.33, 659.25, 0, 0] },
-  { bpm: 116, chords: [[392.00, 493.88, 587.33], [392.00, 523.25, 659.25], [392.00, 493.88, 587.33], [293.66, 369.99, 440.00]], roots: [196.00, 130.81, 196.00, 146.83], mel: [587.33, 783.99, 987.77, 783.99, 880.00, 987.77, 1174.66, 987.77, 880.00, 783.99, 880.00, 987.77, 880.00, 783.99, 0, 0] }
+  { bpm: 76, chords: [[174.61, 220.00, 261.63, 329.63], [164.81, 196.00, 246.94, 293.66], [146.83, 174.61, 220.00, 261.63], [130.81, 164.81, 196.00, 246.94]], roots: [87.31, 82.41, 73.42, 65.41], mel: [523.25, 0, 0, 493.88, 0, 440.00, 0, 0, 392.00, 0, 440.00, 0, 329.63, 0, 0, 0] },
+  { bpm: 84, chords: [[116.54, 146.83, 174.61, 220.00], [110.00, 130.81, 164.81, 196.00], [98.00, 116.54, 146.83, 174.61], [87.31, 110.00, 130.81, 164.81]], roots: [116.54, 110.00, 98.00, 87.31], mel: [587.33, 0, 523.25, 0, 0, 440.00, 0, 392.00, 0, 0, 349.23, 0, 440.00, 0, 0, 0] },
+  { bpm: 72, chords: [[130.81, 164.81, 196.00, 293.66], [110.00, 130.81, 164.81, 261.63], [87.31, 110.00, 130.81, 220.00], [98.00, 123.47, 146.83, 196.00]], roots: [130.81, 110.00, 87.31, 98.00], mel: [659.25, 0, 0, 587.33, 0, 0, 523.25, 0, 0, 440.00, 0, 493.88, 0, 523.25, 0, 0] }
 ];
-function musBus(){ if (!AC) return null; if (!MUS.bus) { MUS.bus = AC.createGain(); MUS.bus.gain.value = 0.16; MUS.bus.connect(AC.destination); } return MUS.bus; }
-function arcTone(f, dur, vol, type){ try { var bus = musBus(); if (!bus || !AC) return; var t = AC.currentTime; var o = AC.createOscillator(), g = AC.createGain(); o.type = type || "square"; o.frequency.value = f; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.001, t + dur); o.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.03); } catch(e){} }
+function musBus(){ if (!AC) return null; if (!MUS.bus) { MUS.bus = AC.createGain(); MUS.bus.gain.value = 0.15; MUS.bus.connect(AC.destination); } return MUS.bus; }
+function arcTone(f, dur, vol, type, att){ try { var bus = musBus(); if (!bus || !AC) return; var t = AC.currentTime; var o = AC.createOscillator(), g = AC.createGain(); o.type = type || "sine"; o.frequency.value = f; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + (att || 0.012)); g.gain.exponentialRampToValueAtTime(0.001, t + dur); o.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.03); } catch(e){} }
+function kickTone(){ try { var bus = musBus(); if (!bus || !AC) return; var t = AC.currentTime; var o = AC.createOscillator(), g = AC.createGain(); o.type = "sine"; o.frequency.setValueAtTime(128, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.12); g.gain.setValueAtTime(0.85, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.24); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.26); } catch(e){} }
+function snareTone(){ arcTone(190, 0.09, 0.20, "triangle"); arcTone(6500, 0.05, 0.10, "square"); }
 function musicTick(){
   if (!MUS.on || !AC) return;
   var song = SONGS[MUS.track % SONGS.length];
   var step = MUS.beat % 32, bar = Math.floor(step / 8) % 4, s8 = step % 8;
   var chord = song.chords[bar], root = song.roots[bar];
-  if (s8 % 2 === 0) arcTone(root * (s8 === 4 ? 1.5 : 1), 0.22, 0.5, "triangle");
-  if (s8 === 0) chord.forEach(function(f){ arcTone(f, 0.3, 0.11, "square"); });
+  if (s8 === 0) { chord.forEach(function(f){ arcTone(f, 3.4, 0.09, "triangle", 0.07); }); arcTone(root, 2.8, 0.40, "sine", 0.02); }
+  if (s8 === 4) arcTone(root * 1.5, 1.2, 0.20, "sine", 0.02);
+  if (s8 === 0 || s8 === 3 || s8 === 4) kickTone();
+  if (s8 === 2 || s8 === 6) snareTone();
+  arcTone(8200, s8 === 7 ? 0.10 : 0.03, s8 % 2 ? 0.05 : 0.03, "square");
   var m = song.mel[MUS.beat % 16];
-  if (m) arcTone(m, 0.19, 0.32, "square");
-  if (s8 % 2 === 1) arcTone(7200, 0.03, 0.09, "square");
+  if (m) arcTone(m, 0.55, 0.24, "sine", 0.045);
   MUS.beat++;
   if (MUS.beat >= 64) { MUS.beat = 0; MUS.track++; if (MUS.timer) { clearInterval(MUS.timer); MUS.timer = setInterval(musicTick, Math.round(60000 / SONGS[MUS.track % SONGS.length].bpm / 2)); } }
 }
@@ -3350,7 +3354,7 @@ function clashMenu(){
     + '<button class="clashbig gold" data-clashmode="ladder">🏆 LADDER' + (lad >= 7 ? ' — CHAMPION 🏆' : ' — BOSS ' + (lad + 1) + ' OF 7') + '<span>' + (lad >= 7 ? 'Every boss beaten. Replay Boss 7 for coins.' : 'Beat bosses in order. Boss ' + (lad + 1) + ' pays ' + (10 + (lad + 1) * 5) + ' 🪙') + '</span></button>'
     + '<div class="clashmeta">🪙 <b>' + coinsGet() + '</b> Clash Coins · Record <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b><br>Wins pay Clash Coins — spend them on packs (1 pack = ' + CLASH_PACK_COST + ' 🪙, in My Packs below)</div>'
     + '<div class="clashmeta">🏆 <b>One ladder everywhere:</b> your ' + maxWins() + ' tier wins \u2014 from prop tickets, plus every battle win \u2014 unlock these tier cards \u2014 the same cards you battle with \u2014 AND the foil tiers inside packs. Clash Coins buy those same packs too.</div>'
-    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>⭐ Stars = your card\'s tier — higher total wins the round.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Holding two-in-a-row on the grid gives +1★ until it breaks.<br>🛡️ Defend: your power stays off — but if you lose the round, NO hit lands.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Arcade music plays while you battle — the 🎵 button (top right) mutes it.</div></details>'
+    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>⭐ Stars = your card\'s tier — higher total wins the round.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Holding two-in-a-row on the grid gives +1★ until it breaks.<br>🛡️ Defend: your power stays off — but if you lose the round, NO hit lands.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>'
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>');
 }
