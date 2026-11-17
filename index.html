@@ -2384,6 +2384,20 @@ async function downloadCard(kind, idx, btn){
 /* ---------- collectible cards: your character, rarity per tier ---------- */
 function charArt(){ var c = (profile && profile.char) || ""; return /^(\/api\/avatars\?s=|https?:)/.test(c) ? c : ""; }
 var CHARNAMES = ["THE CLOSER","THE BOSS","THE OPERATOR","ALL-AMERICAN","THE DEALMAKER","THE EXECUTIVE","THE SLUGGER","THE PLAYMAKER","THE CAPTAIN","THE FRANCHISE","THE ACE","THE ISLANDER"];
+var POWERS = [
+  {name:"CLUTCH TIME", style:"ATTACK", desc:"+1 star when any card is one hit from elimination."},
+  {name:"AUTHORITY", style:"CONTROL", desc:"Enemy powers don't work against her."},
+  {name:"INTEL", style:"TRICK", desc:"See the enemy die roll before you choose Attack or Defend."},
+  {name:"HAIL MARY", style:"LUCK", desc:"Once per battle, a round he lost counts as a win instead."},
+  {name:"NEGOTIATOR", style:"TRICK", desc:"Tied clashes count as wins for his card."},
+  {name:"FINE PRINT", style:"CONTROL", desc:"Enemies facing her fight at -1 star."},
+  {name:"HOME RUN", style:"ATTACK", desc:"A winning roll with a 6 in it deals 2 hits."},
+  {name:"FAST BREAK", style:"ATTACK", desc:"+1 star in the opening round of every battle."},
+  {name:"RALLY", style:"COMEBACK", desc:"+1 star for every hit his team is behind."},
+  {name:"STAR POWER", style:"ATTACK", desc:"+1 star in every single clash."},
+  {name:"ACE SERVE", style:"DEFENSE", desc:"She can't take a hit in the first round."},
+  {name:"ISLAND CALM", style:"DEFENSE", desc:"Once per battle, a hit against him is blocked."}
+];
 function charIdxOf(){ var m = /[?&]s=(\d+)/.exec((profile && profile.char) || ""); return m ? parseInt(m[1], 10) : 0; }
 function cardCharIdx(){ var v = parseInt(localStorage.getItem("pa_cardchar") || "0", 10); if (v >= 1 && v <= 12) return v; return charIdxOf() || 1; }
 function cardBackHTML(title, sub){
@@ -2413,6 +2427,31 @@ function tierCardHTML(t, wins, withBtns, ci){
   return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · ' + t.name + ' · ' + t.rarity, 'Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits.') + '</div></div>';
 }
 
+function battleCardHTML(t, wins, ci){
+  var un = wins >= t.wins;
+  var ti = TIERS.indexOf(t);
+  ci = ci || charIdxOf();
+  var art = "/api/battle?s=" + ci;
+  var cname = ci >= 1 ? CHARNAMES[ci - 1] : "YOUR AGENT";
+  var num = ci >= 1 ? ((ci - 1) * 7 + ti + 1) : 0;
+  var numTxt = num ? ("\u2694 B-" + ("00" + num).slice(-3)) : "\u2694 BATTLE";
+  var stars = "\u2605".repeat(ti + 1);
+  var pw = POWERS[(ci || 1) - 1] || POWERS[0];
+  var glow = ti >= 3 ? (", 0 0 " + (12 + ti * 4) + "px " + t.color + "59") : "";
+  var bw = ti >= 4 ? 3 : 2;
+  var front = '<div class="flipfront" style="border:' + bw + 'px solid ' + t.color + ';--tc:' + t.color + ';box-shadow:0 12px 26px rgba(0,0,0,.38)' + glow + ', inset 0 1px 0 rgba(255,255,255,.05)">'
+    + '<div class="tcplate"><span class="tcname">' + cname + '</span><span class="tcno">' + numTxt + '</span></div>'
+    + '<div class="tcwin"><img class="cardart" src="' + art + '" alt="">' + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
+    + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:' + t.color + '">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:' + t.color + '">' + t.rarity + '</span></div>'
+    + '<div style="margin-top:5px;font-weight:900;font-size:12.5px;color:#f5b942">\u26A1 ' + pw.name + ' <span style="color:#9aa7bd;font-weight:700;font-size:10px;letter-spacing:1px">' + pw.style + '</span></div>'
+    + '<div class="tierto" style="margin-top:2px">' + pw.desc + '</div>'
+    + (un ? '' : '<div class="tierto" style="margin-top:3px">' + (t.wins - wins) + ' winning ticket' + ((t.wins - wins) === 1 ? '' : 's') + ' to go</div>')
+    + '</div>'
+    + (ti >= 5 ? '<div class="tcspark"></div>' : '')
+    + '<div class="holo" style="--hc:' + t.color + '59"></div></div>';
+  return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' \u00B7 ' + t.name + ' Battle Card', pw.name + ' \u2014 ' + pw.desc + '<br><br>Agent Clash: clash = stars + dice + power. Two hits and a card is out. Powers live on battle cards only.') + '</div></div>';
+}
+
 function renderBoard(){
   renderPickem();
   renderFollowing();
@@ -2426,6 +2465,7 @@ function renderBoard(){
   var stripEl = $("cardStrip");
   if (stripEl) stripEl.innerHTML = CHARNAMES.map(function(n, k){ var n1 = k + 1; return '<img src="/api/avatars?s=' + n1 + '" data-ci="' + n1 + '" class="' + (n1 === cci ? 'on' : '') + '" title="' + n + '" alt="' + n + '">'; }).join("");
   var tierCards = TIERS.map(function(t){ return tierCardHTML(t, wins, true, cci); }).join("");
+  var battleHtml = '<div style="grid-column:1/-1" class="note">\u2694\uFE0F BATTLE CARDS \u2014 Agent Clash \u00B7 every tier, tier-color borders \u00B7 powers fight in battles</div>' + TIERS.map(function(t){ return battleCardHTML(t, wins, cci); }).join("");
   var playerCards = cards.map(function(l, li){
     var photo = photoCache[(l.player || "").toLowerCase()] || "";
     var front = '<div class="flipfront" style="border:2px solid #a78bfa;--tc:#a78bfa">'
@@ -2442,7 +2482,7 @@ function renderBoard(){
   if (fl0.length) foilHtml = '<div style="grid-column:1/-1" class="note">✨ FOIL CARDS — pulled from packs (' + fl0.length + ')</div>' + fl0.map(function(k){ var pp = k.split("-"); var tt = TIERS[parseInt(pp[1], 10)]; return tt ? foilCardHTML(tt, parseInt(pp[0], 10)) : ""; }).join("");
   renderPacks();
   var stampHtml = '<div style="grid-column:1/-1" class="note">🌟 GOLD FOIL STAMPS — one for every agent (' + stampsGet().length + ' of 12) · hiding in about 1 pack in 10</div>' + CHARNAMES.map(function(nm, ix){ return stampCardHTML(ix + 1); }).join("");
-  $("myCards").innerHTML = tierCards + playerCards + stampHtml + foilHtml + '<div style="grid-column:1/-1" class="note">⭐ SPECIAL CARDS — Pick\'em rewards &amp; chase cards</div>' + specialCardHTML() + ringCardHTML();
+  $("myCards").innerHTML = tierCards + battleHtml + playerCards + stampHtml + foilHtml + '<div style="grid-column:1/-1" class="note">⭐ SPECIAL CARDS — Pick\'em rewards &amp; chase cards</div>' + specialCardHTML() + ringCardHTML();
   document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); var av0 = b.getAttribute("data-avatar")||""; profile.avatar = av0; profile.featured = b.getAttribute("data-featured")||""; if (av0.indexOf("/api/avatars") === 0) profile.char = av0; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
   document.querySelectorAll(".dlcard").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadCard(b.getAttribute("data-kind"), parseInt(b.getAttribute("data-idx"),10), b); }); });
   document.querySelectorAll(".setprofs").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); profile.avatar = b.getAttribute("data-avatar") || ""; profile.featured = b.getAttribute("data-featured") || ""; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
