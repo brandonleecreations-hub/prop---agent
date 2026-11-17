@@ -235,6 +235,7 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 #clashZoom .tiercard{min-height:0}
 .zoomhint{margin-top:12px;font-size:12px;color:#9aa7bd}
 .field3d{position:relative;border-radius:14px;padding:8px 7px 7px;margin-bottom:7px;overflow:hidden;background:repeating-linear-gradient(90deg,#1e6031 0 36px,#277a3d 36px 72px);box-shadow:inset 0 0 0 2px rgba(255,255,255,.14), inset 0 -30px 44px rgba(0,0,0,.42), inset 0 22px 34px rgba(0,0,0,.30);transform:perspective(760px) rotateX(3deg);transform-origin:50% 100%}
+.field3d{flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto}
 .field3d::before{content:"";position:absolute;inset:0;background:radial-gradient(85% 62% at 50% 38%,rgba(255,255,255,.17),transparent 62%);pointer-events:none}
 .field3d::after{content:"";position:absolute;left:5%;right:5%;top:50%;height:2px;background:rgba(255,255,255,.38);border-radius:2px;pointer-events:none}
 .field3d .side{position:relative;z-index:1}
@@ -519,6 +520,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .energychip .eorb{width:20px;height:20px}
 .deckrow .itemhand{flex:1;min-width:0}
 @media (max-height:740px){ .fcard img{height:38px} .fcard.bench img{height:28px} .fcard.active{width:96px} .fcard.bench{width:58px} .ttcell{width:32px;height:32px;font-size:14px} .deck3d{width:44px;height:60px} .pileback{width:34px;height:46px} .cbtn{padding:9px 4px;font-size:14px} .coin3d{width:92px;height:92px} .clashlog{font-size:11.5px} }
+@media (max-height:860px){ .fcard img{height:36px} .fcard.bench img{height:26px} .fcard{width:76px} .fcard.active{width:94px} .fcard.bench{width:55px} .fcnm{font-size:11.5px} .fcst{font-size:10px} .fcpw{font-size:9.5px} .fcatk{font-size:9.5px} .ttcell{width:31px;height:31px;font-size:14px} .deck3d{width:44px;height:60px} .pileback{width:34px;height:46px} .espotcards{min-height:38px} .eorb{width:13px;height:13px} .guidebar{padding:5px 8px;font-size:11.5px} .deckcap{font-size:9.5px;margin-top:4px} .cbtn{padding:9px 4px} .clashlog{font-size:11.5px} .itemcard{width:60px;padding:5px 3px} .itemcard .iic{font-size:19px} .sidetag{font-size:9.5px} .clashround{font-size:13px;margin-bottom:5px} }
 .zonelab{font-size:9px;font-weight:900;letter-spacing:1.5px;color:#9d94c7;text-align:center;margin-bottom:3px}
 .espot{flex:0 0 auto;text-align:center;width:66px}
 .espotcards{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;align-content:center;min-height:46px;background:rgba(124,58,237,.12);border:1.5px dashed rgba(168,85,247,.6);border-radius:10px;padding:4px 2px;box-shadow:inset 0 3px 10px rgba(0,0,0,.45)}
