@@ -378,6 +378,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
         <button class="ghostbtn" id="installBtn" style="flex:1;min-width:170px;background:linear-gradient(135deg,#f5b942,#d97706);color:#1a1000;border:none;font-weight:900;padding:14px 18px;font-size:15.5px;box-shadow:0 8px 24px rgba(245,185,66,.45)">📲 ADD TO HOME SCREEN</button>
         <button class="ghostbtn" id="shareBtn" style="flex:1;min-width:140px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.4);font-weight:800;padding:14px 18px;font-size:15px">🔗 Share the app</button>
       </div>
+      <button type="button" id="wReplay" class="ghostbtn" style="width:100%;margin-top:10px;background:transparent;color:#cfcfe0;border:1px solid rgba(255,255,255,.25);font-weight:700;padding:10px">▶ Watch the 10-second welcome</button>
     </div>
   </section>
 
@@ -549,6 +550,67 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   </div>
 </dialog>
 
+<div id="welcomePop">
+  <div class="wstage" id="wStage">
+    <button type="button" class="wskip" id="wSkip">Skip ✕</button>
+    <div class="wbeat on" id="wBeat1">
+      <img src="/api/icons?s=512" alt="" class="wlogo">
+      <div class="wtitle">PROP AGENT</div>
+      <div class="wsub">Real PrizePicks props.<br>No money. All bragging rights.</div>
+    </div>
+    <div class="wbeat" id="wBeat2">
+      <div class="wcard">
+        <div class="wcardname">⭐ STAR PLAYER</div>
+        <div class="wcardstat">POINTS</div>
+        <div class="wcardline">24.5</div>
+        <div class="wcardbtns"><span class="wmore">MORE</span><span class="wless">LESS</span></div>
+      </div>
+      <div class="wslip"><span>Your slip · 2 picks</span><span class="wstamp">LOCKED IN</span></div>
+      <div class="wsub">Tap MORE or LESS.<br>That's the whole game.</div>
+    </div>
+    <div class="wbeat" id="wBeat3">
+      <div class="wbig">🏆</div>
+      <div class="wsub" style="font-size:19px">Win tickets → climb the tiers,<br>open packs, chase <b style="color:#f5c518">THE RING</b>.</div>
+      <div class="wsub">Follow your friends. Like their tickets.</div>
+      <button type="button" class="bigbtn" id="wStart" style="max-width:280px;margin-top:10px">Start picking →</button>
+    </div>
+    <div class="wdots"><span class="on"></span><span></span><span></span></div>
+    <div class="wprog"><i></i></div>
+  </div>
+</div>
+<style>
+#welcomePop{display:none;position:fixed;inset:0;z-index:200;background:#07070d;transition:opacity .3s}
+#welcomePop.fade{opacity:0}
+.wstage{position:absolute;inset:0;background:radial-gradient(600px 400px at 50% 30%,rgba(124,58,237,.35),transparent 70%)}
+.wbeat{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center;opacity:0;pointer-events:none;transition:opacity .45s}
+.wbeat.on{opacity:1;pointer-events:auto}
+.wskip{position:absolute;top:16px;right:16px;z-index:3;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:8px 14px;font-weight:700}
+.wlogo{width:110px;height:110px;border-radius:24px;box-shadow:0 0 44px rgba(124,58,237,.75);animation:wpulse 2.2s ease-in-out infinite}
+@keyframes wpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.wtitle{font-size:40px;font-weight:900;letter-spacing:1px;color:#fff;text-shadow:0 0 24px rgba(124,58,237,.9)}
+.wsub{font-size:17px;color:#cfcfe0;line-height:1.5}
+.wcard{background:#12121e;border:1px solid #2c2c3a;border-radius:16px;padding:18px 22px;width:min(300px,84vw)}
+.wcardname{font-weight:900;letter-spacing:1px}
+.wcardstat{color:#9a9ab0;letter-spacing:3px;font-size:12px;margin-top:4px}
+.wcardline{font-size:52px;font-weight:900;margin:6px 0 12px}
+.wcardbtns{display:flex;gap:10px;justify-content:center}
+.wmore{background:linear-gradient(135deg,#7C3AED,#6d28d9);color:#fff;font-weight:900;padding:10px 22px;border-radius:10px;animation:wring 1.2s ease-in-out infinite}
+.wless{background:#1b1b28;color:#fff;font-weight:900;padding:10px 22px;border-radius:10px;border:1px solid #2c2c3a}
+@keyframes wring{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.55)}50%{box-shadow:0 0 0 9px rgba(124,58,237,0)}}
+.wslip{display:flex;align-items:center;gap:12px;background:#12121e;border:1px solid #2c2c3a;border-radius:12px;padding:10px 14px;font-weight:700}
+.wstamp{color:#f5c518;border:2.5px solid #f5c518;border-radius:8px;padding:3px 10px;font-weight:900;letter-spacing:2px;transform:rotate(-8deg)}
+.wbeat.on .wstamp{animation:wstampin .5s .9s both}
+@keyframes wstampin{from{transform:rotate(-8deg) scale(2.4);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
+.wbig{font-size:64px}
+.wdots{position:absolute;bottom:34px;left:0;right:0;display:flex;gap:8px;justify-content:center}
+.wdots span{width:9px;height:9px;border-radius:50%;background:#33334a}
+.wdots span.on{background:#f5c518}
+.wprog{position:absolute;bottom:0;left:0;right:0;height:4px;background:#1b1b28}
+.wprog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#7C3AED,#f5c518)}
+.wprog i.go{animation:wfill 10.6s linear forwards}
+@keyframes wfill{from{width:0}to{width:100%}}
+@media (prefers-reduced-motion: reduce){ #welcomePop *{animation:none!important;transition:none!important} }
+</style>
 <script>
 "use strict";
 /* ============ Prop Agent — rebuilt main page ============
@@ -2761,6 +2823,38 @@ document.addEventListener("click", function(e){
     if (j && j.ok) { b.classList.toggle("on", !on); b.innerHTML = '<span class="hrt">♥</span> ' + j.likes; }
   });
 });
+
+/* ---------- 10-second welcome (new users, once; replay from Home) ---------- */
+var wTimers = [], wBeat = 0;
+function wSetBeat(n){
+  wBeat = n;
+  [1,2,3].forEach(function(i){ var b = $("wBeat"+i); if (b) b.classList.toggle("on", i === n); });
+  document.querySelectorAll(".wdots span").forEach(function(d, i){ d.classList.toggle("on", i === n - 1); });
+}
+function wSchedule(){
+  wTimers.forEach(function(x){ clearTimeout(x); }); wTimers = [];
+  if (wBeat === 1) wTimers.push(setTimeout(function(){ wSetBeat(2); wSchedule(); }, 3300));
+  else if (wBeat === 2) wTimers.push(setTimeout(function(){ wSetBeat(3); wSchedule(); }, 3300));
+  else if (wBeat === 3) wTimers.push(setTimeout(function(){ closeWelcome(); }, 4000));
+}
+function closeWelcome(){
+  wTimers.forEach(function(x){ clearTimeout(x); }); wTimers = [];
+  var w = $("welcomePop"); if (!w) return;
+  lsSet("pa_welcomed", 1);
+  w.classList.add("fade");
+  setTimeout(function(){ w.style.display = "none"; w.classList.remove("fade"); }, 320);
+}
+function showWelcome(){
+  var w = $("welcomePop"); if (!w || w.style.display === "block") return;
+  w.style.display = "block"; w.classList.remove("fade");
+  var bar = w.querySelector(".wprog i"); if (bar) { bar.classList.remove("go"); void bar.offsetWidth; bar.classList.add("go"); }
+  wSetBeat(1); wSchedule();
+}
+var wSkipB = $("wSkip"); if (wSkipB) wSkipB.addEventListener("click", function(e){ e.stopPropagation(); closeWelcome(); });
+var wStartB = $("wStart"); if (wStartB) wStartB.addEventListener("click", function(e){ e.stopPropagation(); closeWelcome(); });
+var wStageEl = $("wStage"); if (wStageEl) wStageEl.addEventListener("click", function(){ if (wBeat < 3) { wSetBeat(wBeat + 1); wSchedule(); } });
+var wReplayB = $("wReplay"); if (wReplayB) wReplayB.addEventListener("click", function(){ showWelcome(); });
+if (!lsGet("pa_welcomed", 0)) setTimeout(function(){ showWelcome(); }, 600);
 
 setInterval(function(){ loadPickemEvent(); renderPickem(); }, 30000);
 
