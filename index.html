@@ -265,6 +265,29 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .popface.back{transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:14px}
 .spark{position:absolute;left:50%;top:50%;width:7px;height:7px;border-radius:50%;background:#f5c518;box-shadow:0 0 9px #f5c518;opacity:0;animation:sparkA 1s ease-out .15s both;pointer-events:none;z-index:3}
 @keyframes sparkA{0%{opacity:0;transform:translate(0,0) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(1)}}
+.packpromo{position:relative;border:2px solid #7C3AED;border-radius:16px;padding:14px;background:radial-gradient(120% 120% at 20% 0%, #2a1650 0%, #12101d 60%);overflow:hidden}
+.packpromo::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 32%,rgba(245,197,24,.12) 48%,rgba(255,255,255,.08) 52%,transparent 68%);transform:translateX(-130%);animation:pkshine 5.2s ease-in-out infinite;pointer-events:none}
+.packimg{width:74px;height:96px;object-fit:cover;border-radius:10px;border:2px solid #f5c518;box-shadow:0 8px 20px rgba(0,0,0,.5)}
+.openbtn{background:linear-gradient(135deg,#7C3AED,#5b21b6);color:#fff;font-weight:900;border:none;border-radius:11px;padding:11px 14px;font-size:14px;cursor:pointer}
+.openbtn.gold{background:linear-gradient(135deg,#f5c518,#d97706);color:#1a1405}
+.openbtn:disabled{opacity:.38;cursor:default}
+.foilshine{position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(245,197,24,.32) 48%,rgba(255,255,255,.20) 52%,transparent 70%);transform:translateX(-130%);animation:pkshine 3.6s ease-in-out infinite;pointer-events:none}
+#packPop{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center}
+#packPop.open{display:flex}
+.packstage{width:min(64vw,230px);cursor:pointer;animation:cardpopA .6s cubic-bezier(.2,.9,.3,1.2) both;text-align:center}
+.packstage img{width:100%;border-radius:14px;box-shadow:0 22px 50px rgba(0,0,0,.6),0 0 30px #7c3aed55;display:block}
+.packstage.torn{animation:packtear .55s ease-in both}
+@keyframes packtear{30%{transform:rotate(-2.5deg) scale(1.04)}55%{transform:rotate(2deg) scale(1.07)}100%{transform:scale(1.35);opacity:0}}
+.revealrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.revealcard{width:104px;animation:cardpopA .6s cubic-bezier(.2,.9,.3,1.2) both;border-radius:12px;overflow:hidden;border:2px solid #f5c518;background:#0d0d13;box-shadow:0 14px 30px rgba(0,0,0,.5)}
+.revealcard img{width:100%;height:104px;object-fit:cover;display:block}
+.revealcard .rvinfo{padding:6px 7px;font-size:11px;line-height:1.35}
+.revealcard{position:relative}
+.revealcard::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-130%);animation:pkshine 1.1s ease-out .45s both;pointer-events:none}
+.revealcard.ringcard{animation:cardpopA .6s cubic-bezier(.2,.9,.3,1.2) both, ringpulse 1.5s ease-in-out .7s infinite alternate}
+@keyframes ringpulse{from{box-shadow:0 14px 30px rgba(0,0,0,.5),0 0 12px rgba(245,197,24,.35)}to{box-shadow:0 14px 30px rgba(0,0,0,.5),0 0 40px rgba(245,197,24,.85)}}
+.tiercard.ringglow .flipfront{animation:ringpulse 1.8s ease-in-out infinite alternate}
+#packBurst{position:absolute;left:50%;top:36%;width:0;height:0;pointer-events:none;display:none;z-index:5}
 </style>
 </head>
 <body>
@@ -420,6 +443,9 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <h2>🏆 Tiers</h2>
     <p class="sub">Climb the ladder by locking winning tickets. A win counts only when every leg on the ticket hits.</p>
     <div class="grid" id="tiers"></div>
+    <h2>🎁 My Packs</h2>
+    <p class="sub">One FREE pack every day — plus earn more by winning tickets and sharing the app. Every pack holds 3 foil cards… and one pack in a hundred hides THE RING 🏆</p>
+    <div id="packsBox"></div>
     <h2>🃏 My Cards</h2>
     <p class="sub">Your collection — player cards from winning tickets and your tier cards. Tap a card to flip it over.</p>
     <div class="charstrip" id="cardStrip"></div><p class="note" style="margin:0 0 10px">Every agent has a card in every tier — tap an agent to see their full set. Higher tiers look rarer. Your wins unlock them.</p><div class="grid" id="myCards"><p class="empty">Loading cards…</p></div>
@@ -2006,11 +2032,16 @@ function renderBoard(){
       + '</div><div class="holo" style="--hc:#a78bfa59"></div></div>';
     return '<div class="tiercard unlocked"><div class="tierinner">' + front + cardBackHTML(esc(l.player), esc(l.team || "") + '<br>' + esc(l.matchup || "") + '<br>Earned on a ticket where every leg hit.') + '</div></div>';
   }).join("");
-  $("myCards").innerHTML = '<div style="grid-column:1/-1" class="note">⭐ SPECIAL CARDS — Weekly Pick\'em rewards</div>' + specialCardHTML() + tierCards + playerCards;
+  var foilHtml = "";
+  var fl0 = foilsGet();
+  if (fl0.length) foilHtml = '<div style="grid-column:1/-1" class="note">✨ FOIL CARDS — pulled from packs (' + fl0.length + ')</div>' + fl0.map(function(k){ var pp = k.split("-"); var tt = TIERS[parseInt(pp[1], 10)]; return tt ? foilCardHTML(tt, parseInt(pp[0], 10)) : ""; }).join("");
+  renderPacks();
+  $("myCards").innerHTML = '<div style="grid-column:1/-1" class="note">⭐ SPECIAL CARDS — Pick\'em rewards &amp; chase cards</div>' + specialCardHTML() + ringCardHTML() + tierCards + playerCards + foilHtml;
   document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); var av0 = b.getAttribute("data-avatar")||""; profile.avatar = av0; profile.featured = b.getAttribute("data-featured")||""; if (av0.indexOf("/api/avatars") === 0) profile.char = av0; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
   document.querySelectorAll(".dlcard").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadCard(b.getAttribute("data-kind"), parseInt(b.getAttribute("data-idx"),10), b); }); });
   document.querySelectorAll(".setprofs").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); profile.avatar = b.getAttribute("data-avatar") || ""; profile.featured = b.getAttribute("data-featured") || ""; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
   document.querySelectorAll(".dlspecial").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadSpecialCard(b); }); });
+  document.querySelectorAll(".dlring").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadRingCard(b); }); });
   document.querySelectorAll("#cardStrip img").forEach(function(im){ im.addEventListener("click", function(){ localStorage.setItem("pa_cardchar", im.getAttribute("data-ci")); renderBoard(); }); });
   document.querySelectorAll(".tiercard").forEach(function(c){ c.addEventListener("click", function(){ if (c.getAttribute("data-noflip")) return; c.classList.toggle("flipped"); }); });
 }
@@ -2074,6 +2105,84 @@ function renderPickem(){
     ? '<div class="pickem"><img class="pkart" src="' + cfg.bannerArt + '" alt="" style="width:100%;border-radius:10px;display:block"><div class="pk-title" style="margin-top:10px">' + cfg.awayShort + ' @ ' + cfg.homeShort + '</div><div class="note">' + pickemWhen() + ' MST · ' + cfg.note + '</div>' + body + '</div>'
     : '<div class="pickem">' + head + body + '</div>';
   boxes.forEach(function(b){ b.innerHTML = h; });
+}
+/* ---------- packs: daily / share / ticket wins -> foil cards + THE RING ---------- */
+function packsGet(){ return lsGet("pa_packs", { n: 0, g: 0 }); }
+function packsSet(p){ lsSet("pa_packs", p); }
+function foilsGet(){ return lsGet("pa_foils", []); }
+function dayStr(){ var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+function maxTierIdx(){ var w = maxWins(), idx = 0; TIERS.forEach(function(t, i){ if (w >= t.wins) idx = i; }); return idx; }
+function awardTicketPack(t){
+  var p = packsGet();
+  if (t.legs && t.legs.length >= 4) p.g = (p.g || 0) + 1; else p.n = (p.n || 0) + 1;
+  packsSet(p);
+}
+function renderPacks(){
+  var box = $("packsBox"); if (!box) return;
+  var p = packsGet(), today = dayStr();
+  var claimed = lsGet("pa_daily_day", "") === today;
+  var shared = lsGet("pa_share_day", "") === today;
+  var foils = foilsGet();
+  box.innerHTML = '<div class="packpromo">'
+    + '<div style="display:flex;gap:12px;align-items:center"><img class="packimg" src="/api/banners?s=pack" alt="">'
+    + '<div><div style="font-weight:900;font-size:17px">🎁 1 FREE PACK <span style="color:#f5c518">EVERY DAY</span></div>'
+    + '<div class="note" style="margin-top:3px">Every pack: <b style="color:#fff">3 foil cards</b>. Gold packs guarantee a foil of your highest tier. And hiding in about 1 pack in 100… <b style="color:#f5c518">THE RING 🏆</b> — signed, one of a kind, the rarest card in the game.</div></div></div>'
+    + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'
+    + (claimed ? '<button class="openbtn" disabled>✓ Free pack claimed — back tomorrow</button>' : '<button class="openbtn gold" data-claimpack="1">🎁 CLAIM FREE PACK</button>')
+    + '<button class="openbtn" data-openpack="n"' + ((p.n || 0) > 0 ? '' : ' disabled') + '>Open Pack · ' + (p.n || 0) + '</button>'
+    + '<button class="openbtn gold" data-openpack="g"' + ((p.g || 0) > 0 ? '' : ' disabled') + '>Open Gold Pack · ' + (p.g || 0) + '</button>'
+    + (shared ? '<button class="openbtn" disabled>✓ Shared today</button>' : '<button class="openbtn" data-sharepack="1">🔗 Share &amp; Earn a Pack</button>')
+    + '</div>'
+    + '<div class="note" style="margin-top:9px">Win a ticket → +1 pack (4+ picks → Gold Pack). Foils collected: <b style="color:#f5c518">' + foils.length + '</b> · ' + (lsGet("pa_ring", 0) ? '🏆 THE RING: <b style="color:#f5c518">PULLED!</b>' : 'THE RING: still hiding…') + '</div>'
+    + '</div>';
+}
+function ringBackHTML(){
+  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512" alt=""></div><div class="bkname" style="color:#f5c518">PROP AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">THE RING · CHAMPIONSHIP EDITION</div><div class="bksub">Signed · One of a Kind<br>The rarest pull in the game — about 1 pack in 100</div><div class="holo" style="--hc:#f5c51859"></div></div>';
+}
+function ringCardHTML(){
+  var un = !!lsGet("pa_ring", 0);
+  var front = '<div class="flipfront" style="border:3px solid #f5c518;--tc:#f5c518;box-shadow:0 12px 26px rgba(0,0,0,.38),0 0 22px #f5c51859, inset 0 1px 0 rgba(255,255,255,.05)">'
+    + '<div class="tcplate"><span class="tcname">THE RING</span><span class="tcno">🏆 CHASE</span></div>'
+    + '<div class="tcwin"><img class="cardart" src="/api/avatars?s=14" alt="">' + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
+    + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">THE RING</span><span class="rarpill" style="background:#f5c518;color:#1a1405">ONE OF A KIND</span></div>'
+    + '<div class="tierto" style="margin-top:6px">' + (un ? 'You pulled it — the signed chase card. The rarest card in Prop Agent.' : 'The signed championship ring card. Hiding in about 1 pack in 100 — open packs to hunt it.') + '</div>'
+    + (un ? '<div style="display:flex;gap:6px;margin-top:8px"><button class="mini setprofs" data-avatar="/api/avatars?s=14" data-featured="The Ring · Chase Card">Set as profile card</button><button class="mini dlring">Download PNG</button></div>' : '')
+    + '</div><div class="holo" style="--hc:#f5c51859"></div></div>';
+  return '<div class="tiercard' + (un ? ' unlocked ringglow' : ' locked') + '"' + (un ? '' : ' data-noflip="1"') + '><div class="tierinner">' + front + ringBackHTML() + '</div></div>';
+}
+function foilCardHTML(t, ci){
+  var ti = TIERS.indexOf(t);
+  var cname = CHARNAMES[ci - 1];
+  var stars = ""; for (var s = 0; s < ti + 1; s++) stars += "★";
+  var front = '<div class="flipfront" style="border:2px solid #f5c518;--tc:#f5c518;box-shadow:0 12px 26px rgba(0,0,0,.38),0 0 16px rgba(245,197,24,.28), inset 0 1px 0 rgba(255,255,255,.05)">'
+    + '<div class="tcplate"><span class="tcname">' + cname + '</span><span class="tcno">✨ FOIL</span></div>'
+    + '<div class="tcwin"><img class="cardart" src="/api/avatars?s=' + ci + '" alt=""></div>'
+    + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:#f5c518;color:#1a1405">FOIL</span></div>'
+    + '<div class="tierto" style="margin-top:6px">Gold foil edition — pulled from a pack</div>'
+    + '</div><div class="foilshine"></div></div>';
+  return '<div class="tiercard unlocked"><div class="tierinner">' + front + cardBackHTML(cname + ' · FOIL', t.name + ' tier gold foil edition<br>Pulled from a Prop Agent pack.') + '</div></div>';
+}
+function downloadRingCard(btn){
+  var img = new Image();
+  img.onload = function(){
+    var cv = document.createElement("canvas"); cv.width = 630; cv.height = 900;
+    var x = cv.getContext("2d");
+    x.fillStyle = "#0d0d13"; x.fillRect(0, 0, 630, 900);
+    var sc = Math.max(630 / img.width, 780 / img.height), w = img.width * sc, h = img.height * sc;
+    x.drawImage(img, (630 - w) / 2, 0, w, h);
+    var gr = x.createLinearGradient(0, 640, 0, 900); gr.addColorStop(0, "rgba(13,13,19,0)"); gr.addColorStop(0.45, "rgba(13,13,19,.92)"); gr.addColorStop(1, "#0d0d13");
+    x.fillStyle = gr; x.fillRect(0, 640, 630, 260);
+    x.strokeStyle = "#f5c518"; x.lineWidth = 10; x.strokeRect(5, 5, 620, 890);
+    x.fillStyle = "#f5c518"; x.font = "900 54px system-ui, sans-serif"; x.textAlign = "center";
+    x.fillText("THE RING", 315, 800);
+    x.fillStyle = "#e5e9f2"; x.font = "700 25px system-ui, sans-serif";
+    x.fillText("CHAMPIONSHIP EDITION · ONE OF A KIND", 315, 838);
+    x.fillStyle = "#9aa7bd"; x.font = "600 21px system-ui, sans-serif";
+    x.fillText("PROP AGENT", 315, 872);
+    var a = document.createElement("a"); a.download = "the-ring-chase-card.png"; a.href = cv.toDataURL("image/png"); a.click();
+    if (btn) { var o = btn.textContent; btn.textContent = "Saved ✓"; setTimeout(function(){ btn.textContent = o; }, 1600); }
+  };
+  img.src = "/api/avatars?s=14";
 }
 function specialCardHTML(){
   var cfg = WEEKLY_PICKEM, un = specialUnlocked();
@@ -2156,6 +2265,84 @@ document.addEventListener("click", function(e){
   ensureCardPop();
   var w = document.getElementById("cardPopWrap"); if (w) w.classList.remove("flipped");
   document.getElementById("cardPop").classList.add("open");
+});
+/* ---------- pack opening overlay ---------- */
+function pullPack(kind){
+  var maxTi = maxTierIdx();
+  var isRing = false;
+  if (!lsGet("pa_ring", 0) && Math.random() < (kind === "g" ? 0.04 : 0.01)) isRing = true;
+  var pulls = [];
+  for (var i = 0; i < 3; i++){
+    var ci = 1 + Math.floor(Math.random() * 12);
+    var ti = Math.floor(Math.random() * (maxTi + 1));
+    if (kind === "g" && i === 2) ti = maxTi;
+    pulls.push({ ci: ci, ti: ti });
+  }
+  if (isRing) { lsSet("pa_ring", 1); pulls[2] = { ring: true }; }
+  var fl = foilsGet();
+  pulls.forEach(function(pu){ if (!pu.ring) { var k = pu.ci + "-" + pu.ti; if (fl.indexOf(k) < 0) fl.push(k); } });
+  lsSet("pa_foils", fl);
+  return pulls;
+}
+function ensurePackPop(){
+  if (document.getElementById("packPop")) return;
+  var sparks = [[-120,-70],[110,-90],[-90,60],[130,40],[-150,10],[150,-20],[0,-130],[60,110]].map(function(v){ return '<span class="spark" style="--tx:' + v[0] + 'px;--ty:' + v[1] + 'px"></span>'; }).join("");
+  var el = document.createElement("div");
+  el.id = "packPop";
+  el.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:16px;position:relative">'
+    + '<div id="packBurst"><div class="burst"></div>' + sparks + '</div>'
+    + '<div class="packstage" id="packStage"></div>'
+    + '<div class="revealrow" id="packCards" style="display:none"></div>'
+    + '<div id="packCap" style="font-weight:900;color:#f5c518;text-align:center"></div>'
+    + '<button class="mini" id="packClose" style="background:#17171f;border:1px solid #33333f;color:#fff;padding:9px 18px;border-radius:10px;font-weight:800">Collect</button></div>';
+  document.body.appendChild(el);
+  el.addEventListener("click", function(e){ if (e.target === el) { el.classList.remove("open"); renderBoard(); } });
+  document.getElementById("packClose").addEventListener("click", function(){ el.classList.remove("open"); renderBoard(); });
+  document.getElementById("packStage").addEventListener("click", function(){
+    if (window._packOpened) return; window._packOpened = true;
+    var st = this; st.classList.add("torn");
+    var bst = document.getElementById("packBurst"); if (bst) bst.style.display = "block";
+    setTimeout(function(){
+      st.style.display = "none";
+      if (bst) bst.style.display = "none";
+      var pulls = window._packPulls || [], cards = document.getElementById("packCards"), cap = document.getElementById("packCap");
+      cards.style.display = "flex";
+      cards.innerHTML = pulls.map(function(pu, i){
+        if (pu.ring) return '<div class="revealcard ringcard" style="animation-delay:' + (i * 0.22) + 's,0s;width:118px"><img src="/api/avatars?s=14" alt="" style="height:118px"><div class="rvinfo"><b style="color:#f5c518">🏆 THE RING</b><br>SIGNED · ONE OF A KIND</div></div>';
+        var t = TIERS[pu.ti];
+        return '<div class="revealcard" style="animation-delay:' + (i * 0.22) + 's"><img src="/api/avatars?s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">✨ ' + t.name + ' FOIL</span></div></div>';
+      }).join("");
+      if (pulls.some(function(pu){ return pu.ring; })) { cap.textContent = "🏆 YOU PULLED THE RING!! Signed, one of a kind — the rarest card in the game!"; try { confetti(); } catch(e){} }
+      else cap.textContent = "3 foil cards added to My Cards ✨";
+    }, 560);
+  });
+}
+function openPackPop(kind){
+  var p = packsGet();
+  if (kind === "g") { if (!(p.g > 0)) return; p.g--; } else { if (!(p.n > 0)) return; p.n--; }
+  packsSet(p); renderPacks();
+  window._packPulls = pullPack(kind); window._packOpened = false;
+  ensurePackPop();
+  var stage = $("packStage"), cards = $("packCards"), cap = $("packCap");
+  cards.innerHTML = ""; cards.style.display = "none";
+  stage.style.display = "block"; stage.classList.remove("torn");
+  stage.innerHTML = '<img src="/api/banners?s=pack" alt=""' + (kind === "g" ? ' style="border:3px solid #f5c518"' : '') + '><div style="font-weight:900;margin-top:10px;color:#f5c518;letter-spacing:1px">' + (kind === "g" ? "GOLD PACK" : "PROP AGENT PACK") + '</div><div class="note">Tap to open</div>';
+  cap.textContent = "";
+  $("packPop").classList.add("open");
+}
+document.addEventListener("click", function(e){
+  var c = e.target && e.target.closest ? e.target.closest("[data-claimpack],[data-openpack],[data-sharepack]") : null;
+  if (!c) return;
+  if (c.hasAttribute("data-claimpack")) {
+    if (lsGet("pa_daily_day", "") !== dayStr()) { lsSet("pa_daily_day", dayStr()); var p = packsGet(); p.n = (p.n || 0) + 1; packsSet(p); }
+    renderPacks();
+  } else if (c.hasAttribute("data-openpack")) {
+    openPackPop(c.getAttribute("data-openpack"));
+  } else if (c.hasAttribute("data-sharepack")) {
+    var grant = function(){ if (lsGet("pa_share_day", "") !== dayStr()) { lsSet("pa_share_day", dayStr()); var p2 = packsGet(); p2.n = (p2.n || 0) + 1; packsSet(p2); } renderPacks(); };
+    if (navigator.share) { navigator.share({ title: "Prop Agent", text: "Play Prop Agent — real PrizePicks props, live tickets and collectible agent cards:", url: "https://prop-agent-bre.vercel.app/" }).then(grant).catch(function(){}); }
+    else if (navigator.clipboard) { navigator.clipboard.writeText("https://prop-agent-bre.vercel.app/").then(grant).catch(function(){}); }
+  }
 });
 loadPickemEvent();
 renderPickem();
@@ -2309,7 +2496,7 @@ function confetti(){
 function celebrateCheck(t){
   if (!t.result || animSeen[t.id]) return;
   animSeen[t.id] = 1; lsSet("pa_anim_seen", animSeen);
-  if (t.result==="win") confetti();
+  if (t.result==="win"){ confetti(); awardTicketPack(t); }
   else if (t.result==="loss"){
     var card = document.querySelector('[data-ticket="'+t.id+'"]');
     if (card) setTimeout(function(){ playRedX(card); }, 250);
