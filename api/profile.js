@@ -62,7 +62,8 @@ module.exports = async (req, res) => {
     if (req.method === "GET" && req.query && req.query.uid) {
       const uid = String(req.query.uid);
       if (!UUID_RE.test(uid)) { res.status(200).json({ ok: false, error: "bad uid" }); return; }
-      const p = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card&id=eq." + uid, { headers: sbHeaders() });
+      let p = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card,coins,battle_w,battle_l,ladder&id=eq." + uid, { headers: sbHeaders() });
+      if (p.status >= 300) p = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card&id=eq." + uid, { headers: sbHeaders() });
       const t = await rest("tickets?select=legs,status,created_at&user_id=eq." + uid + "&order=created_at.desc&limit=200", { headers: sbHeaders() });
       res.status(200).json({ ok: true, profile: (p.json && p.json[0]) || null, tickets: Array.isArray(t.json) ? t.json : [] });
       return;
@@ -77,11 +78,17 @@ module.exports = async (req, res) => {
       const avatarUrl = String(body.avatar_url || "").slice(0, 500);
       const featuredCard = String(body.featured_card || "").slice(0, 80);
       const wins = Math.max(0, parseInt(body.wins, 10) || 0);
+      const coins = Math.max(0, parseInt(body.coins, 10) || 0);
+      const battleW = Math.max(0, parseInt(body.battle_w, 10) || 0);
+      const battleL = Math.max(0, parseInt(body.battle_l, 10) || 0);
+      const ladderN = Math.max(0, Math.min(7, parseInt(body.ladder, 10) || 0));
       const rows = Array.isArray(body.tickets) ? body.tickets.slice(0, 200) : [];
-      const upsertProfile = (id) => rest("profiles", {
+      const upsertProfile = (id, full) => rest("profiles", {
         method: "POST",
         headers: sbHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }),
-        body: JSON.stringify({ id: id, display_name: name, wins: wins, avatar_url: avatarUrl, featured_card: featuredCard }),
+        body: JSON.stringify(full
+          ? { id: id, display_name: name, wins: wins, avatar_url: avatarUrl, featured_card: featuredCard, coins: coins, battle_w: battleW, battle_l: battleL, ladder: ladderN }
+          : { id: id, display_name: name, wins: wins, avatar_url: avatarUrl, featured_card: featuredCard }),
       });
       if (name !== "Guest Agent") {
         const cur = await rest("profiles?select=display_name&id=eq." + uid, { headers: sbHeaders() });
@@ -93,13 +100,15 @@ module.exports = async (req, res) => {
           if (taken) { res.status(200).json({ ok: false, error: "username taken" }); return; }
         }
       }
-      let up = await upsertProfile(uid);
+      let up = await upsertProfile(uid, true);
+      if (up.status >= 300 && (up.text || "").indexOf("23503") === -1) up = await upsertProfile(uid, false);
       if (up.status >= 300 && (up.text || "").indexOf("23503") > -1) {
         // Device id is not an auth user yet — create one and adopt its id.
         const newId = await createDeviceUser();
         if (newId) {
           uid = newId;
-          up = await upsertProfile(uid);
+          up = await upsertProfile(uid, true);
+          if (up.status >= 300 && (up.text || "").indexOf("23503") === -1) up = await upsertProfile(uid, false);
         }
       }
       if (up.status >= 300) { res.status(200).json({ ok: false, step: "profile", status: up.status, detail: (up.text || "").slice(0, 200) }); return; }
