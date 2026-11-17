@@ -236,6 +236,12 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #playerDlg .pdlgbody{max-height:62vh;overflow-y:auto}
 
 
+.pickem{border:2px solid #f5c518;border-radius:16px;padding:14px;background:radial-gradient(120% 140% at 20% 0%,#3b2f0b 0%,#17130a 55%,#101018 100%);box-shadow:0 0 24px #f5c51833;margin:10px 0}
+.pk-kick{color:#f5c518;font-weight:900;letter-spacing:1.5px;font-size:12px}
+.pk-title{font-size:19px;font-weight:900;margin:4px 0 2px}
+.pickbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:#17171f;border:1.5px solid #33333f;color:#fff;border-radius:12px;padding:11px 12px;font-weight:800;font-size:15px;margin-top:8px;cursor:pointer}
+.pickbtn.on{border-color:#f5c518;background:#2a230d;box-shadow:0 0 12px #f5c51844}
+.pickbtn img{width:24px;height:24px;object-fit:contain}
 </style>
 </head>
 <body>
@@ -259,6 +265,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <div id="liveHero"></div>
     <div id="heroStats"></div>
     <p class="note" id="heroStatus"></p>
+    <div id="pickemHome" class="pickemBox"></div>
     <div id="tickerWrap" style="display:none"><h2>Your Players Ticker</h2><p class="sub">Your picks, live — follows the players on your slip and tickets, updated with the scores every 30 seconds.</p><div class="tickwrap" id="yourTicker"></div></div>
     <div id="secAgents"><h2>Top Agents</h2>
     <p class="sub">Ranked by most winning tickets — tap an agent to see their shared tickets.</p>
@@ -379,6 +386,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 
   <!-- LEADERBOARD -->
   <section class="view" id="view-board">
+    <div id="pickemBoard" class="pickemBox"></div>
     <div class="card row" style="justify-content:space-between;align-items:center;gap:10px">
       <div><b>Your Agent</b><br><span class="note">Profile pic, name, wins and cards — saved to your cloud profile.</span></div>
       <button class="agentbtn" id="agentBtn">👤 Guest Agent</button>
@@ -965,7 +973,7 @@ function findProp(id){
 }
 
 /* ---------- home: top agents / upcoming / news ---------- */
-function myWins(){ return tickets.filter(function(t){ return t.result==="win"; }).length; }
+function myWins(){ return tickets.filter(function(t){ return t.result==="win"; }).length + (parseInt(lsGet("pa_bonuswins", 0), 10) || 0); }
 function maxWins(){ var m = 0; try { m = parseInt(lsGet("pa_maxwins", 0), 10) || 0; } catch(e){} var w = myWins(); if (w > m){ m = w; try { lsSet("pa_maxwins", m); } catch(e){} } return m; }
 function agentRows(){
   var rows = cloudAgents
@@ -1952,6 +1960,7 @@ function tierCardHTML(t, wins, withBtns, ci){
 }
 
 function renderBoard(){
+  renderPickem();
   var rows = agentRows();
   $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Wins</th></tr>'
     + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b></td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
@@ -1974,12 +1983,122 @@ function renderBoard(){
       + '</div><div class="holo" style="--hc:#a78bfa59"></div></div>';
     return '<div class="tiercard unlocked"><div class="tierinner">' + front + cardBackHTML(esc(l.player), esc(l.team || "") + '<br>' + esc(l.matchup || "") + '<br>Earned on a ticket where every leg hit.') + '</div></div>';
   }).join("");
-  $("myCards").innerHTML = tierCards + playerCards;
+  $("myCards").innerHTML = '<div style="grid-column:1/-1" class="note">⭐ SPECIAL CARDS — Weekly Pick\'em rewards</div>' + specialCardHTML() + tierCards + playerCards;
   document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); var av0 = b.getAttribute("data-avatar")||""; profile.avatar = av0; profile.featured = b.getAttribute("data-featured")||""; if (av0.indexOf("/api/avatars") === 0) profile.char = av0; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
   document.querySelectorAll(".dlcard").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadCard(b.getAttribute("data-kind"), parseInt(b.getAttribute("data-idx"),10), b); }); });
+  document.querySelectorAll(".setprofs").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); profile.avatar = b.getAttribute("data-avatar") || ""; profile.featured = b.getAttribute("data-featured") || ""; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
+  document.querySelectorAll(".dlspecial").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadSpecialCard(b); }); });
   document.querySelectorAll("#cardStrip img").forEach(function(im){ im.addEventListener("click", function(){ localStorage.setItem("pa_cardchar", im.getAttribute("data-ci")); renderBoard(); }); });
   document.querySelectorAll(".tiercard").forEach(function(c){ c.addEventListener("click", function(){ c.classList.toggle("flipped"); }); });
 }
+
+/* ---------- Weekly Pick'em (special card reward) ---------- */
+var WEEKLY_PICKEM = { week: "2026-W47", lgKey: "nfl", eventId: "401873066", starts: "2026-11-20T01:15Z", away: "Indianapolis Colts", home: "Houston Texans", awayShort: "Colts", homeShort: "Texans", note: "Thursday Night Football", cardName: "THE ORACLE", art: "/api/avatars?s=13" };
+function specialUnlocked(){ return (lsGet("pa_special", []) || []).indexOf(WEEKLY_PICKEM.week) >= 0; }
+function pickemWhen(){ try { return new Date(WEEKLY_PICKEM.starts).toLocaleString("en-US", { timeZone: "America/Denver", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); } catch(e){ return ""; } }
+function loadPickemEvent(){
+  var now = Date.now(); if (window._pkFetch && now - window._pkFetch < 25000) return; window._pkFetch = now;
+  var cfg = WEEKLY_PICKEM;
+  var lg = LEAGUES.filter(function(x){ return x.key === cfg.lgKey; })[0]; if (!lg) return;
+  var d = new Date(new Date(cfg.starts).getTime() - 5 * 3600 * 1000);
+  var ymd = d.getUTCFullYear() + ("0" + (d.getUTCMonth() + 1)).slice(-2) + ("0" + d.getUTCDate()).slice(-2);
+  fetchJson(ESPN + lg.sport + "/" + lg.league + "/scoreboard?dates=" + ymd).then(function(r){
+    var evs = (r && r.events) || [], ev = null;
+    evs.forEach(function(e){ if (String(e.id) === String(cfg.eventId)) ev = e; });
+    if (!ev || !ev.competitions || !ev.competitions[0]) return;
+    var comp = ev.competitions[0], cs = comp.competitors || [];
+    var aw = cs.filter(function(c){ return c.homeAway === "away"; })[0] || cs[0];
+    var hm = cs.filter(function(c){ return c.homeAway === "home"; })[0] || cs[1];
+    var stt = (comp.status && comp.status.type) || {};
+    window._pickemEv = { state: stt.state || "pre", awayLogo: aw ? logoUrl(aw) : "", homeLogo: hm ? logoUrl(hm) : "", winnerSide: (hm && hm.winner) ? "home" : ((aw && aw.winner) ? "away" : "") };
+    renderPickem();
+  }).catch(function(){});
+}
+function renderPickem(){
+  var boxes = document.querySelectorAll(".pickemBox");
+  if (!boxes.length) return;
+  var cfg = WEEKLY_PICKEM;
+  var pk = lsGet("pa_pickem", null);
+  var mine = (pk && pk.week === cfg.week) ? pk.side : "";
+  var ev = window._pickemEv || null;
+  var started = Date.now() >= new Date(cfg.starts).getTime();
+  var state = ev ? ev.state : (started ? "in" : "pre");
+  var head = '<div class="pk-kick">🏆 WEEKLY PICK\'EM</div><div class="pk-title">' + cfg.awayShort + ' @ ' + cfg.homeShort + '</div><div class="note">' + pickemWhen() + ' MST · ' + cfg.note + '</div>';
+  var body = "";
+  if (state === "post"){
+    var wname = ev.winnerSide === "home" ? cfg.home : (ev.winnerSide === "away" ? cfg.away : "");
+    if (mine && ev.winnerSide){
+      if (mine === ev.winnerSide){
+        if (!pk.counted){
+          pk.counted = true; lsSet("pa_pickem", pk);
+          var sp = lsGet("pa_special", []); if (sp.indexOf(cfg.week) < 0){ sp.push(cfg.week); lsSet("pa_special", sp); }
+          lsSet("pa_bonuswins", (parseInt(lsGet("pa_bonuswins", 0), 10) || 0) + 1);
+          try { confetti(); } catch(e){}
+          if (typeof refreshAgentBtn === "function") refreshAgentBtn();
+        }
+        body = '<div style="margin-top:10px;font-weight:900;color:#4ade80">🎉 You called it — the ' + wname + ' won! ' + cfg.cardName + ' is unlocked in My Cards (Board tab), and +1 win went to your tier progress.</div>';
+      } else body = '<div style="margin-top:10px;font-weight:800">The ' + wname + ' took it — no card this week. A new Weekly Pick\'em drops next week.</div>';
+    } else body = '<div style="margin-top:10px;font-weight:800">Final' + (wname ? ' — the ' + wname + ' won it' : '') + '. No pick was in for you this week.</div>';
+  } else if (state === "in" || started){
+    body = '<div style="margin-top:10px"><span class="livepill"><span class="dot"></span>LIVE</span> <b>Picking is closed</b>' + (mine ? ' — your pick: <b style="color:#f5c518">' + (mine === "home" ? cfg.home : cfg.away) + '</b>. Good luck!' : ' — the game has started, so the pick is gone for this week.') + '</div>';
+  } else {
+    var artRow = '<div style="display:flex;gap:10px;align-items:center;margin-top:9px"><img src="' + cfg.art + '" alt="" style="width:52px;height:62px;object-fit:cover;border-radius:8px;border:1.5px solid #f5c518"><div class="note" style="color:#e5e9f2">Call it right and unlock <b style="color:#f5c518">' + cfg.cardName + '</b> — a rare special card for your collection — plus <b style="color:#f5c518">+1 win</b> toward your tiers.</div></div>';
+    var btn = function(side, name, logo){ return '<button class="pickbtn' + (mine === side ? ' on' : '') + '" data-pickem="' + side + '">' + (logo ? '<img src="' + logo + '" alt="">' : '') + name + (mine === side ? ' ✓' : '') + '</button>'; };
+    body = artRow + btn("away", cfg.away, ev ? ev.awayLogo : "") + btn("home", cfg.home, ev ? ev.homeLogo : "")
+      + '<div class="note" style="margin-top:7px">' + (mine ? 'Pick saved — you can change it until kickoff. It locks the second the game starts.' : 'Tap a team to make your pick. It locks the second the game starts.') + '</div>';
+  }
+  var h = '<div class="pickem">' + head + body + '</div>';
+  boxes.forEach(function(b){ b.innerHTML = h; });
+}
+function specialCardHTML(){
+  var cfg = WEEKLY_PICKEM, un = specialUnlocked();
+  var front = '<div class="flipfront" style="border:3px solid #f5c518;--tc:#f5c518;box-shadow:0 12px 26px rgba(0,0,0,.38), 0 0 22px #f5c51859, inset 0 1px 0 rgba(255,255,255,.05)">'
+    + '<div class="tcplate"><span class="tcname">' + cfg.cardName + '</span><span class="tcno">SPECIAL</span></div>'
+    + '<div class="tcwin"><img class="cardart" src="' + cfg.art + '" alt="">' + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
+    + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">WEEKLY PICK\'EM</span><span class="rarpill" style="background:#f5c518;color:#1a1405">SPECIAL EDITION</span></div>'
+    + '<div class="tierto" style="margin-top:6px">' + (un ? 'Unlocked — in your collection · +1 win added to your tier progress' : 'Call the Weekly Pick\'em game right to unlock this rare card') + '</div>'
+    + (un ? '<button class="setprofs mini" data-avatar="' + cfg.art + '" data-featured="The Oracle · Special Card">Set as profile card</button> <button class="dlspecial mini">Download PNG</button>' : '')
+    + '</div><div class="holo" style="--hc:#f5c51859"></div></div>';
+  return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cfg.cardName + ' · SPECIAL EDITION', 'The Weekly Pick\'em reward. Call the featured game before it starts; if your team wins, this card joins your collection and you get +1 win toward your tiers.') + '</div></div>';
+}
+function downloadSpecialCard(btn){
+  var cfg = WEEKLY_PICKEM;
+  if (btn) btn.textContent = "Saving…";
+  var W = 630, H = 900, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  var ctx = cv.getContext("2d");
+  ctx.fillStyle = "#0d0d13"; ctx.fillRect(0, 0, W, H);
+  var img = new Image();
+  img.onload = function(){
+    var iw = W - 56, ih = 660, ix = 28, iy = 28;
+    var sc = Math.max(iw / img.width, ih / img.height), dw = img.width * sc, dh = img.height * sc;
+    ctx.save(); ctx.beginPath(); ctx.rect(ix, iy, iw, ih); ctx.clip();
+    ctx.drawImage(img, ix + (iw - dw) / 2, iy + (ih - dh) / 2, dw, dh); ctx.restore();
+    ctx.strokeStyle = "#f5c518"; ctx.lineWidth = 6; ctx.strokeRect(14, 14, W - 28, H - 28);
+    ctx.fillStyle = "#f5c518"; ctx.font = "900 44px system-ui, sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(cfg.cardName, W / 2, 770);
+    ctx.fillStyle = "#e5e9f2"; ctx.font = "700 25px system-ui, sans-serif";
+    ctx.fillText("WEEKLY PICK'EM · SPECIAL EDITION", W / 2, 815);
+    ctx.fillStyle = "#9aa7bd"; ctx.font = "600 21px system-ui, sans-serif";
+    ctx.fillText("PROP AGENT", W / 2, 855);
+    cv.toBlob(function(bl){
+      var a = document.createElement("a"); a.href = URL.createObjectURL(bl); a.download = "the-oracle-special-card.png"; a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+      if (btn){ btn.textContent = "Saved ✓"; setTimeout(function(){ btn.textContent = "Download PNG"; }, 1600); }
+    });
+  };
+  img.onerror = function(){ if (btn) btn.textContent = "Download PNG"; };
+  img.src = cfg.art;
+}
+document.addEventListener("click", function(e){
+  var b = e.target && e.target.closest ? e.target.closest("[data-pickem]") : null;
+  if (!b) return;
+  if (Date.now() >= new Date(WEEKLY_PICKEM.starts).getTime()){ renderPickem(); return; }
+  lsSet("pa_pickem", { week: WEEKLY_PICKEM.week, side: b.getAttribute("data-pickem"), ts: Date.now() });
+  renderPickem();
+});
+loadPickemEvent();
+renderPickem();
+setInterval(function(){ loadPickemEvent(); renderPickem(); }, 30000);
 
 /* ---------- profile + push ---------- */
 function refreshAgentBtn(){
