@@ -167,6 +167,8 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .cardsec-h{width:100%;display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,rgba(124,58,237,.25),rgba(245,185,66,.12));border:1px solid rgba(167,139,250,.45);border-radius:11px;padding:9px 12px;color:#fff;font-weight:900;font-size:13px;letter-spacing:.4px;cursor:pointer;text-align:left}
 .cscount{margin-left:auto;font-size:11px;color:#f5c518;font-weight:800;white-space:nowrap}
 .cschev{font-size:13px;color:#c4b5fd}
+.csbtn{background:linear-gradient(135deg,#7C3AED,#5b21b6);border:1px solid #f5b942;color:#fff;font-weight:900;font-size:11px;letter-spacing:.6px;padding:6px 12px;border-radius:999px;box-shadow:0 3px 10px rgba(124,58,237,.45);white-space:nowrap}
+.sectoggle{display:block;width:100%;padding:13px;border-radius:12px;border:2px solid #f5b942;background:linear-gradient(135deg,#7C3AED,#5b21b6);color:#fff;font-weight:900;font-size:15px;letter-spacing:1.2px;cursor:pointer;margin:0 0 10px;box-shadow:0 6px 18px rgba(124,58,237,.4)}
 .cardsec-b{margin-top:9px}
 .cardsec.closed .cardsec-b{display:none}
 .clashad{perspective:600px;border-radius:16px;box-shadow:0 14px 30px rgba(0,0,0,.55), 0 0 24px rgba(245,185,66,.35), inset 0 1px 0 rgba(255,255,255,.25)}
@@ -706,8 +708,8 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <p class="sub">Agents you follow and their latest shared tickets.</p>
     <div id="followingBox"><p class="empty">Loading…</p></div>
     <h2>🏆 Tiers</h2>
-    <p class="sub">Climb the ladder by locking winning tickets. A win counts only when every leg on the ticket hits.</p>
-    <div class="grid" id="tiers"></div>
+    <button type="button" id="tiersToggle" class="sectoggle">&#9660; HIDE THE TIERS</button><div id="tiersBody"><p class="sub">Climb the ladder by locking winning tickets. A win counts only when every leg on the ticket hits.</p>
+    <div class="grid" id="tiers"></div></div>
     <h2>🎁 My Packs</h2>
     <p class="sub">One FREE pack every day — plus earn more by winning tickets and sharing the app. Every pack holds 3 foil cards. Gold foil cards (Gold tier &amp; up) hide in packs too — a little tough to pull, about 1 slot in 5… and one pack in a hundred hides THE RING 🏆</p>
     <div id="clashBox"></div>
@@ -1576,11 +1578,21 @@ function findProp(id){
 /* ---------- home: top agents / upcoming / news ---------- */
 function myWins(){ return tickets.filter(function(t){ return t.result==="win" && !ticketHasCustom(t); }).length + (parseInt(lsGet("pa_bonuswins", 0), 10) || 0) + (parseInt(lsGet("pa_winbank", 0), 10) || 0) + (parseInt(lsGet("pa_battlewins", 0), 10) || 0); }
 function maxWins(){ var m = 0; try { m = parseInt(lsGet("pa_maxwins", 0), 10) || 0; } catch(e){} var w = myWins(); if (w > m){ m = w; try { lsSet("pa_maxwins", m); } catch(e){} } return m; }
+function frameColor(feat){
+  var s = String(feat || "");
+  if (!s) return "";
+  if (/stamp|ring|special/i.test(s)) return "#f5b942";
+  for (var i = TIERS.length - 1; i >= 0; i--){ if (s.indexOf(TIERS[i].name) >= 0) return TIERS[i].color; }
+  return "";
+}
+function frameStyle(feat, w){ var c = frameColor(feat); return c ? ("border:" + (w || 2) + "px solid " + c + ";box-shadow:0 0 9px " + c + "99") : ""; }
+function frameCss(feat, w){ var s = frameStyle(feat, w); return s ? ";" + s : ""; }
+function applyAvatarFrame(el, feat){ if (!el) return; var c = frameColor(feat); el.style.border = c ? "3px solid " + c : ""; el.style.boxShadow = c ? "0 0 14px " + c + "99" : ""; }
 function agentRows(){
   var rows = cloudAgents
-    ? cloudAgents.filter(function(a){ return a.id !== cloudUid; }).map(function(a){ return {id:a.id, name:a.display_name||"Agent", wins:a.wins||0, me:false, avatar:a.avatar_url||"", streak:(typeof agentStreaks !== "undefined" && agentStreaks[a.id]) || 0}; })
+    ? cloudAgents.filter(function(a){ return a.id !== cloudUid; }).map(function(a){ return {id:a.id, name:a.display_name||"Agent", wins:a.wins||0, me:false, avatar:a.avatar_url||"", featured:a.featured_card||"", streak:(typeof agentStreaks !== "undefined" && agentStreaks[a.id]) || 0}; })
     : SEED_AGENTS.map(function(a){ return {id:"", name:a.name, wins:a.wins, me:false, avatar:"", streak:0}; });
-  rows.push({id:cloudUid, name:(profile.name||"You")+" (You)", wins:myWins(), me:true, avatar:profile.avatar||"", streak:myStreak()});
+  rows.push({id:cloudUid, name:(profile.name||"You")+" (You)", wins:myWins(), me:true, avatar:profile.avatar||"", featured:profile.featured||"", streak:myStreak()});
   rows.sort(function(a,b){ return b.wins-a.wins; });
   return rows;
 }
@@ -1589,7 +1601,7 @@ function renderTopAgents(){
   var rows = agentRows().slice(0,5);
   setHtml($("topAgents"), '<div class="card">'+rows.map(function(r,i){
     var t = tierFor(r.wins);
-    return '<div class="leg'+(r.id?' agentclick':'')+'"'+(r.id?' data-agent="'+r.id+'"':'')+'><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.name+'</span>'+streakBadge(r.streak)+'</div><span class="note">'+r.wins+' winning tickets</span></div>';
+    return '<div class="leg'+(r.id?' agentclick':'')+'"'+(r.id?' data-agent="'+r.id+'"':'')+'><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px' + frameCss(r.featured, 2) + '">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.name+'</span>'+streakBadge(r.streak)+'</div><span class="note">'+r.wins+' winning tickets</span></div>';
   }).join("")+'</div>');
 }
 function renderUpcoming(){
@@ -2637,14 +2649,14 @@ function tierCardHTML(t, wins, withBtns, ci){
 function cardSec(id, title, count, inner, openDefault){
   var st = lsGet("pa_cardsecs", {});
   var open = (id in st) ? !!st[id] : openDefault;
-  return '<div class="cardsec' + (open ? '' : ' closed') + '"><button class="cardsec-h" data-cardsec="' + id + '"><span>' + title + '</span><span class="cscount">' + count + '</span><span class="cschev">' + (open ? '\u25BE' : '\u25B8') + '</span></button><div class="cardsec-b"><div class="cardsgrid">' + inner + '</div></div></div>';
+  return '<div class="cardsec' + (open ? '' : ' closed') + '"><button class="cardsec-h" data-cardsec="' + id + '"><span>' + title + '</span><span class="cscount">' + count + '</span><span class="csbtn">' + (open ? '\u25BE HIDE' : '\u25B8 SHOW') + '</span></button><div class="cardsec-b"><div class="cardsgrid">' + inner + '</div></div></div>';
 }
 function renderBoard(){
   renderPickem();
   renderFollowing();
   var rows = agentRows();
   $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Wins</th></tr>'
-    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+(r.id?' class="agentclick" data-agent="'+r.id+'"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px">':'')+'<b>'+esc(r.name)+'</b>'+streakBadge(r.streak)+'</td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
+    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+(r.id?' class="agentclick" data-agent="'+r.id+'"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px' + frameCss(r.featured, 2) + '">':'')+'<b>'+esc(r.name)+'</b>'+streakBadge(r.streak)+'</td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
   var wins = maxWins();
   $("tiers").innerHTML = TIERS.map(function(t){ return tierCardHTML(t, wins, false, charIdxOf()); }).join("");
   var cards = allPlayerCardLegs();
@@ -2676,7 +2688,7 @@ function renderBoard(){
     + cardSec("stamps", "🌟 GOLD FOIL STAMPS — 1 in ~7 packs", stampsGet().length + " of 12", stampCardsOnly, false)
     + (fl0.length ? cardSec("foils", "✨ FOIL CARDS — from packs", fl0.length + " pulled", foilCardsOnly, false) : "")
     + cardSec("special", "⭐ SPECIAL CARDS — Pick'em & chase", specN + " of 2", specialCardHTML() + ringCardHTML(), false);
-  document.querySelectorAll(".cardsec-h").forEach(function(h){ h.addEventListener("click", function(){ var sec = h.parentElement; var nowClosed = sec.classList.toggle("closed"); var st = lsGet("pa_cardsecs", {}); st[h.getAttribute("data-cardsec")] = !nowClosed; lsSet("pa_cardsecs", st); var ch = h.querySelector(".cschev"); if (ch) ch.textContent = nowClosed ? "\u25B8" : "\u25BE"; sfx("click"); }); });
+  document.querySelectorAll(".cardsec-h").forEach(function(h){ h.addEventListener("click", function(){ var sec = h.parentElement; var nowClosed = sec.classList.toggle("closed"); var st = lsGet("pa_cardsecs", {}); st[h.getAttribute("data-cardsec")] = !nowClosed; lsSet("pa_cardsecs", st); var ch = h.querySelector(".csbtn"); if (ch) ch.textContent = nowClosed ? "\u25B8 SHOW" : "\u25BE HIDE"; sfx("click"); }); });
   document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); var av0 = b.getAttribute("data-avatar")||""; profile.avatar = av0; profile.featured = b.getAttribute("data-featured")||""; if (av0.indexOf("/api/avatars") === 0) profile.char = av0; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
   document.querySelectorAll(".dlcard").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadCard(b.getAttribute("data-kind"), parseInt(b.getAttribute("data-idx"),10), b); }); });
   document.querySelectorAll(".setprofs").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); profile.avatar = b.getAttribute("data-avatar") || ""; profile.featured = b.getAttribute("data-featured") || ""; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
@@ -3071,12 +3083,12 @@ function clashGrant(n){
 function clashLbHtml(){
   var mine = battlesGet();
   var list = [];
-  if (cloudAgents) cloudAgents.forEach(function(a){ var w = a.battle_w || 0, l = a.battle_l || 0; if (a.id === cloudUid) { w = Math.max(w, mine.w || 0); l = Math.max(l, mine.l || 0); } if (w > 0) list.push({ name: a.display_name || "Agent", w: w, l: l, avatar: a.avatar_url || "", me: a.id === cloudUid }); });
-  if (!list.some(function(c){ return c.me; }) && (mine.w || 0) > 0) list.push({ name: profile.name || "You", w: mine.w || 0, l: mine.l || 0, avatar: profile.avatar || "", me: true });
+  if (cloudAgents) cloudAgents.forEach(function(a){ var w = a.battle_w || 0, l = a.battle_l || 0; if (a.id === cloudUid) { w = Math.max(w, mine.w || 0); l = Math.max(l, mine.l || 0); } if (w > 0) list.push({ name: a.display_name || "Agent", w: w, l: l, avatar: a.avatar_url || "", featured: a.featured_card || "", me: a.id === cloudUid }); });
+  if (!list.some(function(c){ return c.me; }) && (mine.w || 0) > 0) list.push({ name: profile.name || "You", w: mine.w || 0, l: mine.l || 0, avatar: profile.avatar || "", featured: profile.featured || "", me: true });
   list.sort(function(a, b){ return b.w - a.w || a.l - b.l; });
   list = list.slice(0, 5);
   if (!list.length) return '<div class="clashlb"><div class="clashlb-t">\uD83C\uDFC6 TOP CLASHERS \u2014 most Grid Clash wins</div><div class="clashlb-none">No battle wins yet \u2014 be the first on this board!</div></div>';
-  return '<div class="clashlb"><div class="clashlb-t">\uD83C\uDFC6 TOP CLASHERS \u2014 most Grid Clash wins</div>' + list.map(function(c, i){ return '<div class="clashlb-r' + (c.me ? ' me' : '') + '"><span class="clashlb-rk">' + (i + 1) + '</span>' + (c.avatar ? '<img src="' + esc(c.avatar) + '" alt="">' : '') + '<span class="clashlb-nm">' + esc(c.name) + (c.me ? ' (You)' : '') + '</span><span class="clashlb-w">' + c.w + 'W \u2013 ' + c.l + 'L</span></div>'; }).join("") + '</div>';
+  return '<div class="clashlb"><div class="clashlb-t">\uD83C\uDFC6 TOP CLASHERS \u2014 most Grid Clash wins</div>' + list.map(function(c, i){ return '<div class="clashlb-r' + (c.me ? ' me' : '') + '"><span class="clashlb-rk">' + (i + 1) + '</span>' + (c.avatar ? '<img src="' + esc(c.avatar) + '" alt=""' + (frameStyle(c.featured, 2) ? ' style="' + frameStyle(c.featured, 2) + '"' : '') + '>' : '') + '<span class="clashlb-nm">' + esc(c.name) + (c.me ? ' (You)' : '') + '</span><span class="clashlb-w">' + c.w + 'W \u2013 ' + c.l + 'L</span></div>'; }).join("") + '</div>';
 }
 function renderClash(){
   var box = $("clashBox"); if (!box) return;
@@ -3725,7 +3737,7 @@ function openAgent(id, refresh){
     if (!j || !j.ok || !j.profile) { body.innerHTML = '<p class="empty">Could not load this agent.</p>'; return; }
     var p = j.profile, t = tierFor(p.wins || 0), mine = id === cloudUid;
     var st = j.stats || { tickets: 0, wins: p.wins || 0, recordW: 0, recordL: 0, winPct: null, streak: 0, best: 0 };
-    var head = '<div class="row" style="gap:12px;align-items:center"><img src="' + esc(p.avatar_url || "/api/icons?s=192") + '" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:19px;font-weight:900">' + esc(fmtUser(p.display_name || "Agent")) + streakBadge(st.streak) + '</div><div class="note">' + t.name + ' · ' + (p.wins || 0) + ' wins · ' + (followCounts[id] || 0) + ' followers' + (p.featured_card ? ' · ' + esc(p.featured_card) : '') + '</div></div><button class="ghostbtn" id="vaClose">Close</button></div>'
+    var head = '<div class="row" style="gap:12px;align-items:center"><img src="' + esc(p.avatar_url || "/api/icons?s=192") + '" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)' + frameCss(p.featured_card, 3) + '" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:19px;font-weight:900">' + esc(fmtUser(p.display_name || "Agent")) + streakBadge(st.streak) + '</div><div class="note">' + t.name + ' · ' + (p.wins || 0) + ' wins · ' + (followCounts[id] || 0) + ' followers' + (p.featured_card ? ' · ' + esc(p.featured_card) : '') + '</div></div><button class="ghostbtn" id="vaClose">Close</button></div>'
       + (mine ? '<p class="sub" style="margin-top:8px">This is you — exactly what other agents see on your public profile.</p>' : '<div style="margin-top:10px"><button type="button" class="ghostbtn" id="vaFollow" style="font-weight:800;padding:9px 16px;' + (isFollowing(id) ? '' : 'background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none') + '">' + (isFollowing(id) ? '✓ Following — tap to unfollow' : '+ Follow') + '</button></div>');
     var statsRow = '<div class="row" style="gap:7px;flex-wrap:wrap;margin-top:12px">'
       + '<span class="badge">🏆 ' + (st.wins || 0) + ' wins</span>'
@@ -3776,7 +3788,7 @@ function renderSearchResults(){
     if (!j.results.length) { box.innerHTML = '<p class="empty">No agents match "' + esc(q) + '" yet.</p>'; return; }
     box.innerHTML = j.results.map(function(r){
       var t = tierFor(r.wins || 0), isMe = r.id === cloudUid;
-      return '<div class="leg"><span data-agent="' + r.id + '" class="agentclick" style="display:flex;align-items:center;gap:9px;flex:1;min-width:0">' + (r.avatar_url ? '<img src="' + esc(r.avatar_url) + '" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover">' : '') + '<span style="min-width:0"><b>' + esc(fmtUser(r.display_name || "Agent")) + '</b>' + streakBadge(agentStreaks[r.id] || 0) + '<br><span class="note">' + t.name + ' · ' + (r.wins || 0) + ' wins · ' + (r.followers || 0) + ' followers</span></span></span>' + (isMe ? '<span class="note">You</span>' : '<button type="button" class="likebtn' + (r.following ? ' on' : '') + '" data-follow="' + r.id + '">' + (r.following ? '✓ Following' : '+ Follow') + '</button>') + '</div>';
+      return '<div class="leg"><span data-agent="' + r.id + '" class="agentclick" style="display:flex;align-items:center;gap:9px;flex:1;min-width:0">' + (r.avatar_url ? '<img src="' + esc(r.avatar_url) + '" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover' + frameCss(r.featured_card || "", 2) + '">' : '') + '<span style="min-width:0"><b>' + esc(fmtUser(r.display_name || "Agent")) + '</b>' + streakBadge(agentStreaks[r.id] || 0) + '<br><span class="note">' + t.name + ' · ' + (r.wins || 0) + ' wins · ' + (r.followers || 0) + ' followers</span></span></span>' + (isMe ? '<span class="note">You</span>' : '<button type="button" class="likebtn' + (r.following ? ' on' : '') + '" data-follow="' + r.id + '">' + (r.following ? '✓ Following' : '+ Follow') + '</button>') + '</div>';
     }).join("");
   });
 }
@@ -3832,12 +3844,12 @@ setInterval(function(){ loadPickemEvent(); renderPickem(); }, 30000);
 /* ---------- profile + push ---------- */
 function refreshAgentBtn(){
   var t = tierFor(myWins());
-  $("agentBtn").innerHTML = (profile.avatar ? '<img src="'+esc(profile.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px"> ' : "👤 ") + esc(profile.name || "Guest Agent") + " · <b>" + t.name + "</b>";
+  $("agentBtn").innerHTML = (profile.avatar ? '<img src="'+esc(profile.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px' + frameCss(profile.featured, 2) + '"> ' : "👤 ") + esc(profile.name || "Guest Agent") + " · <b>" + t.name + "</b>";
 }
 var logoImgEl = $("logoImg"); if (logoImgEl) logoImgEl.addEventListener("click", function(){ var ab = $("agentBtn"); if (ab) ab.click(); });
 $("agentBtn").addEventListener("click", function(){
   $("agName").value = profile.name || ""; $("agEmail").value = profile.email || "";
-  var ai = $("agAvatarImg"); if (ai) { if (profile.avatar) { ai.src = profile.avatar; ai.style.display = ""; } else ai.style.display = "none"; }
+  var ai = $("agAvatarImg"); if (ai) { if (profile.avatar) { ai.src = profile.avatar; ai.style.display = ""; } else ai.style.display = "none"; } applyAvatarFrame(ai, profile.featured);
   var af = $("agFeatured"); if (af) af.textContent = String(profile.featured || "").replace(/^[^A-Za-z0-9]+/, "") || "No profile card set";
   var t = tierFor(myWins()), nx = nextTier(myWins());
   var _w = myWins(), _l = myLosses(), _st = myStreak(), _pct = (_w + _l) ? Math.round(100 * _w / (_w + _l)) : null;
@@ -3947,7 +3959,7 @@ function renderAvatarGrid(){
     im.style.cssText = "width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;cursor:pointer;border:3px solid " + (cur === u ? "#7C3AED" : "rgba(255,255,255,.08)");
     im.addEventListener("click", function(){
       profile.char = u; profile.avatar = u; lsSet("pa_profile", profile);
-      var ai = $("agAvatarImg"); if (ai) { ai.src = u; ai.style.display = ""; }
+      var ai = $("agAvatarImg"); if (ai) { ai.src = u; ai.style.display = ""; } applyAvatarFrame(ai, profile.featured);
       refreshAgentBtn(); renderBoard(); renderAvatarGrid(); cloudSave();
     });
     g.appendChild(im);
@@ -4242,6 +4254,13 @@ function refreshHome(){ renderTopAgents(); renderUpcoming(); renderNews(); rende
 $("refreshBtn").addEventListener("click", function(){ boardCache = {}; propsCache = {}; refreshHome(); if ($("view-live").classList.contains("on")) renderLive(); if (currentSport!=="all") renderBoards(); });
 $("gameDetail").addEventListener("click", function(e){ var b = e.target && e.target.closest ? e.target.closest(".gcBack") : null; if (b) closeGame(false); });
 var tkR = $("tkRefresh"); if (tkR) tkR.addEventListener("click", function(){ renderTickets(); });
+(function(){
+  var tb = $("tiersBody"), tg = $("tiersToggle"); if (!tb || !tg) return;
+  var st0 = lsGet("pa_cardsecs", {}); var open = ("tiers" in st0) ? !!st0["tiers"] : true;
+  var apply = function(){ tb.style.display = open ? "" : "none"; tg.innerHTML = open ? "\u25BE HIDE THE TIERS" : "\u25B8 SHOW THE TIERS"; };
+  apply();
+  tg.addEventListener("click", function(){ open = !open; var s2 = lsGet("pa_cardsecs", {}); s2["tiers"] = open; lsSet("pa_cardsecs", s2); apply(); sfx("click"); });
+})();
 refreshAgentBtn();
 renderAllSlips();
 refreshHome();
