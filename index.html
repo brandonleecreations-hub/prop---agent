@@ -177,6 +177,11 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .heroscore .hdash{color:var(--purp-lt);font-size:44px;font-weight:900;line-height:1}
 .herolive{display:inline-block;margin:12px 0 8px;background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.35);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:800}
 .herotap{color:var(--mut);font-size:13.5px;font-weight:700;text-align:center;margin:4px 0 0}
+.heroes2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hero2{padding:12px 12px 10px;margin:0}
+.hero2 .hrow{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-weight:800;font-size:14px;padding:2.5px 0;line-height:1.2}
+.hero2 .hrow b{font-size:20px;font-weight:900}
+.hero2 .hlg{font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:var(--purp-lt)}
 @media (max-width:640px){ .slip{position:static} .pline{font-size:21px} }
 .card{position:relative;box-shadow:0 12px 26px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05)}
 .stampwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:5}
@@ -882,13 +887,32 @@ function renderUpcoming(){
       var _su = $("secUpcoming"); if (_su) _su.style.display = _nl ? "none" : "";
       renderTicker();
       var hero = $("liveHero");
-      var heroSig = liveAll.map(function(g){ var tt = eventTeams(g.ev); return g.ev.id + ":" + tt.map(function(x){ return x.score||""; }).join("-"); }).join(",");
+      var PRIO = {nfl:0, nba:1, nhl:2, cfb:3, cbb:4, wbb:5, mlb:6, tennis:7};
+      var ranked = liveAll.slice().sort(function(x, y){ return (PRIO[x.lg.key] != null ? PRIO[x.lg.key] : 9) - (PRIO[y.lg.key] != null ? PRIO[y.lg.key] : 9); });
+      var picks = [];
+      ranked.forEach(function(g){ if (picks.length < 2 && !picks.some(function(p){ return p.lg.key === g.lg.key; })) picks.push(g); });
+      if (picks.length < 2) ranked.forEach(function(g){ if (picks.length < 2 && picks.indexOf(g) === -1) picks.push(g); });
+      var heroSig = picks.map(function(g){ var tt = eventTeams(g.ev); var st2 = g.ev.status && g.ev.status.type || {}; return g.ev.id + ":" + tt.map(function(x){ return x.score||""; }).join("-") + ":" + (st2.shortDetail||""); }).join(",");
       var heroChanged = heroSig !== window._heroSig;
       if (heroChanged) window._heroSig = heroSig;
       if (hero && heroChanged) {
-        if (!liveAll.length) { hero.innerHTML = ""; }
+        if (!picks.length) { hero.innerHTML = ""; }
+        else if (picks.length === 2) {
+          var miniHero = function(g){
+            var ts = eventTeams(g.ev);
+            var st = g.ev.status && g.ev.status.type || {};
+            var a = ts[0] || {}, b = ts[1] || {};
+            return '<div class="hero hero2" data-hero="' + g.lg.key + '|' + g.ev.id + '">'
+              + '<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px"><span class="hlg">' + esc(g.lg.label.toUpperCase()) + '</span><span class="herolive" style="margin:0;padding:3px 9px;font-size:11px">🔴 ' + esc(st.shortDetail || st.detail || "LIVE") + '</span></div>'
+              + '<div class="hrow"><span>' + esc(a.name || "") + '</span><b>' + esc(a.score != null ? a.score : "0") + '</b></div>'
+              + '<div class="hrow"><span>' + esc(b.name || "") + '</span><b>' + esc(b.score != null ? b.score : "0") + '</b></div>'
+              + '<p class="herotap" style="font-size:11.5px">Tap for game center →</p></div>';
+          };
+          hero.innerHTML = '<div class="heroes2">' + picks.map(miniHero).join("") + '</div>';
+          hero.querySelectorAll("[data-hero]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-hero").split("|"); showView("live"); openGame(p[0], p[1]); }); });
+        }
         else {
-          var g = liveAll[0], ts = eventTeams(g.ev);
+          var g = picks[0], ts = eventTeams(g.ev);
           var st = g.ev.status && g.ev.status.type || {};
           var a = ts[0] || {}, b = ts[1] || {};
           var nm = function(t){ var n = t.name || ""; var parts = n.split(" "); return {first: parts.slice(0,-1).join(" ") || n, last: parts[parts.length-1] || ""}; };
@@ -898,7 +922,7 @@ function renderUpcoming(){
             + '<div><span class="hscore">'+esc(a.score!=null?a.score:"0")+'</span> <span class="hdash">—</span> <span class="hscore">'+esc(b.score!=null?b.score:"0")+'</span></div>'
             + '<div class="heroname" style="text-align:right">'+esc(nb.first)+' '+esc(nb.last)+'<small>'+esc(nb.last)+'</small></div></div>'
             + '<div style="text-align:center"><span class="herolive">🔴 LIVE · '+esc(st.shortDetail||st.detail||g.lg.label)+'</span></div>'
-            + '<p class="herotap">Tap for team stats, player stats &amp; plays →</p></div>';
+            + '<p class="herotap">Tap for the game center — props, tracker &amp; plays →</p></div>';
           var hc = $("heroCard");
           if (hc) hc.addEventListener("click", function(){ showView("live"); openGame(g.lg.key, g.ev.id); });
         }
@@ -906,7 +930,7 @@ function renderUpcoming(){
       var hst = $("heroStats");
       if (hst && heroChanged) {
         if (!liveAll.length) hst.innerHTML = "";
-        else fetchJson(ESPN+g.lg.sport+"/"+g.lg.league+"/summary?event="+encodeURIComponent(g.ev.id)).then(function(sm){ renderPerf(hst, g.lg, sm); }).catch(function(){ hst.innerHTML = ""; });
+        else { var tg = picks[0]; fetchJson(ESPN+tg.lg.sport+"/"+tg.lg.league+"/summary?event="+encodeURIComponent(tg.ev.id)).then(function(sm){ renderPerf(hst, tg.lg, sm); }).catch(function(){ hst.innerHTML = ""; }); }
       }
     } catch(e) { /* hero is decorative — never break Home */ }
     var ups = [];
