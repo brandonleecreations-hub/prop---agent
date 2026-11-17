@@ -142,6 +142,10 @@ function noteFetch(sport) {
 const SB_URL = (process.env.SUPABASE_URL || "").replace(/\/+$/, "");
 const SB_SVC = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const DAILY_CREDIT_BUDGET = 30;
+// Brandon 2026-11-17: one-day lift -- on 2026-11-17 (ET) the cap is 50
+// so the day's next pull can complete; never above 50 that day, and the
+// normal 30/day cap resumes by itself the next ET day.
+function dailyCap() { return etToday() === "2026-11-17" ? 50 : DAILY_CREDIT_BUDGET; }
 const SLOT_HOURS_ET = [6, 16];
 function etSlot() {
   const h = etHour();
@@ -626,7 +630,7 @@ module.exports = async (req, res) => {
     const todayT = etToday();
     let totalT = 0; const sportsT = {};
     rowsT.forEach((r) => { const c = String(r.count_day || "") === todayT ? (r.credits_today | 0) : 0; sportsT[r.sport] = c; totalT += c; });
-    res.status(200).json({ ok: true, tally: true, day: todayT, cap: DAILY_CREDIT_BUDGET, totalToday: totalT, sports: sportsT });
+    res.status(200).json({ ok: true, tally: true, day: todayT, cap: dailyCap(), totalToday: totalT, sports: sportsT });
     return;
   }
   const sport = (req.query && req.query.sport) || "";
@@ -718,7 +722,7 @@ module.exports = async (req, res) => {
     if (slot === 0 || slotUsed) { await serveStaleOrFallback(res, sport, hit, sbRow); return; }
     const allRows = await sbCacheAll();
     const usedToday = (allRows || []).reduce((sum, r) => sum + (String(r.count_day || "") === etToday() ? (r.credits_today | 0) : 0), 0);
-    if (usedToday + 6 > DAILY_CREDIT_BUDGET) { await serveStaleOrFallback(res, sport, hit, sbRow); return; }
+    if (usedToday + 6 > dailyCap()) { await serveStaleOrFallback(res, sport, hit, sbRow); return; }
     sbClaimed = await sbClaim(sport, sbRow, slot);
     if (!sbClaimed) {
       const freshRow = await sbCacheRow(sport);
