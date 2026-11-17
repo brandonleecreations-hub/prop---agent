@@ -619,20 +619,6 @@ module.exports = async (req, res) => {
   if (!keys.length) { res.setHeader("Cache-Control", "no-store"); res.status(200).json({ ok: false, configured: false, props: [] }); return; }
   const sport = (req.query && req.query.sport) || "";
   if (SPORT_KEYS.indexOf(sport) === -1) { res.status(400).json({ ok: false, error: "unknown sport" }); return; }
-  if (req.query && req.query.debug === "sb") {
-    const diag = { urlSet: !!SB_URL, svcSet: !!SB_SVC };
-    try {
-      const r = await fetch(SB_URL + "/rest/v1/props_cache?select=sport&limit=3", { headers: { apikey: SB_SVC, Authorization: "Bearer " + SB_SVC } });
-      diag.plainStatus = r.status;
-      diag.plainBody = (await r.text()).slice(0, 200);
-    } catch (e) { diag.plainErr = String((e && e.message) || e).slice(0, 140); }
-    const row = await sbCacheRow(sport);
-    diag.rowKind = row === undefined ? "unavailable" : row === null ? "norow" : "row";
-    if (row) { diag.rowSlot = row.last_slot; diag.rowDay = row.count_day; diag.rowCredits = row.credits_today; diag.rowProps = Array.isArray(row.props) ? row.props.length : -1; diag.rowFetchedAt = row.fetched_at; }
-    res.setHeader("Cache-Control", "no-store");
-    res.status(200).json({ ok: true, debug: diag, props: [] });
-    return;
-  }
   const hit = cache[sport];
   // Break lane (Brandon 2026-11-16): while a game in this sport sits at
   // halftime / intermission / a quarter break, the client may ask for a
