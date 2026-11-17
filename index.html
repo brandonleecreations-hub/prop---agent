@@ -1392,7 +1392,6 @@ function renderUpcoming(){
       window._liveNow = liveAll.length;
       var _nl = liveAll.length===0;
       var _sa = $("secAgents"); if (_sa) _sa.style.display = _nl ? "none" : "";
-      var _su = $("secUpcoming"); if (_su) _su.style.display = _nl ? "none" : "";
       renderTicker();
       var hero = $("liveHero");
       var PRIO = {nfl:0, nba:1, nhl:2, cfb:3, cbb:4, wbb:5, mlb:6, tennis:7};
@@ -1446,8 +1445,18 @@ function renderUpcoming(){
       var st = ev.status && ev.status.type && ev.status.type.state;
       if (st==="pre") ups.push({lg:r.lg, ev:ev});
     }); });
-    ups.sort(function(a,b){ return new Date(a.ev.date)-new Date(b.ev.date); });
-    ups = ups.slice(0,6);
+    /* Few of the day's main games (Brandon 2026-11-17): league priority
+       first (same order as the live hero), at most 2 per sport so the list
+       mixes sports, then by start time. Max 6. */
+    var UPRIO = {nfl:0, nba:1, nhl:2, cfb:3, cbb:4, wbb:5, mlb:6, tennis:7};
+    ups.sort(function(a,b){ var pa = UPRIO[a.lg.key] != null ? UPRIO[a.lg.key] : 9, pb = UPRIO[b.lg.key] != null ? UPRIO[b.lg.key] : 9; return pa !== pb ? pa - pb : new Date(a.ev.date) - new Date(b.ev.date); });
+    var perSport = {}, mainUps = [];
+    ups.forEach(function(u){ var c = perSport[u.lg.key] || 0; if (c < 2 && mainUps.length < 6) { perSport[u.lg.key] = c + 1; mainUps.push(u); } });
+    ups = mainUps;
+    /* No live games on Home: the Upcoming section is the day's preview --
+       shown when it has games, left off the page entirely when it has
+       none (Brandon 2026-11-17). Rows already tap through to Game Center. */
+    var _su = $("secUpcoming"); if (_su) _su.style.display = (window._liveNow === 0 && !ups.length) ? "none" : "";
     var upChanged = setHtml($("upcoming"), ups.length ? ups.map(function(u){
       var ts = eventTeams(u.ev);
       var aU = ts.filter(function(t){ return t.homeAway==="away"; })[0], hU = ts.filter(function(t){ return t.homeAway==="home"; })[0];
