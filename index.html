@@ -554,7 +554,12 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .fcard.lunge{animation:lungeA .45s ease}
 .fcard.hitshake{animation:hitshakeA .5s ease}
 @keyframes lungeA{30%{transform:scale(1.07) translateY(-4px)}}
-@keyframes hitshakeA{15%,45%,75%{transform:translateX(-5px)}30%,60%,90%{transform:translateX(5px)}}
+@keyframes hitshakeA{15%,45%,75%{transform:translateX(-5px) rotate(-2deg)}30%,60%,90%{transform:translateX(5px) rotate(2deg)}}
+.fxpop{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:54px;z-index:6;pointer-events:none;filter:drop-shadow(0 12px 16px rgba(0,0,0,.65));animation:fxpopA .65s cubic-bezier(.2,1.6,.4,1)}
+@keyframes fxpopA{0%{transform:perspective(500px) scale(.2) rotate(-26deg) translateZ(-80px);opacity:0}40%{transform:perspective(500px) scale(1.35) rotate(8deg) translateZ(60px);opacity:1}65%{transform:perspective(500px) scale(1.02) rotate(0deg) translateZ(20px)}100%{transform:perspective(500px) scale(1.15) translateZ(30px)}}
+.fxpop.shield{font-size:50px;filter:drop-shadow(0 0 20px rgba(96,165,250,.9)) drop-shadow(0 12px 16px rgba(0,0,0,.6));animation-name:fxpopB}
+@keyframes fxpopB{0%{transform:perspective(500px) scale(.2) rotateY(-70deg);opacity:0}45%{transform:perspective(500px) scale(1.3) rotateY(12deg);opacity:1}70%{transform:perspective(500px) scale(1.03) rotateY(0deg)}100%{transform:perspective(500px) scale(1.12)}}
+@media (prefers-reduced-motion: reduce){ .fxpop{animation:none} }
 .clashmid{text-align:center;margin:12px 0 2px}
 .vsbadge{display:inline-block;background:#e5484d;color:#fff;font-weight:900;border-radius:8px;padding:2px 12px;letter-spacing:2px;box-shadow:0 0 16px rgba(229,72,77,.5)}
 .dice{font-size:42px;margin-top:6px;display:flex;gap:16px;justify-content:center;line-height:1.1}
@@ -3451,7 +3456,7 @@ function clashMenu(){
 }
 function clashSetup(mode){
   var boss = mode === "ladder" ? Math.min(ladderGet() + 1, 7) : 0;
-  CL = { mode: mode, boss: boss, sel: 0, mine: [null, null], cpu: null, myActive: 0, cpuActive: 0, round: 1, busy: false, over: false, tagged: false, lastHit: null, lastWin: null, log: [], grid: ["", "", "", "", "", "", "", "", ""], myBonus: 0, cpuBonus: 0, myGuard: 0, cpuGuard: 0, myTemp: 0, cpuTemp: 0, placing: null, abilityPick: null, ttLine: null, ttResolve: null, abResolve: null, phase: null, flip: null, firstPlayer: null, myDeck: [], cpuDeck: [], myHand: [], cpuHand: [], myPile: [], cpuPile: [], drawPop: 0, statSurge: 0, justShuffled: false, itemUsedRound: 0, cpuItemRound: 0, myFreeHit: false, cpuFreeHit: false, planned: false, scoutText: null };
+  CL = { mode: mode, boss: boss, sel: 0, mine: [null, null], cpu: null, myActive: 0, cpuActive: 0, round: 1, busy: false, over: false, tagged: false, lastHit: null, lastWin: null, lastBlock: null, log: [], grid: ["", "", "", "", "", "", "", "", ""], myBonus: 0, cpuBonus: 0, myGuard: 0, cpuGuard: 0, myTemp: 0, cpuTemp: 0, placing: null, abilityPick: null, ttLine: null, ttResolve: null, abResolve: null, phase: null, flip: null, firstPlayer: null, myDeck: [], cpuDeck: [], myHand: [], cpuHand: [], myPile: [], cpuPile: [], drawPop: 0, statSurge: 0, justShuffled: false, itemUsedRound: 0, cpuItemRound: 0, myFreeHit: false, cpuFreeHit: false, planned: false, scoutText: null };
   clashPickRender();
 }
 function clashPickRender(){
@@ -3503,7 +3508,7 @@ function clashCpuPair(){
 }
 function clashStartFight(){
   CL.cpu = clashCpuPair();
-  CL.myActive = 0; CL.cpuActive = 0; CL.round = 1; CL.busy = false; CL.over = false; CL.tagged = false; CL.lastHit = null; CL.lastWin = null; CL.grid = ["", "", "", "", "", "", "", "", ""]; CL.myBonus = 0; CL.cpuBonus = 0; CL.myGuard = 0; CL.cpuGuard = 0; CL.myTemp = 0; CL.cpuTemp = 0; CL.placing = null; CL.abilityPick = null; CL.ttLine = null; CL.ttResolve = null; CL.abResolve = null;
+  CL.myActive = 0; CL.cpuActive = 0; CL.round = 1; CL.busy = false; CL.over = false; CL.tagged = false; CL.lastHit = null; CL.lastWin = null; CL.lastBlock = null; CL.grid = ["", "", "", "", "", "", "", "", ""]; CL.myBonus = 0; CL.cpuBonus = 0; CL.myGuard = 0; CL.cpuGuard = 0; CL.myTemp = 0; CL.cpuTemp = 0; CL.placing = null; CL.abilityPick = null; CL.ttLine = null; CL.ttResolve = null; CL.abResolve = null;
   CL.phase = "flip"; CL.flip = null; CL.firstPlayer = null; CL.myDeck = buildDeck(); CL.cpuDeck = buildDeck(); CL.myHand = []; CL.cpuHand = []; CL.myPile = []; CL.cpuPile = []; CL.drawPop = 0; CL.statSurge = 0; CL.justShuffled = true; CL.itemUsedRound = 0; CL.cpuItemRound = 0; CL.myFreeHit = false; CL.cpuFreeHit = false; CL.planned = false; CL.scoutText = null; drawItems("me", 3); drawItems("cpu", 3);
   CL.log = ["🥊 " + fName(CL.mine[0]) + " & " + fName(CL.mine[1]) + " vs " + fName(CL.cpu[0]) + " & " + fName(CL.cpu[1]) + " — FIGHT!"];
   clashArena();
@@ -3638,7 +3643,7 @@ async function flipResolve(call){
   clashArena();
 }
 function pipsHTML(f){ return '<span class="pips">' + (f.hits >= 1 ? '<i class="hit"></i>' : '<i></i>') + (f.hits >= 2 ? '<i class="hit"></i>' : '<i></i>') + (f.hits >= 3 ? '<i class="hit"></i>' : '<i></i>') + '</span>'; }
-function fighterHTML(f, active, extra){
+function fighterHTML(f, active, extra, fx){
   var t = TIERS[f.ti];
   return '<div class="fcard' + (active ? ' active' : ' bench') + (fAlive(f) ? '' : ' ko') + (extra || '') + '" data-zci="' + f.ci + '" data-zti="' + f.ti + '" style="border-color:' + t.color + '">'
     + '<img src="/api/battle?s=' + f.ci + '" alt="">'
@@ -3646,6 +3651,7 @@ function fighterHTML(f, active, extra){
     + '<div class="fcst" style="color:' + t.color + '">' + t.name + ' ' + "★".repeat(f.ti + 1) + '</div>'
     + '<div class="fcpw">⚡ ' + POWERS[f.ci - 1].name + '</div><div class="fcatk">\uD83D\uDD2E ATK ' + atkOf(f) + ' · cost \u00D7' + hitCost(f) + '</div>' + pipsHTML(f)
     + (fAlive(f) ? '' : '<div class="kotag">ELIMINATED</div>')
+    + (fx === "fist" ? '<div class="fxpop fist">\uD83D\uDC4A</div>' : (fx === "shield" ? '<div class="fxpop shield">\uD83D\uDEE1\uFE0F</div>' : ''))
     + '</div>';
 }
 function clashArena(){
@@ -3683,9 +3689,9 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
   var phase = !CL.busy && !CL.over && !CL.placing && !CL.abilityPick;
   clashPanel('<div class="clashround">' + (CL.mode === "ladder" ? '🏆 BOSS ' + CL.boss + ' · ' : '') + 'ROUND ' + CL.round + '</div>'
     + guide
-    + '<div class="field3d"><div class="side cpu"><div class="sidetag">CPU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("cpu") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("cpu") + ' \u00B7 DECK ' + CL.cpuDeck.length + '</div><div class="frow">' + fighterHTML(cp, true, cpExtra) + fighterHTML(cpp, false, "") + '</div></div>'
+    + '<div class="field3d"><div class="side cpu"><div class="sidetag">CPU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("cpu") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("cpu") + ' \u00B7 DECK ' + CL.cpuDeck.length + '</div><div class="frow">' + fighterHTML(cp, true, cpExtra, CL.lastHit === "cpu" ? "fist" : (CL.lastBlock === "cpu" ? "shield" : "")) + fighterHTML(cpp, false, "") + '</div></div>'
     + '<div class="clashmid"><span class="vsbadge">VS</span><div class="zonelab">CLASH GRID · 3 IN A ROW = ABILITY</div>' + ttHTML() + '<div class="clashnums" id="clashNums"></div>' + intel + scoutHtml + logHtml + '</div>'
-    + '<div class="side me"><div class="sidetag">YOU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("me") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("me") + '</div><div class="frow">' + fighterHTML(me, true, meExtra) + fighterHTML(mp, false, "") + '</div></div></div>'
+    + '<div class="side me"><div class="sidetag">YOU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("me") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("me") + '</div><div class="frow">' + fighterHTML(me, true, meExtra, CL.lastHit === "me" ? "fist" : (CL.lastBlock === "me" ? "shield" : "")) + fighterHTML(mp, false, "") + '</div></div></div>'
     + itemHTML()
     + abilityHTML()
     + '<div class="clashbtns">'
@@ -3726,11 +3732,11 @@ async function clashRound(stance){
   var B = CL;
   if (stance === "tag") {
     if (CL.tagged || !fAlive(CL.mine[1 - CL.myActive])) return;
-    CL.myActive = 1 - CL.myActive; CL.tagged = true; sfx("tag"); CL.lastHit = null; CL.lastWin = null;
+    CL.myActive = 1 - CL.myActive; CL.tagged = true; sfx("tag"); CL.lastHit = null; CL.lastWin = null; CL.lastBlock = null;
     CL.log.push("🔁 You tag in " + fName(CL.mine[CL.myActive]) + "!");
     clashArena(); return;
   }
-  CL.busy = true; CL.lastHit = null; CL.lastWin = null; sfx("charge");
+  CL.busy = true; CL.lastHit = null; CL.lastWin = null; CL.lastBlock = null; sfx("charge");
   if (!CL.planned) cpuPlan();
   CL.planned = false;
   cpuUseItem();
@@ -3793,7 +3799,7 @@ async function clashRound(stance){
       }
     }
     var landed = landedHits > 0;
-    CL.lastHit = landed ? loser : null;
+    CL.lastHit = landed ? loser : null; CL.lastBlock = (!landed && (res === "def" || res === "save")) ? loser : null;
     CL.lastWin = landed ? winSide : loser;
     if (landed) { await doMarks(winSide, landedHits, B); if (CL !== B) return; }
     else if (res === "def") { CL.log.push("\u2716 Blocked hit \u2014 but the round winner claims a grid square!"); await doMarks(winSide, 1, B); if (CL !== B) return; }
