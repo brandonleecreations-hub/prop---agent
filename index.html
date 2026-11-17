@@ -288,6 +288,30 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 @keyframes ringpulse{from{box-shadow:0 14px 30px rgba(0,0,0,.5),0 0 12px rgba(245,197,24,.35)}to{box-shadow:0 14px 30px rgba(0,0,0,.5),0 0 40px rgba(245,197,24,.85)}}
 .tiercard.ringglow .flipfront{animation:ringpulse 1.8s ease-in-out infinite alternate}
 #packBurst{position:absolute;left:50%;top:36%;width:0;height:0;pointer-events:none;display:none;z-index:5}
+.packsplit{position:relative;width:100%;aspect-ratio:427/640}
+.ph{position:absolute;left:0;width:100%;height:50.6%;background-image:url(/api/banners?s=pack);background-size:100% 200%;background-repeat:no-repeat}
+.ph-t{top:0;background-position:center top;border-radius:14px 14px 0 0}
+.ph-b{bottom:0;background-position:center bottom;border-radius:0 0 14px 14px}
+.packstage.charging .packsplit{animation:charge .48s ease-in-out both}
+@keyframes charge{0%{transform:scale(1)}30%{transform:scale(1.03) rotate(-1.2deg)}55%{transform:scale(1.05) rotate(1.2deg)}80%{transform:scale(1.07) rotate(-1.6deg)}100%{transform:scale(1.08)}}
+.packstage.charging .ph{filter:drop-shadow(0 0 22px rgba(245,197,24,.55))}
+.packstage.torn .ph-t{animation:splitT .55s ease-in both}
+.packstage.torn .ph-b{animation:splitB .55s ease-in both}
+@keyframes splitT{to{transform:translate(-26px,-44px) rotate(-9deg);opacity:0}}
+@keyframes splitB{to{transform:translate(26px,44px) rotate(8deg);opacity:0}}
+.packflash{position:absolute;left:50%;top:50%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(245,197,24,.85) 40%,transparent 70%);opacity:0;pointer-events:none}
+.packstage.torn .packflash{animation:flashA .55s ease-out both}
+@keyframes flashA{0%{opacity:0;transform:scale(.4)}25%{opacity:1}100%{opacity:0;transform:scale(3.2)}}
+.revealwrap{position:relative}
+.revealglow{position:absolute;left:50%;top:46%;width:340px;height:340px;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(245,197,24,.20) 0%,rgba(124,58,237,.14) 45%,transparent 70%);pointer-events:none;animation:glowpulse 2.6s ease-in-out infinite alternate}
+@keyframes glowpulse{from{opacity:.65}to{opacity:1}}
+.revealcard{animation:cardfan .7s cubic-bezier(.2,.9,.3,1.28) both}
+@keyframes cardfan{0%{transform:translate(var(--fx,0px),30px) rotate(var(--fr,0deg)) scale(.5);opacity:0}55%{opacity:1}100%{transform:translate(0,0) rotate(0deg) scale(1);opacity:1}}
+.revealcard::after{animation-delay:.8s}
+.revealcard.bestcard{box-shadow:0 14px 30px rgba(0,0,0,.5),0 0 26px rgba(245,197,24,.45)}
+.revealcard.ringcard{animation:cardfan .7s cubic-bezier(.2,.9,.3,1.28) both, ringpulse 1.5s ease-in-out 1.05s infinite alternate}
+#pullView{position:fixed;inset:0;z-index:350;display:none;flex-direction:column;align-items:center;justify-content:center}
+#pullView.open{display:flex}
 #ringCel{position:fixed;inset:0;z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
 .celrays{position:absolute;left:50%;top:44%;width:150vmax;height:150vmax;transform:translate(-50%,-50%);background:repeating-conic-gradient(from 0deg, rgba(245,197,24,.16) 0deg 10deg, transparent 10deg 24deg);animation:celspin 14s linear infinite;pointer-events:none}
 @keyframes celspin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
@@ -2339,6 +2363,36 @@ function ringCelebration(){
   el.addEventListener("click", function(){ el.remove(); });
   setTimeout(function(){ if (el.parentNode) el.remove(); }, 6000);
 }
+function ensurePullView(){
+  if (document.getElementById("pullView")) return;
+  var el = document.createElement("div");
+  el.id = "pullView";
+  el.innerHTML = '<div class="popwrap" id="pullViewWrap"><div class="popinner">'
+    + '<div class="popface popfront" id="pullViewFront"></div>'
+    + '<div class="popface popback" id="pullViewBack"></div>'
+    + '</div></div>'
+    + '<div class="note" style="text-align:center;margin-top:10px">Tap the card to flip it</div>'
+    + '<button class="mini" id="pullViewClose" style="background:#17171f;border:1px solid #33333f;color:#fff;padding:9px 18px;border-radius:10px;font-weight:800;margin-top:8px">✕ Close</button>';
+  document.body.appendChild(el);
+  el.addEventListener("click", function(e){ if (e.target === el) el.classList.remove("open"); });
+  document.getElementById("pullViewClose").addEventListener("click", function(){ el.classList.remove("open"); });
+  document.getElementById("pullViewWrap").addEventListener("click", function(){ this.classList.toggle("flipped"); });
+}
+function viewPulledCard(i){
+  var pu = (window._packPulls || [])[i]; if (!pu) return;
+  ensurePullView();
+  var front = document.getElementById("pullViewFront"), back = document.getElementById("pullViewBack");
+  document.getElementById("pullViewWrap").classList.remove("flipped");
+  if (pu.ring) {
+    front.innerHTML = '<img class="popart" src="/api/avatars?s=14" alt=""><div class="popplate">THE RING</div><div class="poppill">🏆 CHASE · SIGNED · ONE OF A KIND</div>';
+    back.innerHTML = ringBackHTML();
+  } else {
+    var t = TIERS[pu.ti], cname = CHARNAMES[pu.ci - 1];
+    front.innerHTML = '<img class="popart" src="/api/avatars?s=' + pu.ci + '" alt=""><div class="popplate">' + cname + '</div><div class="poppill">✨ ' + t.name.toUpperCase() + ' FOIL</div>';
+    back.innerHTML = cardBackHTML(cname + ' · FOIL', t.name + ' tier gold foil edition<br>Pulled from a Prop Agent pack.');
+  }
+  document.getElementById("pullView").classList.add("open");
+}
 function ensurePackPop(){
   if (document.getElementById("packPop")) return;
   var sparks = [[-120,-70],[110,-90],[-90,60],[130,40],[-150,10],[150,-20],[0,-130],[60,110]].map(function(v){ return '<span class="spark" style="--tx:' + v[0] + 'px;--ty:' + v[1] + 'px"></span>'; }).join("");
@@ -2347,31 +2401,38 @@ function ensurePackPop(){
   el.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:16px;position:relative">'
     + '<div id="packBurst"><div class="burst"></div>' + sparks + '</div>'
     + '<div class="packstage" id="packStage"></div>'
-    + '<div class="revealrow" id="packCards" style="display:none"></div>'
+    + '<div class="revealwrap"><div class="revealglow" id="packGlow" style="display:none"></div><div class="revealrow" id="packCards" style="display:none"></div></div>'
+    + '<div class="note" id="packHint" style="display:none">Tap a card to view it big — tap the big card to flip it</div>'
     + '<div id="packCap" style="font-weight:900;color:#f5c518;text-align:center"></div>'
     + '<button class="mini" id="packClose" style="background:#17171f;border:1px solid #33333f;color:#fff;padding:9px 18px;border-radius:10px;font-weight:800">Collect</button></div>';
   document.body.appendChild(el);
   el.addEventListener("click", function(e){ if (e.target === el) { el.classList.remove("open"); renderBoard(); } });
   document.getElementById("packClose").addEventListener("click", function(){ el.classList.remove("open"); renderBoard(); });
+  document.getElementById("packCards").addEventListener("click", function(e){
+    var c = e.target && e.target.closest ? e.target.closest("[data-view]") : null;
+    if (c) viewPulledCard(parseInt(c.getAttribute("data-view"), 10));
+  });
   document.getElementById("packStage").addEventListener("click", function(){
     if (window._packOpened) return; window._packOpened = true;
-    var st = this; st.classList.add("torn");
-    var bst = document.getElementById("packBurst"); if (bst) bst.style.display = "block";
+    var st = this; st.classList.add("charging");
+    setTimeout(function(){ st.classList.add("torn"); var bst = document.getElementById("packBurst"); if (bst) bst.style.display = "block"; }, 480);
     setTimeout(function(){
       st.style.display = "none";
-      if (bst) bst.style.display = "none";
+      var bst2 = document.getElementById("packBurst"); if (bst2) bst2.style.display = "none";
       var pulls = window._packPulls || [], cards = document.getElementById("packCards"), cap = document.getElementById("packCap");
+      var glow = document.getElementById("packGlow"); if (glow) glow.style.display = "block";
+      var hint = document.getElementById("packHint"); if (hint) hint.style.display = "block";
       cards.style.display = "flex";
       cards.innerHTML = pulls.map(function(pu, i){
-        if (pu.ring) return '<div class="revealcard ringcard" style="animation-delay:' + (i * 0.22) + 's,0s;width:118px"><img src="/api/avatars?s=14" alt="" style="height:118px"><div class="rvinfo"><b style="color:#f5c518">🏆 THE RING</b><br>SIGNED · ONE OF A KIND</div></div>';
+        if (pu.ring) return '<div class="revealcard ringcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's,1.05s;width:118px;cursor:pointer"><img src="/api/avatars?s=14" alt="" style="height:118px"><div class="rvinfo"><b style="color:#f5c518">🏆 THE RING</b><br>SIGNED · ONE OF A KIND</div></div>';
         var t = TIERS[pu.ti];
-        return '<div class="revealcard" style="animation-delay:' + (i * 0.22) + 's"><img src="/api/avatars?s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">✨ ' + t.name + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
+        return '<div class="revealcard' + (i === 2 ? ' bestcard' : '') + '" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer"><img src="/api/avatars?s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">✨ ' + t.name + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
       }).join("");
       var newN = pulls.filter(function(pu){ return !pu.ring && !pu.dup; }).length;
       var dupN = pulls.filter(function(pu){ return pu.dup; }).length;
       if (pulls.some(function(pu){ return pu.ring; })) { cap.textContent = window._packDemo ? "DEMO — that's the chase celebration! Nothing was saved." : "🏆 YOU PULLED THE RING!! Signed, one of a kind — the rarest card in the game!"; ringCelebration(); }
       else cap.textContent = (window._packDemo ? "DEMO — " : "") + newN + " new foil card" + (newN === 1 ? "" : "s") + " added to My Cards ✨" + (dupN ? " · " + dupN + " duplicate" + (dupN === 1 ? "" : "s") + " not saved" : "");
-    }, 560);
+    }, 1030);
   });
 }
 function openPackPop(demo){
@@ -2384,8 +2445,10 @@ function openPackPop(demo){
   ensurePackPop();
   var stage = $("packStage"), cards = $("packCards"), cap = $("packCap");
   cards.innerHTML = ""; cards.style.display = "none";
-  stage.style.display = "block"; stage.classList.remove("torn");
-  stage.innerHTML = '<img src="/api/banners?s=pack" alt=""><div style="font-weight:900;margin-top:10px;color:#f5c518;letter-spacing:1px">' + (demo ? "DEMO PACK" : "PROP AGENT PACK") + '</div><div class="note">Tap to open</div>';
+  var gl = $("packGlow"); if (gl) gl.style.display = "none";
+  var ph2 = $("packHint"); if (ph2) ph2.style.display = "none";
+  stage.style.display = "block"; stage.classList.remove("torn"); stage.classList.remove("charging");
+  stage.innerHTML = '<div class="packsplit"><div class="ph ph-t"></div><div class="ph ph-b"></div><div class="packflash"></div></div><div style="font-weight:900;margin-top:10px;color:#f5c518;letter-spacing:1px">' + (demo ? "DEMO PACK" : "PROP AGENT PACK") + '</div><div class="note">Tap to open</div>';
   cap.textContent = "";
   $("packPop").classList.add("open");
 }
