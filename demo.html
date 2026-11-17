@@ -114,18 +114,21 @@ function pullPack(chase) {
   var pulls = [], seen = {};
   var isRing = chase || (!ringPulled && Math.random() < 0.01);
   for (var i = 0; i < 3; i++) {
-    var ci = 1 + Math.floor(Math.random() * 12), ti = pickTier(), k = ci + "-" + ti;
-    var dup = !!owned[k] || !!seen[k]; seen[k] = 1;
-    if (!dup) { owned[k] = 1; foilCount++; }
-    pulls.push({ ci: ci, ti: ti, dup: dup });
+    pulls.push({ ci: 1 + Math.floor(Math.random() * 12), ti: pickTier() });
   }
   if (isRing) { pulls[2] = { ring: true }; ringPulled = true; }
+  pulls.forEach(function(pu) {
+    if (pu.ring) return;
+    var k = pu.ci + "-" + pu.ti;
+    pu.dup = !!owned[k] || !!seen[k]; seen[k] = 1;
+    if (!pu.dup) { owned[k] = 1; foilCount++; }
+  });
   return pulls;
 }
 function renderStats() {
   document.getElementById("stats").innerHTML = "Packs opened: <b>" + opened + "</b> · Foils pulled: <b>" + foilCount + "</b> · THE RING: <b>" + (ringPulled ? "PULLED! 🏆" : "still hiding…") + "</b>";
   var keys = Object.keys(owned);
-  document.getElementById("coll").innerHTML = keys.length ? keys.map(function(k) {
+  document.getElementById("coll").innerHTML = (ringPulled || keys.length) ? (ringPulled ? '<img src="/api/avatars?s=14" title="THE RING · CHASE CARD" alt="">' : '') + keys.map(function(k) {
     return '<img src="/api/avatars?s=' + k.split("-")[0] + '" title="' + NAMES[parseInt(k.split("-")[0], 10) - 1] + ' · ' + TIERS[parseInt(k.split("-")[1], 10)].n + ' FOIL" alt="">';
   }).join("") : '<span class="empty">No foils yet — open a pack.</span>';
 }
