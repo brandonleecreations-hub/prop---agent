@@ -221,6 +221,16 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .pctchip{display:inline-block;background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.45);border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:800;letter-spacing:.4px}
 .closed .pickrow{display:none}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(106px,1fr));gap:10px}
+.gphdr{display:flex;align-items:center;gap:7px;margin:14px 0 6px;font-size:12px;font-weight:900;letter-spacing:1.4px;color:var(--purp-lt)}
+.gprow{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:7px 10px;margin-bottom:6px;cursor:pointer}
+.gprow .pwrap{width:34px;height:34px;margin:0;flex:none}
+.gprow .pinit{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;background:linear-gradient(135deg,#3b1470,#1b1030);color:var(--purp-lt)}
+.gprow .pwrap img{width:34px;height:34px;border-radius:50%;object-fit:cover}
+.gpm{flex:1;min-width:0;display:flex;flex-direction:column}
+.gpn{font-weight:800;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gpc{color:var(--purp-lt);font-size:11px;font-weight:800}
+.gpl{font-size:11.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gpa{color:var(--purp-lt);font-size:18px;font-weight:900}
 .ptile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:11px 8px;text-align:center;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.05)}
 .ptile img{width:56px;height:56px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)}
 .pwrap{position:relative;display:block;width:56px;height:56px;margin:0 auto}
@@ -1681,7 +1691,7 @@ function renderGameProps(lg, s){
   }
   (inBrk ? refreshPropsBrk(lg).then(function(){ return buildProps(lg); }) : buildProps(lg)).then(function(ps){
     var head = '<div style="font-size:16px;margin-top:14px"><b>Player Props — This Game</b> <span class="note">best on top · tap a player for all their props</span></div>' + (inBrk ? '<p class="sub" style="color:var(--gold);margin-top:6px">⏸ At the break — fresh props just posted for the next part of the game. Pick before play resumes.</p>' : '');
-    if (!ps.length){ box.innerHTML = head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'; return; }
+    if (!ps.length){ box.innerHTML = ""; return; }
     var names = {}, teamNames = {}, teamLast = {};
     try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ (tp.athletes||[]).forEach(function(a){ if (a.athlete && a.athlete.displayName) names[lastNameOf(a.athlete.displayName)] = 1; }); }); } catch(e){}
     cs.forEach(function(c){ if (c.team){ if (c.team.displayName){ teamNames[c.team.displayName.toLowerCase()] = 1; teamLast[lastNameOf(c.team.displayName)] = 1; } if (c.team.shortDisplayName) teamNames[c.team.shortDisplayName.toLowerCase()] = 1; } });
@@ -1692,9 +1702,35 @@ function renderGameProps(lg, s){
       if (p.team && lastWords.length === 2 && lastWords[0] !== lastWords[1] && teamLast[lastNameOf(p.team)]) return true;
       return false;
     });
-    if (!hits.length){ box.innerHTML = head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'; return; }
+    if (!hits.length){ box.innerHTML = ""; return; }
     var gs = sortGroups(playerGroups(hits), "pct");
-    box.innerHTML = head + '<div class="pgrid" style="margin-top:8px">' + gs.map(tileHtml).join("") + '</div>';
+    /* Compact rows organized by team (Brandon 2026-11-17): small player
+       rows under a team header; tap a player for all their props. */
+    var teamOf = {};
+    try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ var tn = (tp.team && (tp.team.displayName || tp.team.shortDisplayName)) || ""; (tp.athletes || []).forEach(function(a){ if (a.athlete && a.athlete.displayName) teamOf[lastNameOf(a.athlete.displayName)] = tn; }); }); } catch(e){}
+    var compTeams = cs.map(function(c){ return c.team ? {name: c.team.displayName || c.team.shortDisplayName || "", away: c.homeAway === "away", logo: logoUrl(c)} : null; }).filter(function(x){ return x && x.name; });
+    compTeams.sort(function(a, b){ return (b.away ? 1 : 0) - (a.away ? 1 : 0); });
+    var buckets = compTeams.map(function(t){ return {name: t.name, logo: t.logo, groups: []}; });
+    var rest = [];
+    gs.forEach(function(g){
+      var tn = g.team || teamOf[lastNameOf(g.player)] || "";
+      var bi = -1;
+      buckets.forEach(function(b, i){ if (tn && (b.name.toLowerCase() === tn.toLowerCase() || lastNameOf(b.name) === lastNameOf(tn))) bi = i; });
+      if (bi >= 0) buckets[bi].groups.push(g); else rest.push(g);
+    });
+    if (rest.length) buckets.push({name: "More players", logo: "", groups: rest});
+    var rowHtml = function(g){
+      var tops = g.props.slice().sort(function(a, b){ return (b.pct || 0) - (a.pct || 0); }).slice(0, 3).map(function(p){ return esc(p.stat) + " " + esc(String(p.line)); }).join(" \u00B7 ");
+      var more = g.props.length > 3 ? ' <span style="color:var(--purp-lt)">+' + (g.props.length - 3) + " more</span>" : "";
+      return '<div class="gprow" data-player="' + esc(g.player) + '" data-league="' + esc(g.league) + '">'
+        + '<span class="pwrap"><span class="pinit">' + esc(initials(g.player)) + '</span>' + (g.img ? '<img src="' + esc(g.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>'
+        + '<span class="gpm"><span class="gpn">' + esc(g.player) + ' <span class="gpc">' + g.props.length + ' prop' + (g.props.length === 1 ? "" : "s") + '</span></span>'
+        + '<span class="gpl">' + tops + more + '</span></span>'
+        + '<span class="gpa">\u203A</span></div>';
+    };
+    box.innerHTML = head + buckets.filter(function(b){ return b.groups.length; }).map(function(b){
+      return '<div class="gphdr">' + (b.logo ? tlogoImg(b.logo, 16) : "") + esc(b.name.toUpperCase()) + '</div>' + b.groups.map(rowHtml).join("");
+    }).join("");
     bindTiles(box);
   }).catch(function(){});
 }
