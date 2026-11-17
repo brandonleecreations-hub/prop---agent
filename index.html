@@ -457,6 +457,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <details class="card" style="margin-top:14px">
       <summary>Optional: add a fully custom leg</summary>
       <p class="note" style="margin-top:10px">Copy each line exactly as your betting site shows it — your player, your line, your More / Less pick, and which site it came from (PrizePicks, Underdog, DraftKings, FanDuel, Sleeper…). Prop Agent tracks live stats against <b>your</b> line where ESPN reports the stat. Tennis stats like Aces, Double Faults and First Serve % aren't in the ESPN feed, so those legs get a tap-to-track stepper on your ticket.</p>
+      <p class="note" style="margin-top:6px;color:#f5c518;font-weight:700">🧩 Fair-play rule: a ticket with any custom leg earns no tier points and no packs — custom picks are graded by you, not the box score. The ticket still tracks, saves, and can be liked like any other.</p>
       <div class="fld"><label>Player</label><input type="text" id="cPlayer" placeholder="Player name"></div>
       <div class="row">
         <div class="fld" style="flex:1"><label>Stat</label><input type="text" id="cStat" placeholder="e.g. Points, Aces, Passing Yards"></div>
@@ -594,7 +595,7 @@ function cleanupTickets(){
     var age = now - (t.ts || now);
     if (t.result === "loss" && age > LOSS_KEEP_MS) { changed = true; lbank++; return false; }
     if (t.result === "win" && age > WIN_KEEP_MS) {
-      changed = true; bank++;
+      changed = true; if (!ticketHasCustom(t)) bank++;
       (t.legs || []).forEach(function(l){ var k = pcKey(l); if (!seen[k]) { seen[k] = 1; snaps.push({ player: l.player, stat: l.stat, line: l.line, dir: l.dir, team: l.team || "", matchup: l.matchup || "" }); } });
       return false;
     }
@@ -611,9 +612,10 @@ function allPlayerCardLegs(){
   return out;
 }
 function myLosses(){ return tickets.filter(function(t){ return t.result === "loss"; }).length + (parseInt(lsGet("pa_lossbank", 0), 10) || 0); }
+function ticketHasCustom(t){ return !!t && (t.legs || []).some(function(l){ return !!l.custom; }); }
 function myStreak(){
   var fin = tickets.filter(function(t){ return t.result === "win" || t.result === "loss"; }).slice().sort(function(a, b){ return (b.ts || 0) - (a.ts || 0); });
-  var n = 0; for (var i = 0; i < fin.length; i++) { if (fin[i].result === "win") n++; else break; } return n;
+  var n = 0; for (var i = 0; i < fin.length; i++) { if (fin[i].result === "win" && ticketHasCustom(fin[i])) continue; if (fin[i].result === "win") n++; else break; } return n;
 }
 function streakBadge(n){ return n >= 3 ? ' <span style="color:#ff9f43;font-weight:900">🔥' + n + '</span>' : ""; }
 function fmtUser(name){ name = String(name || "Agent"); return /^[A-Za-z0-9_]+$/.test(name) ? "@" + name : name; }
@@ -834,6 +836,7 @@ function slipHtml(){
     + '<div class="row" style="margin-top:12px"><span class="pay">'+(can ? n+' picks — ready to lock in' : 'Pick at least 2 to lock a ticket')+'</span></div>'
     + '<div class="note" style="margin-top:6px">🎟️ Tickets today: '+locks+' of '+DAILY_TICKET_LIMIT+(limitHit ? ' — daily limit reached, back tomorrow' : '')+'</div>'
     + (hedge ? '<div class="note" style="margin-top:4px;color:#f87171;font-weight:700">🚫 Anti-hedge: '+esc(hedge)+'</div>' : '')
+    + (slip.some(function(l){ return !!l.custom; }) ? '<div class="note" style="margin-top:4px;color:#f5c518;font-weight:700">🧩 Custom pick on this slip — tickets with custom picks earn no tier points or packs. Custom picks are graded by you, not the box score.</div>' : '')
     + '<div class="row" style="margin-top:10px;gap:8px"><span class="note">Who can see this slip?</span><button type="button" class="likebtn'+(slipPublic?' on':'')+'" data-slipub="1">🌐 Public</button><button type="button" class="likebtn'+(!slipPublic?' on':'')+'" data-slipub="0">🔒 Private</button></div>'
     + (slipPublic ? '<div class="note" style="margin-top:4px">Public slips show on your profile — other agents can see and like them.</div>' : '<div class="note" style="margin-top:4px">Private slips stay on your account only — nobody else can see or like them.</div>')
     + '<div style="margin-top:12px"><button class="bigbtn" id="lockBtn" '+(canLock?"":"disabled")+'>'+(can ? (limitHit ? "Daily Limit Reached" : (hedge ? "Blocked — Opposite Pick" : "Lock In Ticket")) : "Lock In (pick 2+ to enable)")+'</button></div>';
@@ -1166,7 +1169,7 @@ function findProp(id){
 }
 
 /* ---------- home: top agents / upcoming / news ---------- */
-function myWins(){ return tickets.filter(function(t){ return t.result==="win"; }).length + (parseInt(lsGet("pa_bonuswins", 0), 10) || 0) + (parseInt(lsGet("pa_winbank", 0), 10) || 0); }
+function myWins(){ return tickets.filter(function(t){ return t.result==="win" && !ticketHasCustom(t); }).length + (parseInt(lsGet("pa_bonuswins", 0), 10) || 0) + (parseInt(lsGet("pa_winbank", 0), 10) || 0); }
 function maxWins(){ var m = 0; try { m = parseInt(lsGet("pa_maxwins", 0), 10) || 0; } catch(e){} var w = myWins(); if (w > m){ m = w; try { lsSet("pa_maxwins", m); } catch(e){} } return m; }
 function agentRows(){
   var rows = cloudAgents
@@ -1971,7 +1974,7 @@ function renderTickets(){
         + '<div data-stepper="'+esc(t.id)+'|'+esc(l.id)+'"></div>'
         + (l.player ? '<div style="padding:2px 0 8px"><button type="button" class="ghostbtn" data-pplay="'+esc(t.id)+'|'+esc(l.id)+'" style="font-size:12px;padding:5px 11px">Play by play - '+esc(l.player)+'</button><div data-pplays="'+esc(t.id)+'|'+esc(l.id)+'"></div></div>' : '');
     }).join("");
-    return '<div class="card" data-ticket="'+t.id+'"><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span>' + res + (t.pub === false ? ' · 🔒 Private' : '') + '</span></div>' + likeChip(t) + '<span class="stampmini">LOCKED IN</span>'+legs+'</div>';
+    return '<div class="card" data-ticket="'+t.id+'"><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span>' + res + (t.pub === false ? ' · 🔒 Private' : '') + (ticketHasCustom(t) ? ' · 🧩 Custom' : '') + '</span></div>' + likeChip(t) + (ticketHasCustom(t) ? '<div class="note">🧩 Custom ticket — earns no tier points or packs.</div>' : '') + '<span class="stampmini">LOCKED IN</span>'+legs+'</div>';
   }).join("");
   box.querySelectorAll("[data-pplay]").forEach(function(b){ b.addEventListener("click", function(){ togglePlayerPlays(b); }); });
   tickets.forEach(function(t){
@@ -2181,7 +2184,7 @@ function renderBoard(){
   if (fl0.length) foilHtml = '<div style="grid-column:1/-1" class="note">✨ FOIL CARDS — pulled from packs (' + fl0.length + ')</div>' + fl0.map(function(k){ var pp = k.split("-"); var tt = TIERS[parseInt(pp[1], 10)]; return tt ? foilCardHTML(tt, parseInt(pp[0], 10)) : ""; }).join("");
   renderPacks();
   var stampHtml = '<div style="grid-column:1/-1" class="note">🌟 GOLD FOIL STAMPS — one for every agent (' + stampsGet().length + ' of 12) · hiding in about 1 pack in 10</div>' + CHARNAMES.map(function(nm, ix){ return stampCardHTML(ix + 1); }).join("");
-  $("myCards").innerHTML = '<div style="grid-column:1/-1" class="note">⭐ SPECIAL CARDS — Pick\'em rewards &amp; chase cards</div>' + specialCardHTML() + ringCardHTML() + tierCards + playerCards + stampHtml + foilHtml;
+  $("myCards").innerHTML = tierCards + playerCards + stampHtml + foilHtml + '<div style="grid-column:1/-1" class="note">⭐ SPECIAL CARDS — Pick\'em rewards &amp; chase cards</div>' + specialCardHTML() + ringCardHTML();
   document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); var av0 = b.getAttribute("data-avatar")||""; profile.avatar = av0; profile.featured = b.getAttribute("data-featured")||""; if (av0.indexOf("/api/avatars") === 0) profile.char = av0; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
   document.querySelectorAll(".dlcard").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadCard(b.getAttribute("data-kind"), parseInt(b.getAttribute("data-idx"),10), b); }); });
   document.querySelectorAll(".setprofs").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); profile.avatar = b.getAttribute("data-avatar") || ""; profile.featured = b.getAttribute("data-featured") || ""; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
@@ -2259,6 +2262,7 @@ function foilsGet(){ return lsGet("pa_foils", []); }
 function dayStr(){ var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
 function maxTierIdx(){ var w = maxWins(), idx = 0; TIERS.forEach(function(t, i){ if (w >= t.wins) idx = i; }); return idx; }
 function awardTicketPack(t){
+  if (ticketHasCustom(t)) return;
   var p = packsGet();
   if (t.legs && t.legs.length >= 4) p.n = (p.n || 0) + 2; else p.n = (p.n || 0) + 1;
   packsSet(p);

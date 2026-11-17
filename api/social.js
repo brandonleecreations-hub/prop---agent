@@ -69,10 +69,10 @@ module.exports = async (req, res) => {
       const ids = Array.isArray(b.json) ? b.json.map((r) => r.id) : [];
       const out = {};
       if (ids.length) {
-        const t = await rest("tickets?select=user_id,status,created_at&user_id=in.(" + ids.join(",") + ")&status=in.(win,loss)&order=created_at.desc&limit=1000", { headers: sbHeaders() });
+        const t = await rest("tickets?select=user_id,status,created_at,legs&user_id=in.(" + ids.join(",") + ")&status=in.(win,loss)&order=created_at.desc&limit=1000", { headers: sbHeaders() });
         const byUser = {};
-        if (Array.isArray(t.json)) t.json.forEach((r) => { (byUser[r.user_id] = byUser[r.user_id] || []).push(r.status); });
-        ids.forEach((id) => { const arr = byUser[id] || []; let n = 0; for (let i = 0; i < arr.length; i++) { if (arr[i] === "win") n++; else break; } out[id] = n; });
+        if (Array.isArray(t.json)) t.json.forEach((r) => { (byUser[r.user_id] = byUser[r.user_id] || []).push(r.status === "win" && Array.isArray(r.legs) && r.legs.some((l) => l && l.custom) ? "skip" : r.status); });
+        ids.forEach((id) => { const arr = byUser[id] || []; let n = 0; for (let i = 0; i < arr.length; i++) { if (arr[i] === "skip") continue; if (arr[i] === "win") n++; else break; } out[id] = n; });
       }
       res.status(200).json({ ok: true, streaks: out });
       return;
@@ -118,15 +118,18 @@ module.exports = async (req, res) => {
       const p = await rest("profiles?select=" + PROF_SEL + "&id=eq." + target, { headers: sbHeaders() });
       const prof = (p.json && p.json[0]) || null;
       const t = await rest("tickets?select=id,user_id,legs,status,created_at&user_id=eq." + target + "&is_public=eq.true&order=created_at.desc&limit=50", { headers: sbHeaders() });
-      const all = await rest("tickets?select=status,created_at&user_id=eq." + target + "&order=created_at.asc&limit=1000", { headers: sbHeaders() });
+      const all = await rest("tickets?select=status,created_at,legs&user_id=eq." + target + "&order=created_at.asc&limit=1000", { headers: sbHeaders() });
       const rowsA = Array.isArray(all.json) ? all.json : [];
+      const customWin = (r) => r.status === "win" && Array.isArray(r.legs) && r.legs.some((l) => l && l.custom);
       let sw = 0, sl = 0, best = 0, cur = 0;
       rowsA.forEach((r) => {
+        if (customWin(r)) return;
         if (r.status === "win") { sw++; cur++; if (cur > best) best = cur; }
         else if (r.status === "loss") { sl++; cur = 0; }
       });
       let streak = 0;
       for (let i = rowsA.length - 1; i >= 0; i--) {
+        if (customWin(rowsA[i])) continue;
         if (rowsA[i].status === "win") streak++;
         else if (rowsA[i].status === "loss") break;
       }
@@ -176,9 +179,9 @@ module.exports = async (req, res) => {
       });
       if (!best) { res.status(200).json({ ok: true, ticket: null, owner: null }); return; }
       const p = await rest("profiles?select=" + PROF_SEL + "&id=eq." + best.user_id, { headers: sbHeaders() });
-      const ot = await rest("tickets?select=status&user_id=eq." + best.user_id + "&status=in.(win,loss)&order=created_at.desc&limit=100", { headers: sbHeaders() });
+      const ot = await rest("tickets?select=status,legs&user_id=eq." + best.user_id + "&status=in.(win,loss)&order=created_at.desc&limit=100", { headers: sbHeaders() });
       let ostreak = 0;
-      if (Array.isArray(ot.json)) { for (let i = 0; i < ot.json.length; i++) { if (ot.json[i].status === "win") ostreak++; else break; } }
+      if (Array.isArray(ot.json)) { for (let i = 0; i < ot.json.length; i++) { const r = ot.json[i]; if (r.status === "win" && Array.isArray(r.legs) && r.legs.some((l) => l && l.custom)) continue; if (r.status === "win") ostreak++; else break; } }
       res.status(200).json({ ok: true, ticket: shapeTicket(best, me), owner: (p.json && p.json[0]) || null, streak: ostreak });
       return;
     }
