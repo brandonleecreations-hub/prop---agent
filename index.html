@@ -1898,8 +1898,8 @@ $("pushBtn").addEventListener("click", function(){
       return reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:urlB64ToUint8(cfg.publicKey)});
     }).then(function(sub){
       var saveSub = fetch("/api/subscribe", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({uid:cloudUid, subscription:sub.toJSON()})}).then(function(r){ return r.json(); }).then(function(j){ if (j && j.uid && j.uid !== cloudUid) { cloudUid = j.uid; lsSet("pa_uid", cloudUid); } }).catch(function(){});
-      return saveSub.then(function(){ return fetch("/api/send-push", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"test", subscription:sub, title:"Prop Agent", body:"Notifications are on — win/loss alerts now land even when the app is closed."})}); });
-    }).then(function(){ note.textContent = "Notifications enabled — a test push was sent. Win/loss alerts work even when the app is closed."; });
+      return saveSub.then(function(){ return fetch("/api/send-push", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"test", subscription:sub, title:"🎉 You're in, Agent!", body:"Notifications are on. We'll tap you before your tickets start and when they settle — just the good stuff, never spam."})}); });
+    }).then(function(){ note.textContent = "You're all set — a test push just flew to your phone. Ticket starts + results, even with the app closed."; });
   }).catch(function(){ note.textContent = "Couldn't enable notifications — check your browser's notification permission."; });
 });
 

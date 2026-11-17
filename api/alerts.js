@@ -106,8 +106,8 @@ module.exports = async (req, res) => {
       const firstLeg = legs.find((l) => new Date((l && l.starts) || 0).getTime() === first) || legs[0];
       let when = "";
       try { when = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }).format(new Date(first)) + " ET"; } catch (e) {}
-      const title = "Your Prop Agent ticket starts soon";
-      const body = (firstLeg.player ? firstLeg.player + " " + (firstLeg.dir || "") + " " + firstLeg.line + " " + firstLeg.stat + " \u2014 " : "") + "first game starts " + (when || "shortly") + ". " + legs.length + (legs.length === 1 ? " pick" : " picks") + " on this ticket.";
+      const title = "⏰ Almost game time!";
+      const body = (firstLeg.player ? firstLeg.player + " " + (firstLeg.dir || "") + " " + firstLeg.line + " " + firstLeg.stat + " \u2014 " : "") + "starts at " + (when || "soon") + ". Your " + legs.length + "-pick ticket is about to ride. Good luck! 🍀";
       for (const s of userSubs) {
         try {
           await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify({ title, body, url: "/" }));
@@ -193,10 +193,10 @@ module.exports = async (req, res) => {
         await rest("tickets?id=eq." + row.id, { method: "PATCH", headers: sbHeaders({ Prefer: "return=minimal" }), body: JSON.stringify({ status: result, legs: stamped }) });
       }
       if (webpush && userSubs.length) {
-        const title = result === "win" ? "Your Prop Agent ticket WON" : "Your Prop Agent ticket missed";
+        const title = result === "win" ? "🎉 Ticket WON — every leg hit!" : "Ticket missed — shake it off";
         const body = result === "win"
-          ? "Every leg hit. Open the app to see your ticket and cards."
-          : (missedLeg ? (missedLeg.player + " " + missedLeg.stat + " " + missedLeg.line + " finished at " + missedActual + " — ticket missed.") : "One leg missed. Open the app for details.");
+          ? "Beautiful picking, Agent. Open the app to see your ticket and check for new cards you unlocked."
+          : (missedLeg ? (missedLeg.player + " " + missedLeg.stat + " " + missedLeg.line + " landed on " + missedActual + " — that leg came up short. The next board is already up when you are.") : "One leg came up short this time. Fresh props are already posting — go get the next one.");
         for (const s of userSubs) {
           try {
             await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify({ title, body, url: "/" }));
