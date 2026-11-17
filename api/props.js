@@ -20,6 +20,13 @@
 //   - A hard per-instance daily budget (MAX_FETCHES_PER_DAY per sport) is a
 //     brake: when hit, the last cached board is served instead of fetching.
 //   - Fetches are capped at 2 pages; failures are never cached anywhere.
+// Shared budget (Brandon 2026-11-17, after the second overnight drain):
+// when the Supabase props_cache table exists, it governs ALL paid fetches
+// across every instance -- one fetch serves everyone, paid fetches happen
+// only inside two daily windows (06:00 + 16:00 ET), and a hard global cap
+// of 30 credits/day (~900/month) keeps the free tier alive. If the table
+// is missing or Supabase is unreachable, behavior falls back to the
+// per-instance rules above, unchanged.
 
 const SPORT_KEYS = [
   "basketball_nba", "basketball_ncaab", "basketball_wncaab", "basketball_wnba",
@@ -115,6 +122,134 @@ function noteFetch(sport) {
   fetchLog[sport].count++;
 }
 
+// ---- Shared props cache + global credit budget (Brandon 2026-11-17) ----
+// The overnight drain happened because every Vercel instance kept its own
+// cache and its own budget: the account-level total was unbounded. The fix
+// moves the board cache and the fetch accounting into ONE Supabase table
+// (props_cache) shared by every instance:
+//   - A fresh shared board is served to everyone; no Parlay fetch at all.
+//   - Paid fetches happen only in two windows per sport per day (06:00 and
+//     16:00 ET), claimed atomically so exactly ONE instance fetches.
+//   - Credits are reserved at claim time and the day total across ALL
+//     sports is hard-capped at DAILY_CREDIT_BUDGET, so the free tier
+//     (1,000/month) cannot be drained: worst case ~30 credits/day.
+//   - An empty Parlay board is retried at the next window, never on a
+//     30-minute loop; the free ESPN fallback covers boards meanwhile.
+// Every helper fails OPEN (returns null/undefined) when the table does not
+// exist or Supabase hiccups, and the handler then uses the legacy
+// per-instance behavior -- so this code is safe to run before the table
+// is created.
+const SB_URL = (process.env.SUPABASE_URL || "").replace(/\/+$/, "");
+const SB_SVC = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const DAILY_CREDIT_BUDGET = 30;
+const SLOT_HOURS_ET = [6, 16];
+function etSlot() {
+  const h = etHour();
+  if (h >= SLOT_HOURS_ET[1]) return 2;
+  if (h >= SLOT_HOURS_ET[0]) return 1;
+  return 0;
+}
+async function sbReq(path, opts) {
+  if (!SB_URL || !SB_SVC) return null;
+  try {
+    const ctl = new AbortController();
+    const to = setTimeout(() => ctl.abort(), 2500);
+    const r = await fetch(SB_URL + "/rest/v1/" + path, Object.assign({}, opts || {}, {
+      signal: ctl.signal,
+      headers: Object.assign({ apikey: SB_SVC, Authorization: "Bearer " + SB_SVC, "Content-Type": "application/json" }, (opts && opts.headers) || {}),
+    }));
+    clearTimeout(to);
+    if (!r.ok) return null;
+    const txt = await r.text();
+    try { return JSON.parse(txt); } catch (e) { return null; }
+  } catch (e) { return null; }
+}
+// Returns the row, null when the sport has no row yet, and undefined when
+// the shared store is unavailable (the caller then uses legacy behavior).
+async function sbCacheRow(sport) {
+  const rows = await sbReq("props_cache?sport=eq." + encodeURIComponent(sport) + "&select=sport,props,fetched_at,credits_today,count_day,last_slot");
+  if (rows === null) return undefined;
+  return Array.isArray(rows) && rows.length ? rows[0] : null;
+}
+async function sbCacheAll() {
+  const rows = await sbReq("props_cache?select=sport,credits_today,count_day");
+  return Array.isArray(rows) ? rows : null;
+}
+function sbFresh(row) {
+  if (!row) return false;
+  const age = Date.now() - new Date(row.fetched_at).getTime();
+  const props = Array.isArray(row.props) ? row.props : [];
+  if (!props.length) return age < 30 * 60 * 1000;
+  if (age > PREGAME_TTL) {
+    const anyFuture = props.some((p) => p.starts && new Date(p.starts).getTime() > Date.now() - 10 * 60 * 1000);
+    if (!anyFuture) return age < 30 * 60 * 1000;
+  }
+  return age < DAY_TTL;
+}
+// Atomically claim this sport's fetch window. The claim condition matches
+// the row's previous (count_day, last_slot) exactly, so when two instances
+// race, only one's PATCH lands. Reserves the worst case (6 credits).
+async function sbClaim(sport, row, slot) {
+  const today = etToday();
+  const prevDay = row ? String(row.count_day || "") : "";
+  const prevSlot = row ? (row.last_slot | 0) : 0;
+  const prevCredits = row && prevDay === today ? (row.credits_today | 0) : 0;
+  const body = { fetched_at: new Date().toISOString(), last_slot: slot, count_day: today, credits_today: prevCredits + 6 };
+  if (row) {
+    const out = await sbReq("props_cache?sport=eq." + encodeURIComponent(sport) + "&last_slot=eq." + prevSlot + "&count_day=eq." + encodeURIComponent(prevDay), {
+      method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify(body),
+    });
+    return Array.isArray(out) && out.length ? { reserved: 6 } : null;
+  }
+  const ins = await sbReq("props_cache", {
+    method: "POST", headers: { Prefer: "return=representation" },
+    body: JSON.stringify(Object.assign({ sport, props: [] }, body)),
+  });
+  return Array.isArray(ins) && ins.length ? { reserved: 6 } : null;
+}
+async function sbCachePut(sport, props, actualCredits, reserved) {
+  const row = await sbCacheRow(sport);
+  const body = { props };
+  if (row && row !== undefined) {
+    const today = etToday();
+    const cur = String(row.count_day || "") === today ? (row.credits_today | 0) : 0;
+    body.credits_today = Math.max(0, cur - Math.max(0, (reserved | 0) - (actualCredits | 0)));
+    body.count_day = today;
+  }
+  await sbReq("props_cache?sport=eq." + encodeURIComponent(sport), { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify(body) });
+}
+async function sbRefund(sport, reserved) {
+  const row = await sbCacheRow(sport);
+  if (!row || row === undefined) return;
+  const today = etToday();
+  if (String(row.count_day || "") !== today) return;
+  const cur = Math.max(0, (row.credits_today | 0) - (reserved | 0));
+  await sbReq("props_cache?sport=eq." + encodeURIComponent(sport), { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ credits_today: cur }) });
+}
+// No paid fetch is allowed: serve the shared board (even stale), else the
+// in-memory board, else the free ESPN fallback, else an empty board.
+async function serveStaleOrFallback(res, sport, hit, sbRow) {
+  if (sbRow && Array.isArray(sbRow.props) && sbRow.props.length) {
+    cache[sport] = { ts: new Date(sbRow.fetched_at).getTime(), props: sbRow.props, pregameRefreshed: true };
+    res.status(200).json({ ok: true, configured: true, cached: true, shared: true, stale: true, props: sbRow.props });
+    return;
+  }
+  if (hit && hit.props.length) {
+    res.status(200).json({ ok: true, configured: true, cached: true, stale: true, props: hit.props });
+    return;
+  }
+  const fb = await espnFallback(sport, "pre").catch(() => []);
+  if (fb.length) {
+    stampSeen(sport, fb);
+    cache[sport] = { ts: Date.now(), props: fb, pregameRefreshed: false, espnFallback: true };
+    res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300");
+    res.status(200).json({ ok: true, configured: true, cached: false, fallback: "espn", props: fb });
+    return;
+  }
+  res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300");
+  res.status(200).json({ ok: true, configured: true, cached: true, shared: !!sbRow, props: sbRow && Array.isArray(sbRow.props) ? sbRow.props : (hit ? hit.props : []) });
+}
+
 // Schedule gate (Brandon 2026-11-16): before paying for a Parlay refresh,
 // check the sport's ESPN schedule (free). If the sport has NO games today
 // that are upcoming or in progress, don't refresh its props at all until
@@ -191,6 +326,7 @@ async function fetchSport(sport, key) {
     if (!hasMore || !isFinite(next) || batch.length === 0) break;
     offset = next;
   }
+  rows.pagesUsed = guard;
   return rows;
 }
 
@@ -527,9 +663,37 @@ module.exports = async (req, res) => {
     }
     noGamesMark = etToday();
   }
+  // Shared cache + global budget: when the Supabase props_cache table is
+  // reachable it governs paid fetches (see the sb* helpers). sbRow ===
+  // undefined means the shared store is unavailable -- fall through to the
+  // legacy per-instance behavior below, unchanged.
+  const sbRow = await sbCacheRow(sport);
+  let sbClaimed = null;
+  if (sbRow !== undefined) {
+    if (sbRow && sbFresh(sbRow)) {
+      const sp = Array.isArray(sbRow.props) ? sbRow.props : [];
+      cache[sport] = { ts: new Date(sbRow.fetched_at).getTime(), props: sp, pregameRefreshed: true };
+      if (!sp.length) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300");
+      res.status(200).json({ ok: true, configured: true, cached: true, shared: true, props: sp });
+      return;
+    }
+    const slot = etSlot();
+    const slotUsed = !!(sbRow && slot > 0 && String(sbRow.count_day || "") === etToday() && (sbRow.last_slot | 0) >= slot);
+    if (slot === 0 || slotUsed) { await serveStaleOrFallback(res, sport, hit, sbRow); return; }
+    const allRows = await sbCacheAll();
+    const usedToday = (allRows || []).reduce((sum, r) => sum + (String(r.count_day || "") === etToday() ? (r.credits_today | 0) : 0), 0);
+    if (usedToday + 6 > DAILY_CREDIT_BUDGET) { await serveStaleOrFallback(res, sport, hit, sbRow); return; }
+    sbClaimed = await sbClaim(sport, sbRow, slot);
+    if (!sbClaimed) {
+      const freshRow = await sbCacheRow(sport);
+      await serveStaleOrFallback(res, sport, hit, freshRow === undefined ? sbRow : freshRow);
+      return;
+    }
+  }
   // Budget brake: never let a runaway loop drain the account. Serve the
   // last board we have (even stale) rather than paying for another fetch.
-  if (budgetLeft(sport) <= 0) {
+  // (Skipped when the shared claim already authorized this fetch.)
+  if (!sbClaimed && budgetLeft(sport) <= 0) {
     if (hit) { if (!hit.props.length) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300"); res.status(200).json({ ok: true, configured: true, cached: true, stale: true, props: hit.props }); return; }
     res.setHeader("Cache-Control", "no-store");
     res.status(200).json({ ok: false, configured: true, error: "daily fetch budget reached for this sport", props: [] });
@@ -542,6 +706,7 @@ module.exports = async (req, res) => {
     }
     const rows = await inflight[sport];
     let props = normalize(rows);
+    const parlayProps = props;
     let espnFb = false;
     if (!props.length) {
       const fb = await espnFallback(sport, "pre").catch(() => []);
@@ -552,8 +717,10 @@ module.exports = async (req, res) => {
     const wasPregame = !!(hit && Date.now() - hit.ts < DAY_TTL);
     if (noGamesMark) noGamesFetch[sport] = noGamesMark;
     cache[sport] = { ts: Date.now(), props, pregameRefreshed: wasPregame, espnFallback: espnFb };
+    if (sbClaimed) { await sbCachePut(sport, parlayProps, ((rows.pagesUsed || 1) * 3), sbClaimed.reserved); sbClaimed = null; }
     if (!props.length || espnFb) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300"); res.status(200).json({ ok: true, configured: true, cached: false, fallback: espnFb ? "espn" : undefined, props });
   } catch (err) {
+    if (sbClaimed) { await sbRefund(sport, sbClaimed.reserved); sbClaimed = null; }
     if (!hit || !hit.props.length) {
       const fb = await espnFallback(sport, "pre").catch(() => []);
       if (fb.length) {
