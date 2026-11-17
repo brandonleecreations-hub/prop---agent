@@ -621,6 +621,7 @@ function streakBadge(n){ return n >= 3 ? ' <span style="color:#ff9f43;font-weigh
 function fmtUser(name){ name = String(name || "Agent"); return /^[A-Za-z0-9_]+$/.test(name) ? "@" + name : name; }
 cleanupTickets();
 var manualTr = lsGet("pa_manual", {});            // ticketId -> {legId: currentValue}
+var manualFin = lsGet("pa_manualfin", {});        // ticketId -> {legId: true} — user marked the leg final
 
 /* ---------- tiers ---------- */
 var TIERS = [
@@ -1841,8 +1842,10 @@ function gradeTicket(t){
   var jobs = t.legs.map(function(leg){
     var man = (manualTr[t.id]||{})[leg.id];
     if (leg.custom || !leg.eventId || !leg.athleteId){
-      if (man!=null) return Promise.resolve({id:leg.id, val:man, status:legGrade(leg, man), manual:true});
-      return Promise.resolve({id:leg.id, val:null, status:"manual", manual:true});
+      var fin = !!((manualFin[t.id]||{})[leg.id]);
+      if (man!=null) return Promise.resolve({id:leg.id, val:man, status:legGrade(leg, man), manual:true, manFinal:fin});
+      if (fin) return Promise.resolve({id:leg.id, val:0, status:legGrade(leg, 0), manual:true, manFinal:true});
+      return Promise.resolve({id:leg.id, val:null, status:"manual", manual:true, manFinal:false});
     }
     var lg = leagueByKey(leg.league);
     return fetchJson(ESPN+lg.sport+"/"+lg.league+"/summary?event="+encodeURIComponent(leg.eventId)).then(function(s){
@@ -1854,8 +1857,9 @@ function gradeTicket(t){
   });
   return Promise.all(jobs).then(function(rs){
     var map = {}; rs.forEach(function(r){ map[r.id]=r; });
-    var anyMiss = rs.some(function(r){ return r.status==="miss" && (r.final || r.manual); });
-    var allDone = rs.every(function(r){ return (r.status==="hit" || r.status==="push") && (r.final || r.manual); });
+    var settled = function(r){ return r.final || (r.manual && r.manFinal); };
+    var anyMiss = rs.some(function(r){ return r.status==="miss" && settled(r); });
+    var allDone = rs.every(function(r){ return (r.status==="hit" || r.status==="push") && settled(r); });
     if (!t.result && anyMiss) { t.result = "loss"; lsSet("pa_tickets", tickets); }
     else if (!t.result && allDone && rs.length) { t.result = "win"; lsSet("pa_tickets", tickets); }
     if (t.result) { celebrateCheck(t); cloudSave(); }
@@ -1988,11 +1992,23 @@ function renderTickets(){
           var st = box.querySelector('[data-stepper="'+t.id+'|'+l.id+'"]');
           if (st){
             var cur = (manualTr[t.id]||{})[l.id] || 0;
-            st.innerHTML = '<div class="row" style="padding:4px 0 8px"><span class="note">Track '+esc(l.stat)+' yourself:</span><span class="stepper"><button data-step="'+t.id+'|'+l.id+'|-1">−</button><b>'+cur+'</b><button data-step="'+t.id+'|'+l.id+'|1">+</button></span></div>';
+            var fin2 = !!((manualFin[t.id]||{})[l.id]);
+            st.innerHTML = '<div class="row" style="padding:4px 0 8px"><span class="note">Track '+esc(l.stat)+' yourself:</span>'
+              + (fin2 ? '<span class="note" style="color:#f5c518;font-weight:800">✓ FINAL — '+cur+'</span>'
+                : t.result ? '<span class="note">Tracked: <b>'+cur+'</b></span>'
+                : '<span class="stepper"><button data-step="'+t.id+'|'+l.id+'|-1">−</button><b>'+cur+'</b><button data-step="'+t.id+'|'+l.id+'|1">+</button></span><button class="likebtn" data-manfin="'+t.id+'|'+l.id+'" style="margin-left:8px">✓ Mark final</button>')
+              + '</div>'
+              + (!fin2 && !t.result ? '<div class="note" style="padding-bottom:6px">Enter the live number as the game goes — the ticket only settles when you tap ✓ Mark final.</div>' : '');
             st.querySelectorAll("[data-step]").forEach(function(b){ b.addEventListener("click", function(){
               var p = b.getAttribute("data-step").split("|"); var tid=p[0], lid=p[1], d=parseInt(p[2],10);
               manualTr[tid] = manualTr[tid]||{}; manualTr[tid][lid] = Math.max(0, (manualTr[tid][lid]||0)+d);
               lsSet("pa_manual", manualTr); renderTickets();
+            }); });
+            st.querySelectorAll("[data-manfin]").forEach(function(b){ b.addEventListener("click", function(){
+              var p = b.getAttribute("data-manfin").split("|"); var tid=p[0], lid=p[1];
+              manualTr[tid] = manualTr[tid]||{}; if (manualTr[tid][lid] == null) manualTr[tid][lid] = 0; lsSet("pa_manual", manualTr);
+              manualFin[tid] = manualFin[tid]||{}; manualFin[tid][lid] = true;
+              lsSet("pa_manualfin", manualFin); renderTickets();
             }); });
           }
         }
