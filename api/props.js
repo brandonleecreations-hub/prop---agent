@@ -617,6 +617,18 @@ module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=39600");
   const keys = [process.env.PARLAY_API_KEY, process.env.PARLEY_API_KEY, process.env.PARLAY_API_KEY_2, process.env.PARLEY_API_KEY_2, process.env.PRIZEPICKS_FEED_API_KEY, process.env.PRIZEPICKS_API_KEY, process.env.PARLAY_KEY].filter((v, i, a) => !!v && a.indexOf(v) === i);
   if (!keys.length) { res.setHeader("Cache-Control", "no-store"); res.status(200).json({ ok: false, configured: false, props: [] }); return; }
+  // Read-only daily credit tally (Brandon 2026-11-17: watch today's
+  // progress, notify if credits go up). Numbers only -- no props, no keys.
+  if (req.query && req.query.tally === "1") {
+    res.setHeader("Cache-Control", "no-store");
+    const rowsT = await sbCacheAll();
+    if (!rowsT) { res.status(200).json({ ok: false, tally: false }); return; }
+    const todayT = etToday();
+    let totalT = 0; const sportsT = {};
+    rowsT.forEach((r) => { const c = String(r.count_day || "") === todayT ? (r.credits_today | 0) : 0; sportsT[r.sport] = c; totalT += c; });
+    res.status(200).json({ ok: true, tally: true, day: todayT, cap: DAILY_CREDIT_BUDGET, totalToday: totalT, sports: sportsT });
+    return;
+  }
   const sport = (req.query && req.query.sport) || "";
   if (SPORT_KEYS.indexOf(sport) === -1) { res.status(400).json({ ok: false, error: "unknown sport" }); return; }
   const hit = cache[sport];
