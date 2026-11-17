@@ -3289,26 +3289,27 @@ function clashZoom(ci, ti){
   sfx("click");
 }
 function closeZoom(){ var z = $("clashZoom"); if (z) { z.classList.remove("open"); z.innerHTML = ""; } }
-/* ---------- soft jazz loop — 3 synthesized songs, arcade style ---------- */
+/* ---------- arcade music — 3 synthesized chiptune songs ---------- */
 var MUS = { on: false, timer: null, track: 0, beat: 0, bus: null };
-var JAZZ = [
-  { bpm: 78, chords: [[261.63, 329.63, 392.00, 493.88], [220.00, 261.63, 329.63, 392.00], [174.61, 220.00, 261.63, 329.63], [196.00, 246.94, 293.66, 392.00]], bass: [130.81, 110.00, 87.31, 98.00] },
-  { bpm: 86, chords: [[293.66, 369.99, 440.00, 523.25], [246.94, 293.66, 369.99, 440.00], [196.00, 246.94, 293.66, 369.99], [220.00, 261.63, 329.66, 440.00]], bass: [146.83, 123.47, 98.00, 110.00] },
-  { bpm: 70, chords: [[233.08, 293.66, 349.23, 440.00], [196.00, 233.08, 293.66, 349.23], [155.56, 196.00, 233.08, 293.66], [174.61, 220.00, 261.63, 349.23]], bass: [116.54, 98.00, 77.78, 87.31] }
+var SONGS = [
+  { bpm: 124, chords: [[261.63, 329.63, 392.00], [349.23, 440.00, 523.25], [392.00, 493.88, 587.33], [440.00, 523.25, 659.25]], roots: [130.81, 174.61, 196.00, 220.00], mel: [523.25, 659.25, 783.99, 659.25, 880.00, 783.99, 659.25, 587.33, 659.25, 783.99, 880.00, 783.99, 659.25, 587.33, 523.25, 0] },
+  { bpm: 132, chords: [[440.00, 523.25, 659.25], [440.00, 523.25, 659.25], [349.23, 440.00, 523.25], [392.00, 493.88, 587.33]], roots: [220.00, 220.00, 174.61, 196.00], mel: [880.00, 1046.50, 987.77, 880.00, 783.99, 880.00, 659.25, 0, 698.46, 880.00, 783.99, 659.25, 587.33, 659.25, 0, 0] },
+  { bpm: 116, chords: [[392.00, 493.88, 587.33], [392.00, 523.25, 659.25], [392.00, 493.88, 587.33], [293.66, 369.99, 440.00]], roots: [196.00, 130.81, 196.00, 146.83], mel: [587.33, 783.99, 987.77, 783.99, 880.00, 987.77, 1174.66, 987.77, 880.00, 783.99, 880.00, 987.77, 880.00, 783.99, 0, 0] }
 ];
-function musBus(){ if (!AC) return null; if (!MUS.bus) { MUS.bus = AC.createGain(); MUS.bus.gain.value = 0.05; MUS.bus.connect(AC.destination); } return MUS.bus; }
-function jazzTone(f, dur, vol, type){ try { var bus = musBus(); if (!bus || !AC) return; var t = AC.currentTime; var o = AC.createOscillator(), g = AC.createGain(); o.type = type || "triangle"; o.frequency.value = f; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.09); g.gain.exponentialRampToValueAtTime(0.001, t + dur); o.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.05); } catch(e){} }
+function musBus(){ if (!AC) return null; if (!MUS.bus) { MUS.bus = AC.createGain(); MUS.bus.gain.value = 0.16; MUS.bus.connect(AC.destination); } return MUS.bus; }
+function arcTone(f, dur, vol, type){ try { var bus = musBus(); if (!bus || !AC) return; var t = AC.currentTime; var o = AC.createOscillator(), g = AC.createGain(); o.type = type || "square"; o.frequency.value = f; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.001, t + dur); o.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.03); } catch(e){} }
 function musicTick(){
   if (!MUS.on || !AC) return;
-  var song = JAZZ[MUS.track % JAZZ.length];
-  var bar = Math.floor(MUS.beat / 4) % 4, b = MUS.beat % 4;
-  var chord = song.chords[bar];
-  if (b === 0) { chord.forEach(function(f){ jazzTone(f, 2.6, 0.15, "triangle"); }); jazzTone(song.bass[bar], 1.4, 0.5, "sine"); }
-  if (b === 2) jazzTone(song.bass[bar] * 1.5, 0.9, 0.3, "sine");
-  jazzTone(6800, 0.03, 0.045, "square");
-  if (b === 3 && Math.random() < 0.5) jazzTone(chord[Math.floor(Math.random() * chord.length)] * 2, 0.5, 0.05, "sine");
+  var song = SONGS[MUS.track % SONGS.length];
+  var step = MUS.beat % 32, bar = Math.floor(step / 8) % 4, s8 = step % 8;
+  var chord = song.chords[bar], root = song.roots[bar];
+  if (s8 % 2 === 0) arcTone(root * (s8 === 4 ? 1.5 : 1), 0.22, 0.5, "triangle");
+  if (s8 === 0) chord.forEach(function(f){ arcTone(f, 0.3, 0.11, "square"); });
+  var m = song.mel[MUS.beat % 16];
+  if (m) arcTone(m, 0.19, 0.32, "square");
+  if (s8 % 2 === 1) arcTone(7200, 0.03, 0.09, "square");
   MUS.beat++;
-  if (MUS.beat >= 64) { MUS.beat = 0; MUS.track++; if (MUS.timer) { clearInterval(MUS.timer); MUS.timer = setInterval(musicTick, Math.round(60000 / JAZZ[MUS.track % JAZZ.length].bpm)); } }
+  if (MUS.beat >= 64) { MUS.beat = 0; MUS.track++; if (MUS.timer) { clearInterval(MUS.timer); MUS.timer = setInterval(musicTick, Math.round(60000 / SONGS[MUS.track % SONGS.length].bpm / 2)); } }
 }
 function musicStart(){
   try {
@@ -3318,18 +3319,19 @@ function musicStart(){
     if (AC.state === "suspended") AC.resume();
     if (MUS.on) return;
     MUS.on = true; MUS.beat = 0;
-    MUS.timer = setInterval(musicTick, Math.round(60000 / JAZZ[MUS.track % JAZZ.length].bpm));
+    MUS.timer = setInterval(musicTick, Math.round(60000 / SONGS[MUS.track % SONGS.length].bpm / 2));
     musicTick();
   } catch(e){}
 }
 function musicStop(){ MUS.on = false; if (MUS.timer) { clearInterval(MUS.timer); MUS.timer = null; } }
-function musicToggle(){ var on = lsGet("pa_music", 1) !== 0; lsSet("pa_music", on ? 0 : 1); if (on) musicStop(); else musicStart(); var b = $("musBtn"); if (b) b.textContent = on ? "🔇" : "🎵"; }
+function musicToggle(){ var on = lsGet("pa_music", 1) !== 0; lsSet("pa_music", on ? 0 : 1); if (on) musicStop(); else musicStart(); var b = $("musBtn"); if (b) b.textContent = on ? "\uD83D\uDD07" : "\uD83C\uDFB5"; }
 
 var CL = null;
 function ensureClashPop(){
   if (document.getElementById("clashPop")) return;
   var el = document.createElement("div");
   el.id = "clashPop";
+  el.addEventListener("pointerdown", function(){ try { if (AC && AC.state === "suspended") AC.resume(); if (lsGet("pa_music", 1) !== 0 && !MUS.on) musicStart(); } catch(e){} });
   el.innerHTML = '<button id="musBtn" title="Music on/off">' + (lsGet("pa_music", 1) === 0 ? "🔇" : "🎵") + '</button><div class="clashpanel" id="clashPanel"></div><div id="clashZoom"></div>';
   document.body.appendChild(el);
   el.addEventListener("click", function(e){ if (e.target === el) closeClash(); });
@@ -3348,7 +3350,7 @@ function clashMenu(){
     + '<button class="clashbig gold" data-clashmode="ladder">🏆 LADDER' + (lad >= 7 ? ' — CHAMPION 🏆' : ' — BOSS ' + (lad + 1) + ' OF 7') + '<span>' + (lad >= 7 ? 'Every boss beaten. Replay Boss 7 for coins.' : 'Beat bosses in order. Boss ' + (lad + 1) + ' pays ' + (10 + (lad + 1) * 5) + ' 🪙') + '</span></button>'
     + '<div class="clashmeta">🪙 <b>' + coinsGet() + '</b> Clash Coins · Record <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b><br>Wins pay Clash Coins — spend them on packs (1 pack = ' + CLASH_PACK_COST + ' 🪙, in My Packs below)</div>'
     + '<div class="clashmeta">🏆 <b>One ladder everywhere:</b> your ' + maxWins() + ' tier wins \u2014 from prop tickets, plus every battle win \u2014 unlock these tier cards \u2014 the same cards you battle with \u2014 AND the foil tiers inside packs. Clash Coins buy those same packs too.</div>'
-    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>⭐ Stars = your card\'s tier — higher total wins the round.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Holding two-in-a-row on the grid gives +1★ until it breaks.<br>🛡️ Defend: your power stays off — but if you lose the round, NO hit lands.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Soft jazz plays while you battle — the 🎵 button (top right) mutes it.</div></details>'
+    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>⭐ Stars = your card\'s tier — higher total wins the round.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Holding two-in-a-row on the grid gives +1★ until it breaks.<br>🛡️ Defend: your power stays off — but if you lose the round, NO hit lands.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Arcade music plays while you battle — the 🎵 button (top right) mutes it.</div></details>'
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>');
 }
