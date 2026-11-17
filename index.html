@@ -914,7 +914,7 @@ function renderUpcoming(){
               + '<p class="herotap" style="font-size:11.5px">Tap for game center →</p></div>';
           };
           hero.innerHTML = '<div class="heroes2">' + picks.map(miniHero).join("") + '</div>';
-          hero.querySelectorAll("[data-hero]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-hero").split("|"); showView("live"); openGame(p[0], p[1]); }); });
+          hero.querySelectorAll("[data-hero]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-hero").split("|"); showView("live"); window._gameFrom = "home"; openGame(p[0], p[1]); }); });
         }
         else {
           var g = picks[0], ts = eventTeams(g.ev);
@@ -929,7 +929,7 @@ function renderUpcoming(){
             + '<div style="text-align:center"><span class="herolive">🔴 LIVE · '+esc(st.shortDetail||st.detail||g.lg.label)+'</span></div>'
             + '<p class="herotap">Tap for the game center — props, tracker &amp; plays →</p></div>';
           var hc = $("heroCard");
-          if (hc) hc.addEventListener("click", function(){ showView("live"); openGame(g.lg.key, g.ev.id); });
+          if (hc) hc.addEventListener("click", function(){ showView("live"); window._gameFrom = "home"; openGame(g.lg.key, g.ev.id); });
         }
       }
       var hst = $("heroStats");
@@ -951,7 +951,7 @@ function renderUpcoming(){
       var mHtml = (aU && hU) ? tlogoImg(aU.logo,17)+esc(aU.name)+' @ '+tlogoImg(hU.logo,17)+esc(hU.name) : ts.map(function(t){ return tlogoImg(t.logo,17)+esc(t.name); }).join(' @ ');
       return '<div class="card game" data-game="'+u.lg.key+'|'+u.ev.id+'" style="cursor:pointer"><div><div class="gteam">'+mHtml+'</div><div style="color:var(--purp-lt);font-size:11.5px;font-weight:800;letter-spacing:1.2px;margin-top:2px">'+esc(u.lg.label.toUpperCase())+'</div></div><div class="gstat">'+esc(fmtDay(u.ev.date))+' '+esc(new Date(u.ev.date).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}))+'</div></div>';
     }).join("") : '<p class="empty">No upcoming games found right now.</p>');
-    if (upChanged) $("upcoming").querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); showView("live"); openGame(p[0], p[1]); }); });
+    if (upChanged) $("upcoming").querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); showView("live"); window._gameFrom = "home"; openGame(p[0], p[1]); }); });
   });
 }
 function articleHtml(a, picks){
@@ -1312,10 +1312,11 @@ function trackerHtml(lg, s, comp, cs){
 }
 
 function closeGame(silent){
+  var dest = window._gameFrom || "live"; window._gameFrom = null;
   window._openGame = null;
   var gd = $("gameDetail"); if (gd) gd.innerHTML = "";
   ["liveCenter","liveTabs","liveStatus"].forEach(function(id){ var el = $(id); if (el) el.style.display = ""; });
-  if (!silent){ renderLive(); if (window._liveScrollY != null) window.scrollTo(0, window._liveScrollY); }
+  if (!silent){ if (dest === "home") showView("home"); else { renderLive(); if (window._liveScrollY != null) window.scrollTo(0, window._liveScrollY); } }
 }
 function openGame(key, eventId, isRefresh){
   window._openGame = {key: key, eventId: eventId};
