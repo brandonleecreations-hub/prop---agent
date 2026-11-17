@@ -2016,7 +2016,7 @@ function renderBoard(){
 }
 
 /* ---------- Weekly Pick'em (special card reward) ---------- */
-var WEEKLY_PICKEM = { week: "2026-W47", lgKey: "nfl", eventId: "401873066", starts: "2026-11-20T01:15Z", away: "Indianapolis Colts", home: "Houston Texans", awayShort: "Colts", homeShort: "Texans", note: "Thursday Night Football", cardName: "PROP AGENT", art: "/api/avatars?s=13", bannerArt: "/api/banners?s=pickem" };
+var WEEKLY_PICKEM = { week: "2026-W47", lgKey: "nfl", eventId: "401873066", starts: "2026-11-20T01:15Z", away: "Indianapolis Colts", home: "Houston Texans", awayShort: "Colts", homeShort: "Texans", note: "Thursday Night Football", cardName: "PROP AGENT", art: "/api/avatars?s=13&v=2", bannerArt: "/api/banners?s=pickem" };
 function specialUnlocked(){ return (lsGet("pa_special", []) || []).indexOf(WEEKLY_PICKEM.week) >= 0; }
 function pickemWhen(){ try { return new Date(WEEKLY_PICKEM.starts).toLocaleString("en-US", { timeZone: "America/Denver", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); } catch(e){ return ""; } }
 function loadPickemEvent(){
@@ -2143,9 +2143,12 @@ function ensureCardPop(){
     + '<button class="mini" id="popClose" style="background:#17171f;border:1px solid #33333f;color:#fff;padding:8px 16px;border-radius:10px;font-weight:800">✕ Close</button>'
     + '</div>';
   document.body.appendChild(el);
-  el.addEventListener("click", function(e){ if (e.target === el) el.classList.remove("open"); });
-  document.getElementById("popWrap").addEventListener("click", function(){ this.classList.toggle("flipped"); });
-  document.getElementById("popClose").addEventListener("click", function(){ el.classList.remove("open"); });
+  el.addEventListener("click", function(e){
+    var w = document.getElementById("popWrap");
+    if (e.target === el) { el.classList.remove("open"); return; }
+    if (e.target.closest && e.target.closest("#popClose")) { el.classList.remove("open"); return; }
+    if (w && e.target.closest && e.target.closest("#popWrap")) { w.classList.toggle("flipped"); }
+  });
 }
 document.addEventListener("click", function(e){
   var t = e.target && e.target.closest ? e.target.closest("[data-cardpop]") : null;
