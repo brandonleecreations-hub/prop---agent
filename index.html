@@ -558,6 +558,16 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   </div>
 </dialog>
 
+<dialog id="pushPromptDlg">
+  <h3>&#128276; Never miss a result</h3>
+  <p class="note">Your account is created. Turn on notifications and Prop Agent will tap you before your tickets start and the moment they win or lose &#8212; even with the app closed. Just the good stuff, never spam.</p>
+  <div class="row" style="margin-top:14px;gap:8px">
+    <button class="bigbtn" id="ppEnable" type="button" style="flex:1">Enable notifications</button>
+    <button class="ghostbtn" id="ppSkip" type="button">Not now</button>
+  </div>
+  <p class="note" id="ppNote" style="margin-top:10px"></p>
+</dialog>
+
 <div id="welcomePop">
   <div class="wstage" id="wStage">
     <button type="button" class="wskip" id="wSkip">Skip ✕</button>
@@ -3056,7 +3066,7 @@ $("agSignup").addEventListener("click", function(){
   var c = authCreds(); if (!c) return;
   authNote("Creating your account\u2026");
   authCall({action:"signup", email:c.email, password:c.password}).then(function(j){
-    if (j && j.ok) authSignedIn(j, "Account created \u2014 you're logged in. Your progress now saves to your account on any device.");
+    if (j && j.ok) { authSignedIn(j, "Account created \u2014 you're logged in. Your progress now saves to your account on any device."); setTimeout(showPushPrompt, 600); }
     else authNote((j && j.error) || "Couldn't create the account \u2014 try again.");
   }).catch(function(){ authNote("Couldn't reach the account service \u2014 try again in a moment."); });
 });
@@ -3110,6 +3120,33 @@ $("pushBtn").addEventListener("click", function(){
       return saveSub.then(function(){ return fetch("/api/send-push", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({action:"test", subscription:sub, title:"🎉 You're in, Agent!", body:"Notifications are on. We'll tap you before your tickets start and when they settle — just the good stuff, never spam."})}); });
     }).then(function(){ note.textContent = "You're all set — a test push just flew to your phone. Ticket starts + results, even with the app closed."; });
   }).catch(function(){ note.textContent = "Couldn't enable notifications — check your browser's notification permission."; });
+});
+
+/* ---------- post-signup push prompt (Brandon 2026-11-17): after an
+   account is created, offer notifications once per device. ---------- */
+function showPushPrompt(){
+  if (lsGet("pa_pushprompt", 0)) return;
+  if (!("Notification" in window) || !("PushManager" in window)) return;
+  if (Notification.permission !== "default") return;
+  var d = $("pushPromptDlg"); if (!d) return;
+  lsSet("pa_pushprompt", 1);
+  if (!d.open) d.showModal();
+}
+function closePushPrompt(){ var d = $("pushPromptDlg"); if (d && d.open) d.close(); }
+$("ppSkip").addEventListener("click", closePushPrompt);
+$("ppEnable").addEventListener("click", function(){
+  var btn = this, note = $("ppNote");
+  btn.disabled = true; btn.textContent = "One sec\u2026";
+  var b = $("pushBtn"); if (b) b.click();
+  setTimeout(function(){
+    if (window.Notification && Notification.permission === "granted") {
+      if (note) note.textContent = "\u2713 You're all set \u2014 a test push is on its way.";
+      setTimeout(closePushPrompt, 1600);
+    } else {
+      btn.disabled = false; btn.textContent = "Enable notifications";
+      if (note) note.textContent = "Not turned on \u2014 you can enable anytime from your profile (tap the logo, then Enable notifications).";
+    }
+  }, 2000);
 });
 
 /* ---------- result animations (the only animations in the app) ----------
