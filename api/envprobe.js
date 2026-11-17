@@ -1,10 +1,2 @@
-// TEMPORARY diagnostic (restored 2026-11-16): reports only the NAMES of env
-// vars related to the props keys — never values.
-module.exports = async (req, res) => {
-  res.setHeader("Content-Type", "application/json");
-  res.setHeader("Cache-Control", "no-store");
-  const names = Object.keys(process.env)
-    .filter((k) => /PARLAY|PARLEY|PRIZE|PROP|PICKS/i.test(k))
-    .sort();
-  res.status(200).json({ ok: true, names });
-};
+// Diagnostic removed — endpoint disabled.
+module.exports = async (req, res) => { res.status(404).json({ ok: false }); };

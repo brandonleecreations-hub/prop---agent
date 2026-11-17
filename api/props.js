@@ -164,6 +164,9 @@ const PREGAME_WINDOW = 2 * 60 * 60 * 1000;
 function cacheFresh(hit) {
   if (!hit) return false;
   const age = Date.now() - hit.ts;
+  // An empty board (e.g. pulled between slates) only stays fresh ~10 min,
+  // so the next posted props land quickly instead of riding the 11h cache.
+  if (!hit.props.length) return age < 10 * 60 * 1000;
   // Most-recent rule: if every game on the cached board has already started,
   // the board is yesterday's news — a newer slate may be posted, so refresh
   // (at most once per 30 min) instead of riding the 11h cache into empty.
