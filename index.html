@@ -490,9 +490,9 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .coinface.red{background:radial-gradient(circle at 36% 30%,#ffe4e6,#f87171 34%,#dc2626 62%,#991b1b 88%);color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.45)}
 .coinface.blue{background:radial-gradient(circle at 36% 30%,#dbeafe,#60a5fa 34%,#2563eb 62%,#1e3a8a 88%);color:#fff;transform:rotateX(180deg);text-shadow:0 2px 6px rgba(0,0,0,.45)}
 .coinface span{font-size:12px;letter-spacing:3px;font-weight:900}
-.flipfield{position:relative;overflow:hidden}
-.flipfield::before{content:"";position:absolute;inset:-10px;background:url(/api/icons?s=512) center/240px no-repeat;opacity:.15;animation:logopulse 3.4s ease-in-out infinite;pointer-events:none}
-@keyframes logopulse{0%,100%{transform:scale(1) rotate(-2deg);opacity:.12}50%{transform:scale(1.08) rotate(2deg);opacity:.22}}
+.flipfield{position:relative;overflow:hidden;background:radial-gradient(130% 130% at 50% 0%,#2b1655 0%,#170c33 55%,#0a0618 100%);transform:none}
+.flipfield::before{content:"";position:absolute;inset:-10px;background:url(/api/icons?s=512) center/330px no-repeat;opacity:.3;animation:logopulse 3.4s ease-in-out infinite;pointer-events:none}
+@keyframes logopulse{0%,100%{transform:scale(1) rotate(-2deg);opacity:.2}50%{transform:scale(1.08) rotate(2deg);opacity:.34}}
 .flipfield>*{position:relative;z-index:1}
 .itemrow{margin-top:9px;background:rgba(245,185,66,.07);border:1px solid rgba(245,185,66,.35);border-radius:12px;padding:8px 10px}
 .itemlab{font-size:10.5px;font-weight:900;letter-spacing:.6px;color:#f5d98a;margin-bottom:6px}
@@ -4421,7 +4421,7 @@ function showView(name){
   if (name==="board") renderBoard();
   if (name==="build") renderBuild();
   if (name==="highlights"){ renderTicketHighlights(); renderYourVideos(); }
-  window._view = name; updateSlipChip();
+  window._view = name; lsSet("pa_tab", name); updateSlipChip();
   window.scrollTo(0,0);
 }
 document.querySelectorAll("nav.bottom button").forEach(function(b){
@@ -4432,7 +4432,7 @@ document.querySelectorAll("nav.bottom button").forEach(function(b){
   });
 });
 function setSport(key){
-  currentSport = key;
+  currentSport = key; lsSet("pa_sport", key);
   boardStat = "all"; boardTeam = "all"; boardQuery = ""; var bq = $("boardSearch"); if (bq) bq.value = "";
   document.querySelectorAll("#sportTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-sport")===key); });
   if (key==="all") showView("home"); else { showView("sport"); renderBoards(); }
@@ -4503,7 +4503,12 @@ renderBoard();
   }
 })();
 cloudInit();
-showView("home");
+(function bootTab(){
+  var t = lsGet("pa_tab", "home");
+  if (t === "sport") { var bs = lsGet("pa_sport", "all"); if (bs && bs !== "all") { setSport(bs); return; } showView("home"); return; }
+  if (t && t !== "home") { showView(t); return; }
+  showView("home");
+})();
 if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").catch(function(){}); }
 setInterval(function(){ boardCache = {}; refreshHome(); if ($("view-live").classList.contains("on")){ renderLive(); if (window._openGame) openGame(window._openGame.key, window._openGame.eventId, true); }
   if (window._view === "sport" && currentSport !== "all"){ getScoreboard(leagueByKey(currentSport), 1).then(function(){ var bmI = breakMap[currentSport] || {}; if (Object.keys(bmI).length || window._brkWasOpen){ window._brkWasOpen = !!Object.keys(bmI).length; renderBoards(); } }).catch(function(){}); }
