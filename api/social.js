@@ -77,6 +77,21 @@ module.exports = async (req, res) => {
       res.status(200).json({ ok: true, streaks: out });
       return;
     }
+    if (req.method === "GET" && req.query && req.query.search !== undefined) {
+      const q = String(req.query.search || "").trim().replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+      const me = String(req.query.me || "");
+      if (q.length < 2) { res.status(200).json({ ok: true, results: [] }); return; }
+      const r = await rest("profiles?select=" + PROF_SEL + "&display_name=ilike." + encodeURIComponent("%" + q + "%") + "&order=wins.desc&limit=20", { headers: sbHeaders() });
+      const rows = Array.isArray(r.json) ? r.json : [];
+      const counts = {}, mine = {};
+      if (rows.length) {
+        const ids = rows.map((x) => x.id);
+        const f = await rest("follows?select=follower_id,following_id&following_id=in.(" + ids.join(",") + ")&limit=10000", { headers: sbHeaders() });
+        if (Array.isArray(f.json)) f.json.forEach((x) => { counts[x.following_id] = (counts[x.following_id] || 0) + 1; if (me && x.follower_id === me) mine[x.following_id] = 1; });
+      }
+      res.status(200).json({ ok: true, results: rows.map((x) => ({ id: x.id, display_name: x.display_name, wins: x.wins, avatar_url: x.avatar_url, featured_card: x.featured_card, followers: counts[x.id] || 0, following: !!mine[x.id] })) });
+      return;
+    }
     if (req.method === "GET" && req.query && req.query.state) {
       const me = String(req.query.uid || "");
       if (!UUID_RE.test(me)) { res.status(200).json({ ok: false, error: "bad uid" }); return; }

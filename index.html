@@ -479,6 +479,9 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
       <div><b>Your Agent</b><br><span class="note">Profile pic, name, wins and cards — saved to your cloud profile.</span></div>
       <button class="agentbtn" id="agentBtn">👤 Guest Agent</button>
     </div>
+    <h2>🔍 Find Agents</h2>
+    <p class="sub">Search members by username — tap a result to open their profile, or follow them right from the list.</p>
+    <div class="card" style="margin-bottom:14px"><input type="text" id="agentSearch" placeholder="Search usernames…" autocomplete="off" style="width:100%;background:#101018;border:1px solid #2c2c3a;border-radius:10px;color:#fff;padding:11px 13px;font-size:15px;box-sizing:border-box"><div id="agentSearchResults" style="margin-top:6px"></div></div>
     <h2>🏆 Leaderboard</h2>
     <p class="sub">Top 50 agents · ranked by most winning tickets · tap an agent to see their shared tickets and follow them.</p>
     <div class="card" id="leaderboard"><p class="empty">Loading the board…</p></div>
@@ -2646,6 +2649,7 @@ function toggleFollow(id){
       followCounts[id] = Math.max(0, (followCounts[id] || 0) + (on ? -1 : 1));
       feedAt = 0;
       renderBoard();
+      renderSearchResults();
       if (window._viewAgentId === id) openAgent(id, true);
     }
   });
@@ -2708,7 +2712,26 @@ function renderTopTicket(){
     box.innerHTML = '<div class="card" style="padding:10px 14px;margin-top:12px"><div class="row" style="gap:9px;align-items:center"><span style="color:#ff5d7a;font-size:16px">♥</span><div style="flex:1;min-width:0"><div style="font-weight:900;font-size:13px;letter-spacing:.6px">TOP TICKET · ' + (t.likes || 0) + ' LIKES</div><div class="note" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (o.avatar_url ? '<img src="' + esc(o.avatar_url) + '" alt="" style="width:16px;height:16px;border-radius:50%;object-fit:cover;vertical-align:-3px;margin-right:5px">' : '') + '<b style="color:#e5e9f2">' + esc(fmtUser(o.display_name || "Agent")) + '</b>' + streakBadge(j.streak || 0) + ' · ' + statusChip(t.status) + ' · ' + legs + more + '</div></div>' + (o.id && o.id !== cloudUid ? '<button type="button" class="likebtn' + (t.likedByMe ? ' on' : '') + '" data-like="' + t.id + '"><span class="hrt">♥</span> ' + (t.likes || 0) + '</button>' : '<span class="note">♥ ' + (t.likes || 0) + '</span>') + '</div></div>';
   });
 }
+var searchTimer = null, lastSearchQ = "";
+function renderSearchResults(){
+  var box = $("agentSearchResults"); if (!box) return;
+  var q = lastSearchQ;
+  if (!q || q.length < 2) { box.innerHTML = ""; return; }
+  socialGet("search=" + encodeURIComponent(q) + "&me=" + encodeURIComponent(cloudUid)).then(function(j){
+    if (lastSearchQ !== q) return;
+    if (!j || !j.ok) { box.innerHTML = '<p class="empty">Search did not load — try again.</p>'; return; }
+    if (!j.results.length) { box.innerHTML = '<p class="empty">No agents match "' + esc(q) + '" yet.</p>'; return; }
+    box.innerHTML = j.results.map(function(r){
+      var t = tierFor(r.wins || 0), isMe = r.id === cloudUid;
+      return '<div class="leg"><span data-agent="' + r.id + '" class="agentclick" style="display:flex;align-items:center;gap:9px;flex:1;min-width:0">' + (r.avatar_url ? '<img src="' + esc(r.avatar_url) + '" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover">' : '') + '<span style="min-width:0"><b>' + esc(fmtUser(r.display_name || "Agent")) + '</b>' + streakBadge(agentStreaks[r.id] || 0) + '<br><span class="note">' + t.name + ' · ' + (r.wins || 0) + ' wins · ' + (r.followers || 0) + ' followers</span></span></span>' + (isMe ? '<span class="note">You</span>' : '<button type="button" class="likebtn' + (r.following ? ' on' : '') + '" data-follow="' + r.id + '">' + (r.following ? '✓ Following' : '+ Follow') + '</button>') + '</div>';
+    }).join("");
+  });
+}
+var asEl = $("agentSearch");
+if (asEl) asEl.addEventListener("input", function(){ lastSearchQ = asEl.value.trim(); if (searchTimer) clearTimeout(searchTimer); searchTimer = setTimeout(renderSearchResults, 350); });
 document.addEventListener("click", function(e){
+  var f = e.target && e.target.closest ? e.target.closest("[data-follow]") : null;
+  if (f) { toggleFollow(f.getAttribute("data-follow")); return; }
   var c = e.target && e.target.closest ? e.target.closest("[data-agent]") : null;
   if (c) { openAgent(c.getAttribute("data-agent")); return; }
   var b = e.target && e.target.closest ? e.target.closest("[data-like]") : null;
