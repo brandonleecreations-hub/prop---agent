@@ -1563,7 +1563,7 @@ function findProp(id){
 }
 
 /* ---------- home: top agents / upcoming / news ---------- */
-function myWins(){ return tickets.filter(function(t){ return t.result==="win" && !ticketHasCustom(t); }).length + (parseInt(lsGet("pa_bonuswins", 0), 10) || 0) + (parseInt(lsGet("pa_winbank", 0), 10) || 0); }
+function myWins(){ return tickets.filter(function(t){ return t.result==="win" && !ticketHasCustom(t); }).length + (parseInt(lsGet("pa_bonuswins", 0), 10) || 0) + (parseInt(lsGet("pa_winbank", 0), 10) || 0) + (parseInt(lsGet("pa_battlewins", 0), 10) || 0); }
 function maxWins(){ var m = 0; try { m = parseInt(lsGet("pa_maxwins", 0), 10) || 0; } catch(e){} var w = myWins(); if (w > m){ m = w; try { lsSet("pa_maxwins", m); } catch(e){} } return m; }
 function agentRows(){
   var rows = cloudAgents
@@ -2679,7 +2679,7 @@ function renderBoard(){
     cardSec("tier", "🃏 TIER CARDS — " + CHARNAMES[cci - 1], unlockedN + " of 7 unlocked", tierCards, true)
     + cardSec("battle", "\u2694\uFE0F BATTLE CARDS — Grid Clash", unlockedN + " of 7 unlocked", battleCardsOnly, true)
     + (cards.length ? cardSec("player", "🏆 PLAYER CARDS — winning tickets", cards.length + " earned", playerCards, false) : "")
-    + cardSec("stamps", "🌟 GOLD FOIL STAMPS — 1 in ~10 packs", stampsGet().length + " of 12", stampCardsOnly, false)
+    + cardSec("stamps", "🌟 GOLD FOIL STAMPS — 1 in ~12 packs", stampsGet().length + " of 12", stampCardsOnly, false)
     + (fl0.length ? cardSec("foils", "✨ FOIL CARDS — from packs", fl0.length + " pulled", foilCardsOnly, false) : "")
     + cardSec("special", "⭐ SPECIAL CARDS — Pick'em & chase", specN + " of 2", specialCardHTML() + ringCardHTML(), false);
   document.querySelectorAll(".cardsec-h").forEach(function(h){ h.addEventListener("click", function(){ var sec = h.parentElement; var nowClosed = sec.classList.toggle("closed"); var st = lsGet("pa_cardsecs", {}); st[h.getAttribute("data-cardsec")] = !nowClosed; lsSet("pa_cardsecs", st); var ch = h.querySelector(".cschev"); if (ch) ch.textContent = nowClosed ? "\u25B8" : "\u25BE"; sfx("click"); }); });
@@ -2774,7 +2774,7 @@ function renderPacks(){
   box.innerHTML = '<div class="packpromo">'
     + '<div style="display:flex;gap:12px;align-items:center"><img class="packimg" src="/api/banners?s=pack" alt="">'
     + '<div><div style="font-weight:900;font-size:17px">🎁 1 FREE PACK <span style="color:#f5c518">EVERY DAY</span></div>'
-    + '<div class="note" style="margin-top:3px">Every pack: <b style="color:#fff">3 foil cards</b>. Big ticket wins (4+ picks) earn 2 packs. And hiding in about 1 pack in 100… <b style="color:#f5c518">THE RING 🏆</b> — signed, one of a kind, the rarest card in the game.</div></div></div>'
+    + '<div class="note" style="margin-top:3px">Every pack: <b style="color:#fff">3 foil cards</b>. Big ticket wins (4+ picks) earn 2 packs. And hiding in about 1 pack in 125… <b style="color:#f5c518">THE RING 🏆</b> — signed, one of a kind, the rarest card in the game.</div></div></div>'
     + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'
     + (claimed ? '<button class="openbtn" disabled>✓ Free pack claimed — back tomorrow</button>' : '<button class="openbtn gold" data-claimpack="1">🎁 CLAIM FREE PACK</button>')
     + '<button class="openbtn" data-openpack="n"' + ((p.n || 0) > 0 ? '' : ' disabled') + '>Open Pack · ' + (p.n || 0) + '</button>'
@@ -2786,7 +2786,7 @@ function renderPacks(){
     + '</div>';
 }
 function ringBackHTML(){
-  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512" alt=""></div><div class="bkname" style="color:#f5c518">PROP AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">THE RING · CHAMPIONSHIP EDITION</div><div class="bksub">Signed · One of a Kind<br>The rarest pull in the game — about 1 pack in 100</div><div class="holo" style="--hc:#f5c51859"></div></div>';
+  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512" alt=""></div><div class="bkname" style="color:#f5c518">PROP AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">THE RING · CHAMPIONSHIP EDITION</div><div class="bksub">Signed · One of a Kind<br>The rarest pull in the game — about 1 pack in 125</div><div class="holo" style="--hc:#f5c51859"></div></div>';
 }
 function stampsGet(){ return lsGet("pa_stamps", []); }
 function stampBackHTML(ci){
@@ -2798,7 +2798,7 @@ function stampCardHTML(ci){
     + '<div class="tcplate"><span class="tcname">' + cname + '</span><span class="tcno">🌟 STAMP</span></div>'
     + '<div class="tcwin"><img class="cardart" src="/api/battle?s=' + ci + '" alt="">' + (un ? '<span class="stampbadge">FOIL</span>' : '<div class="lockveil">LOCKED</div>') + '</div>'
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">GOLD FOIL STAMP</span><span class="rarpill" style="background:#f5c518;color:#1a1405">STAMP EDITION</span></div>'
-    + '<div class="tierto" style="margin-top:6px">' + (un ? 'You pulled the gold foil stamp edition of ' + cname + '.' : 'The gold foil stamp edition of ' + cname + ' — hiding in about 1 pack in 10.') + '</div>'
+    + '<div class="tierto" style="margin-top:6px">' + (un ? 'You pulled the gold foil stamp edition of ' + cname + '.' : 'The gold foil stamp edition of ' + cname + ' — hiding in about 1 pack in 12.') + '</div>'
     + (un ? '<div style="display:flex;gap:6px;margin-top:8px"><button class="mini setprofs" data-avatar="/api/battle?s=' + ci + '" data-featured="' + cname + ' · Gold Foil Stamp">Set as profile card</button><button class="mini dlstamp" data-ci="' + ci + '">Download PNG</button></div>' : '')
     + '</div><div class="foilshine"></div></div>';
   return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"' + (un ? '' : ' data-noflip="1"') + '><div class="tierinner">' + front + stampBackHTML(ci) + '</div></div>';
@@ -2834,7 +2834,7 @@ function ringCardHTML(){
     + '<div class="tcplate"><span class="tcname">THE RING</span><span class="tcno">🏆 CHASE</span></div>'
     + '<div class="tcwin"><img class="cardart" src="/api/avatars?s=14" alt="">' + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">THE RING</span><span class="rarpill" style="background:#f5c518;color:#1a1405">ONE OF A KIND</span></div>'
-    + '<div class="tierto" style="margin-top:6px">' + (un ? 'You pulled it — the signed chase card. The rarest card in Prop Agent.' : 'The signed championship ring card. Hiding in about 1 pack in 100 — open packs to hunt it.') + '</div>'
+    + '<div class="tierto" style="margin-top:6px">' + (un ? 'You pulled it — the signed chase card. The rarest card in Prop Agent.' : 'The signed championship ring card. Hiding in about 1 pack in 125 — open packs to hunt it.') + '</div>'
     + (un ? '<div style="display:flex;gap:6px;margin-top:8px"><button class="mini setprofs" data-avatar="/api/avatars?s=14" data-featured="The Ring · Chase Card">Set as profile card</button><button class="mini dlring">Download PNG</button></div>' : '')
     + '</div><div class="holo" style="--hc:#f5c51859"></div></div>';
   return '<div class="tiercard' + (un ? ' unlocked ringglow' : ' locked') + '"' + (un ? '' : ' data-noflip="1"') + '><div class="tierinner">' + front + ringBackHTML() + '</div></div>';
@@ -2960,15 +2960,15 @@ function drawPremiumTier(){ var r = Math.random(); if (r < 0.55) return 3; if (r
 function pullPack(demo){
   var maxTi = maxTierIdx();
   var isRing = false;
-  if (demo) isRing = true; else if (!lsGet("pa_ring", 0) && Math.random() < 0.01) isRing = true;
+  if (demo) isRing = true; else if (!lsGet("pa_ring", 0) && Math.random() < 0.008) isRing = true;
   var pulls = [];
   for (var i = 0; i < 3; i++){
     var ci = 1 + Math.floor(Math.random() * 12);
-    var ti = Math.random() < 0.18 ? drawPremiumTier() : Math.floor(Math.random() * (maxTi + 1));
+    var ti = Math.random() < 0.15 ? drawPremiumTier() : Math.floor(Math.random() * (maxTi + 1));
     pulls.push({ ci: ci, ti: ti });
   }
   if (isRing) { if (!demo) lsSet("pa_ring", 1); pulls[2] = { ring: true }; }
-  if (!demo && !isRing && Math.random() < 0.10) {
+  if (!demo && !isRing && Math.random() < 0.083) {
     var stampCi = 1 + Math.floor(Math.random() * 12), stArr = stampsGet(), sDup = stArr.indexOf(stampCi) >= 0;
     if (!sDup) { stArr.push(stampCi); lsSet("pa_stamps", stArr); }
     pulls[2] = { stamp: true, ci: stampCi, dup: sDup };
@@ -3331,7 +3331,7 @@ function clashMenu(){
     + '<button class="clashbig" data-clashmode="quick">⚡ QUICK CLASH<span>Friendly fight — CPU cards match your tiers, never stronger</span></button>'
     + '<button class="clashbig gold" data-clashmode="ladder">🏆 LADDER' + (lad >= 7 ? ' — CHAMPION 🏆' : ' — BOSS ' + (lad + 1) + ' OF 7') + '<span>' + (lad >= 7 ? 'Every boss beaten. Replay Boss 7 for coins.' : 'Beat bosses in order. Boss ' + (lad + 1) + ' pays ' + (10 + (lad + 1) * 5) + ' 🪙') + '</span></button>'
     + '<div class="clashmeta">🪙 <b>' + coinsGet() + '</b> Clash Coins · Record <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b><br>Wins pay Clash Coins — spend them on packs (1 pack = ' + CLASH_PACK_COST + ' 🪙, in My Packs below)</div>'
-    + '<div class="clashmeta">🏆 <b>One ladder everywhere:</b> your ' + maxWins() + ' tier wins from prop tickets unlock these battle cards AND the foil tiers inside packs. Clash Coins buy those same packs.</div>'
+    + '<div class="clashmeta">🏆 <b>One ladder everywhere:</b> your ' + maxWins() + ' tier wins \u2014 from prop tickets, plus up to 3 a day from battle wins \u2014 unlock these battle cards AND the foil tiers inside packs. Clash Coins buy those same packs too.</div>'
     + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>⭐ Stars = your card\'s tier — higher total wins the round.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Holding two-in-a-row on the grid gives +1★ until it breaks.<br>🛡️ Defend: your power stays off — but if you lose the round, NO hit lands.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Soft jazz plays while you battle — the 🎵 button (top right) mutes it.</div></details>'
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>');
@@ -3541,13 +3541,17 @@ function clashFinish(won){
   if (won) {
     var pay = CL.mode === "ladder" ? 10 + CL.boss * 5 : 10;
     earned = clashGrant(pay); capped = earned < pay; if (earned > 0) setTimeout(function(){ sfx("coin"); }, 550);
+    var bwDay = lsGet("pa_battleday", null);
+    var bwToday = (bwDay && bwDay.day === dayStr()) ? (bwDay.n || 0) : 0;
+    CL.bwPoint = bwToday < 3;
+    if (CL.bwPoint) { lsSet("pa_battlewins", (parseInt(lsGet("pa_battlewins", 0), 10) || 0) + 1); lsSet("pa_battleday", { day: dayStr(), n: bwToday + 1 }); }
     if (CL.mode === "ladder" && CL.boss === ladderGet() + 1 && CL.boss <= 7) lsSet("pa_ladder", CL.boss);
     cloudSave();
   }
   renderClash(); renderPacks();
   clashPanel('<div class="clashresult">' + (won ? '<div class="reswin">🏆 VICTORY!</div>' : '<div class="reslose">DEFEAT</div>')
     + '<div class="clashsub">' + (won ? 'Your pair takes the night! ' + (earned > 0 ? '<b style="color:#f5c518">+' + earned + ' 🪙 Clash Coins</b>' + (capped ? ' (daily coin cap hit — more tomorrow)' : '') : '<b>Daily coin cap reached — wins pay again tomorrow.</b>') : 'The CPU pair takes this one. Watch their powers, time your tags, and run it back.') + '</div>'
-    + '<div class="clashmeta">Battle Record: <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b> · 🪙 <b>' + coinsGet() + '</b>' + (CL.mode === "ladder" && won && CL.boss < 7 ? ' · Next up: Boss ' + (CL.boss + 1) : '') + (CL.mode === "ladder" && won && CL.boss === 7 ? ' · 🏆 LADDER CHAMPION!' : '') + '</div>'
+    + '<div class="clashmeta">Battle Record: <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b> · 🪙 <b>' + coinsGet() + '</b>' + (won ? (CL.bwPoint ? ' \u00B7 \uD83C\uDFC6 <b>+1 Tier Point</b> \u2014 ' + myWins() + ' total wins' : ' \u00B7 Battle tier points capped for today (3/day) \u2014 more tomorrow') : '') + (CL.mode === "ladder" && won && CL.boss < 7 ? ' · Next up: Boss ' + (CL.boss + 1) : '') + (CL.mode === "ladder" && won && CL.boss === 7 ? ' · 🏆 LADDER CHAMPION!' : '') + '</div>'
     + '<button class="clashbig gold" data-clashrematch="1">🔁 REMATCH<span>' + (CL.mode === "ladder" ? 'Boss ' + CL.boss + ' again' : 'New CPU pair, same tiers') + '</span></button>'
     + '<button class="clashbig" data-clashmode="' + CL.mode + '">🔄 NEW PAIR<span>Pick different fighters</span></button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:8px">Done</button></div>');
