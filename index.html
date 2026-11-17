@@ -90,6 +90,7 @@ input[type=number]{width:110px}
 .game{display:flex;justify-content:space-between;gap:10px;align-items:center}
 .gteam{font-weight:700;font-size:15px}
 .gscore{font-weight:800;font-size:17px;font-variant-numeric:tabular-nums}
+.tlogo{object-fit:contain;vertical-align:middle;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
 .gstat{color:var(--mut);font-size:12.5px;text-align:right}
 .news a{display:block;color:var(--txt);font-weight:600;font-size:14.5px;padding:7px 0;border-bottom:1px solid var(--line)}
 .news a:last-child{border-bottom:none}
@@ -524,8 +525,11 @@ function getScoreboard(lg, days){
 }
 function eventTeams(ev){
   var comp = (ev.competitions||[])[0]; if (!comp) return [];
-  return (comp.competitors||[]).map(function(c){ return {id:String(c.team && c.team.id || ""), name:(c.team && (c.team.displayName||c.team.shortDisplayName))||"", abbr:(c.team && c.team.abbreviation)||"", score:c.score, homeAway:c.homeAway, winner:c.winner}; });
+  return (comp.competitors||[]).map(function(c){ return {id:String(c.team && c.team.id || ""), name:(c.team && (c.team.displayName||c.team.shortDisplayName))||"", abbr:(c.team && c.team.abbreviation)||"", score:c.score, homeAway:c.homeAway, winner:c.winner, logo:(c.team && (c.team.logo || (c.team.logos && c.team.logos[0] && c.team.logos[0].href)))||""}; });
 }
+function logoUrl(c){ var t = c && c.team; return t ? (t.logo || (t.logos && t.logos[0] && t.logos[0].href) || "") : ""; }
+function tlogoImg(url, size){ return url ? '<img class="tlogo" src="'+esc(url)+'" width="'+size+'" height="'+size+'" alt="" loading="lazy" onerror="this.remove()">' : ""; }
+function teamLogo(c, size){ var u = logoUrl(c); return u ? '<img class="tlogo" style="margin-right:6px" src="'+esc(u)+'" width="'+size+'" height="'+size+'" alt="" loading="lazy" onerror="this.remove()">' : ""; }
 function nextGameFor(events, teamId){
   var best = null;
   events.forEach(function(ev){
@@ -904,8 +908,8 @@ function renderUpcoming(){
             var a = ts[0] || {}, b = ts[1] || {};
             return '<div class="hero hero2" data-hero="' + g.lg.key + '|' + g.ev.id + '">'
               + '<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px"><span class="hlg">' + esc(g.lg.label.toUpperCase()) + '</span><span class="herolive" style="margin:0;padding:3px 9px;font-size:11px">🔴 ' + esc(st.shortDetail || st.detail || "LIVE") + '</span></div>'
-              + '<div class="hrow"><span>' + esc(a.name || "") + '</span><b>' + esc(a.score != null ? a.score : "0") + '</b></div>'
-              + '<div class="hrow"><span>' + esc(b.name || "") + '</span><b>' + esc(b.score != null ? b.score : "0") + '</b></div>'
+              + '<div class="hrow"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(a.logo, 19) + esc(a.name || "") + '</span><b>' + esc(a.score != null ? a.score : "0") + '</b></div>'
+              + '<div class="hrow"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(b.logo, 19) + esc(b.name || "") + '</span><b>' + esc(b.score != null ? b.score : "0") + '</b></div>'
               + '<p class="herotap" style="font-size:11.5px">Tap for game center →</p></div>';
           };
           hero.innerHTML = '<div class="heroes2">' + picks.map(miniHero).join("") + '</div>';
@@ -918,9 +922,9 @@ function renderUpcoming(){
           var nm = function(t){ var n = t.name || ""; var parts = n.split(" "); return {first: parts.slice(0,-1).join(" ") || n, last: parts[parts.length-1] || ""}; };
           var na = nm(a), nb = nm(b);
           hero.innerHTML = '<div class="hero" id="heroCard"><div class="heroscore">'
-            + '<div class="heroname">'+esc(na.first)+' '+esc(na.last)+'<small>'+esc(na.last)+'</small></div>'
+            + '<div class="heroname">'+tlogoImg(a.logo, 32)+esc(na.first)+' '+esc(na.last)+'<small>'+esc(na.last)+'</small></div>'
             + '<div><span class="hscore">'+esc(a.score!=null?a.score:"0")+'</span> <span class="hdash">—</span> <span class="hscore">'+esc(b.score!=null?b.score:"0")+'</span></div>'
-            + '<div class="heroname" style="text-align:right">'+esc(nb.first)+' '+esc(nb.last)+'<small>'+esc(nb.last)+'</small></div></div>'
+            + '<div class="heroname" style="text-align:right">'+tlogoImg(b.logo, 32)+esc(nb.first)+' '+esc(nb.last)+'<small>'+esc(nb.last)+'</small></div></div>'
             + '<div style="text-align:center"><span class="herolive">🔴 LIVE · '+esc(st.shortDetail||st.detail||g.lg.label)+'</span></div>'
             + '<p class="herotap">Tap for the game center — props, tracker &amp; plays →</p></div>';
           var hc = $("heroCard");
@@ -942,7 +946,9 @@ function renderUpcoming(){
     ups = ups.slice(0,6);
     var upChanged = setHtml($("upcoming"), ups.length ? ups.map(function(u){
       var ts = eventTeams(u.ev);
-      return '<div class="card game" data-game="'+u.lg.key+'|'+u.ev.id+'" style="cursor:pointer"><div><div class="gteam">'+esc(matchName(ts))+'</div><div style="color:var(--purp-lt);font-size:11.5px;font-weight:800;letter-spacing:1.2px;margin-top:2px">'+esc(u.lg.label.toUpperCase())+'</div></div><div class="gstat">'+esc(fmtDay(u.ev.date))+' '+esc(new Date(u.ev.date).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}))+'</div></div>';
+      var aU = ts.filter(function(t){ return t.homeAway==="away"; })[0], hU = ts.filter(function(t){ return t.homeAway==="home"; })[0];
+      var mHtml = (aU && hU) ? tlogoImg(aU.logo,17)+esc(aU.name)+' @ '+tlogoImg(hU.logo,17)+esc(hU.name) : ts.map(function(t){ return tlogoImg(t.logo,17)+esc(t.name); }).join(' @ ');
+      return '<div class="card game" data-game="'+u.lg.key+'|'+u.ev.id+'" style="cursor:pointer"><div><div class="gteam">'+mHtml+'</div><div style="color:var(--purp-lt);font-size:11.5px;font-weight:800;letter-spacing:1.2px;margin-top:2px">'+esc(u.lg.label.toUpperCase())+'</div></div><div class="gstat">'+esc(fmtDay(u.ev.date))+' '+esc(new Date(u.ev.date).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}))+'</div></div>';
     }).join("") : '<p class="empty">No upcoming games found right now.</p>');
     if (upChanged) $("upcoming").querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); showView("live"); openGame(p[0], p[1]); }); });
   });
@@ -1041,7 +1047,7 @@ function renderPerf(el, lg, s){
     head += "<th>Total</th></tr>";
     var rows = cs.map(function(c){
       var cells = (c.linescores||[]).map(function(x){ return "<td>"+esc(x.displayValue!=null ? x.displayValue : "")+"</td>"; }).join("");
-      return "<tr><td>"+esc(c.team.displayName)+"</td>"+cells+"<td style=\"color:var(--purp-lt);font-weight:800\">"+esc(c.score!=null ? c.score : "")+"</td></tr>";
+      return "<tr><td>"+teamLogo(c,20)+esc(c.team.displayName)+"</td>"+cells+"<td style=\"color:var(--purp-lt);font-weight:800\">"+esc(c.score!=null ? c.score : "")+"</td></tr>";
     }).join("");
     var perf = [];
     if (s.leaders && s.leaders.length) {
@@ -1086,7 +1092,7 @@ function gameCard(lg, ev){
   var rows = cs.map(function(c){
     var nm = (c.team && (c.team.shortDisplayName || c.team.displayName)) || "";
     var sc = pre ? "0" : (c.score!=null ? c.score : "");
-    return '<div class="gteam">'+esc(nm)+' <span class="gscore">'+esc(sc)+'</span></div>';
+    return '<div class="gteam">'+teamLogo(c,22)+esc(nm)+' <span class="gscore">'+esc(sc)+'</span></div>';
   }).join("");
   var extra = "";
   if (lg.key==="tennis" && live && cs.length===2){
@@ -1191,7 +1197,7 @@ function wpHtml(s, cs){
   var step = Math.max(1, Math.ceil(wp.length / 48)), pts = [];
   for (var i = 0; i < wp.length; i += step){ var p = wp[i]; pts.push((i / Math.max(1, wp.length - 1) * 100).toFixed(1) + "," + (26 - (p.homeWinPercentage || 0) * 24).toFixed(1)); }
   pts.push("100," + (26 - ((last && last.homeWinPercentage) || 0) * 24).toFixed(1));
-  return '<div style="margin-top:10px"><div class="row" style="justify-content:space-between"><span class="trkLbl">Win probability</span><span class="note">' + esc(aa) + ' ' + (100 - hp) + '% · ' + esc(ha) + ' ' + hp + '%</span></div>'
+  return '<div style="margin-top:10px"><div class="row" style="justify-content:space-between"><span class="trkLbl">Win probability</span><span class="note">' + teamLogo(aw, 15) + esc(aa) + ' ' + (100 - hp) + '% · ' + teamLogo(hm, 15) + esc(ha) + ' ' + hp + '%</span></div>'
     + '<div class="wpbar"><i style="width:' + (100 - hp) + '%;background:#38bdf8"></i><i style="width:' + hp + '%;background:var(--purp2)"></i></div>'
     + '<svg viewBox="0 0 100 28" preserveAspectRatio="none" style="width:100%;height:30px;margin-top:4px"><line x1="0" y1="14" x2="100" y2="14" stroke="#ffffff22" stroke-width="0.7"/><polyline fill="none" stroke="#f5c518" stroke-width="1.6" points="' + pts.join(" ") + '"/></svg></div>';
 }
@@ -1323,14 +1329,15 @@ function openGame(key, eventId, isRefresh){
     var detail = st.shortDetail || st.detail || "";
     var html = '<div class="card" style="border-top:3px solid var(--purp2)"><div style="font-size:24px;font-weight:900;line-height:1.15">' + esc(title) + ' <span style="color:var(--purp-lt);font-size:15px;font-weight:800">' + esc(lg.label) + '</span></div>'
       + '<div class="note" style="margin:4px 0 8px">' + esc(detail) + (venue ? ' · ' + esc(venue) : '') + '</div>'
-      + (live ? '<div><span style="background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.45);border-radius:999px;padding:4px 11px;font-weight:800;font-size:12px">● LIVE' + (detail ? ' · ' + esc(detail) : '') + '</span></div>' : '');
+      + (live ? '<div><span style="background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.45);border-radius:999px;padding:4px 11px;font-weight:800;font-size:12px">● LIVE' + (detail ? ' · ' + esc(detail) : '') + '</span></div>' : '')
+      + ((cs.length===2 && (logoUrl(cs[0]) || logoUrl(cs[1]))) ? '<div style="display:flex;justify-content:space-around;align-items:center;margin:14px 0 2px">' + cs.map(function(c){ return '<div style="text-align:center;width:42%">' + tlogoImg(logoUrl(c),54) + '<div style="font-weight:800;font-size:13px;margin-top:5px">' + esc((c.team && (c.team.shortDisplayName || c.team.displayName)) || "") + '</div><div style="font-size:23px;font-weight:900;color:var(--purp-lt)">' + esc(c.score!=null ? c.score : "") + '</div></div>'; }).join('<div style="font-weight:900;color:var(--mut);font-size:15px">VS</div>') + '</div>' : '');
     var nper = 0; cs.forEach(function(c){ nper = Math.max(nper, (c.linescores||[]).length); });
     if (cs.length && nper){
       html += '<table class="lb" style="margin-top:12px"><tr><th>Team</th>';
       for (var i=0;i<nper;i++) html += '<th>' + (isT ? "S" : "P") + (i+1) + '</th>';
       html += '<th>Total</th></tr>' + cs.map(function(c){
         var cells = (c.linescores||[]).map(function(x){ return '<td>' + esc(x.displayValue!=null ? x.displayValue : "") + '</td>'; }).join("");
-        return '<tr><td>' + esc((c.team && c.team.displayName) || "") + '</td>' + cells + '<td style="color:var(--purp-lt);font-weight:800">' + esc(c.score!=null ? c.score : "") + '</td></tr>';
+        return '<tr><td>' + teamLogo(c,24) + esc((c.team && c.team.displayName) || "") + '</td>' + cells + '<td style="color:var(--purp-lt);font-weight:800">' + esc(c.score!=null ? c.score : "") + '</td></tr>';
       }).join("") + '</table>';
     }
     html += trackerHtml(lg, s, comp, cs);
