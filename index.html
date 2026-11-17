@@ -288,6 +288,15 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 @keyframes ringpulse{from{box-shadow:0 14px 30px rgba(0,0,0,.5),0 0 12px rgba(245,197,24,.35)}to{box-shadow:0 14px 30px rgba(0,0,0,.5),0 0 40px rgba(245,197,24,.85)}}
 .tiercard.ringglow .flipfront{animation:ringpulse 1.8s ease-in-out infinite alternate}
 #packBurst{position:absolute;left:50%;top:36%;width:0;height:0;pointer-events:none;display:none;z-index:5}
+#ringCel{position:fixed;inset:0;z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
+.celrays{position:absolute;left:50%;top:44%;width:150vmax;height:150vmax;transform:translate(-50%,-50%);background:repeating-conic-gradient(from 0deg, rgba(245,197,24,.16) 0deg 10deg, transparent 10deg 24deg);animation:celspin 14s linear infinite;pointer-events:none}
+@keyframes celspin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+.celcard{width:min(62vw,240px);animation:celzoom .8s cubic-bezier(.2,.9,.3,1.35) both;z-index:2}
+.celcard img{width:100%;border-radius:14px;border:3px solid #f5c518;box-shadow:0 0 60px rgba(245,197,24,.75);display:block}
+@keyframes celzoom{0%{transform:scale(.25) rotate(-7deg);opacity:0}60%{transform:scale(1.12) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0deg)}}
+.celtitle{font-size:27px;font-weight:900;color:#f5c518;text-shadow:0 2px 18px rgba(245,197,24,.65);margin-top:16px;animation:celzoom .7s .15s cubic-bezier(.2,.9,.3,1.3) both;z-index:2;text-align:center;padding:0 12px}
+.celsub{font-weight:800;color:#fff;letter-spacing:1.5px;margin-top:5px;z-index:2}
+.celtap{color:#c9c9d4;font-size:12.5px;margin-top:12px;z-index:2}
 </style>
 </head>
 <body>
@@ -2132,6 +2141,7 @@ function renderPacks(){
     + '<button class="openbtn" data-openpack="n"' + ((p.n || 0) > 0 ? '' : ' disabled') + '>Open Pack · ' + (p.n || 0) + '</button>'
     + '<button class="openbtn gold" data-openpack="g"' + ((p.g || 0) > 0 ? '' : ' disabled') + '>Open Gold Pack · ' + (p.g || 0) + '</button>'
     + (shared ? '<button class="openbtn" disabled>✓ Shared today</button>' : '<button class="openbtn" data-sharepack="1">🔗 Share &amp; Earn a Pack</button>')
+    + '<button class="openbtn" data-demopack="1" style="background:#17171f;border:1px solid #7C3AED">▶ Demo Pull</button>'
     + '</div>'
     + '<div class="note" style="margin-top:9px">Win a ticket → +1 pack (4+ picks → Gold Pack). Foils collected: <b style="color:#f5c518">' + foils.length + '</b> · ' + (lsGet("pa_ring", 0) ? '🏆 THE RING: <b style="color:#f5c518">PULLED!</b>' : 'THE RING: still hiding…') + '</div>'
     + '</div>';
@@ -2267,10 +2277,10 @@ document.addEventListener("click", function(e){
   document.getElementById("cardPop").classList.add("open");
 });
 /* ---------- pack opening overlay ---------- */
-function pullPack(kind){
+function pullPack(kind, demo){
   var maxTi = maxTierIdx();
   var isRing = false;
-  if (!lsGet("pa_ring", 0) && Math.random() < (kind === "g" ? 0.04 : 0.01)) isRing = true;
+  if (demo) isRing = true; else if (!lsGet("pa_ring", 0) && Math.random() < (kind === "g" ? 0.04 : 0.01)) isRing = true;
   var pulls = [];
   for (var i = 0; i < 3; i++){
     var ci = 1 + Math.floor(Math.random() * 12);
@@ -2278,11 +2288,22 @@ function pullPack(kind){
     if (kind === "g" && i === 2) ti = maxTi;
     pulls.push({ ci: ci, ti: ti });
   }
-  if (isRing) { lsSet("pa_ring", 1); pulls[2] = { ring: true }; }
+  if (isRing) { if (!demo) lsSet("pa_ring", 1); pulls[2] = { ring: true }; }
   var fl = foilsGet();
-  pulls.forEach(function(pu){ if (!pu.ring) { var k = pu.ci + "-" + pu.ti; if (fl.indexOf(k) < 0) fl.push(k); } });
-  lsSet("pa_foils", fl);
+  var seen = {};
+  pulls.forEach(function(pu){ if (!pu.ring) { var k = pu.ci + "-" + pu.ti; pu.dup = (fl.indexOf(k) >= 0) || !!seen[k]; seen[k] = 1; if (!pu.dup) fl.push(k); } });
+  if (!demo) lsSet("pa_foils", fl);
   return pulls;
+}
+function ringCelebration(){
+  try { confetti(); setTimeout(function(){ try { confetti(); } catch(e){} }, 350); setTimeout(function(){ try { confetti(); } catch(e){} }, 700); } catch(e){}
+  var old = document.getElementById("ringCel"); if (old) old.remove();
+  var el = document.createElement("div");
+  el.id = "ringCel";
+  el.innerHTML = '<div class="celrays"></div><div class="celcard"><img src="/api/avatars?s=14" alt=""></div><div class="celtitle">🏆 CHASE CARD PULLED!</div><div class="celsub">THE RING · Signed · One of a Kind</div><div class="celtap">Tap anywhere to collect</div>';
+  document.body.appendChild(el);
+  el.addEventListener("click", function(){ el.remove(); });
+  setTimeout(function(){ if (el.parentNode) el.remove(); }, 6000);
 }
 function ensurePackPop(){
   if (document.getElementById("packPop")) return;
@@ -2310,34 +2331,40 @@ function ensurePackPop(){
       cards.innerHTML = pulls.map(function(pu, i){
         if (pu.ring) return '<div class="revealcard ringcard" style="animation-delay:' + (i * 0.22) + 's,0s;width:118px"><img src="/api/avatars?s=14" alt="" style="height:118px"><div class="rvinfo"><b style="color:#f5c518">🏆 THE RING</b><br>SIGNED · ONE OF A KIND</div></div>';
         var t = TIERS[pu.ti];
-        return '<div class="revealcard" style="animation-delay:' + (i * 0.22) + 's"><img src="/api/avatars?s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">✨ ' + t.name + ' FOIL</span></div></div>';
+        return '<div class="revealcard" style="animation-delay:' + (i * 0.22) + 's"><img src="/api/avatars?s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">✨ ' + t.name + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
       }).join("");
-      if (pulls.some(function(pu){ return pu.ring; })) { cap.textContent = "🏆 YOU PULLED THE RING!! Signed, one of a kind — the rarest card in the game!"; try { confetti(); } catch(e){} }
-      else cap.textContent = "3 foil cards added to My Cards ✨";
+      var newN = pulls.filter(function(pu){ return !pu.ring && !pu.dup; }).length;
+      var dupN = pulls.filter(function(pu){ return pu.dup; }).length;
+      if (pulls.some(function(pu){ return pu.ring; })) { cap.textContent = window._packDemo ? "DEMO — that's the chase celebration! Nothing was saved." : "🏆 YOU PULLED THE RING!! Signed, one of a kind — the rarest card in the game!"; ringCelebration(); }
+      else cap.textContent = (window._packDemo ? "DEMO — " : "") + newN + " new foil card" + (newN === 1 ? "" : "s") + " added to My Cards ✨" + (dupN ? " · " + dupN + " duplicate" + (dupN === 1 ? "" : "s") + " not saved" : "");
     }, 560);
   });
 }
-function openPackPop(kind){
-  var p = packsGet();
-  if (kind === "g") { if (!(p.g > 0)) return; p.g--; } else { if (!(p.n > 0)) return; p.n--; }
-  packsSet(p); renderPacks();
-  window._packPulls = pullPack(kind); window._packOpened = false;
+function openPackPop(kind, demo){
+  if (!demo) {
+    var p = packsGet();
+    if (kind === "g") { if (!(p.g > 0)) return; p.g--; } else { if (!(p.n > 0)) return; p.n--; }
+    packsSet(p); renderPacks();
+  }
+  window._packPulls = pullPack(kind, demo); window._packOpened = false; window._packDemo = !!demo;
   ensurePackPop();
   var stage = $("packStage"), cards = $("packCards"), cap = $("packCap");
   cards.innerHTML = ""; cards.style.display = "none";
   stage.style.display = "block"; stage.classList.remove("torn");
-  stage.innerHTML = '<img src="/api/banners?s=pack" alt=""' + (kind === "g" ? ' style="border:3px solid #f5c518"' : '') + '><div style="font-weight:900;margin-top:10px;color:#f5c518;letter-spacing:1px">' + (kind === "g" ? "GOLD PACK" : "PROP AGENT PACK") + '</div><div class="note">Tap to open</div>';
+  stage.innerHTML = '<img src="/api/banners?s=pack" alt=""' + (kind === "g" ? ' style="border:3px solid #f5c518"' : '') + '><div style="font-weight:900;margin-top:10px;color:#f5c518;letter-spacing:1px">' + (demo ? "DEMO PACK" : (kind === "g" ? "GOLD PACK" : "PROP AGENT PACK")) + '</div><div class="note">Tap to open</div>';
   cap.textContent = "";
   $("packPop").classList.add("open");
 }
 document.addEventListener("click", function(e){
-  var c = e.target && e.target.closest ? e.target.closest("[data-claimpack],[data-openpack],[data-sharepack]") : null;
+  var c = e.target && e.target.closest ? e.target.closest("[data-claimpack],[data-openpack],[data-sharepack],[data-demopack]") : null;
   if (!c) return;
   if (c.hasAttribute("data-claimpack")) {
     if (lsGet("pa_daily_day", "") !== dayStr()) { lsSet("pa_daily_day", dayStr()); var p = packsGet(); p.n = (p.n || 0) + 1; packsSet(p); }
     renderPacks();
   } else if (c.hasAttribute("data-openpack")) {
     openPackPop(c.getAttribute("data-openpack"));
+  } else if (c.hasAttribute("data-demopack")) {
+    openPackPop("n", true);
   } else if (c.hasAttribute("data-sharepack")) {
     var grant = function(){ if (lsGet("pa_share_day", "") !== dayStr()) { lsSet("pa_share_day", dayStr()); var p2 = packsGet(); p2.n = (p2.n || 0) + 1; packsSet(p2); } renderPacks(); };
     if (navigator.share) { navigator.share({ title: "Prop Agent", text: "Play Prop Agent — real PrizePicks props, live tickets and collectible agent cards:", url: "https://prop-agent-bre.vercel.app/" }).then(grant).catch(function(){}); }
