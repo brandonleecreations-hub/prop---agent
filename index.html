@@ -245,6 +245,14 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .specialback{background:radial-gradient(120% 90% at 50% 0%, #3a2c07 0%, #0d0a18 65%);border:2px solid #f5c518}
 .sbring{width:132px;height:132px;border-radius:50%;border:3px solid #f5c518;box-shadow:0 0 22px #f5c51855, inset 0 0 18px #f5c51833;display:flex;align-items:center;justify-content:center;background:#0d0d13}
 .specialback .sbring img{width:104px;height:104px;object-fit:contain;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.08) drop-shadow(0 0 10px rgba(245,197,24,.45))}
+.pickem{position:relative;overflow:hidden}
+.pickem::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 32%,rgba(245,197,24,.13) 48%,rgba(255,255,255,.09) 52%,transparent 68%);transform:translateX(-130%);animation:pkshine 4.8s ease-in-out infinite;pointer-events:none}
+@keyframes pkshine{0%{transform:translateX(-130%)}55%,100%{transform:translateX(130%)}}
+.pkart{animation:pkzoom 9s ease-in-out infinite alternate}
+@keyframes pkzoom{from{transform:scale(1)}to{transform:scale(1.045)}}
+.pkthumb{animation:pkfloat 3.4s ease-in-out infinite alternate}
+@keyframes pkfloat{from{transform:translateY(-1.5px)}to{transform:translateY(2px)}}
+@media (prefers-reduced-motion: reduce){.pickem::after,.pkart,.pkthumb{animation:none}}
 </style>
 </head>
 <body>
@@ -2045,13 +2053,13 @@ function renderPickem(){
   } else if (state === "in" || started){
     body = '<div style="margin-top:10px"><span class="livepill"><span class="dot"></span>LIVE</span> <b>Picking is closed</b>' + (mine ? ' — your pick: <b style="color:#f5c518">' + (mine === "home" ? cfg.home : cfg.away) + '</b>. Good luck!' : ' — the game has started, so the pick is gone for this week.') + '</div>';
   } else {
-    var artRow = '<div style="display:flex;gap:10px;align-items:center;margin-top:9px"><img src="' + cfg.art + '" alt="" style="width:52px;height:62px;object-fit:cover;border-radius:8px;border:1.5px solid #f5c518"><div class="note" style="color:#e5e9f2">Call it right and unlock <b style="color:#f5c518">' + cfg.cardName + '</b> — a rare special card for your collection — plus <b style="color:#f5c518">+1 win</b> toward your tiers.</div></div>';
+    var artRow = '<div style="display:flex;gap:10px;align-items:center;margin-top:9px"><img class="pkthumb" src="' + cfg.art + '" alt="" style="width:52px;height:62px;object-fit:cover;border-radius:8px;border:1.5px solid #f5c518"><div class="note" style="color:#e5e9f2">Call it right and unlock <b style="color:#f5c518">' + cfg.cardName + '</b> — a rare special card for your collection — plus <b style="color:#f5c518">+1 win</b> toward your tiers.</div></div>';
     var btn = function(side, name, logo){ return '<button class="pickbtn' + (mine === side ? ' on' : '') + '" data-pickem="' + side + '">' + (logo ? '<img src="' + logo + '" alt="">' : '') + name + (mine === side ? ' ✓' : '') + '</button>'; };
     body = artRow + btn("away", cfg.away, ev ? ev.awayLogo : "") + btn("home", cfg.home, ev ? ev.homeLogo : "")
       + '<div class="note" style="margin-top:7px">' + (mine ? 'Pick saved — you can change it until kickoff. It locks the second the game starts.' : 'Tap a team to make your pick. It locks the second the game starts.') + '</div>';
   }
   var h = (state === "pre" && !started)
-    ? '<div class="pickem"><img src="' + cfg.bannerArt + '" alt="" style="width:100%;border-radius:10px;display:block"><div class="pk-title" style="margin-top:10px">' + cfg.awayShort + ' @ ' + cfg.homeShort + '</div><div class="note">' + pickemWhen() + ' MST · ' + cfg.note + '</div>' + body + '</div>'
+    ? '<div class="pickem"><img class="pkart" src="' + cfg.bannerArt + '" alt="" style="width:100%;border-radius:10px;display:block"><div class="pk-title" style="margin-top:10px">' + cfg.awayShort + ' @ ' + cfg.homeShort + '</div><div class="note">' + pickemWhen() + ' MST · ' + cfg.note + '</div>' + body + '</div>'
     : '<div class="pickem">' + head + body + '</div>';
   boxes.forEach(function(b){ b.innerHTML = h; });
 }
