@@ -1180,10 +1180,13 @@ function courtSvg(s){
     if (i === plays.length - 1) c += '<circle class="pdot" cx="' + cx + '" cy="' + cy + '" r="9" fill="none" stroke="#f5c518" stroke-width="2"/>';
     return c;
   }).join("");
+  var arcPts = [];
+  for (var a = 158; a >= 22; a -= 4){ var rad = a * Math.PI / 180; arcPts.push((150 + 142.5 * Math.cos(rad)).toFixed(1) + "," + (31.5 + 142.5 * Math.sin(rad)).toFixed(1)); }
+  var arc = "M18,2 L18,85 L" + arcPts.join(" L") + " L282,85 L282,2";
   return '<svg viewBox="0 0 300 282"><rect x="2" y="2" width="296" height="278" rx="6" fill="#141033" stroke="#7C3AED" stroke-width="2"/>'
     + '<rect x="102" y="2" width="96" height="114" fill="#1d1440" stroke="#a78bfa" stroke-width="1.6"/>'
     + '<circle cx="150" cy="116" r="36" fill="none" stroke="#a78bfa" stroke-width="1.6"/>'
-    + '<path d="M18,2 L18,84 A142.5,142.5 0 0 1 282,84 L282,2" fill="none" stroke="#a78bfa" stroke-width="1.6"/>'
+    + '<path d="' + arc + '" fill="none" stroke="#a78bfa" stroke-width="1.6"/>'
     + '<line x1="126" y1="24" x2="174" y2="24" stroke="#f5c518" stroke-width="2.4"/><circle cx="150" cy="31.5" r="5" fill="none" stroke="#f5c518" stroke-width="2.2"/>'
     + '<circle cx="150" cy="280" r="36" fill="none" stroke="#a78bfa" stroke-width="1.6"/>'
     + dots + '</svg>';
@@ -1327,10 +1330,12 @@ function openGame(key, eventId, isRefresh){
       var perf = [];
       (s.leaders || []).forEach(function(tl){ (tl.leaders||[]).forEach(function(cat){ var L = (cat.leaders||[])[0]; if (L && L.athlete && perf.length<4) perf.push({name:L.athlete.displayName, stat:(L.displayValue||"") + " " + (cat.shortDisplayName||cat.displayName||"")}); }); });
       if (perf.length) html += '<div style="font-size:16px;margin-top:14px"><b>Top</b> <b style="color:var(--gold)">Performers</b></div>' + perf.map(function(p){ return '<div class="row" style="justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><b>' + esc(p.name) + '</b><span style="color:var(--cyan);font-weight:700;font-size:13px">' + esc(p.stat) + '</span></div>'; }).join("");
-      var tstats = (s.boxscore && s.boxscore.statistics) || [];
-      if (tstats.length===2 && tstats[0].stats && tstats[1].stats){
-        var byName = {}; tstats[0].stats.forEach(function(x){ byName[x.name] = {label:x.label||x.name, a:x.displayValue}; });
-        tstats[1].stats.forEach(function(x){ if (byName[x.name]) byName[x.name].b = x.displayValue; });
+      var tstats = (s.boxscore && s.boxscore.statistics) || (s.boxscore && s.boxscore.teams) || [];
+      var stA = tstats.length===2 ? (tstats[0].stats || tstats[0].statistics || []) : [];
+      var stB = tstats.length===2 ? (tstats[1].stats || tstats[1].statistics || []) : [];
+      if (tstats.length===2 && stA.length && stB.length){
+        var byName = {}; stA.forEach(function(x){ byName[x.name] = {label:x.label||x.name, a:x.displayValue}; });
+        stB.forEach(function(x){ if (byName[x.name]) byName[x.name].b = x.displayValue; });
         var skeys = Object.keys(byName).filter(function(k){ return byName[k].b != null; }).slice(0,10);
         if (skeys.length) html += '<div style="font-size:16px;margin-top:14px"><b>Team Stats</b></div><table class="lb"><tr><th>' + esc((tstats[0].team && tstats[0].team.displayName) || "") + '</th><th>Stat</th><th>' + esc((tstats[1].team && tstats[1].team.displayName) || "") + '</th></tr>' + skeys.map(function(k){ return '<tr><td>' + esc(byName[k].a||"") + '</td><td class="note">' + esc(byName[k].label) + '</td><td>' + esc(byName[k].b||"") + '</td></tr>'; }).join("") + '</table>';
       }
