@@ -310,6 +310,8 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .revealcard::after{animation-delay:.8s}
 .revealcard.bestcard{box-shadow:0 14px 30px rgba(0,0,0,.5),0 0 26px rgba(245,197,24,.45)}
 .revealcard.ringcard{animation:cardfan .7s cubic-bezier(.2,.9,.3,1.28) both, ringpulse 1.5s ease-in-out 1.05s infinite alternate}
+.stampbadge{position:absolute;top:8px;right:8px;background:linear-gradient(135deg,#ffe066,#d97706);color:#1a1405;font-weight:900;font-size:11px;letter-spacing:1.5px;padding:4px 8px;border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.6);border:1px solid #fff3b0;z-index:3}
+.revealcard.stampcard{border:3px solid #f5c518;box-shadow:0 14px 30px rgba(0,0,0,.5),0 0 30px rgba(245,197,24,.55)}
 #pullView{position:fixed;inset:0;z-index:350;display:none;flex-direction:column;align-items:center;justify-content:center}
 #pullView.open{display:flex}
 #ringCel{position:fixed;inset:0;z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
@@ -2105,12 +2107,14 @@ function renderBoard(){
   var fl0 = foilsGet();
   if (fl0.length) foilHtml = '<div style="grid-column:1/-1" class="note">✨ FOIL CARDS — pulled from packs (' + fl0.length + ')</div>' + fl0.map(function(k){ var pp = k.split("-"); var tt = TIERS[parseInt(pp[1], 10)]; return tt ? foilCardHTML(tt, parseInt(pp[0], 10)) : ""; }).join("");
   renderPacks();
-  $("myCards").innerHTML = '<div style="grid-column:1/-1" class="note">⭐ SPECIAL CARDS — Pick\'em rewards &amp; chase cards</div>' + specialCardHTML() + ringCardHTML() + tierCards + playerCards + foilHtml;
+  var stampHtml = '<div style="grid-column:1/-1" class="note">🌟 GOLD FOIL STAMPS — one for every agent (' + stampsGet().length + ' of 12) · hiding in about 1 pack in 20</div>' + CHARNAMES.map(function(nm, ix){ return stampCardHTML(ix + 1); }).join("");
+  $("myCards").innerHTML = '<div style="grid-column:1/-1" class="note">⭐ SPECIAL CARDS — Pick\'em rewards &amp; chase cards</div>' + specialCardHTML() + ringCardHTML() + tierCards + playerCards + stampHtml + foilHtml;
   document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); var av0 = b.getAttribute("data-avatar")||""; profile.avatar = av0; profile.featured = b.getAttribute("data-featured")||""; if (av0.indexOf("/api/avatars") === 0) profile.char = av0; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
   document.querySelectorAll(".dlcard").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadCard(b.getAttribute("data-kind"), parseInt(b.getAttribute("data-idx"),10), b); }); });
   document.querySelectorAll(".setprofs").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); profile.avatar = b.getAttribute("data-avatar") || ""; profile.featured = b.getAttribute("data-featured") || ""; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
   document.querySelectorAll(".dlspecial").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadSpecialCard(b); }); });
   document.querySelectorAll(".dlring").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadRingCard(b); }); });
+  document.querySelectorAll(".dlstamp").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadStampCard(parseInt(b.getAttribute("data-ci"), 10), b); }); });
   document.querySelectorAll("#cardStrip img").forEach(function(im){ im.addEventListener("click", function(){ localStorage.setItem("pa_cardchar", im.getAttribute("data-ci")); renderBoard(); }); });
   document.querySelectorAll(".tiercard").forEach(function(c){ c.addEventListener("click", function(){ if (c.getAttribute("data-noflip")) return; c.classList.toggle("flipped"); }); });
 }
@@ -2202,11 +2206,51 @@ function renderPacks(){
     + (shared ? '<button class="openbtn" disabled>✓ Shared today</button>' : '<button class="openbtn" data-sharepack="1">🔗 Share &amp; Earn a Pack</button>')
     + '<button class="openbtn" data-demopack="1" style="background:#17171f;border:1px solid #7C3AED">▶ Demo Pull</button>'
     + '</div>'
-    + '<div class="note" style="margin-top:9px">Win a ticket → +1 pack (4+ picks → 2 packs). Foils collected: <b style="color:#f5c518">' + foils.length + '</b> · ' + (lsGet("pa_ring", 0) ? '🏆 THE RING: <b style="color:#f5c518">PULLED!</b>' : 'THE RING: still hiding…') + '</div>'
+    + '<div class="note" style="margin-top:9px">Win a ticket → +1 pack (4+ picks → 2 packs). Foils collected: <b style="color:#f5c518">' + foils.length + '</b> · Gold stamps: <b style="color:#f5c518">' + stampsGet().length + ' of 12</b> · ' + (lsGet("pa_ring", 0) ? '🏆 THE RING: <b style="color:#f5c518">PULLED!</b>' : 'THE RING: still hiding…') + '</div>'
     + '</div>';
 }
 function ringBackHTML(){
   return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512" alt=""></div><div class="bkname" style="color:#f5c518">PROP AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">THE RING · CHAMPIONSHIP EDITION</div><div class="bksub">Signed · One of a Kind<br>The rarest pull in the game — about 1 pack in 100</div><div class="holo" style="--hc:#f5c51859"></div></div>';
+}
+function stampsGet(){ return lsGet("pa_stamps", []); }
+function stampBackHTML(ci){
+  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512" alt=""></div><div class="bkname" style="color:#f5c518">PROP AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">' + CHARNAMES[ci - 1].toUpperCase() + ' · GOLD FOIL STAMP</div><div class="bksub">Gold foil stamp edition<br>One stamp card for every agent</div><div class="holo" style="--hc:#f5c51859"></div></div>';
+}
+function stampCardHTML(ci){
+  var un = stampsGet().indexOf(ci) >= 0, cname = CHARNAMES[ci - 1];
+  var front = '<div class="flipfront" style="border:3px solid #f5c518;--tc:#f5c518;box-shadow:0 12px 26px rgba(0,0,0,.38),0 0 22px #f5c51859, inset 0 1px 0 rgba(255,255,255,.05)">'
+    + '<div class="tcplate"><span class="tcname">' + cname + '</span><span class="tcno">🌟 STAMP</span></div>'
+    + '<div class="tcwin"><img class="cardart" src="/api/avatars?s=' + ci + '" alt="">' + (un ? '<span class="stampbadge">FOIL</span>' : '<div class="lockveil">LOCKED</div>') + '</div>'
+    + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">GOLD FOIL STAMP</span><span class="rarpill" style="background:#f5c518;color:#1a1405">STAMP EDITION</span></div>'
+    + '<div class="tierto" style="margin-top:6px">' + (un ? 'You pulled the gold foil stamp edition of ' + cname + '.' : 'The gold foil stamp edition of ' + cname + ' — hiding in about 1 pack in 20.') + '</div>'
+    + (un ? '<div style="display:flex;gap:6px;margin-top:8px"><button class="mini setprofs" data-avatar="/api/avatars?s=' + ci + '" data-featured="' + cname + ' · Gold Foil Stamp">Set as profile card</button><button class="mini dlstamp" data-ci="' + ci + '">Download PNG</button></div>' : '')
+    + '</div><div class="foilshine"></div></div>';
+  return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"' + (un ? '' : ' data-noflip="1"') + '><div class="tierinner">' + front + stampBackHTML(ci) + '</div></div>';
+}
+function downloadStampCard(ci, btn){
+  var img = new Image();
+  img.onload = function(){
+    var cv = document.createElement("canvas"); cv.width = 630; cv.height = 900;
+    var x = cv.getContext("2d");
+    x.fillStyle = "#0d0d13"; x.fillRect(0, 0, 630, 900);
+    var sc = Math.max(630 / img.width, 780 / img.height), w = img.width * sc, h = img.height * sc;
+    x.drawImage(img, (630 - w) / 2, 0, w, h);
+    var gr = x.createLinearGradient(0, 640, 0, 900); gr.addColorStop(0, "rgba(13,13,19,0)"); gr.addColorStop(0.45, "rgba(13,13,19,.92)"); gr.addColorStop(1, "#0d0d13");
+    x.fillStyle = gr; x.fillRect(0, 640, 630, 260);
+    x.strokeStyle = "#f5c518"; x.lineWidth = 10; x.strokeRect(5, 5, 620, 890);
+    x.fillStyle = "#f5c518"; x.fillRect(448, 26, 156, 64);
+    x.fillStyle = "#1a1405"; x.font = "900 34px system-ui, sans-serif"; x.textAlign = "center";
+    x.fillText("FOIL", 526, 68);
+    x.fillStyle = "#f5c518"; x.font = "900 50px system-ui, sans-serif";
+    x.fillText(CHARNAMES[ci - 1].toUpperCase(), 315, 800);
+    x.fillStyle = "#e5e9f2"; x.font = "700 25px system-ui, sans-serif";
+    x.fillText("GOLD FOIL STAMP EDITION", 315, 838);
+    x.fillStyle = "#9aa7bd"; x.font = "600 21px system-ui, sans-serif";
+    x.fillText("PROP AGENT", 315, 872);
+    var a = document.createElement("a"); a.download = "gold-stamp-" + ci + ".png"; a.href = cv.toDataURL("image/png"); a.click();
+    if (btn) { var o = btn.textContent; btn.textContent = "Saved ✓"; setTimeout(function(){ btn.textContent = o; }, 1600); }
+  };
+  img.src = "/api/avatars?s=" + ci;
 }
 function ringCardHTML(){
   var un = !!lsGet("pa_ring", 0);
@@ -2348,9 +2392,14 @@ function pullPack(demo){
     pulls.push({ ci: ci, ti: ti });
   }
   if (isRing) { if (!demo) lsSet("pa_ring", 1); pulls[2] = { ring: true }; }
+  if (!demo && !isRing && Math.random() < 0.05) {
+    var stampCi = 1 + Math.floor(Math.random() * 12), stArr = stampsGet(), sDup = stArr.indexOf(stampCi) >= 0;
+    if (!sDup) { stArr.push(stampCi); lsSet("pa_stamps", stArr); }
+    pulls[2] = { stamp: true, ci: stampCi, dup: sDup };
+  }
   var fl = foilsGet();
   var seen = {};
-  pulls.forEach(function(pu){ if (!pu.ring) { var k = pu.ci + "-" + pu.ti; pu.dup = (fl.indexOf(k) >= 0) || !!seen[k]; seen[k] = 1; if (!pu.dup) fl.push(k); } });
+  pulls.forEach(function(pu){ if (!pu.ring && !pu.stamp) { var k = pu.ci + "-" + pu.ti; pu.dup = (fl.indexOf(k) >= 0) || !!seen[k]; seen[k] = 1; if (!pu.dup) fl.push(k); } });
   if (!demo) lsSet("pa_foils", fl);
   return pulls;
 }
@@ -2384,7 +2433,11 @@ function viewPulledCard(i){
   ensurePullView();
   var front = document.getElementById("pullViewFront"), back = document.getElementById("pullViewBack");
   document.getElementById("pullViewWrap").classList.remove("flipped");
-  if (pu.ring) {
+  if (pu.stamp) {
+    var sname = CHARNAMES[pu.ci - 1];
+    front.innerHTML = '<img src="/api/avatars?s=' + pu.ci + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><span class="stampbadge" style="font-size:14px;padding:6px 11px">FOIL</span><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + sname + '</b><span class="rarpill" style="background:#f5c518;color:#1a1405">🌟 GOLD STAMP</span></div>';
+    back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">PROP AGENT</b><div style="color:#f5c518;letter-spacing:1.5px;font-weight:800;font-size:12px">' + sname.toUpperCase() + ' · GOLD FOIL STAMP</div><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">Gold foil stamp edition<br>One stamp card for every agent</div>';
+  } else if (pu.ring) {
     front.innerHTML = '<img src="/api/avatars?s=14" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">THE RING</b><span class="rarpill" style="background:#f5c518;color:#1a1405">🏆 CHASE</span></div>';
     back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">PROP AGENT</b><div style="color:#f5c518;letter-spacing:1.5px;font-weight:800;font-size:12px">THE RING · CHAMPIONSHIP EDITION</div><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">Signed · One of a Kind<br>The rarest pull in the game</div>';
   } else {
@@ -2426,13 +2479,15 @@ function ensurePackPop(){
       cards.style.display = "flex";
       cards.innerHTML = pulls.map(function(pu, i){
         if (pu.ring) return '<div class="revealcard ringcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's,1.05s;width:118px;cursor:pointer"><img src="/api/avatars?s=14" alt="" style="height:118px"><div class="rvinfo"><b style="color:#f5c518">🏆 THE RING</b><br>SIGNED · ONE OF A KIND</div></div>';
+        if (pu.stamp) return '<div class="revealcard stampcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer;width:112px"><div style="position:relative"><img src="/api/avatars?s=' + pu.ci + '" alt="" style="height:112px;width:100%;object-fit:cover;display:block"><span class="stampbadge">FOIL</span></div><div class="rvinfo"><b style="color:#f5c518">🌟 ' + CHARNAMES[pu.ci - 1] + '</b><br>GOLD FOIL STAMP' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
         var t = TIERS[pu.ti];
         return '<div class="revealcard' + (i === 2 || pu.ti >= 3 ? ' bestcard' : '') + '" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer"><img src="/api/avatars?s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">✨ ' + t.name + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
       }).join("");
-      var newN = pulls.filter(function(pu){ return !pu.ring && !pu.dup; }).length;
+      var newN = pulls.filter(function(pu){ return !pu.ring && !pu.stamp && !pu.dup; }).length;
       var dupN = pulls.filter(function(pu){ return pu.dup; }).length;
-      var premN = pulls.filter(function(pu){ return !pu.ring && pu.ti >= 3 && !pu.dup; }).length;
+      var premN = pulls.filter(function(pu){ return !pu.ring && !pu.stamp && pu.ti >= 3 && !pu.dup; }).length;
       if (pulls.some(function(pu){ return pu.ring; })) { cap.textContent = window._packDemo ? "DEMO — that's the chase celebration! Nothing was saved." : "🏆 YOU PULLED THE RING!! Signed, one of a kind — the rarest card in the game!"; ringCelebration(); }
+      else if (pulls.some(function(pu){ return pu.stamp; })) { var spu = pulls.filter(function(pu){ return pu.stamp; })[0]; cap.textContent = spu.dup ? "🌟 GOLD FOIL STAMP — " + CHARNAMES[spu.ci - 1] + " again! Duplicate — already in your collection." : "🌟 GOLD FOIL STAMP PULLED — " + CHARNAMES[spu.ci - 1] + "! One of only 12 stamp cards."; }
       else cap.textContent = (window._packDemo ? "DEMO — " : "") + newN + " new foil card" + (newN === 1 ? "" : "s") + " added to My Cards ✨" + (dupN ? " · " + dupN + " duplicate" + (dupN === 1 ? "" : "s") + " not saved" : "") + (premN ? " · ✨ " + premN + " GOLD FOIL" + (premN === 1 ? "" : "S") + "!" : "");
     }, 1030);
   });

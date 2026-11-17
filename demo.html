@@ -61,6 +61,8 @@
   @keyframes cardfan { 0% { transform: translate(var(--fx,0px),30px) rotate(var(--fr,0deg)) scale(.5); opacity: 0; } 55% { opacity: 1; } 100% { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; } }
   .revealcard.bestcard { box-shadow: 0 14px 30px rgba(0,0,0,.5), 0 0 26px rgba(245,197,24,.45); }
   .revealcard.ringcard { animation: cardfan .7s cubic-bezier(.2,.9,.3,1.28) both, ringpulse 1.5s ease-in-out 1.05s infinite alternate; }
+  .stampbadge { position: absolute; top: 8px; right: 8px; background: linear-gradient(135deg,#ffe066,#d97706); color: #1a1405; font-weight: 900; font-size: 11px; letter-spacing: 1.5px; padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.6); border: 1px solid #fff3b0; z-index: 3; }
+  .revealcard.stampcard { border: 3px solid #f5c518; box-shadow: 0 14px 30px rgba(0,0,0,.5), 0 0 30px rgba(245,197,24,.55); }
   #pullView { position: fixed; inset: 0; z-index: 55; display: none; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
   #pullView.open { display: flex; }
   .pvwrap { width: min(68vw,250px); perspective: 1100px; animation: celzoom .55s cubic-bezier(.2,.9,.3,1.3) both; }
@@ -116,7 +118,7 @@
     <div class="collrow" id="coll"><span class="empty">No foils yet — open a pack.</span></div>
   </div>
 
-  <p class="note">This demo works exactly like the real game: every pack holds 3 foil cards, duplicates don't stack. Gold foil cards (Gold tier and up) hide in packs too — a little tough to pull, about 1 slot in 8 — and THE RING — the signed, one-of-a-kind chase card — hides in about 1 pack in 100. The <b style="color:#f5c518">Demo Chase Pull</b> button guarantees a Ring pull in this demo so you can see the celebration — in the real game there is no chase pack: THE RING hides in regular packs.<br><br>Play the real thing: <a href="https://prop-agent-bre.vercel.app/">prop-agent-bre.vercel.app</a> — Board tab → 🎁 My Packs (there's a Demo Pull button there too).</p>
+  <p class="note">This demo works exactly like the real game: every pack holds 3 foil cards, duplicates don't stack. Gold foil cards (Gold tier and up) hide in packs too — a little tough to pull, about 1 slot in 8. Gold FOIL STAMP cards — one for every agent, gold back included — hide in about 1 pack in 20 — and THE RING — the signed, one-of-a-kind chase card — hides in about 1 pack in 100. The <b style="color:#f5c518">Demo Chase Pull</b> button guarantees a Ring pull in this demo so you can see the celebration — in the real game there is no chase pack: THE RING hides in regular packs.<br><br>Play the real thing: <a href="https://prop-agent-bre.vercel.app/">prop-agent-bre.vercel.app</a> — Board tab → 🎁 My Packs (there's a Demo Pull button there too).</p>
 </div>
 
 <div id="pullView">
@@ -148,7 +150,7 @@ var TIERS = [
   { n: "Diamond",  c: "#7dd3fc", w: 4 },
   { n: "Legend",   c: "#b26bff", w: 2 }
 ];
-var opened = 0, foilCount = 0, ringPulled = false, owned = {}, busy = false;
+var opened = 0, foilCount = 0, ringPulled = false, owned = {}, busy = false, stampOwned = {}, stampCount = 0;
 
 function pickBase() {
   var r = Math.random();
@@ -161,12 +163,14 @@ function pickPremium() {
 function pullPack(chase) {
   var pulls = [], seen = {};
   var isRing = chase || (!ringPulled && Math.random() < 0.01);
+  var isStamp = !isRing && Math.random() < 0.05, stampCi = 1 + Math.floor(Math.random() * 12);
   for (var i = 0; i < 3; i++) {
     pulls.push({ ci: 1 + Math.floor(Math.random() * 12), ti: Math.random() < 0.12 ? pickPremium() : pickBase() });
   }
   if (isRing) { pulls[2] = { ring: true }; ringPulled = true; }
+  if (isStamp) { pulls[2] = { stamp: true, ci: stampCi, dup: !!stampOwned[stampCi] }; if (!pulls[2].dup) { stampOwned[stampCi] = 1; stampCount++; } }
   pulls.forEach(function(pu) {
-    if (pu.ring) return;
+    if (pu.ring || pu.stamp) return;
     var k = pu.ci + "-" + pu.ti;
     pu.dup = !!owned[k] || !!seen[k]; seen[k] = 1;
     if (!pu.dup) { owned[k] = 1; foilCount++; }
@@ -174,9 +178,9 @@ function pullPack(chase) {
   return pulls;
 }
 function renderStats() {
-  document.getElementById("stats").innerHTML = "Packs opened: <b>" + opened + "</b> · Foils pulled: <b>" + foilCount + "</b> · THE RING: <b>" + (ringPulled ? "PULLED! 🏆" : "still hiding…") + "</b>";
+  document.getElementById("stats").innerHTML = "Packs opened: <b>" + opened + "</b> · Foils pulled: <b>" + foilCount + "</b> · Gold stamps: <b>" + stampCount + "</b> · THE RING: <b>" + (ringPulled ? "PULLED! 🏆" : "still hiding…") + "</b>";
   var keys = Object.keys(owned);
-  document.getElementById("coll").innerHTML = (ringPulled || keys.length) ? (ringPulled ? '<img src="/api/avatars?s=14" title="THE RING · CHASE CARD" alt="">' : '') + keys.map(function(k) {
+  document.getElementById("coll").innerHTML = (ringPulled || keys.length || stampCount) ? (ringPulled ? '<img src="/api/avatars?s=14" title="THE RING · CHASE CARD" alt="">' : '') + Object.keys(stampOwned).map(function(k) { return '<img src="/api/avatars?s=' + k + '" title="' + NAMES[parseInt(k, 10) - 1] + ' · GOLD FOIL STAMP" style="border-color:#ffe066;outline:2px solid #f5c518" alt="">'; }).join("") + keys.map(function(k) {
     return '<img src="/api/avatars?s=' + k.split("-")[0] + '" title="' + NAMES[parseInt(k.split("-")[0], 10) - 1] + ' · ' + TIERS[parseInt(k.split("-")[1], 10)].n + ' FOIL" alt="">';
   }).join("") : '<span class="empty">No foils yet — open a pack.</span>';
 }
@@ -196,14 +200,18 @@ function openPack(chase) {
     var pulls = pullPack(chase); opened++; window._lastPulls = pulls;
     reveal.innerHTML = pulls.map(function(pu, i) {
       if (pu.ring) return '<div class="revealcard ringcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's,1.05s"><img src="/api/avatars?s=14" alt="" style="height:122px"><div class="rvinfo"><b style="color:#f5c518">🏆 THE RING</b><br>SIGNED · ONE OF A KIND</div></div>';
+      if (pu.stamp) return '<div class="revealcard stampcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's"><div style="position:relative"><img src="/api/avatars?s=' + pu.ci + '" alt="" style="height:112px;width:100%;object-fit:cover;display:block"><span class="stampbadge">FOIL</span></div><div class="rvinfo"><b style="color:#f5c518">🌟 ' + NAMES[pu.ci - 1] + '</b><br>GOLD FOIL STAMP' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
       var t = TIERS[pu.ti];
       return '<div class="revealcard' + (i === 2 || pu.ti >= 3 ? ' bestcard' : '') + '" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's"><img src="/api/avatars?s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + NAMES[pu.ci - 1] + '</b><br><span style="color:' + t.c + ';font-weight:800">✨ ' + t.n + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
     }).join("");
-    var newN = pulls.filter(function(pu){ return !pu.ring && !pu.dup; }).length;
+    var newN = pulls.filter(function(pu){ return !pu.ring && !pu.stamp && !pu.dup; }).length;
     var dupN = pulls.filter(function(pu){ return pu.dup; }).length;
     if (pulls.some(function(pu){ return pu.ring; })) {
       cap.textContent = "🏆 YOU PULLED THE RING!! Signed, one of a kind — the rarest card in the game!";
       celebrate();
+    } else if (pulls.some(function(pu){ return pu.stamp; })) {
+      var spu = pulls.filter(function(pu){ return pu.stamp; })[0];
+      cap.textContent = spu.dup ? "🌟 GOLD FOIL STAMP — " + NAMES[spu.ci - 1] + " again! Duplicate — already in your demo pulls." : "🌟 GOLD FOIL STAMP PULLED — " + NAMES[spu.ci - 1] + "! One of only 12 stamp cards.";
     } else {
       cap.textContent = newN + " new foil card" + (newN === 1 ? "" : "s") + " ✨" + (dupN ? " · " + dupN + " duplicate" + (dupN === 1 ? "" : "s") + " not saved" : "");
     }
@@ -237,7 +245,10 @@ function viewPulled(i) {
   var pu = (window._lastPulls || [])[i]; if (!pu) return;
   var front = document.getElementById("pvFront"), back = document.getElementById("pvBack");
   document.getElementById("pvWrap").classList.remove("flipped");
-  if (pu.ring) {
+  if (pu.stamp) {
+    front.innerHTML = '<img class="art" src="/api/avatars?s=' + pu.ci + '" alt=""><span class="stampbadge" style="font-size:14px;padding:6px 11px">FOIL</span><div class="pvplate">' + NAMES[pu.ci - 1] + '<small>🌟 GOLD FOIL STAMP</small></div>';
+    back.innerHTML = '<img src="/api/icons?s=512" alt=""><div style="font-weight:900;color:#f5c518;font-size:19px">PROP AGENT</div><div style="color:#f5c518;letter-spacing:1.5px;font-weight:800;font-size:12px">' + NAMES[pu.ci - 1].toUpperCase() + ' · GOLD FOIL STAMP</div><div style="color:#c9c9d4;font-size:12.5px">Gold foil stamp edition<br>One stamp card for every agent</div>';
+  } else if (pu.ring) {
     front.innerHTML = '<img class="art" src="/api/avatars?s=14" alt=""><div class="pvplate">THE RING<small>🏆 CHASE · SIGNED · ONE OF A KIND</small></div>';
     back.innerHTML = '<img src="/api/icons?s=512" alt=""><div style="font-weight:900;color:#f5c518;font-size:19px">PROP AGENT</div><div style="color:#f5c518;letter-spacing:1.5px;font-weight:800;font-size:12px">THE RING · CHAMPIONSHIP EDITION</div><div style="color:#c9c9d4;font-size:12.5px">Signed · One of a Kind<br>The rarest pull in the game</div>';
   } else {
