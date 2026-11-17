@@ -161,6 +161,27 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 #myCards .tiercard.lgnd .tcwin::after{animation-duration:2.1s}
 #myCards .tcspark{animation:sparkdrift 4.5s ease-in-out infinite alternate}
 @keyframes sparkdrift{from{transform:translateY(0)}to{transform:translateY(-7px)}}
+#myCards{display:block}
+.cardsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
+.cardsec{margin-bottom:14px}
+.cardsec-h{width:100%;display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,rgba(124,58,237,.25),rgba(245,185,66,.12));border:1px solid rgba(167,139,250,.45);border-radius:11px;padding:9px 12px;color:#fff;font-weight:900;font-size:13px;letter-spacing:.4px;cursor:pointer;text-align:left}
+.cscount{margin-left:auto;font-size:11px;color:#f5c518;font-weight:800;white-space:nowrap}
+.cschev{font-size:13px;color:#c4b5fd}
+.cardsec-b{margin-top:9px}
+.cardsec.closed .cardsec-b{display:none}
+.clashad{perspective:600px;border-radius:16px;box-shadow:0 14px 30px rgba(0,0,0,.55), 0 0 24px rgba(245,185,66,.35), inset 0 1px 0 rgba(255,255,255,.25)}
+.clashad .caface{width:56px;height:56px;box-shadow:0 8px 16px rgba(0,0,0,.6), 0 0 12px rgba(245,185,66,.35);animation:cafL 3.4s ease-in-out infinite}
+.clashad .caface.r{animation:cafR 3.4s ease-in-out infinite}
+@keyframes cafL{0%,100%{transform:perspective(400px) rotateY(14deg) translateY(0)}50%{transform:perspective(400px) rotateY(-8deg) translateY(-3px)}}
+@keyframes cafR{0%,100%{transform:perspective(400px) rotateY(-14deg) translateY(0)}50%{transform:perspective(400px) rotateY(8deg) translateY(-3px)}}
+.clashad .catitle{font-family:'Bungee','Archivo Black',system-ui,sans-serif;font-size:19px;letter-spacing:1px;background:linear-gradient(180deg,#fff7d6,#ffd94d 55%,#ff9d2e);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#ffd94d;filter:drop-shadow(0 2px 0 rgba(90,40,0,.55)) drop-shadow(0 0 14px rgba(245,185,66,.45))}
+.clashad .casub{font-family:'Archivo',system-ui,sans-serif;font-weight:700;color:#e6dcff}
+.clashad .cavs{animation:cavspulse 1.6s ease-in-out infinite, cavs3d 5s ease-in-out infinite}
+@keyframes cavs3d{0%,100%{transform:perspective(300px) rotateY(0deg)}50%{transform:perspective(300px) rotateY(180deg)}}
+.clashad .clashbtn{font-family:'Bungee','Archivo Black',system-ui,sans-serif;letter-spacing:.5px;background:linear-gradient(180deg,#a855f7,#7C3AED 60%,#5b21b6);box-shadow:0 6px 0 #3b1470, 0 12px 20px rgba(0,0,0,.5), 0 0 16px rgba(168,85,247,.55)}
+.clashad .clashbtn:active{transform:translateY(4px);box-shadow:0 2px 0 #3b1470, 0 6px 12px rgba(0,0,0,.5)}
+.caspark{position:absolute;font-size:13px;pointer-events:none;animation:sparkfloat 2.8s ease-in-out infinite;z-index:1}
+@keyframes sparkfloat{0%,100%{transform:translateY(0) scale(1);opacity:.9}50%{transform:translateY(-6px) scale(1.25);opacity:1}}
 .agentpick{position:relative;transform:perspective(600px) rotateX(4deg);box-shadow:0 8px 16px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.18);transition:transform .15s ease}
 .agentpick.on{transform:perspective(600px) rotateX(0deg) scale(1.06)}
 .pickgrid{perspective:700px}
@@ -220,7 +241,7 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .clashad .clashbtn{flex:0 0 auto;position:relative;z-index:1;animation:btnpulse 1.8s ease-in-out infinite}
 @keyframes btnpulse{0%,100%{box-shadow:0 0 0 rgba(245,185,66,0)}50%{box-shadow:0 0 20px rgba(245,185,66,.85)}}
 .clashad .coinpill{position:absolute;top:7px;right:9px;z-index:1}
-@media (prefers-reduced-motion: reduce){#myCards .tiercard,#myCards .tcwin .cardart,#myCards .tcwin::after,#myCards .tiercard.unlocked .flipfront,#myCards .tcspark,.clashad::after,.clashad .caface,.clashad .cavs,.clashad .clashbtn{animation:none}}
+@media (prefers-reduced-motion: reduce){#myCards .tiercard,#myCards .tcwin .cardart,#myCards .tcwin::after,#myCards .tiercard.unlocked .flipfront,#myCards .tcspark,.clashad::after,.clashad .caface,.clashad .cavs,.clashad .clashbtn,.caspark{animation:none}}
 .charstrip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px}
 .charstrip img{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid var(--line);cursor:pointer;flex:0 0 auto}
 .charstrip img.on{border-color:#a78bfa;box-shadow:0 0 12px rgba(124,58,237,.8)}
@@ -511,7 +532,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .celsub{font-weight:800;color:#fff;letter-spacing:1.5px;margin-top:5px;z-index:2}
 .celtap{color:#c9c9d4;font-size:12.5px;margin-top:12px;z-index:2}
 </style>
-</head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bungee&family=Archivo:wght@500;700;900&display=swap" rel="stylesheet"></head>
 <body>
 <header>
   <div class="hwrap">
@@ -2617,6 +2638,11 @@ function battleCardHTML(t, wins, ci){
   return '<div class="tiercard' + (ti === 6 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' \u00B7 ' + t.name + ' Battle Card', pw.name + ' \u2014 ' + pw.desc + '<br><br>Agent Clash: clash = stars + power + grid. Land hits to place marks - 3 in a row wins an ability. Powers live on battle cards only.') + '</div></div>';
 }
 
+function cardSec(id, title, count, inner, openDefault){
+  var st = lsGet("pa_cardsecs", {});
+  var open = (id in st) ? !!st[id] : openDefault;
+  return '<div class="cardsec' + (open ? '' : ' closed') + '"><button class="cardsec-h" data-cardsec="' + id + '"><span>' + title + '</span><span class="cscount">' + count + '</span><span class="cschev">' + (open ? '\u25BE' : '\u25B8') + '</span></button><div class="cardsec-b"><div class="cardsgrid">' + inner + '</div></div></div>';
+}
 function renderBoard(){
   renderPickem();
   renderFollowing();
@@ -2630,7 +2656,7 @@ function renderBoard(){
   var stripEl = $("cardStrip");
   if (stripEl) stripEl.innerHTML = CHARNAMES.map(function(n, k){ var n1 = k + 1; return '<img src="/api/battle?s=' + n1 + '" data-ci="' + n1 + '" class="' + (n1 === cci ? 'on' : '') + '" title="' + n + '" alt="' + n + '">'; }).join("");
   var tierCards = TIERS.map(function(t){ return tierCardHTML(t, wins, true, cci); }).join("");
-  var battleHtml = '<div style="grid-column:1/-1" class="note">\u2694\uFE0F BATTLE CARDS \u2014 Agent Clash \u00B7 every tier, tier-color borders \u00B7 powers fight in battles</div>' + TIERS.map(function(t){ return battleCardHTML(t, wins, cci); }).join("");
+  var battleCardsOnly = TIERS.map(function(t){ return battleCardHTML(t, wins, cci); }).join("");
   var playerCards = cards.map(function(l, li){
     var photo = photoCache[(l.player || "").toLowerCase()] || "";
     var front = '<div class="flipfront" style="border:2px solid #a78bfa;--tc:#a78bfa">'
@@ -2642,13 +2668,21 @@ function renderBoard(){
       + '</div><div class="holo" style="--hc:#a78bfa59"></div></div>';
     return '<div class="tiercard unlocked"><div class="tierinner">' + front + cardBackHTML(esc(l.player), esc(l.team || "") + '<br>' + esc(l.matchup || "") + '<br>Earned on a ticket where every leg hit.') + '</div></div>';
   }).join("");
-  var foilHtml = "";
   var fl0 = foilsGet();
-  if (fl0.length) foilHtml = '<div style="grid-column:1/-1" class="note">✨ FOIL CARDS — pulled from packs (' + fl0.length + ')</div>' + fl0.map(function(k){ var pp = k.split("-"); var tt = TIERS[parseInt(pp[1], 10)]; return tt ? foilCardHTML(tt, parseInt(pp[0], 10)) : ""; }).join("");
+  var foilCardsOnly = fl0.map(function(k){ var pp = k.split("-"); var tt = TIERS[parseInt(pp[1], 10)]; return tt ? foilCardHTML(tt, parseInt(pp[0], 10)) : ""; }).join("");
   renderPacks();
   renderClash();
-  var stampHtml = '<div style="grid-column:1/-1" class="note">🌟 GOLD FOIL STAMPS — one for every agent (' + stampsGet().length + ' of 12) · hiding in about 1 pack in 10</div>' + CHARNAMES.map(function(nm, ix){ return stampCardHTML(ix + 1); }).join("");
-  $("myCards").innerHTML = tierCards + battleHtml + playerCards + stampHtml + foilHtml + '<div style="grid-column:1/-1" class="note">⭐ SPECIAL CARDS — Pick\'em rewards &amp; chase cards</div>' + specialCardHTML() + ringCardHTML();
+  var stampCardsOnly = CHARNAMES.map(function(nm, ix){ return stampCardHTML(ix + 1); }).join("");
+  var unlockedN = TIERS.filter(function(t){ return wins >= t.wins; }).length;
+  var specN = (specialUnlocked() ? 1 : 0) + (lsGet("pa_ring", 0) ? 1 : 0);
+  $("myCards").innerHTML =
+    cardSec("tier", "🃏 TIER CARDS — " + CHARNAMES[cci - 1], unlockedN + " of 7 unlocked", tierCards, true)
+    + cardSec("battle", "\u2694\uFE0F BATTLE CARDS — Grid Clash", unlockedN + " of 7 unlocked", battleCardsOnly, true)
+    + (cards.length ? cardSec("player", "🏆 PLAYER CARDS — winning tickets", cards.length + " earned", playerCards, false) : "")
+    + cardSec("stamps", "🌟 GOLD FOIL STAMPS — 1 in ~10 packs", stampsGet().length + " of 12", stampCardsOnly, false)
+    + (fl0.length ? cardSec("foils", "✨ FOIL CARDS — from packs", fl0.length + " pulled", foilCardsOnly, false) : "")
+    + cardSec("special", "⭐ SPECIAL CARDS — Pick'em & chase", specN + " of 2", specialCardHTML() + ringCardHTML(), false);
+  document.querySelectorAll(".cardsec-h").forEach(function(h){ h.addEventListener("click", function(){ var sec = h.parentElement; var nowClosed = sec.classList.toggle("closed"); var st = lsGet("pa_cardsecs", {}); st[h.getAttribute("data-cardsec")] = !nowClosed; lsSet("pa_cardsecs", st); var ch = h.querySelector(".cschev"); if (ch) ch.textContent = nowClosed ? "\u25B8" : "\u25BE"; sfx("click"); }); });
   document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); var av0 = b.getAttribute("data-avatar")||""; profile.avatar = av0; profile.featured = b.getAttribute("data-featured")||""; if (av0.indexOf("/api/avatars") === 0) profile.char = av0; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
   document.querySelectorAll(".dlcard").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadCard(b.getAttribute("data-kind"), parseInt(b.getAttribute("data-idx"),10), b); }); });
   document.querySelectorAll(".setprofs").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); profile.avatar = b.getAttribute("data-avatar") || ""; profile.featured = b.getAttribute("data-featured") || ""; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
@@ -3049,7 +3083,7 @@ function renderClash(){
     + '<span class="cavs">VS</span>'
     + '<img class="caface r" src="/api/battle?s=1" alt="">'
     + '<button class="clashbtn" data-clashnow="1">\u2694\uFE0F CLASH NOW</button>'
-    + '<span class="coinpill">\uD83E\uDE99 ' + coinsGet() + '</span></div>';
+    + '<span class="coinpill">\uD83E\uDE99 ' + coinsGet() + '</span><span class="caspark" style="left:36%;top:5px">✨</span><span class="caspark" style="right:27%;bottom:4px;animation-delay:1.3s">⚡</span></div>';
 }
 
 function mkFighter(ci, ti){ return { ci: ci, ti: ti, hits: 0, used: {} }; }
@@ -3297,6 +3331,7 @@ function clashMenu(){
     + '<button class="clashbig" data-clashmode="quick">⚡ QUICK CLASH<span>Friendly fight — CPU cards match your tiers, never stronger</span></button>'
     + '<button class="clashbig gold" data-clashmode="ladder">🏆 LADDER' + (lad >= 7 ? ' — CHAMPION 🏆' : ' — BOSS ' + (lad + 1) + ' OF 7') + '<span>' + (lad >= 7 ? 'Every boss beaten. Replay Boss 7 for coins.' : 'Beat bosses in order. Boss ' + (lad + 1) + ' pays ' + (10 + (lad + 1) * 5) + ' 🪙') + '</span></button>'
     + '<div class="clashmeta">🪙 <b>' + coinsGet() + '</b> Clash Coins · Record <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b><br>Wins pay Clash Coins — spend them on packs (1 pack = ' + CLASH_PACK_COST + ' 🪙, in My Packs below)</div>'
+    + '<div class="clashmeta">🏆 <b>One ladder everywhere:</b> your ' + maxWins() + ' tier wins from prop tickets unlock these battle cards AND the foil tiers inside packs. Clash Coins buy those same packs.</div>'
     + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>⭐ Stars = your card\'s tier — higher total wins the round.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Holding two-in-a-row on the grid gives +1★ until it breaks.<br>🛡️ Defend: your power stays off — but if you lose the round, NO hit lands.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Soft jazz plays while you battle — the 🎵 button (top right) mutes it.</div></details>'
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>');
