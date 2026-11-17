@@ -64,6 +64,13 @@ h2:first-child{margin-top:4px}
 .pline{font-size:24px;font-weight:800;margin:6px 0 2px}
 .pline span{font-size:13px;color:var(--mut);font-weight:600}
 .psrc{font-size:11.5px;color:var(--mut)}
+.l5row{display:none;align-items:center;gap:7px;background:#171724;border:1px solid #2c2c3a;border-radius:10px;padding:6px 9px;margin:8px auto 2px;max-width:340px}
+.l5row.show{display:flex}
+.l5lab{font-size:10px;font-weight:900;letter-spacing:1.5px;color:#9a9ab0;white-space:nowrap}
+.l5chips{display:flex;gap:4px;flex:1;justify-content:center}
+.l5chip{min-width:27px;text-align:center;font-size:11px;font-weight:800;color:#fff;background:#3a3a4a;border-radius:6px;padding:3px 4px}
+.l5chip.on{background:#2fbf71}
+.l5cnt{font-size:11px;font-weight:800;color:#e8e8f2;white-space:nowrap}
 .ml{display:flex;gap:8px;margin-top:12px}
 .ml button{flex:1;border-radius:12px;padding:12px 0;font-size:15px;font-weight:900;border:1px solid var(--line);background:var(--panel2);color:var(--txt)}
 .ml button span{display:block;font-size:12px;font-weight:700;color:var(--mut);margin-top:2px;text-transform:none}
@@ -948,6 +955,7 @@ function propCard(p){
     + '<div class="pline-big">'+p.line+'</div>' + (p.pct!=null ? '<div><span class="pctchip">'+p.pct+'% IMPLIED</span></div>' : '')
     + (startsTxt ? '<div><span class="starts-pill">'+esc(startsTxt)+'</span></div>' : '')
     + (p.liveActual!=null ? '<div class="plive-line">LIVE · '+p.liveActual+' '+esc(p.stat)+' so far · line '+p.line+'</div>' : '')
+    + (p.half || p.brk ? '' : '<div class="l5row" data-l5="1" data-aid="'+esc(p.athleteId||"")+'" data-player="'+esc(p.player)+'" data-lg="'+esc(p.league)+'" data-stat="'+esc(p.stat)+'" data-line="'+p.line+'"></div>')
     + '<div class="psrc">PrizePicks · '+esc(p.leagueLabel)+' · via Parlay API'+(srcDate ? ' · '+esc(srcDate) : '')+'</div>'
     + '<div class="ml"><button class="more'+(slipHas(p.id,"MORE")?" sel":"")+'" data-pick="'+esc(p.id)+'|MORE">MORE<span>'+esc(sub)+'</span></button><button class="less'+(slipHas(p.id,"LESS")?" sel":"")+'" data-pick="'+esc(p.id)+'|LESS">LESS<span>'+esc(sub)+'</span></button></div>'
     + '</div></div>';
@@ -999,6 +1007,109 @@ function propCardsGrouped(list){
   if (half.length) h += '<div style="grid-column:1/-1;margin-top:10px;padding:6px 10px;border:1px solid var(--gold);border-radius:9px;color:var(--gold);font-weight:900;letter-spacing:1.2px;font-size:12px">⏱ 1ST HALF PROPS</div>' + half.map(propCard).join("");
   return h;
 }
+/* ---------- Last-5 hit rates (ESPN game logs -- free, no Parlay credits; cached 6h) ---------- */
+var L5_MAP = {
+  "points":["points"], "rebounds":["totalRebounds"], "assists":["assists"], "steals":["steals"], "blocks":["blocks"], "turnovers":["turnovers"],
+  "3-pt made":["made:threePointFieldGoalsMade-threePointFieldGoalsAttempted"], "3-pt attempted":["att:threePointFieldGoalsMade-threePointFieldGoalsAttempted"],
+  "field goals made":["made:fieldGoalsMade-fieldGoalsAttempted"], "free throws made":["made:freeThrowsMade-freeThrowsAttempted"],
+  "pts+rebs+asts":["points","totalRebounds","assists"], "points+rebounds+assists":["points","totalRebounds","assists"],
+  "pts+rebs":["points","totalRebounds"], "points+rebounds":["points","totalRebounds"],
+  "pts+asts":["points","assists"], "points+assists":["points","assists"],
+  "rebs+asts":["totalRebounds","assists"], "rebounds+assists":["totalRebounds","assists"],
+  "blocks+steals":["blocks","steals"], "blks+stls":["blocks","steals"], "minutes":["minutes"],
+  "passing yards":["passingYards"], "passing tds":["passingTouchdowns"], "passing touchdowns":["passingTouchdowns"],
+  "completions":["completions"], "pass attempts":["passingAttempts"], "passing attempts":["passingAttempts"], "interceptions":["interceptions"],
+  "rushing yards":["rushingYards"], "rushing tds":["rushingTouchdowns"], "rushing touchdowns":["rushingTouchdowns"],
+  "rush attempts":["rushingAttempts"], "rushing attempts":["rushingAttempts"], "carries":["rushingAttempts"],
+  "receiving yards":["receivingYards"], "receiving tds":["receivingTouchdowns"], "receiving touchdowns":["receivingTouchdowns"],
+  "receptions":["receptions"], "targets":["receivingTargets"],
+  "rush+rec yards":["rushingYards","receivingYards"], "rushing+receiving yards":["rushingYards","receivingYards"],
+  "passing+rushing yards":["passingYards","rushingYards"],
+  "goals":["goals"], "shots on goal":["shotsTotal"], "shots":["shotsTotal"], "saves":["saves"],
+  "power play points":["powerPlayGoals","powerPlayAssists"],
+  "hits":["hits"], "total bases":["totalBases"], "home runs":["homeRuns"], "runs batted in":["runsBattedIn"], "rbis":["runsBattedIn"],
+  "stolen bases":["stolenBases"], "runs":["runs"], "strikeouts":["strikeouts"]
+};
+function l5NormStat(s){
+  var x = String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+  x = x.replace(/three pointers?/g, "3-pt").replace(/3pt/g, "3-pt");
+  x = x.replace(/\s*\+\s*/g, "+");
+  return x;
+}
+function l5ColVal(raw, spec){
+  if (raw == null) return null;
+  var s = String(raw).trim(); if (!s || s === "--" || s === "-") return null;
+  if (spec.indexOf("made:") === 0) s = s.split("-")[0];
+  else if (spec.indexOf("att:") === 0) { var parts = s.split("-"); s = parts.length > 1 ? parts[1] : s; }
+  var v = parseFloat(s); return isFinite(v) ? v : null;
+}
+function l5Reduce(g){
+  if (!g || !g.names) return null;
+  var sts = (g.seasonTypes || [])[0]; if (!sts) return null;
+  var byId = {};
+  (sts.categories || []).forEach(function(cat){ if (cat.type !== "event") return; (cat.events || []).forEach(function(e){ byId[e.eventId] = e.stats; }); });
+  var rows = [];
+  Object.keys(g.events || {}).forEach(function(eid){ if (byId[eid]) rows.push([ (g.events[eid].gameDate || ""), byId[eid] ]); });
+  rows.sort(function(a, b){ return a[0] < b[0] ? 1 : -1; });
+  return { names: g.names, rows: rows.slice(0, 10) };
+}
+function l5Series(g, stat){
+  var specs = L5_MAP[l5NormStat(stat)]; if (!specs || !g) return null;
+  var idx = specs.map(function(sp){ return g.names.indexOf(sp.replace(/^(made|att):/, "")); });
+  if (idx.some(function(i){ return i < 0; })) return null;
+  var minIdx = g.names.indexOf("minutes");
+  var vals = [];
+  for (var r = 0; r < g.rows.length && vals.length < 5; r++){
+    var row = g.rows[r][1]; if (!row) continue;
+    if (minIdx >= 0) { var mv = parseFloat(row[minIdx]); if (!isFinite(mv) || mv <= 0) continue; }
+    var sum = 0, ok = true;
+    for (var c = 0; c < specs.length; c++){ var v = l5ColVal(row[idx[c]], specs[c]); if (v == null) { ok = false; break; } sum += v; }
+    if (ok) vals.push(sum);
+  }
+  return vals.length ? vals : null;
+}
+var l5Cache = lsGet("pa_l5", {});
+var l5Inflight = {};
+function l5Fetch(lgKey, aid){
+  var lg = leagueByKey(lgKey);
+  if (!lg || !lg.sport || lg.key === "tennis" || lg.key === "all") return Promise.resolve(null);
+  var ck = lg.key + ":" + aid;
+  var c = l5Cache[ck];
+  if (c && (Date.now() - c.t) < 6 * 3600 * 1000) return Promise.resolve(c.g);
+  if (l5Inflight[ck]) return l5Inflight[ck];
+  var url = "https://site.web.api.espn.com/apis/common/v3/sports/" + lg.sport + "/" + lg.league + "/athletes/" + aid + "/gamelog";
+  var pr = fetchJson(url).then(function(g){
+    delete l5Inflight[ck];
+    var red = l5Reduce(g);
+    if (!red) return null;
+    l5Cache[ck] = { t: Date.now(), g: red };
+    var keys = Object.keys(l5Cache);
+    if (keys.length > 60) { keys.sort(function(a, b){ return l5Cache[a].t - l5Cache[b].t; }); keys.slice(0, keys.length - 60).forEach(function(k){ delete l5Cache[k]; }); }
+    lsSet("pa_l5", l5Cache);
+    return red;
+  }).catch(function(){ delete l5Inflight[ck]; return null; });
+  l5Inflight[ck] = pr;
+  return pr;
+}
+function hydrateL5(){
+  document.querySelectorAll(".l5row[data-l5]").forEach(function(el){
+    el.removeAttribute("data-l5");
+    var player = el.getAttribute("data-player") || "";
+    var aid = el.getAttribute("data-aid") || aidCache[player.toLowerCase()] || "";
+    var lgKey = el.getAttribute("data-lg"), stat = el.getAttribute("data-stat"), line = parseFloat(el.getAttribute("data-line"));
+    if (!aid || !lgKey || isNaN(line)) return;
+    l5Fetch(lgKey, aid).then(function(g){
+      if (!g) return;
+      var vals = l5Series(g, stat);
+      if (!vals || !vals.length) return;
+      var over = 0, chips = "";
+      vals.forEach(function(v){ var on = v > line; if (on) over++; chips += '<span class="l5chip' + (on ? " on" : "") + '">' + (Math.round(v * 10) / 10) + '</span>'; });
+      el.innerHTML = '<span class="l5lab">LAST ' + vals.length + '</span><span class="l5chips">' + chips + '</span><span class="l5cnt">' + over + ' of ' + vals.length + ' over</span>';
+      el.classList.add("show");
+    });
+  });
+}
+
 function fillPlayerDlg(){
   if (!dlgPlayer) return;
   var list = (propsCache[dlgPlayer.league]||[]).filter(function(p){ return p.player===dlgPlayer.name; });
@@ -1017,6 +1128,7 @@ function fillPlayerDlg(){
     + (bmD && !brkList.length && live ? '<p class="sub" style="margin-top:8px">At the break — second-half props only show if the regular board refresh brings them.</p>' : '')
     + '<div class="pdlgbody' + (closed ? ' closed' : '') + '">' + propCardsGrouped(showList) + '</div>';
   if (!closed) bindPicks(body);
+  hydrateL5();
   var cb = $("pdlgClose"); if (cb) cb.addEventListener("click", function(){ $("playerDlg").close(); });
   loadLiveForPlayer(g, list);
 }
@@ -1071,7 +1183,7 @@ function loadLiveForPlayer(g, list){
     var aid = aidCache[g.player.toLowerCase()] || (list[0] && list[0].athleteId) || "";
     fetchJson(ESPN+lg.sport+"/"+lg.league+"/summary?event="+encodeURIComponent(ev.id)).then(function(sm){
       list.forEach(function(p){ var v = findLiveStat(sm, aid, g.player, p.stat); if (v!=null) p.liveActual = v; });
-      if (dlgPlayer && dlgPlayer.name===g.player){ var body = $("playerDlgBody"); var grid = body && body.querySelector(".pdlgbody"); if (grid){ grid.innerHTML = list.map(propCard).join(""); if (!grid.classList.contains("closed")) bindPicks(body); } }
+      if (dlgPlayer && dlgPlayer.name===g.player){ var body = $("playerDlgBody"); var grid = body && body.querySelector(".pdlgbody"); if (grid){ grid.innerHTML = list.map(propCard).join(""); if (!grid.classList.contains("closed")) bindPicks(body); hydrateL5(); } }
     }).catch(function(){});
   }).catch(function(){});
 }
