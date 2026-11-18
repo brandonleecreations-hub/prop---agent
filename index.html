@@ -104,7 +104,7 @@ input[type=number]{width:110px}
 .news a:last-child{border-bottom:none}
 .news .nd{color:var(--mut);font-size:12px;font-weight:400}
 table.lb{width:100%;border-collapse:collapse;font-size:14.5px}
-table.lb td,table.lb th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+table.lb td,table.lb th{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}
 table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
 .tiercard{perspective:1200px;cursor:pointer;aspect-ratio:3/4.2;min-height:320px}
 .tierinner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .65s cubic-bezier(.25,.8,.3,1.15)}
@@ -1001,14 +1001,13 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 
   <!-- LEADERBOARD -->
   <section class="view" id="view-board">
-    <div class="card row" style="justify-content:space-between;align-items:center;gap:10px">
-      <div><b>Your Agent</b><br><span class="note">Profile pic, name, wins and cards — saved to your cloud profile.</span></div>
+    <div class="card row" style="justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;margin-bottom:10px">
+      <div><b>Your Agent</b></div>
       <button class="agentbtn" id="agentBtn">👤 Guest Agent</button>
     </div>
-    <h2>🔍 Find Agents</h2>
-    <p class="sub">Search members by username — tap a result to open their profile, or follow them right from the list.</p>
-    <div class="card" style="margin-bottom:14px"><input type="text" id="agentSearch" placeholder="Search usernames…" autocomplete="off" style="width:100%;background:#101018;border:1px solid #2c2c3a;border-radius:10px;color:#fff;padding:11px 13px;font-size:15px;box-sizing:border-box"><div id="agentSearchResults" style="margin-top:6px"></div></div>
-    <h2>🏆 Leaderboard</h2>
+    <h2 style="font-size:17px;margin:12px 0 6px">🔍 Find Agents</h2>
+    <div class="card" style="margin-bottom:10px;padding:10px"><input type="text" id="agentSearch" placeholder="Search usernames…" autocomplete="off" style="width:100%;background:#101018;border:1px solid #2c2c3a;border-radius:10px;color:#fff;padding:9px 12px;font-size:14px;box-sizing:border-box"><div id="agentSearchResults" style="margin-top:6px"></div></div>
+    <h2 style="font-size:17px;margin:12px 0 6px">🏆 Leaderboard</h2>
     <div class="card" id="leaderboard"><p class="empty">Loading the board…</p></div>
     <h2>👥 Following</h2>
     <p class="sub">Agents you follow and their latest shared tickets.</p>
@@ -3215,6 +3214,7 @@ function tierCardHTML(t, wins, withBtns, ci){
 }
 
 function cardSec(id, title, count, inner, openDefault, gridCls){
+  if (!lsGet("pa_cardsecs_v3", 0)) { var s0 = lsGet("pa_cardsecs", {}); s0.tier = true; s0.player = false; s0.stamps = false; s0.foils = false; s0.special = false; lsSet("pa_cardsecs", s0); lsSet("pa_cardsecs_v3", 1); }
   var st = lsGet("pa_cardsecs", {});
   var open = (id in st) ? !!st[id] : openDefault;
   return '<div class="cardsec' + (open ? '' : ' closed') + '"><button class="cardsec-h" data-cardsec="' + id + '"><span>' + title + '</span><span class="cscount">' + count + '</span><span class="csbtn">' + (open ? '\u25BE HIDE' : '\u25B8 SHOW') + '</span></button><div class="cardsec-b"><div class="cardsgrid' + (gridCls ? ' ' + gridCls : '') + '">' + inner + '</div></div></div>';
