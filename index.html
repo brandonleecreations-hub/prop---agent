@@ -235,6 +235,13 @@ table.lb th{color:var(--mut);font-size:10.5px;text-transform:uppercase;letter-sp
 .fteam{display:flex;align-items:center;font-size:12.5px;font-weight:600;padding:2px 0;white-space:nowrap;overflow:hidden}
 .fteam span{overflow:hidden;text-overflow:ellipsis}
 .fsport{display:flex;justify-content:space-between;align-items:baseline;margin:12px 0 6px;font-size:14px;font-weight:800;color:#ffd970}
+.fchip{flex:0 0 auto;display:flex;align-items:center;gap:8px;background:#12121c;border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 5px;cursor:pointer;scroll-snap-align:start}
+.fchip img{width:30px;height:30px;border-radius:50%;object-fit:cover}
+.fchip b{font-size:13px;white-space:nowrap}
+.ftcard{flex:0 0 auto;width:216px;scroll-snap-align:start;background:#12121c;border:1px solid var(--line);border-radius:12px;padding:9px 11px}
+.fthd{display:flex;align-items:center;gap:7px;margin-bottom:6px;cursor:pointer}
+.fthd img{width:24px;height:24px;border-radius:50%;object-fit:cover}
+.fthd b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fsport .fcount{font-size:12px;color:var(--purp-lt);font-weight:700}
 .dlpop{position:fixed;left:12px;right:12px;bottom:86px;max-width:430px;margin:0 auto;z-index:40;background:radial-gradient(130% 150% at 15% 0%,#4c1d95 0%,#2a1650 46%,#12082b 100%);border:2px solid #f5b942;border-radius:16px;padding:12px 14px;box-shadow:0 14px 40px rgba(124,58,237,.55);overflow:hidden;animation:dlpopin .45s cubic-bezier(.2,1.4,.4,1) both,dlpopbob 3.2s ease-in-out 1.1s infinite}
 .dlpop::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.16) 48%,transparent 62%);transform:translateX(-120%);animation:dlpopshine 3.4s ease-in-out infinite;pointer-events:none}
@@ -1052,9 +1059,11 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     </div>
     <h2 style="font-size:17px;margin:12px 0 6px">🔍 Find Agents</h2>
     <div class="card" style="margin-bottom:10px;padding:10px"><input type="text" id="agentSearch" placeholder="Search usernames…" autocomplete="off" style="width:100%;background:#101018;border:1px solid #2c2c3a;border-radius:10px;color:#fff;padding:9px 12px;font-size:14px;box-sizing:border-box"><div id="agentSearchResults" style="margin-top:6px"></div></div>
-    <h2>👥 Following</h2>
+    <h2>👥 Following <button type="button" class="csbtn" id="followToggle" style="float:right">▾ HIDE</button></h2>
+    <div id="followingBody">
     <p class="sub">Agents you follow and their latest shared tickets.</p>
     <div id="followingBox"><p class="empty">Loading…</p></div>
+    </div>
     <h2>🏆 Tiers</h2>
     <button type="button" id="tiersToggle" class="sectoggle">&#9660; HIDE THE TIERS</button><div id="tiersBody"><p class="sub">Climb the ladder by locking winning tickets. A win counts only when every leg on the ticket hits.</p>
     <div id="tiers"></div></div>
@@ -4745,6 +4754,33 @@ function openAgent(id, refresh){
     var fb = $("vaFollow"); if (fb) fb.addEventListener("click", function(){ toggleFollow(id); });
   });
 }
+function feedAgentsRow(items){
+  var seen = {}, owners = [];
+  (items || []).forEach(function(it){ var o = it.owner || {}; if (o.id && !seen[o.id]) { seen[o.id] = 1; owners.push(o); } });
+  if (!owners.length) return "";
+  return '<div class="fslider" style="padding-bottom:6px">' + owners.map(function(o){
+    return '<div class="fchip" data-agent="' + o.id + '">' + (o.avatar_url ? '<img src="' + esc(o.avatar_url) + '" alt="" style="' + frameCss(o.featured_card || "", 2).replace(/^;/, "") + '">' : "") + '<span><b>' + esc(fmtUser(o.display_name || "Agent")) + '</b><br><span class="note">' + (o.wins || 0) + ' wins</span></span></div>';
+  }).join("") + '</div>';
+}
+function feedTicketCard(it){
+  var t = it.ticket || {}, o = it.owner || {};
+  var legs = (t.legs || []).slice(0, 4).map(function(l){
+    return '<div class="leg" style="padding:3px 0"><span class="dir ' + (l.dir === "MORE" ? "more" : "less") + '">' + esc(l.dir || "") + '</span><div style="flex:1;min-width:0"><b>' + esc(l.player || "") + '</b> \u2014 ' + esc(l.stat || "") + ' ' + (l.line != null ? l.line : "") + '</div></div>';
+  }).join("");
+  var more = (t.legs || []).length > 4 ? '<div class="note">+' + ((t.legs || []).length - 4) + ' more legs</div>' : "";
+  var mine = t.user_id === cloudUid || o.id === cloudUid;
+  return '<div class="ftcard"><div class="fthd" data-agent="' + o.id + '">' + (o.avatar_url ? '<img src="' + esc(o.avatar_url) + '" alt="" style="' + frameCss(o.featured_card || "", 2).replace(/^;/, "") + '">' : "") + '<b>' + esc(fmtUser(o.display_name || "Agent")) + '</b>' + statusChip(t.status) + '</div>' + legs + more
+    + '<div style="margin-top:6px">' + (mine ? '<span class="note"><span style="color:#ff5d7a">\u2665</span> ' + (t.likes || 0) + '</span>' : '<button type="button" class="likebtn' + (t.likedByMe ? ' on' : '') + '" data-like="' + t.id + '"><span class="hrt">\u2665</span> ' + (t.likes || 0) + '</button>') + '</div></div>';
+}
+function applyFollowToggle(){
+  var st = lsGet("pa_cardsecs", {});
+  var open = ("following" in st) ? !!st.following : true;
+  var body = $("followingBody"), btn = $("followToggle");
+  if (body) body.style.display = open ? "" : "none";
+  if (btn) btn.textContent = open ? "\u25BE HIDE" : "\u25B8 SHOW";
+}
+var ftBtn0 = $("followToggle"); if (ftBtn0) ftBtn0.addEventListener("click", function(){ var st = lsGet("pa_cardsecs", {}); var open = ("following" in st) ? !!st.following : true; st.following = !open; lsSet("pa_cardsecs", st); applyFollowToggle(); sfx("click"); });
+applyFollowToggle();
 function renderFollowing(){
   var box = $("followingBox"); if (!box) return;
   if (!myFollows.length) { box.innerHTML = '<div class="card"><p class="sub" style="margin:0">You are not following anyone yet — tap any agent on the leaderboard or Top Agents to open their profile and follow them.</p></div>'; return; }
@@ -4754,7 +4790,7 @@ function renderFollowing(){
     if (!j || !j.ok) { box.innerHTML = '<div class="card"><p class="sub" style="margin:0">Could not load your following feed right now.</p></div>'; return; }
     feedHtmlCache = (!j.items || !j.items.length)
       ? '<div class="card"><p class="sub" style="margin:0">The agents you follow have not shared any tickets yet.</p></div>'
-      : j.items.map(function(it){ return foreignTicketHtml(it.ticket, it.owner.display_name); }).join("");
+      : feedAgentsRow(j.items) + '<div class="fslider">' + j.items.map(function(it){ return feedTicketCard(it); }).join("") + '</div>';
     box.innerHTML = feedHtmlCache;
   });
 }
