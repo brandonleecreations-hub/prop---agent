@@ -1236,7 +1236,7 @@ function nextGameFor(events, teamId){
 }
 
 /* ---------- props (real PrizePicks lines via Parlay API) ---------- */
-var PARLAY_KEYS = {nba:"basketball_nba", nfl:"americanfootball_nfl", cfb:"americanfootball_ncaaf", cbb:"basketball_ncaab", wbb:"basketball_wncaab", nhl:"icehockey_nhl", mlb:"baseball_mlb", tennis:["tennis_atp","tennis_wta"]};
+var PARLAY_KEYS = {nba:"basketball_nba", nfl:"americanfootball_nfl", cfb:"americanfootball_ncaaf", cbb:"basketball_ncaab", wbb:"basketball_wncaab", nhl:"icehockey_nhl", mlb:"baseball_mlb", tennis:"tennis"};
 var propsCache = {};   // leagueKey -> [prop]
 var propsAt = {};      // leagueKey -> last fetch time (ms)
 var propsRefreshing = {};
