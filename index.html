@@ -169,6 +169,20 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .cschev{font-size:13px;color:#c4b5fd}
 .csbtn{background:linear-gradient(135deg,#7C3AED,#5b21b6);border:1px solid #f5b942;color:#fff;font-weight:900;font-size:11px;letter-spacing:.6px;padding:6px 12px;border-radius:999px;box-shadow:0 3px 10px rgba(124,58,237,.45);white-space:nowrap}
 .sectoggle{display:block;width:100%;padding:13px;border-radius:12px;border:2px solid #f5b942;background:linear-gradient(135deg,#7C3AED,#5b21b6);color:#fff;font-weight:900;font-size:15px;letter-spacing:1.2px;cursor:pointer;margin:0 0 10px;box-shadow:0 6px 18px rgba(124,58,237,.4)}
+.tierprog{background:#12101f;border:1px solid #2c2350;border-radius:14px;padding:10px 12px 8px}
+.tbhead{display:flex;justify-content:space-between;font-size:12px;color:#cdbcf5;margin-bottom:7px}
+.tierbar{position:relative;height:10px;background:#241b45;border-radius:99px;margin:0 2px 14px}
+.tbfill{height:100%;border-radius:99px;background:linear-gradient(90deg,#7C3AED,#b26bff,#f5b942);box-shadow:0 0 10px rgba(178,107,255,.55)}
+.tbtick{position:absolute;top:50%;width:0}
+.tbtick i{position:absolute;left:-5px;top:-5px;width:6px;height:6px;border-radius:50%;background:#0d0b18;border:2px solid #8f7bd8}
+.tbtick em{position:absolute;top:7px;left:0;transform:translateX(-50%);font-style:normal;font-size:8px;color:#9a8bc7}
+.tierminis{display:flex;gap:5px}
+.tiermini{flex:1;min-width:0;text-align:center;background:#171331;border:1.5px solid var(--tc);border-radius:9px;padding:4px 2px 3px}
+.tiermini img{width:100%;height:34px;object-fit:cover;object-position:top;border-radius:5px;display:block}
+.tiermini.lk img{filter:grayscale(1);opacity:.45}
+.tiermini .tmn{display:block;font-size:8px;font-weight:800;color:var(--tc);letter-spacing:.3px;margin-top:3px;white-space:nowrap;overflow:hidden}
+.tiermini .tms{display:block;font-size:8px;color:#9a8bc7}
+.tiermini.cur{box-shadow:0 0 0 2px #f5b942,0 0 12px rgba(245,185,66,.45)}
 .cardsec-b{margin-top:9px}
 .cardsec.closed .cardsec-b{display:none}
 .clashad{perspective:600px;border-radius:16px;box-shadow:0 14px 30px rgba(0,0,0,.55), 0 0 24px rgba(245,185,66,.35), inset 0 1px 0 rgba(255,255,255,.25)}
@@ -882,7 +896,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <div id="followingBox"><p class="empty">Loading…</p></div>
     <h2>🏆 Tiers</h2>
     <button type="button" id="tiersToggle" class="sectoggle">&#9660; HIDE THE TIERS</button><div id="tiersBody"><p class="sub">Climb the ladder by locking winning tickets. A win counts only when every leg on the ticket hits.</p>
-    <div class="grid" id="tiers"></div></div>
+    <div id="tiers"></div></div>
     <h2>🎁 My Packs</h2>
     <p class="sub">One FREE pack every day — plus earn more by winning tickets and sharing the app. Every pack holds 3 foil cards. Gold foil cards (Gold tier &amp; up) hide in packs too — a little tough to pull, about 1 slot in 5… and one pack in a hundred hides THE RING 🏆</p>
     <div id="clashBox"></div>
@@ -2825,6 +2839,19 @@ function cardSec(id, title, count, inner, openDefault){
   var open = (id in st) ? !!st[id] : openDefault;
   return '<div class="cardsec' + (open ? '' : ' closed') + '"><button class="cardsec-h" data-cardsec="' + id + '"><span>' + title + '</span><span class="cscount">' + count + '</span><span class="csbtn">' + (open ? '\u25BE HIDE' : '\u25B8 SHOW') + '</span></button><div class="cardsec-b"><div class="cardsgrid">' + inner + '</div></div></div>';
 }
+function tierProgressHTML(wins, ci){
+  ci = ci || charIdxOf() || 1;
+  var cur = tierFor(wins), curIdx = TIERS.indexOf(cur), nxt = nextTier(wins);
+  var pct = Math.max(0, Math.min(100, wins));
+  var ticks = TIERS.slice(1).map(function(t){ return '<span class="tbtick" style="left:' + Math.min(t.wins, 98) + '%"><i></i><em>' + t.wins + '</em></span>'; }).join("");
+  var head = '<div class="tbhead"><span>\uD83C\uDFC6 <b style="color:' + cur.color + '">' + cur.name.toUpperCase() + '</b> \u00B7 ' + wins + ' pts</span><span>' + (nxt ? (nxt.wins - wins) + ' pts to <b style="color:' + nxt.color + '">' + nxt.name.toUpperCase() + '</b>' : '\uD83D\uDC51 TOP TIER') + '</span></div>';
+  var bar = '<div class="tierbar"><div class="tbfill" style="width:' + pct + '%"></div>' + ticks + '</div>';
+  var minis = '<div class="tierminis">' + TIERS.map(function(t, ti){
+    var un = wins >= t.wins;
+    return '<div class="tiermini' + (un ? ' un' : ' lk') + (ti === curIdx ? ' cur' : '') + '" style="--tc:' + t.color + '"><img src="/api/battle?s=' + ci + '" alt=""><span class="tmn">' + t.name + '</span><span class="tms">' + (un ? "\u2605".repeat(ti + 1) : '\uD83D\uDD12 ' + t.wins) + '</span></div>';
+  }).join("") + '</div>';
+  return '<div class="tierprog">' + head + bar + minis + '</div>';
+}
 function renderBoard(){
   renderPickem();
   renderFollowing();
@@ -2832,7 +2859,7 @@ function renderBoard(){
   $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Wins</th></tr>'
     + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+(r.id?' class="agentclick" data-agent="'+r.id+'"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px' + frameCss(r.featured, 2) + '">':'')+'<b>'+esc(r.name)+'</b>'+streakBadge(r.streak)+'</td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
   var wins = maxWins();
-  $("tiers").innerHTML = TIERS.map(function(t){ return tierCardHTML(t, wins, false, charIdxOf()); }).join("");
+  $("tiers").innerHTML = tierProgressHTML(wins, charIdxOf());
   var cards = allPlayerCardLegs();
   var cci = cardCharIdx();
   var stripEl = $("cardStrip");
