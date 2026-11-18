@@ -494,7 +494,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .pickslots{display:flex;gap:10px}
 .pickslot{flex:1;border:2px dashed #4c4266;border-radius:14px;padding:10px;text-align:center;cursor:pointer;background:#12101d}
 .pickslot.on{border:2px solid #f5b942;background:#1b1430}
-.pickslot img{width:74px;height:74px;object-fit:cover;border-radius:10px}
+.pickslot img{width:96px;height:96px;object-fit:cover;border-radius:10px}
 .pickrole{font-size:11px;font-weight:900;letter-spacing:1px;color:#f5b942;margin-bottom:6px}
 .picknm{font-weight:900;font-size:13px;margin-top:5px}
 .pickpw{font-weight:800;font-size:12px}
@@ -502,9 +502,23 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .pickempty{color:#8b86a3;font-size:13px;padding:26px 4px}
 .pickgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
 .agentpick{background:#17171f;border:2px solid #33304a;border-radius:10px;padding:5px;cursor:pointer;color:#fff}
-.agentpick img{width:100%;height:54px;object-fit:cover;border-radius:7px;display:block}
+.agentpick img{width:100%;height:78px;object-fit:cover;border-radius:7px;display:block}
 .agentpick span{display:block;font-size:10px;font-weight:800;margin-top:4px;letter-spacing:.3px}
-.agentpick.on{border-color:#f5b942;box-shadow:0 0 0 2px #f5b942}
+.agentpick.on{border-color:#f5b942;box-shadow:0 0 0 2px #f5b942,0 0 18px rgba(245,185,66,.55)}
+.agentpick{background:linear-gradient(160deg,#1e1838,#100d20);border:2px solid #453a75}
+.stepbanner{position:relative;overflow:hidden;margin:10px 0 2px;padding:10px 12px;border-radius:12px;background:linear-gradient(120deg,#2a1650,#160b31);border:1.5px solid #f5b942;color:#fff;font-weight:900;letter-spacing:.6px;font-size:14.5px;text-align:center;animation:stepglow 1.6s ease-in-out infinite}
+.stepbanner .stepn{background:#f5b942;color:#1a1405;border-radius:6px;padding:2px 7px;font-size:11px;letter-spacing:1px;margin-right:6px;vertical-align:2px}
+.stepbanner .stepdim{color:#c4b5fd;font-weight:700;font-size:12px;letter-spacing:0}
+.stepbanner .stepdown{display:inline-block;color:#f5b942;animation:stepbounce 1s ease-in-out infinite}
+.stepbanner.done{border-color:#4fe3c1;background:linear-gradient(120deg,#0f2e2a,#160b31)}
+.stepbanner::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.22) 50%,transparent 65%);background-size:250% 100%;animation:winshine 2.8s ease-in-out infinite;pointer-events:none}
+@keyframes stepglow{0%,100%{box-shadow:0 0 0 rgba(245,185,66,0)}50%{box-shadow:0 0 18px rgba(245,185,66,.55)}}
+@keyframes stepbounce{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
+.pickslot.on{animation:slotglow 1.8s ease-in-out infinite}
+@keyframes slotglow{0%,100%{box-shadow:0 10px 20px rgba(0,0,0,.5),0 0 0 rgba(245,185,66,0)}50%{box-shadow:0 10px 20px rgba(0,0,0,.5),0 0 16px rgba(245,185,66,.6)}}
+.clashbig.ready{animation:fightpulse 1.5s ease-in-out infinite}
+@keyframes fightpulse{0%,100%{box-shadow:0 6px 18px rgba(0,0,0,.45)}50%{box-shadow:0 6px 26px rgba(245,185,66,.65)}}
+@media (prefers-reduced-motion: reduce){.stepbanner,.stepbanner .stepdown,.stepbanner::after,.pickslot.on,.clashbig.ready{animation:none}}
 .agentpick:disabled{opacity:.32;cursor:default}
 .tierchips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:12px;color:#9aa7bd;font-weight:800;font-size:12px}
 .tierchip{background:#17171f;color:#fff;border:2px solid var(--tc);border-radius:999px;padding:6px 10px;font-weight:800;cursor:pointer}
@@ -2044,7 +2058,7 @@ function renderLiveHighlights(){
     rail.innerHTML = html || '<p class="empty">No clips posted for your players yet — they land as the game goes.</p>';
   });
 }
-var hlSportAt = {}, hlSportSig = "";
+var hlSportCache = {}, hlSportFetching = {}, hlSportSig = "";
 var HL_QUERIES = { nba: "NBA highlights", nfl: "NFL highlights", nhl: "NHL highlights", cfb: "College Football highlights", cbb: "College Basketball highlights", wbb: "Women's College Basketball highlights", mlb: "MLB highlights", tennis: "Tennis highlights" };
 function renderLiveSportHl(){
   var box = $("liveSportHl"); if (!box) return;
@@ -2053,14 +2067,23 @@ function renderLiveSportHl(){
   if (sig !== hlSportSig) {
     hlSportSig = sig;
     box.innerHTML = '<h2 style="font-size:17px;margin-top:16px">🎬 Highlights</h2>' + lgs.map(function(k){ var lg = leagueByKey(k); return '<div id="hlsp-' + k + '"><div class="teamhead" style="margin-top:10px">' + esc(lg ? lg.label : k.toUpperCase()) + '</div><div class="hlrail" id="hlrail-' + k + '"><p class="empty">Loading…</p></div></div>'; }).join("");
+    lgs.forEach(function(k){
+      var c = hlSportCache[k], wrap = $("hlsp-" + k), rail = $("hlrail-" + k);
+      if (c && rail) { if (!c.html) { if (wrap) wrap.style.display = "none"; } else rail.innerHTML = c.html; }
+    });
   }
   lgs.forEach(function(k){
-    if (Date.now() - (hlSportAt[k] || 0) < 30*60*1000) return; hlSportAt[k] = Date.now();
+    var c = hlSportCache[k];
+    if (c && Date.now() - c.at < 30*60*1000) return;
+    if (hlSportFetching[k]) return; hlSportFetching[k] = 1;
     searchClips(HL_QUERIES[k] || (k.toUpperCase() + " highlights"), 8).then(function(clips){
+      hlSportFetching[k] = 0;
+      var html = clips.map(function(x){ return hlClipCard(x, "ESPN clip"); }).join("");
+      hlSportCache[k] = { at: Date.now(), html: html };
       var wrap = $("hlsp-" + k), rail = $("hlrail-" + k); if (!rail) return;
-      if (!clips.length) { if (wrap) wrap.style.display = "none"; return; }
+      if (!html) { if (wrap) wrap.style.display = "none"; return; }
       if (wrap) wrap.style.display = "";
-      rail.innerHTML = clips.map(function(c){ return hlClipCard(c, "ESPN clip"); }).join("");
+      rail.innerHTML = html;
     });
   });
 }
@@ -3824,10 +3847,14 @@ function clashPickRender(){
     tiers += '</div>';
   }
   var ready = CL.mine[0] && CL.mine[1];
+  var stepHtml = !CL.mine[0] ? '<div class="stepbanner"><span class="stepn">STEP 1</span>⭐ PICK YOUR STARTER <span class="stepdown">▼</span></div>'
+    : (!CL.mine[1] ? '<div class="stepbanner"><span class="stepn">STEP 2</span>🔁 PICK YOUR BENCH <span class="stepdim">— your tag partner</span> <span class="stepdown">▼</span></div>'
+    : '<div class="stepbanner done"><span class="stepn">READY</span>✅ PAIR SET — TAP FIGHT! 🥊</div>');
   clashPanel('<div class="clashttl">' + (CL.mode === "ladder" ? '🏆 LADDER — BOSS ' + CL.boss : '⚡ QUICK CLASH') + '</div>'
     + '<div class="clashsub">Build your pair. The CPU matches your tiers — a fair fight. Tap 🔍 on any agent to read their full card first.</div>'
+    + stepHtml
     + '<div class="pickslots">' + slots + '</div>' + grid + tiers
-    + '<button class="clashbig gold" data-clashfight="1"' + (ready ? '' : ' disabled') + '>🥊 FIGHT!<span>' + (ready ? 'Your pair is ready' : 'Pick both fighters first') + '</span></button>'
+    + '<button class="clashbig gold' + (ready ? ' ready' : '') + '" data-clashfight="1"' + (ready ? '' : ' disabled') + '>🥊 FIGHT!<span>' + (ready ? 'Your pair is ready' : 'Pick both fighters first') + '</span></button>'
     + '<button class="openbtn" data-clashmenu="1" style="width:100%;margin-top:8px">← Back</button>');
 }
 var LADDER_TIERS = [[0, 0], [0, 1], [1, 1], [1, 2], [2, 3], [3, 4], [5, 6]];
@@ -4293,9 +4320,9 @@ document.addEventListener("click", function(e){
   if ((t = e.target.closest("[data-clashclose]"))) { closeClash(); return; }
   if ((t = e.target.closest("[data-clashmenu]"))) { clashMenu(); return; }
   if ((t = e.target.closest("[data-clashmode]"))) { clashSetup(t.getAttribute("data-clashmode")); return; }
-  if ((t = e.target.closest("[data-pickslot]"))) { if (CL) { CL.sel = parseInt(t.getAttribute("data-pickslot"), 10); clashPickRender(); } return; }
-  if ((t = e.target.closest("[data-pickagent]"))) { if (CL) { var ci = parseInt(t.getAttribute("data-pickagent"), 10); CL.mine[CL.sel] = mkFighter(ci, bestPickTier(ci)); if (!CL.mine[1 - CL.sel]) CL.sel = 1 - CL.sel; clashPickRender(); } return; }
-  if ((t = e.target.closest("[data-picktier]"))) { if (CL && CL.mine[CL.sel]) { CL.mine[CL.sel].ti = parseInt(t.getAttribute("data-picktier"), 10); clashPickRender(); } return; }
+  if ((t = e.target.closest("[data-pickslot]"))) { if (CL) { CL.sel = parseInt(t.getAttribute("data-pickslot"), 10); sfx("click"); clashPickRender(); } return; }
+  if ((t = e.target.closest("[data-pickagent]"))) { if (CL) { var ci = parseInt(t.getAttribute("data-pickagent"), 10); var wasSel = CL.sel; CL.mine[CL.sel] = mkFighter(ci, bestPickTier(ci)); if (!CL.mine[1 - CL.sel]) CL.sel = 1 - CL.sel; if (CL.mine[0] && CL.mine[1]) sfx("gridwin"); else sfx(wasSel === 1 ? "tag" : "click"); clashPickRender(); } return; }
+  if ((t = e.target.closest("[data-picktier]"))) { if (CL && CL.mine[CL.sel]) { CL.mine[CL.sel].ti = parseInt(t.getAttribute("data-picktier"), 10); sfx("click"); clashPickRender(); } return; }
   if ((t = e.target.closest("[data-clashfight]"))) { if (CL && CL.mine[0] && CL.mine[1]) clashStartFight(); return; }
   if ((t = e.target.closest("[data-clashrematch]"))) { if (CL) { CL.mine = CL.mine.map(function(f){ return mkFighter(f.ci, f.ti); }); clashStartFight(); } return; }
   if ((t = e.target.closest("[data-clashquit]"))) { clashMenu(); return; }
