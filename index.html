@@ -4511,6 +4511,7 @@ function clashCheckEnd(){
 }
 function clashFinish(won){
   CL.over = true; sfx(won ? "win" : "lose");
+  lsSet("pa_clash_last", Date.now());
   var b = battlesGet();
   if (won) b.w = (b.w || 0) + 1; else b.l = (b.l || 0) + 1;
   lsSet("pa_battles", b);
@@ -5161,6 +5162,7 @@ function cloudSave(){
       battle_w: battlesGet().w || 0,
       battle_l: battlesGet().l || 0,
       ladder: ladderGet(),
+      clash_last: parseInt(lsGet("pa_clash_last", 0), 10) || 0,
       tickets: tickets.map(function(t){ return {legs: t.legs, status: t.result || "pending", is_public: t.pub !== false}; })
     })}).then(function(r){ return r.json(); }).then(function(j){
       if (j && j.uid && j.uid !== cloudUid) { cloudUid = j.uid; lsSet("pa_uid", cloudUid); }

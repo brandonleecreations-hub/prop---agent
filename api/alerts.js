@@ -209,6 +209,39 @@ module.exports = async (req, res) => {
         }
       }
     }
+    // ---- Clash re-engagement: one push when an agent hasn't clashed in 3+
+    // days (at most one per user per 7 days). Needs profiles.clash_last and
+    // profiles.clash_reminded; fails open when the columns aren't there yet.
+    report.clashReminded = 0;
+    try {
+      if (webpush && !dry) {
+        const cp = await rest("profiles?select=id,clash_last,clash_reminded&clash_last=gt.0&limit=500", { headers: sbHeaders() });
+        const crows = Array.isArray(cp.json) ? cp.json : [];
+        for (const p of crows) {
+          const last = Number(p.clash_last) || 0;
+          const reminded = Number(p.clash_reminded) || 0;
+          if (!last || nowMs - last < 3 * 86400000) continue;
+          if (reminded && nowMs - reminded < 7 * 86400000) continue;
+          const userSubs = subsByUser[p.id] || [];
+          if (!userSubs.length) continue;
+          let sent = false;
+          for (const s of userSubs) {
+            try {
+              await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify({ title: "\u2694\uFE0F Your agents are waiting!", body: "It's been a few days since your last Agent Clash. Jump back in, tier up your cards and chase THE RING \uD83D\uDC8D \u2014 one of a kind.", url: "/" }));
+              sent = true; report.pushed++;
+            } catch (e) {
+              if (e && (e.statusCode === 404 || e.statusCode === 410)) {
+                await rest("push_subscriptions?id=eq." + s.id, { method: "DELETE", headers: sbHeaders({ Prefer: "return=minimal" }) });
+              } else if (report.errors.length < 5) report.errors.push(String((e && e.message) || e).slice(0, 120));
+            }
+          }
+          if (sent) {
+            report.clashReminded++;
+            try { await rest("profiles?id=eq." + p.id, { method: "PATCH", headers: sbHeaders({ Prefer: "return=minimal" }), body: JSON.stringify({ clash_reminded: nowMs }) }); } catch (e) {}
+          }
+        }
+      }
+    } catch (e) { /* clash reminders fail open */ }
     res.status(200).json(report);
   } catch (e) {
     report.ok = false; report.error = String((e && e.message) || e);

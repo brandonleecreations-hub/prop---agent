@@ -113,6 +113,8 @@ module.exports = async (req, res) => {
         }
       }
       if (up.status >= 300) { res.status(200).json({ ok: false, step: "profile", status: up.status, detail: (up.text || "").slice(0, 200) }); return; }
+      const clashLast = Math.max(0, parseInt(body.clash_last, 10) || 0);
+      if (clashLast) { try { await rest("profiles?id=eq." + uid, { method: "PATCH", headers: sbHeaders({ Prefer: "return=minimal" }), body: JSON.stringify({ clash_last: clashLast }) }); } catch (e) {} }
       const prev = await rest("tickets?select=legs&user_id=eq." + uid + "&limit=500", { headers: sbHeaders() });
       const likeMap = {};
       if (Array.isArray(prev.json)) prev.json.forEach((r) => {
