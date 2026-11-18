@@ -1174,6 +1174,7 @@ var SEED_AGENTS = [
 /* ---------- helpers ---------- */
 function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function lastNameOf(nm){ var p = String(nm || "").trim().split(/\s+/); return (p[p.length - 1] || "").toLowerCase(); }
 function initials(name){ return name.split(/\s+/).map(function(w){return w.charAt(0);}).join("").slice(0,2).toUpperCase(); }
 function fetchJson(url){ return fetch(url).then(function(r){ if(!r.ok) throw new Error("http "+r.status); return r.json(); }); }
 function fmtTime(iso){ try { var d = new Date(iso); return d.toLocaleString([], {weekday:"short", hour:"numeric", minute:"2-digit"}); } catch(e){ return ""; } }
