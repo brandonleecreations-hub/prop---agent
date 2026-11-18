@@ -2226,7 +2226,8 @@ function renderGameProps(lg, s){
     var gcKey = String(comp.id || "");
     var gcCached = gcRosterCache[gcKey];
     if (gcCached) gcCached.forEach(function(en){ names[en.ln] = 1; });
-    if (!Object.keys(names).length && cs.length === 2 && cs[0].team && cs[0].team.id && cs[1].team && cs[1].team.id && !gcCached && !gcRosterFetching[gcKey]) gcFetchRosters(lg, cs, gcKey, s);
+    if (lg.key === "tennis") cs.forEach(function(c){ if (c.team && c.team.displayName) names[lastNameOf(c.team.displayName)] = 1; });
+    if (!Object.keys(names).length && cs.length === 2 && cs[0].team && cs[0].team.id && cs[1].team && cs[1].team.id && !gcCached && !gcRosterFetching[gcKey] && lg.key !== "tennis") gcFetchRosters(lg, cs, gcKey, s);
     cs.forEach(function(c){ if (c.team){ if (c.team.displayName) teamNames[c.team.displayName.toLowerCase()] = 1; if (c.team.shortDisplayName) teamNames[c.team.shortDisplayName.toLowerCase()] = 1; } });
     var gstart = Date.parse(comp.date || "");
     var mset = {};
@@ -2249,6 +2250,7 @@ function renderGameProps(lg, s){
     var teamOf = {};
     try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ var tn = (tp.team && (tp.team.displayName || tp.team.shortDisplayName)) || ""; (tp.athletes || []).forEach(function(a){ if (a.athlete && a.athlete.displayName) teamOf[lastNameOf(a.athlete.displayName)] = tn; }); }); } catch(e){}
     if (gcCached) gcCached.forEach(function(en){ if (!teamOf[en.ln]) teamOf[en.ln] = en.team; });
+    if (lg.key === "tennis") cs.forEach(function(c){ if (c.team && c.team.displayName) teamOf[lastNameOf(c.team.displayName)] = c.team.displayName; });
     var compTeams = cs.map(function(c){ return c.team ? {name: c.team.displayName || c.team.shortDisplayName || "", away: c.homeAway === "away", logo: logoUrl(c)} : null; }).filter(function(x){ return x && x.name; });
     compTeams.sort(function(a, b){ return (b.away ? 1 : 0) - (a.away ? 1 : 0); });
     var buckets = compTeams.map(function(t){ return {name: t.name, logo: t.logo, groups: []}; });
