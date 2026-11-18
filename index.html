@@ -125,7 +125,8 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .cardart.ph{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#241545,#120a26);font-size:60px;font-weight:900}
 .holo{position:absolute;inset:0;pointer-events:none;border-radius:var(--r);background:linear-gradient(115deg,transparent 32%,var(--hc,rgba(255,255,255,.13)) 47%,rgba(255,255,255,.17) 50%,var(--hc,rgba(255,255,255,.13)) 53%,transparent 68%);background-size:280% 100%;background-position:110% 0;opacity:.55;animation:holoshift 5.5s ease-in-out infinite}
 @keyframes holoshift{0%,100%{background-position:110% 0}50%{background-position:-10% 0}}
-.tiercard.locked .cardart{filter:saturate(.95) brightness(.96)}
+.tiercard.locked .cardart{filter:saturate(.45) brightness(.55)}
+.tcwin:has(.lockveil) .cardart{filter:saturate(.45) brightness(.55)}
 .lockveil{position:absolute;top:8px;right:8px;left:auto;text-align:center;font-weight:900;letter-spacing:1.5px;font-size:10px;color:#ffd970;background:rgba(6,6,14,.85);border:1px solid rgba(245,185,66,.8);padding:3px 9px;border-radius:999px;pointer-events:none;z-index:3;width:max-content}
 .flipfront{padding:10px}
 .tcplate{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.02));border:1.5px solid var(--tc,#7C3AED);border-radius:9px;padding:5px 9px;margin-bottom:8px}
@@ -141,7 +142,7 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 #myCards .tiercard{aspect-ratio:auto}
 #myCards .flipfront{position:relative;height:100%}
 #myCards .flipback{display:none}
-#myCards .tcwin{flex:1 1 92px;min-height:92px}
+#myCards .tcwin{flex:1 1 132px;min-height:132px}
 #myCards .tcwin .cardart{object-position:top}
 #myCards .tcinfo .tierto{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 #myCards .flipfront{padding:8px}
@@ -288,7 +289,8 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 #cardZoom .tiercard{min-height:0}
 #cardZoom .setprof,#cardZoom .dlcard,#cardZoom .setprofs,#cardZoom .dlspecial,#cardZoom .dlring,#cardZoom .dlstamp{display:none}
 .zoomhint{margin-top:12px;font-size:12px;color:#9aa7bd}
-.field3d{position:relative;border-radius:14px;padding:6px 7px 5px;margin-bottom:7px;overflow:hidden;background:linear-gradient(180deg,rgba(168,85,247,0) 15.2%,rgba(168,85,247,.38) 16.4%,rgba(168,85,247,0) 18%),linear-gradient(180deg,#05030f 0%,#0d0724 9%,rgba(13,7,36,.72) 15%,rgba(13,7,36,0) 29%),repeating-linear-gradient(90deg,#1e6031 0 36px,#277a3d 36px 72px);box-shadow:inset 0 0 0 2px rgba(255,255,255,.14), inset 0 -30px 44px rgba(0,0,0,.42), inset 0 22px 34px rgba(0,0,0,.30);transform:perspective(720px) rotateX(12deg);transform-origin:50% 100%}
+.field3d{position:relative;border-radius:14px;padding:6px 7px 5px;margin-bottom:7px;overflow:hidden;background:linear-gradient(180deg,rgba(168,85,247,0) 15.2%,rgba(168,85,247,.38) 16.4%,rgba(168,85,247,0) 18%),linear-gradient(180deg,#05030f 0%,#0d0724 9%,rgba(13,7,36,.72) 15%,rgba(13,7,36,0) 29%),repeating-linear-gradient(90deg,#1e6031 0 36px,#277a3d 36px 72px);animation:grasswave 4.5s ease-in-out infinite;box-shadow:inset 0 0 0 2px rgba(255,255,255,.14), inset 0 -30px 44px rgba(0,0,0,.42), inset 0 22px 34px rgba(0,0,0,.30);transform:perspective(720px) rotateX(12deg);transform-origin:50% 100%}
+@keyframes grasswave{0%,100%{background-position:0 0,0 0,0 0}50%{background-position:0 0,0 0,9px 0}}
 .field3d{flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto}
 .field3d::before{content:"";position:absolute;inset:0;background:radial-gradient(85% 62% at 50% 38%,rgba(255,255,255,.17),transparent 62%);pointer-events:none}
 .field3d::after{content:"";position:absolute;left:5%;right:5%;top:50%;height:2px;background:rgba(255,255,255,.38);border-radius:2px;pointer-events:none}
@@ -311,7 +313,7 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .clashad .clashbtn{flex:0 0 auto;position:relative;z-index:1;animation:btnpulse 1.8s ease-in-out infinite}
 @keyframes btnpulse{0%,100%{box-shadow:0 0 0 rgba(245,185,66,0)}50%{box-shadow:0 0 20px rgba(245,185,66,.85)}}
 .clashad .coinpill{position:absolute;top:7px;right:9px;z-index:1}
-@media (prefers-reduced-motion: reduce){#myCards .tiercard,#myCards .tcwin .cardart,#myCards .tcwin::after,#myCards .tiercard.unlocked .flipfront,#myCards .tcspark,.clashad::after,.clashad .caface,.clashad .cavs,.clashad .clashbtn,.caspark,.homeclash::after,.homeclash .caface,.homeclash .cavs,.deck3d,.gptr,.guidepoint::after,.guidebar,.itemcard{animation:none}}
+@media (prefers-reduced-motion: reduce){#myCards .tiercard,#myCards .tcwin .cardart,#myCards .tcwin::after,#myCards .tiercard.unlocked .flipfront,#myCards .tcspark,.clashad::after,.clashad .caface,.clashad .cavs,.clashad .clashbtn,.caspark,.homeclash::after,.homeclash .caface,.homeclash .cavs,.deck3d,.gptr,.guidepoint::after,.guidebar,.itemcard,.field3d{animation:none}}
 .charstrip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px}
 .charstrip img{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid var(--line);cursor:pointer;flex:0 0 auto}
 .charstrip img.on{border-color:#a78bfa;box-shadow:0 0 12px rgba(124,58,237,.8)}
