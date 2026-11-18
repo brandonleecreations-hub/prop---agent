@@ -125,8 +125,8 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .cardart.ph{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#241545,#120a26);font-size:60px;font-weight:900}
 .holo{position:absolute;inset:0;pointer-events:none;border-radius:var(--r);background:linear-gradient(115deg,transparent 32%,var(--hc,rgba(255,255,255,.13)) 47%,rgba(255,255,255,.17) 50%,var(--hc,rgba(255,255,255,.13)) 53%,transparent 68%);background-size:280% 100%;background-position:110% 0;opacity:.55;animation:holoshift 5.5s ease-in-out infinite}
 @keyframes holoshift{0%,100%{background-position:110% 0}50%{background-position:-10% 0}}
-.tiercard.locked .cardart{filter:grayscale(.85) brightness(.55)}
-.lockveil{position:absolute;left:0;right:0;top:42%;text-align:center;font-weight:900;letter-spacing:2px;font-size:14px;color:#fff;text-shadow:0 2px 12px #000;pointer-events:none}
+.tiercard.locked .cardart{filter:saturate(.95) brightness(.96)}
+.lockveil{position:absolute;top:8px;right:8px;left:auto;text-align:center;font-weight:900;letter-spacing:1.5px;font-size:10px;color:#ffd970;background:rgba(6,6,14,.85);border:1px solid rgba(245,185,66,.8);padding:3px 9px;border-radius:999px;pointer-events:none;z-index:3}
 .flipfront{padding:10px}
 .tcplate{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.02));border:1.5px solid var(--tc,#7C3AED);border-radius:9px;padding:5px 9px;margin-bottom:8px}
 .tcname{font-weight:900;font-size:13px;letter-spacing:.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
@@ -259,6 +259,11 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 #clashZoom.open{display:flex}
 #clashZoom .zoomcard{width:min(76vw,290px)}
 #clashZoom .tiercard{min-height:0}
+#cardZoom{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,8,16,.96);z-index:120;padding:18px}
+#cardZoom.open{display:flex}
+#cardZoom .zoomcard{width:min(84vw,302px);animation:zoomin .28s cubic-bezier(.2,.9,.3,1.35) both}
+#cardZoom .tiercard{min-height:0}
+#cardZoom .setprof,#cardZoom .dlcard,#cardZoom .setprofs,#cardZoom .dlspecial,#cardZoom .dlring,#cardZoom .dlstamp{display:none}
 .zoomhint{margin-top:12px;font-size:12px;color:#9aa7bd}
 .field3d{position:relative;border-radius:14px;padding:8px 7px 7px;margin-bottom:7px;overflow:hidden;background:repeating-linear-gradient(90deg,#1e6031 0 36px,#277a3d 36px 72px);box-shadow:inset 0 0 0 2px rgba(255,255,255,.14), inset 0 -30px 44px rgba(0,0,0,.42), inset 0 22px 34px rgba(0,0,0,.30);transform:perspective(760px) rotateX(3deg);transform-origin:50% 100%}
 .field3d{flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto}
@@ -3070,7 +3075,7 @@ function renderBoard(){
   document.querySelectorAll(".dlring").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadRingCard(b); }); });
   document.querySelectorAll(".dlstamp").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadStampCard(parseInt(b.getAttribute("data-ci"), 10), b); }); });
   document.querySelectorAll("#cardStrip img").forEach(function(im){ im.addEventListener("click", function(){ localStorage.setItem("pa_cardchar", im.getAttribute("data-ci")); renderBoard(); }); });
-  document.querySelectorAll(".tiercard").forEach(function(c){ c.addEventListener("click", function(){ if (c.getAttribute("data-noflip")) return; c.classList.toggle("flipped"); }); });
+  document.querySelectorAll("#myCards .tiercard").forEach(function(c){ c.addEventListener("click", function(e){ if (e.target.closest && e.target.closest("button")) return; openCardZoom(c); }); });
 }
 
 /* ---------- Weekly Pick'em (special card reward) ---------- */
@@ -3699,6 +3704,27 @@ function clashZoom(ci, ti){
   sfx("click");
 }
 function closeZoom(){ var z = $("clashZoom"); if (z) { z.classList.remove("open"); z.innerHTML = ""; } }
+function openCardZoom(cardEl){
+  var z = $("cardZoom");
+  if (!z) {
+    z = document.createElement("div"); z.id = "cardZoom"; document.body.appendChild(z);
+    z.addEventListener("click", function(e){
+      var c = e.target.closest ? e.target.closest(".tiercard") : null;
+      if (c) { if (!c.getAttribute("data-noflip")) c.classList.toggle("flipped"); }
+      else closeCardZoom();
+    });
+  }
+  var clone = cardEl.cloneNode(true);
+  clone.classList.remove("flipped");
+  z.innerHTML = "";
+  var wrap = document.createElement("div"); wrap.className = "zoomcard"; wrap.appendChild(clone); z.appendChild(wrap);
+  var hint = document.createElement("div"); hint.className = "zoomhint";
+  hint.textContent = clone.getAttribute("data-noflip") ? "Tap outside to close" : "Tap the card to flip it · tap outside to close";
+  z.appendChild(hint);
+  z.classList.add("open");
+  sfx("click");
+}
+function closeCardZoom(){ var z = $("cardZoom"); if (z) { z.classList.remove("open"); z.innerHTML = ""; } }
 /* ---------- smooth beats — 3 synthesized chill songs ---------- */
 var MUS = { on: false, timer: null, track: 0, beat: 0, bus: null };
 var SONGS = [
