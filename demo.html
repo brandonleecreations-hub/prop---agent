@@ -88,9 +88,19 @@
   .celsub { font-weight: 800; color: #fff; letter-spacing: 1.5px; margin-top: 5px; z-index: 2; }
   .celtap { color: #c9c9d4; font-size: 12.5px; margin-top: 12px; z-index: 2; }
   #confettiCv { position: fixed; inset: 0; pointer-events: none; z-index: 60; }
+.neonbg{position:fixed;inset:0;overflow:hidden;background:#05050c url("/api/banners?s=neon") center/cover no-repeat;opacity:.55;animation:neonzoomer 9s ease-in-out infinite alternate;z-index:0;will-change:transform}
+@keyframes neonzoomer{from{transform:scale(1)}to{transform:scale(1.07)}}
+.neonglowL,.neonglowR{position:absolute;top:0;bottom:0;width:48%;pointer-events:none}
+.neonglowL{left:0;background:radial-gradient(62% 55% at 10% 45%,rgba(34,211,238,.38),transparent 70%);animation:neonpulse 2.6s ease-in-out infinite}
+.neonglowR{right:0;background:radial-gradient(62% 55% at 90% 45%,rgba(236,72,153,.38),transparent 70%);animation:neonpulse 2.6s ease-in-out infinite reverse}
+@keyframes neonpulse{0%,100%{opacity:.4}50%{opacity:1}}
+.neonsweep{position:absolute;inset:0;background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.15) 50%,transparent 58%);transform:translateX(-120%);animation:neonsweepA 3.8s ease-in-out infinite;pointer-events:none}
+@keyframes neonsweepA{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}
+.wrap{position:relative;z-index:1}
 </style>
 </head>
 <body>
+<div class="neonbg"><div class="neonglowL"></div><div class="neonglowR"></div><div class="neonsweep"></div></div>
 <canvas id="confettiCv"></canvas>
 <div class="wrap">
   <img class="logo" src="/api/icons?s=192" alt="">

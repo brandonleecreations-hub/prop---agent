@@ -419,6 +419,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .pkthumb{animation:pkfloat 3.4s ease-in-out infinite alternate}
 @keyframes pkfloat{from{transform:translateY(-1.5px)}to{transform:translateY(2px)}}
 @media (prefers-reduced-motion: reduce){.pickem::after,.pkart,.pkthumb{animation:none}}
+@media (prefers-reduced-motion: reduce){.neonbg,.neonglowL,.neonglowR,.neonsweep{animation:none}}
 .cardpop{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center}
 .cardpop.open{display:flex}
 .cardpop .burst{position:absolute;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,#f5c51833 0%,transparent 65%);animation:burstA .8s ease-out both;pointer-events:none}
@@ -440,6 +441,18 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .foilshine{position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(245,197,24,.32) 48%,rgba(255,255,255,.20) 52%,transparent 70%);transform:translateX(-130%);animation:pkshine 3.6s ease-in-out infinite;pointer-events:none}
 #packPop{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center}
 #packPop.open{display:flex}
+.neonbg{position:absolute;inset:0;overflow:hidden;background:#05050c url("/api/banners?s=neon") center/cover no-repeat;animation:neonzoomer 9s ease-in-out infinite alternate;will-change:transform,filter}
+@keyframes neonzoomer{from{transform:scale(1)}to{transform:scale(1.07)}}
+.neonbg::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 92% at 50% 42%,transparent 38%,rgba(2,2,10,.6) 100%)}
+.neonglowL,.neonglowR{position:absolute;top:0;bottom:0;width:48%;pointer-events:none;will-change:opacity}
+.neonglowL{left:0;background:radial-gradient(62% 55% at 10% 45%,rgba(34,211,238,.38),transparent 70%);animation:neonpulse 2.6s ease-in-out infinite}
+.neonglowR{right:0;background:radial-gradient(62% 55% at 90% 45%,rgba(236,72,153,.38),transparent 70%);animation:neonpulse 2.6s ease-in-out infinite reverse}
+@keyframes neonpulse{0%,100%{opacity:.4}50%{opacity:1}}
+.neonsweep{position:absolute;inset:0;background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.15) 50%,transparent 58%);transform:translateX(-120%);animation:neonsweepA 3.8s ease-in-out infinite;pointer-events:none;will-change:transform}
+@keyframes neonsweepA{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}
+#packPop.burst .neonbg{animation:neonzoomer 9s ease-in-out infinite alternate,neonflash .7s ease-out}
+@keyframes neonflash{0%{filter:brightness(2) saturate(1.6)}100%{filter:brightness(1) saturate(1)}}
+.packstage,.revealcard{will-change:transform,opacity}
 .clashpromo{position:relative;border:2px solid #f5b942;border-radius:16px;padding:14px;background:radial-gradient(120% 120% at 20% 0%, #3a2a05 0%, #12101d 62%);overflow:hidden;margin-bottom:12px}
 .clashbadge{font-size:32px;background:linear-gradient(145deg,#7C3AED,#4c1d95);border:2px solid #f5b942;border-radius:14px;width:58px;height:58px;display:flex;align-items:center;justify-content:center;flex:none}
 .coinpill{background:linear-gradient(145deg,#f5b942,#d97706);color:#1a1405;font-weight:900;border-radius:999px;padding:7px 13px;font-size:14px}
@@ -4130,7 +4143,7 @@ function ensurePackPop(){
   var sparks = [[-120,-70],[110,-90],[-90,60],[130,40],[-150,10],[150,-20],[0,-130],[60,110]].map(function(v){ return '<span class="spark" style="--tx:' + v[0] + 'px;--ty:' + v[1] + 'px"></span>'; }).join("");
   var el = document.createElement("div");
   el.id = "packPop";
-  el.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:16px;position:relative">'
+  el.innerHTML = '<div class="neonbg"><div class="neonglowL"></div><div class="neonglowR"></div><div class="neonsweep"></div></div><div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:16px;position:relative;z-index:1">'
     + '<div id="packBurst"><div class="burst"></div>' + sparks + '</div>'
     + '<div class="packstage" id="packStage"></div>'
     + '<div class="revealwrap"><div class="revealglow" id="packGlow" style="display:none"></div><div class="revealrow" id="packCards" style="display:none"></div></div>'
@@ -4147,8 +4160,9 @@ function ensurePackPop(){
   document.getElementById("packStage").addEventListener("click", function(){
     if (window._packOpened) return; window._packOpened = true;
     var st = this; st.classList.add("charging");
-    setTimeout(function(){ st.classList.add("torn"); var bst = document.getElementById("packBurst"); if (bst) bst.style.display = "block"; }, 480);
+    setTimeout(function(){ st.classList.add("torn"); var bst = document.getElementById("packBurst"); if (bst) bst.style.display = "block"; neonBurst(); }, 480);
     setTimeout(function(){
+      neonBurst();
       st.style.display = "none";
       var bst2 = document.getElementById("packBurst"); if (bst2) bst2.style.display = "none";
       var pulls = window._packPulls || [], cards = document.getElementById("packCards"), cap = document.getElementById("packCap");
@@ -4170,6 +4184,7 @@ function ensurePackPop(){
     }, 1030);
   });
 }
+function neonBurst(){ var pp = document.getElementById("packPop"); if (!pp) return; pp.classList.remove("burst"); void pp.offsetWidth; pp.classList.add("burst"); }
 function openPackPop(demo){
   if (!demo) {
     var p = packsGet();
