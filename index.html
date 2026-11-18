@@ -183,6 +183,10 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .tiermini .tmn{display:block;font-size:8px;font-weight:800;color:var(--tc);letter-spacing:.3px;margin-top:3px;white-space:nowrap;overflow:hidden}
 .tiermini .tms{display:block;font-size:8px;color:#9a8bc7}
 .tiermini.cur{box-shadow:0 0 0 2px #f5b942,0 0 12px rgba(245,185,66,.45)}
+.tcstrip{display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;margin-bottom:2px;scrollbar-width:none}
+.tcstrip::-webkit-scrollbar{display:none}
+.tcface{width:26px;height:26px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid #3a2f66;flex:none;cursor:pointer}
+.tcface.on{border-color:#f5b942;box-shadow:0 0 8px rgba(245,185,66,.65)}
 .cardsec-b{margin-top:9px}
 .cardsec.closed .cardsec-b{display:none}
 .clashad{perspective:600px;border-radius:16px;box-shadow:0 14px 30px rgba(0,0,0,.55), 0 0 24px rgba(245,185,66,.35), inset 0 1px 0 rgba(255,255,255,.25)}
@@ -2839,8 +2843,12 @@ function cardSec(id, title, count, inner, openDefault){
   var open = (id in st) ? !!st[id] : openDefault;
   return '<div class="cardsec' + (open ? '' : ' closed') + '"><button class="cardsec-h" data-cardsec="' + id + '"><span>' + title + '</span><span class="cscount">' + count + '</span><span class="csbtn">' + (open ? '\u25BE HIDE' : '\u25B8 SHOW') + '</span></button><div class="cardsec-b"><div class="cardsgrid">' + inner + '</div></div></div>';
 }
+function tierCharIdx(){ var n = parseInt(lsGet("pa_tierchar", 0), 10) || 0; return (n >= 1 && n <= 12) ? n : cardCharIdx(); }
+function renderTiers(){ var el = $("tiers"); if (!el) return; el.innerHTML = tierProgressHTML(maxWins(), tierCharIdx()); bindTierStrip(); }
+function bindTierStrip(){ var els = document.querySelectorAll("#tiers .tcface"); for (var i = 0; i < els.length; i++) els[i].addEventListener("click", function(){ var n = parseInt(this.getAttribute("data-tierchar"), 10); if (n) { lsSet("pa_tierchar", n); sfx("click"); renderTiers(); } }); }
 function tierProgressHTML(wins, ci){
   ci = ci || charIdxOf() || 1;
+  var strip = '<div class="tcstrip">' + CHARNAMES.map(function(nm, k){ var n1 = k + 1; return '<img class="tcface' + (n1 === ci ? ' on' : '') + '" data-tierchar="' + n1 + '" src="/api/battle?s=' + n1 + '" alt="' + nm + '" title="' + nm + '">'; }).join("") + '</div>';
   var cur = tierFor(wins), curIdx = TIERS.indexOf(cur), nxt = nextTier(wins);
   var pct = Math.max(0, Math.min(100, wins));
   var ticks = TIERS.slice(1).map(function(t){ return '<span class="tbtick" style="left:' + Math.min(t.wins, 98) + '%"><i></i><em>' + t.wins + '</em></span>'; }).join("");
@@ -2850,7 +2858,7 @@ function tierProgressHTML(wins, ci){
     var un = wins >= t.wins;
     return '<div class="tiermini' + (un ? ' un' : ' lk') + (ti === curIdx ? ' cur' : '') + '" style="--tc:' + t.color + '"><img src="/api/battle?s=' + ci + '" alt=""><span class="tmn">' + t.name + '</span><span class="tms">' + (un ? "\u2605".repeat(ti + 1) : '\uD83D\uDD12 ' + t.wins) + '</span></div>';
   }).join("") + '</div>';
-  return '<div class="tierprog">' + head + bar + minis + '</div>';
+  return '<div class="tierprog">' + strip + head + bar + minis + '</div>';
 }
 function renderBoard(){
   renderPickem();
@@ -2859,7 +2867,7 @@ function renderBoard(){
   $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Wins</th></tr>'
     + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+(r.id?' class="agentclick" data-agent="'+r.id+'"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px' + frameCss(r.featured, 2) + '">':'')+'<b>'+esc(r.name)+'</b>'+streakBadge(r.streak)+'</td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
   var wins = maxWins();
-  $("tiers").innerHTML = tierProgressHTML(wins, charIdxOf());
+  $("tiers").innerHTML = tierProgressHTML(wins, tierCharIdx()); bindTierStrip();
   var cards = allPlayerCardLegs();
   var cci = cardCharIdx();
   var stripEl = $("cardStrip");
