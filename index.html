@@ -2676,7 +2676,7 @@ async function downloadTradingCard(ti, ci, btn){
   var t = TIERS[ti]; if (!t) return;
   var W = 630, H = 900, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
   var ctx = cv.getContext("2d");
-  var wins = myWins(); var un = wins >= t.wins;
+  var wins = charWins(ci); var un = wins >= t.wins;
   if (!un) { if (btn) { var o0 = btn.textContent; btn.textContent = "Locked — unlock it first"; setTimeout(function(){ btn.textContent = o0; }, 1600); } return; }
   var accent = t.color; var cname = CHARNAMES[ci - 1] || "YOUR AGENT";
   var num = ("00" + ((ci - 1) * 7 + ti + 1)).slice(-3);
@@ -2731,7 +2731,7 @@ async function downloadCard(kind, idx, btn){
   if (kind === "tier") { var ch0 = btn ? parseInt(btn.getAttribute("data-char") || "0", 10) : 0; return downloadTradingCard(idx, ch0 || charIdxOf() || 1, btn); }
   var W=630, H=900, cv=document.createElement("canvas"); cv.width=W; cv.height=H;
   var ctx=cv.getContext("2d");
-  var wins=myWins();
+  var wins=charWins(charIdxOf() || 1);
   var accent="#7C3AED", title="", big="", sub="", foot="", photoSrc="", initials="";
   if (kind==="tier"){
     var t=TIERS[idx]; if(!t) return;
@@ -2843,8 +2843,24 @@ function cardSec(id, title, count, inner, openDefault){
   var open = (id in st) ? !!st[id] : openDefault;
   return '<div class="cardsec' + (open ? '' : ' closed') + '"><button class="cardsec-h" data-cardsec="' + id + '"><span>' + title + '</span><span class="cscount">' + count + '</span><span class="csbtn">' + (open ? '\u25BE HIDE' : '\u25B8 SHOW') + '</span></button><div class="cardsec-b"><div class="cardsgrid">' + inner + '</div></div></div>';
 }
+function charWinsMap(){ return lsGet("pa_charwins", {}) || {}; }
+function charWins(ci){ var m = charWinsMap(); return parseInt(m[ci], 10) || 0; }
+function charTierIdx(ci){ var w = charWins(ci), idx = 0; TIERS.forEach(function(t, i){ if (w >= t.wins) idx = i; }); return idx; }
+function attributePoints(){
+  var base = myWins();
+  var seen = parseInt(lsGet("pa_attrib", -1), 10);
+  var m = charWinsMap(), sc = tierCharIdx();
+  if (seen < 0) {
+    var tot = 0; for (var k in m) tot += parseInt(m[k], 10) || 0;
+    if (base > tot) { m[sc] = (parseInt(m[sc], 10) || 0) + (base - tot); lsSet("pa_charwins", m); }
+    lsSet("pa_attrib", base);
+    return;
+  }
+  if (base > seen) { m[sc] = (parseInt(m[sc], 10) || 0) + (base - seen); lsSet("pa_charwins", m); lsSet("pa_attrib", base); }
+  else if (base < seen) lsSet("pa_attrib", base);
+}
 function tierCharIdx(){ var n = parseInt(lsGet("pa_tierchar", 0), 10) || 0; return (n >= 1 && n <= 12) ? n : cardCharIdx(); }
-function renderTiers(){ var el = $("tiers"); if (!el) return; el.innerHTML = tierProgressHTML(maxWins(), tierCharIdx()); bindTierStrip(); }
+function renderTiers(){ var el = $("tiers"); if (!el) return; el.innerHTML = tierProgressHTML(charWins(tierCharIdx()), tierCharIdx()); bindTierStrip(); }
 function bindTierStrip(){ var els = document.querySelectorAll("#tiers .tcface"); for (var i = 0; i < els.length; i++) els[i].addEventListener("click", function(){ var n = parseInt(this.getAttribute("data-tierchar"), 10); if (n) { lsSet("pa_tierchar", n); sfx("click"); renderTiers(); } }); }
 function tierProgressHTML(wins, ci){
   ci = ci || charIdxOf() || 1;
@@ -2861,18 +2877,19 @@ function tierProgressHTML(wins, ci){
   return '<div class="tierprog">' + strip + head + bar + minis + '</div>';
 }
 function renderBoard(){
+  attributePoints();
   renderPickem();
   renderFollowing();
   var rows = agentRows();
   $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Wins</th></tr>'
     + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+(r.id?' class="agentclick" data-agent="'+r.id+'"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px' + frameCss(r.featured, 2) + '">':'')+'<b>'+esc(r.name)+'</b>'+streakBadge(r.streak)+'</td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
   var wins = maxWins();
-  $("tiers").innerHTML = tierProgressHTML(wins, tierCharIdx()); bindTierStrip();
+  $("tiers").innerHTML = tierProgressHTML(charWins(tierCharIdx()), tierCharIdx()); bindTierStrip();
   var cards = allPlayerCardLegs();
   var cci = cardCharIdx();
   var stripEl = $("cardStrip");
   if (stripEl) stripEl.innerHTML = CHARNAMES.map(function(n, k){ var n1 = k + 1; return '<img src="/api/battle?s=' + n1 + '" data-ci="' + n1 + '" class="' + (n1 === cci ? 'on' : '') + '" title="' + n + '" alt="' + n + '">'; }).join("");
-  var tierCards = TIERS.map(function(t){ return tierCardHTML(t, wins, true, cci); }).join("");
+  var tierCards = TIERS.map(function(t){ return tierCardHTML(t, charWins(cci), true, cci); }).join("");
   var playerCards = cards.map(function(l, li){
     var photo = photoCache[(l.player || "").toLowerCase()] || "";
     var front = '<div class="flipfront" style="border:2px solid #a78bfa;--tc:#a78bfa">'
@@ -3173,13 +3190,12 @@ document.addEventListener("click", function(e){
 /* ---------- pack opening overlay ---------- */
 function drawPremiumTier(){ var r = Math.random(); if (r < 0.55) return 3; if (r < 0.80) return 4; if (r < 0.93) return 5; return 6; }
 function pullPack(demo){
-  var maxTi = maxTierIdx();
   var isRing = false;
   if (demo) isRing = true; else if (!lsGet("pa_ring", 0) && Math.random() < 0.02) isRing = true;
   var pulls = [];
   for (var i = 0; i < 3; i++){
     var ci = 1 + Math.floor(Math.random() * 12);
-    var ti = Math.random() < 0.25 ? drawPremiumTier() : Math.floor(Math.random() * (maxTi + 1));
+    var ti = Math.random() < 0.25 ? drawPremiumTier() : Math.floor(Math.random() * (charTierIdx(ci) + 1));
     pulls.push({ ci: ci, ti: ti });
   }
   if (isRing) { if (!demo) lsSet("pa_ring", 1); pulls[2] = { ring: true }; }
@@ -3592,7 +3608,7 @@ function clashMenu(){
     + '<button class="clashbig" data-clashmode="quick">⚡ QUICK CLASH<span>Friendly fight — CPU cards match your tiers, never stronger</span></button>'
     + '<button class="clashbig gold" data-clashmode="ladder">🏆 LADDER' + (lad >= 7 ? ' — CHAMPION 🏆' : ' — BOSS ' + (lad + 1) + ' OF 7') + '<span>' + (lad >= 7 ? 'Every boss beaten. Replay Boss 7 for coins.' : 'Beat bosses in order. Boss ' + (lad + 1) + ' pays ' + (10 + (lad + 1) * 5) + ' 🪙') + '</span></button>'
     + '<div class="clashmeta">🪙 <b>' + coinsGet() + '</b> Clash Coins · Record <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b><br>Wins pay Clash Coins — spend them on packs (1 pack = ' + CLASH_PACK_COST + ' 🪙, in My Packs below)</div>'
-    + '<div class="clashmeta">🏆 <b>One ladder everywhere:</b> your ' + maxWins() + ' tier wins \u2014 from prop tickets, plus every battle win \u2014 unlock these tier cards \u2014 the same cards you battle with \u2014 AND the foil tiers inside packs. Clash Coins buy those same packs too.</div>'
+    + '<div class="clashmeta">🏆 <b>Every agent climbs their own ladder:</b> ticket wins and battle wins add points to the agent set on your tier bar \u2014 right now that\u2019s <b>' + CHARNAMES[tierCharIdx() - 1] + '</b> (' + charWins(tierCharIdx()) + ' pts). Switch the bar on the Board tab to feed a different agent. Each agent\u2019s cards and battle tier unlock with their own points.</div>'
     + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars are just your card\'s tier level — they do NOT decide attacks. Turns alternate: only the player whose turn it is can swing, and an attack lands unless it\'s blocked. Tiers set a card\'s DAMAGE and LIFE.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Prop Agent logo. Both players start with EMPTY hands — no Energy, no items. After the coin flip everyone makes an opening pull (1 random card), and every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>ATTACK COSTS 2 ENERGY — PAID UP FRONT:</b> on your turn, pay 2 Energy cards and your attack LANDS for its damage — unless the enemy blocked on their turn. Same price for every card, Rookie to Legend. Can\'t pay? Attack locks — defend, tag, play an item, or end your turn while your pulls build Energy back up.<br>🎴 <b>ITEMS:</b> you can play ONE item per turn from your hand AND still attack or defend — the item is a bonus play, then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> you pay for your block on YOUR turn and it stays armed for the enemy\'s turn — nobody sees it coming, and it only reveals itself when it stops a hit. (The 👁️ Scout item peeks at the CPU\'s plan.)<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 4) and live longer (Rookie 3 life → Legend 9). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>🛡️ <b>DEFEND costs 2 🔮 Energy:</b> on your turn you can DEFEND instead of attacking — pay 2 Energy cards and your block stays armed: the enemy\'s next attack is fully blocked. If you don\'t block, their attack takes your health. The CPU plays by the same rules.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Two-in-a-row threatens the line — finish 3 in a row to win the ability.<br>🚫 <b>NO TIES, NO SIMULTANEOUS SWINGS:</b> fighters take turns — only the player whose turn it is attacks, so attacks never cancel out. Only landed hits earn grid squares.<br>⏭️ <b>END TURN</b> passes your move — the next player goes. Careful: if they attack and you didn\'t block, you can lose health.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>'
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>');
@@ -3624,7 +3640,7 @@ function clashPickRender(){
   var cur = CL.mine[CL.sel];
   if (cur) {
     tiers = '<div class="tierchips"><span>TIER:</span>';
-    for (var ti = 0; ti <= maxTi; ti++) tiers += '<button class="tierchip' + (cur.ti === ti ? ' on' : '') + '" data-picktier="' + ti + '" style="--tc:' + TIERS[ti].color + '">' + TIERS[ti].name + ' ★' + (ti + 1) + '</button>';
+    for (var ti = 0; ti <= charTierIdx(cur.ci); ti++) tiers += '<button class="tierchip' + (cur.ti === ti ? ' on' : '') + '" data-picktier="' + ti + '" style="--tc:' + TIERS[ti].color + '">' + TIERS[ti].name + ' ★' + (ti + 1) + '</button>';
     tiers += '</div>';
   }
   var ready = CL.mine[0] && CL.mine[1];
@@ -4063,13 +4079,14 @@ function clashFinish(won){
     earned = clashGrant(pay); capped = earned < pay; if (earned > 0) setTimeout(function(){ sfx("coin"); }, 550);
     CL.bwPoint = true;
     lsSet("pa_battlewins", (parseInt(lsGet("pa_battlewins", 0), 10) || 0) + 1);
+    attributePoints();
     if (CL.mode === "ladder" && CL.boss === ladderGet() + 1 && CL.boss <= 7) lsSet("pa_ladder", CL.boss);
     cloudSave();
   } else cloudSave();
   renderClash(); renderPacks();
   clashPanel('<div class="clashresult">' + (won ? '<div class="reswin">🏆 VICTORY!</div>' : '<div class="reslose">DEFEAT</div>')
     + '<div class="clashsub">' + (won ? 'Your pair takes the night! ' + (earned > 0 ? '<b style="color:#f5c518">+' + earned + ' 🪙 Clash Coins</b>' + (capped ? ' (daily coin cap hit — more tomorrow)' : '') : '<b>Daily coin cap reached — wins pay again tomorrow.</b>') : 'The CPU pair takes this one. Watch their powers, time your tags, and run it back.') + '</div>'
-    + '<div class="clashmeta">Battle Record: <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b> · 🪙 <b>' + coinsGet() + '</b>' + (won ? (CL.bwPoint ? ' \u00B7 \uD83C\uDFC6 <b>+1 Tier Point</b> \u2014 ' + myWins() + ' total wins' : ' \u00B7 Every battle win earns a tier point') : '') + (CL.mode === "ladder" && won && CL.boss < 7 ? ' · Next up: Boss ' + (CL.boss + 1) : '') + (CL.mode === "ladder" && won && CL.boss === 7 ? ' · 🏆 LADDER CHAMPION!' : '') + '</div>'
+    + '<div class="clashmeta">Battle Record: <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b> · 🪙 <b>' + coinsGet() + '</b>' + (won ? (CL.bwPoint ? ' \u00B7 \uD83C\uDFC6 <b>+1 Tier Point</b> \u2014 ' + CHARNAMES[tierCharIdx() - 1] + ' now has ' + charWins(tierCharIdx()) + ' pts' : ' \u00B7 Every battle win earns a tier point') : '') + (CL.mode === "ladder" && won && CL.boss < 7 ? ' · Next up: Boss ' + (CL.boss + 1) : '') + (CL.mode === "ladder" && won && CL.boss === 7 ? ' · 🏆 LADDER CHAMPION!' : '') + '</div>'
     + '<button class="clashbig gold" data-clashrematch="1">🔁 REMATCH<span>' + (CL.mode === "ladder" ? 'Boss ' + CL.boss + ' again' : 'New CPU pair, same tiers') + '</span></button>'
     + '<button class="clashbig" data-clashmode="' + CL.mode + '">🔄 NEW PAIR<span>Pick different fighters</span></button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:8px">Done</button></div>');
@@ -4092,14 +4109,14 @@ document.addEventListener("click", function(e){
   var cell = e.target.closest("[data-ttcell]"); if (cell) { ttPlace(parseInt(cell.getAttribute("data-ttcell"), 10)); return; }
   var ab = e.target.closest("[data-ability]"); if (ab) { abPick(ab.getAttribute("data-ability")); return; }
   var zc = e.target.closest("[data-zci]"); if (zc) { clashZoom(parseInt(zc.getAttribute("data-zci"), 10), parseInt(zc.getAttribute("data-zti"), 10)); return; }
-  var rc = e.target.closest("[data-readcard]"); if (rc) { var rci = parseInt(rc.getAttribute("data-readcard"), 10); var rti = maxTierIdx(); if (CL) { for (var si = 0; si < 2; si++) if (CL.mine[si] && CL.mine[si].ci === rci) rti = CL.mine[si].ti; } clashZoom(rci, rti); return; }
+  var rc = e.target.closest("[data-readcard]"); if (rc) { var rci = parseInt(rc.getAttribute("data-readcard"), 10); var rti = charTierIdx(rci); if (CL) { for (var si = 0; si < 2; si++) if (CL.mine[si] && CL.mine[si].ci === rci) rti = CL.mine[si].ti; } clashZoom(rci, rti); return; }
   if (e.target.closest("[data-guideoff]")) { lsSet("pa_guide", 0); if (CL && CL.cpu) clashArena(); else if (CL) clashPickRender(); else clashMenu(); return; }
   if (e.target.closest("[data-guideon]")) { lsSet("pa_guide", 1); if (CL && CL.cpu) clashArena(); else if (CL) clashPickRender(); else clashMenu(); return; }
   if ((t = e.target.closest("[data-clashclose]"))) { closeClash(); return; }
   if ((t = e.target.closest("[data-clashmenu]"))) { clashMenu(); return; }
   if ((t = e.target.closest("[data-clashmode]"))) { clashSetup(t.getAttribute("data-clashmode")); return; }
   if ((t = e.target.closest("[data-pickslot]"))) { if (CL) { CL.sel = parseInt(t.getAttribute("data-pickslot"), 10); clashPickRender(); } return; }
-  if ((t = e.target.closest("[data-pickagent]"))) { if (CL) { var ci = parseInt(t.getAttribute("data-pickagent"), 10); CL.mine[CL.sel] = mkFighter(ci, maxTierIdx()); if (!CL.mine[1 - CL.sel]) CL.sel = 1 - CL.sel; clashPickRender(); } return; }
+  if ((t = e.target.closest("[data-pickagent]"))) { if (CL) { var ci = parseInt(t.getAttribute("data-pickagent"), 10); CL.mine[CL.sel] = mkFighter(ci, charTierIdx(ci)); if (!CL.mine[1 - CL.sel]) CL.sel = 1 - CL.sel; clashPickRender(); } return; }
   if ((t = e.target.closest("[data-picktier]"))) { if (CL && CL.mine[CL.sel]) { CL.mine[CL.sel].ti = parseInt(t.getAttribute("data-picktier"), 10); clashPickRender(); } return; }
   if ((t = e.target.closest("[data-clashfight]"))) { if (CL && CL.mine[0] && CL.mine[1]) clashStartFight(); return; }
   if ((t = e.target.closest("[data-clashrematch]"))) { if (CL) { CL.mine = CL.mine.map(function(f){ return mkFighter(f.ci, f.ti); }); clashStartFight(); } return; }
@@ -4352,7 +4369,7 @@ setInterval(function(){ loadPickemEvent(); renderPickem(); }, 30000);
 
 /* ---------- profile + push ---------- */
 function refreshAgentBtn(){
-  var t = tierFor(myWins());
+  var t = tierFor(charWins(tierCharIdx()));
   $("agentBtn").innerHTML = (profile.avatar ? '<img src="'+esc(profile.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px' + frameCss(profile.featured, 2) + '"> ' : "👤 ") + esc(profile.name || "Guest Agent") + " · <b>" + t.name + "</b>";
 }
 var logoImgEl = $("logoImg"); if (logoImgEl) logoImgEl.addEventListener("click", function(){ var ab = $("agentBtn"); if (ab) ab.click(); });
@@ -4360,9 +4377,9 @@ $("agentBtn").addEventListener("click", function(){
   $("agName").value = profile.name || ""; $("agEmail").value = profile.email || "";
   var ai = $("agAvatarImg"); if (ai) { if (profile.avatar) { ai.src = profile.avatar; ai.style.display = ""; } else ai.style.display = "none"; } applyAvatarFrame(ai, profile.featured);
   var af = $("agFeatured"); if (af) af.textContent = String(profile.featured || "").replace(/^[^A-Za-z0-9]+/, "") || "No profile card set";
-  var t = tierFor(myWins()), nx = nextTier(myWins());
+  var t = tierFor(charWins(tierCharIdx())), nx = nextTier(charWins(tierCharIdx()));
   var _w = myWins(), _l = myLosses(), _st = myStreak(), _pct = (_w + _l) ? Math.round(100 * _w / (_w + _l)) : null;
-  $("agStats").innerHTML = "<span>Tier <b>"+t.name+"</b></span><span>Wins <b>"+_w+"</b></span><span>Record <b>"+_w+"W–"+_l+"L</b></span>" + (_pct != null ? "<span>Win rate <b>"+_pct+"%</b></span>" : "") + "<span>Streak <b>"+_st+"</b>"+(_st >= 3 ? " 🔥" : "")+"</span><span>Tickets <b>"+tickets.length+"</b></span>" + (nx ? "<span>Next: <b>"+nx.name+"</b> in "+(nx.wins-myWins())+" wins</span>" : "<span><b>Top tier reached 👑</b></span>");
+  $("agStats").innerHTML = "<span>"+CHARNAMES[tierCharIdx() - 1]+" \u00B7 Tier <b>"+t.name+"</b></span><span>Wins <b>"+_w+"</b></span><span>Record <b>"+_w+"W–"+_l+"L</b></span>" + (_pct != null ? "<span>Win rate <b>"+_pct+"%</b></span>" : "") + "<span>Streak <b>"+_st+"</b>"+(_st >= 3 ? " 🔥" : "")+"</span><span>Tickets <b>"+tickets.length+"</b></span>" + (nx ? "<span>Next: <b>"+nx.name+"</b> in "+(nx.wins-charWins(tierCharIdx()))+" wins</span>" : "<span><b>Top tier reached 👑</b></span>");
   renderAuth(); renderAvatarGrid();
   $("agentDlg").showModal();
 });
@@ -4770,6 +4787,7 @@ var tkR = $("tkRefresh"); if (tkR) tkR.addEventListener("click", function(){ ren
   apply();
   tg.addEventListener("click", function(){ open = !open; var s2 = lsGet("pa_cardsecs", {}); s2["tiers"] = open; lsSet("pa_cardsecs", s2); apply(); sfx("click"); });
 })();
+attributePoints();
 refreshAgentBtn();
 renderAllSlips();
 refreshHome();
