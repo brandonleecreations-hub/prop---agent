@@ -222,7 +222,7 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .homebuild{border-color:rgba(168,85,247,.6);box-shadow:0 10px 22px rgba(0,0,0,.5),0 0 16px rgba(168,85,247,.3)}
 .homebuild .catitle{background:linear-gradient(180deg,#f3e8ff,#c084fc 55%,#9333ea);-webkit-background-clip:text;background-clip:text;color:#c084fc;filter:drop-shadow(0 1px 0 rgba(40,10,80,.55)) drop-shadow(0 0 10px rgba(168,85,247,.45))}
 .hbtile{width:44px;height:44px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;font-size:24px;background:linear-gradient(160deg,#3b1472,#1b0f38);border:1px solid rgba(168,85,247,.5);box-shadow:0 6px 12px rgba(0,0,0,.6),0 0 10px rgba(168,85,247,.35)}
-.posterad{padding:0;line-height:0;height:178px;display:block;cursor:pointer;transition:transform .15s ease;animation:posterglow 3.2s ease-in-out infinite}
+.posterad{padding:0;line-height:0;height:132px;display:block;cursor:pointer;transition:transform .15s ease;animation:posterglow 3.2s ease-in-out infinite}
 .posterad img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 25%;animation:posterzoom 16s ease-in-out infinite alternate}
 .posterad:active{transform:scale(.985)}
 @keyframes posterzoom{from{transform:scale(1.03)}to{transform:scale(1.13) translateY(-5px)}}
@@ -917,7 +917,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <h2>Sports News</h2>
     <p class="sub" id="newsNote">Latest headlines from ESPN · refreshes automatically</p>
     <div class="card news" id="news"><p class="empty">Loading the top headlines…</p></div>
-    <div class="homeclash" id="clashHomeAd"><div class="hctile">⚔️</div><div class="hcmain"><div class="hctitle">AGENT CLASH</div><div class="hcdesc">Card battles with your agents — win coins, open packs.</div></div><button class="hcbtn" type="button">PLAY →</button></div>
+    <div class="homeclash posterad" id="clashHomeAd"><img src="/api/banners?s=clashposter" alt="Agent Clash Card Game — tap to play"></div>
     <div class="card" id="installCard" style="display:none;margin-top:20px;padding:0;overflow:hidden;border:2px solid #f5b942;background:radial-gradient(130% 150% at 15% 0%, #4c1d95 0%, #2a1650 46%, #12082b 100%);box-shadow:0 14px 44px rgba(124,58,237,.5)">
       <div style="display:flex;gap:14px;align-items:center;padding:18px 18px 6px">
         <img src="/api/icons?s=512" alt="" style="width:76px;height:76px;border-radius:18px;box-shadow:0 8px 26px rgba(0,0,0,.55);flex:0 0 auto">
@@ -3713,11 +3713,12 @@ function clashLbHtml(){
   if (!list.length) return '<div class="clashlb"><div class="clashlb-t">\uD83C\uDFC6 TOP CLASHERS \u2014 most Grid Clash wins</div><div class="clashlb-none">No battle wins yet \u2014 be the first on this board!</div></div>';
   return '<div class="clashlb"><div class="clashlb-t">\uD83C\uDFC6 TOP CLASHERS \u2014 most Grid Clash wins</div>' + list.map(function(c, i){ return '<div class="clashlb-r' + (c.me ? ' me' : '') + '"><span class="clashlb-rk">' + (i + 1) + '</span>' + (c.avatar ? '<img src="' + esc(c.avatar) + '" alt=""' + (frameStyle(c.featured, 2) ? ' style="' + frameStyle(c.featured, 2) + '"' : '') + '>' : '') + '<span class="clashlb-nm">' + esc(c.name) + (c.me ? ' (You)' : '') + '</span><span class="clashlb-w">' + c.w + 'W \u2013 ' + c.l + 'L</span></div>'; }).join("") + '</div>';
 }
-var clashHomeAdEl = $("clashHomeAd"); if (clashHomeAdEl) clashHomeAdEl.addEventListener("click", function(){ sfx("click"); showView("board"); });
+var clashHomeAdEl = $("clashHomeAd"); if (clashHomeAdEl) clashHomeAdEl.addEventListener("click", function(){ sfx("click"); openClash(); });
 function renderClash(){
   var box = $("clashBox"); if (!box) return;
   var b = battlesGet(), lad = ladderGet();
-  box.innerHTML = '<div class="clashad"><span class="caspark" style="left:9%;top:4px">✨</span><span class="caspark" style="right:9%;top:4px">✨</span><div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:6px"><img class="caface" src="/api/battle?s=10" alt="" style="border-radius:12px;object-fit:cover"><div class="cavs" style="font-family:\'Bungee\',\'Archivo Black\',system-ui,sans-serif;font-size:21px;color:#ffd94d;text-shadow:0 2px 0 rgba(90,40,0,.55),0 0 14px rgba(245,185,66,.5)">VS</div><img class="caface r" src="/api/battle?s=1" alt="" style="border-radius:12px;object-fit:cover"></div><div class="catitle">⚔️ AGENT CLASH</div><div class="casub">Card battles with your agents — win Clash Coins, climb the ladder, open packs.</div><button class="clashbtn" data-clashnow="1" type="button" style="margin-top:10px;padding:12px 26px;font-size:16px;border:none;border-radius:12px;color:#fff;cursor:pointer">⚔️ CLASH NOW</button><div class="clashrec">Battle Record: ' + b.w + 'W – ' + b.l + 'L · ' + (lad >= 7 ? '🏆 LADDER CHAMPION' : 'Ladder: Boss ' + (lad + 1) + ' of 7') + ' · 🪙 ' + coinsGet() + '</div></div>' + clashLbHtml();
+  box.innerHTML = '<div class="clashad posterad" data-clashnow="1"><img src="/api/banners?s=clashposter" alt="Agent Clash Card Game \u2014 tap to play"></div>'
+    + '<div class="clashrec">Battle Record: ' + b.w + 'W \u2013 ' + b.l + 'L \u00B7 ' + (lad >= 7 ? '\uD83C\uDFC6 LADDER CHAMPION' : 'Ladder: Boss ' + (lad + 1) + ' of 7') + ' \u00B7 \uD83E\uDE99 ' + coinsGet() + '</div>' + clashLbHtml();
 }
 
 function mkFighter(ci, ti){ return { ci: ci, ti: ti, hits: 0, used: {} }; }
