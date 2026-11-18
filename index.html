@@ -2084,10 +2084,12 @@ function collegeGameHasProp(lg, ev){
     /* Exact first: props carry their game's matchup ("Away @ Home") — compare with this event's teams. */
     try {
       var ec = ((ev.competitions || [])[0] || {}).competitors || [];
-      var en = ec.map(function(c){ return (c.team && (c.team.displayName || c.team.shortDisplayName) || "").toLowerCase(); });
-      if (en.length === 2 && en[0] && en[1]) {
-        var m1 = en[0] + " @ " + en[1], m2 = en[1] + " @ " + en[0];
-        for (var i = 0; i < ps.length; i++) { var pm = (ps[i].matchup || "").toLowerCase(); if (pm === m1 || pm === m2) { collegeCheck[ev.id] = {ok:true, ts:Date.now()}; return true; } }
+      if (ec.length === 2) {
+        var vA = [], vB = [];
+        [ec[0], ec[1]].forEach(function(c, ix){ var t = c.team || {}; [t.displayName, t.shortDisplayName].forEach(function(nm){ if (nm) (ix ? vB : vA).push(nm.toLowerCase()); }); });
+        var mset = {};
+        vA.forEach(function(a){ vB.forEach(function(b){ mset[a + " @ " + b] = 1; mset[b + " @ " + a] = 1; }); });
+        for (var i = 0; i < ps.length; i++) { var pm = (ps[i].matchup || "").toLowerCase(); if (pm && mset[pm]) { collegeCheck[ev.id] = {ok:true, ts:Date.now()}; return true; } }
       }
     } catch(e){}
     var names = {}; ps.forEach(function(p){ names[lastNameOf(p.player)] = 1; });
@@ -2155,11 +2157,15 @@ function renderGameProps(lg, s){
     try { (s.rosters || []).forEach(function(rt){ (rt.athletes || []).forEach(function(a){ var an = a.athlete && a.athlete.displayName; if (an) names[lastNameOf(an)] = 1; }); }); } catch(e){}
     cs.forEach(function(c){ if (c.team){ if (c.team.displayName) teamNames[c.team.displayName.toLowerCase()] = 1; if (c.team.shortDisplayName) teamNames[c.team.shortDisplayName.toLowerCase()] = 1; } });
     var gstart = Date.parse(comp.date || "");
-    var tnames = cs.map(function(c){ return (c.team && c.team.displayName || "").toLowerCase(); });
-    var mA = tnames.length === 2 ? tnames[0] + " @ " + tnames[1] : "", mB = tnames.length === 2 ? tnames[1] + " @ " + tnames[0] : "";
+    var mset = {};
+    if (cs.length === 2) {
+      var vA = [], vB = [];
+      [cs[0], cs[1]].forEach(function(c, ix){ var t = c.team || {}; [t.displayName, t.shortDisplayName].forEach(function(nm){ if (nm) (ix ? vB : vA).push(nm.toLowerCase()); }); });
+      vA.forEach(function(a){ vB.forEach(function(b){ mset[a + " @ " + b] = 1; mset[b + " @ " + a] = 1; }); });
+    }
     var hits = ps.filter(function(p){
       if (gstart && p.starts) { var pt = Date.parse(p.starts); if (pt && Math.abs(pt - gstart) > 9 * 3600 * 1000) return false; }
-      if (p.matchup && (p.matchup.toLowerCase() === mA || p.matchup.toLowerCase() === mB)) return true;
+      if (p.matchup && mset[p.matchup.toLowerCase()]) return true;
       if (p.team && teamNames[p.team.toLowerCase()]) return true;
       if (names[lastNameOf(p.player)]) return true;
       return false;
