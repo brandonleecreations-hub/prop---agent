@@ -222,10 +222,10 @@ table.lb th{color:var(--mut);font-size:10.5px;text-transform:uppercase;letter-sp
 .homebuild{border-color:rgba(168,85,247,.6);box-shadow:0 10px 22px rgba(0,0,0,.5),0 0 16px rgba(168,85,247,.3)}
 .homebuild .catitle{background:linear-gradient(180deg,#f3e8ff,#c084fc 55%,#9333ea);-webkit-background-clip:text;background-clip:text;color:#c084fc;filter:drop-shadow(0 1px 0 rgba(40,10,80,.55)) drop-shadow(0 0 10px rgba(168,85,247,.45))}
 .hbtile{width:44px;height:44px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;font-size:24px;background:linear-gradient(160deg,#3b1472,#1b0f38);border:1px solid rgba(168,85,247,.5);box-shadow:0 6px 12px rgba(0,0,0,.6),0 0 10px rgba(168,85,247,.35)}
-.posterad{padding:0;line-height:0;height:132px;display:block;cursor:pointer;transition:transform .15s ease;animation:posterglow 3.2s ease-in-out infinite}
-.posterad img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 25%;animation:posterzoom 16s ease-in-out infinite alternate}
+.posterad{padding:0;line-height:0;height:auto;aspect-ratio:2.37/1;display:block;cursor:pointer;transition:transform .15s ease;animation:posterglow 3.2s ease-in-out infinite}
+.posterad img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 50%;animation:posterzoom 16s ease-in-out infinite alternate}
 .posterad:active{transform:scale(.985)}
-@keyframes posterzoom{from{transform:scale(1.03)}to{transform:scale(1.13) translateY(-5px)}}
+@keyframes posterzoom{from{transform:scale(1)}to{transform:scale(1.06) translateY(-2px)}}
 @keyframes posterglow{0%,100%{box-shadow:0 10px 22px rgba(0,0,0,.5),0 0 14px rgba(245,185,66,.28)}50%{box-shadow:0 10px 22px rgba(0,0,0,.5),0 0 28px rgba(245,185,66,.55)}}
 @media (prefers-reduced-motion: reduce){.posterad,.posterad img{animation:none}}
 .posterad{position:relative;overflow:hidden}
@@ -917,7 +917,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <h2>Sports News</h2>
     <p class="sub" id="newsNote">Latest headlines from ESPN · refreshes automatically</p>
     <div class="card news" id="news"><p class="empty">Loading the top headlines…</p></div>
-    <div class="homeclash posterad" id="clashHomeAd"><img src="/api/banners?s=clashposter" alt="Agent Clash Card Game — tap to play"></div>
+    <div class="homeclash posterad" id="clashHomeAd"><img src="/api/banners?s=clashposter&v=2" alt="Agent Clash Card Game — tap to play"></div>
     <div class="card" id="installCard" style="display:none;margin-top:20px;padding:0;overflow:hidden;border:2px solid #f5b942;background:radial-gradient(130% 150% at 15% 0%, #4c1d95 0%, #2a1650 46%, #12082b 100%);box-shadow:0 14px 44px rgba(124,58,237,.5)">
       <div style="display:flex;gap:14px;align-items:center;padding:18px 18px 6px">
         <img src="/api/icons?s=512" alt="" style="width:76px;height:76px;border-radius:18px;box-shadow:0 8px 26px rgba(0,0,0,.55);flex:0 0 auto">
@@ -3717,7 +3717,7 @@ var clashHomeAdEl = $("clashHomeAd"); if (clashHomeAdEl) clashHomeAdEl.addEventL
 function renderClash(){
   var box = $("clashBox"); if (!box) return;
   var b = battlesGet(), lad = ladderGet();
-  box.innerHTML = '<div class="clashad posterad" data-clashnow="1"><img src="/api/banners?s=clashposter" alt="Agent Clash Card Game \u2014 tap to play"></div>'
+  box.innerHTML = '<div class="clashad posterad" data-clashnow="1"><img src="/api/banners?s=clashposter&v=2" alt="Agent Clash Card Game \u2014 tap to play"></div>'
     + '<div class="clashrec">Battle Record: ' + b.w + 'W \u2013 ' + b.l + 'L \u00B7 ' + (lad >= 7 ? '\uD83C\uDFC6 LADDER CHAMPION' : 'Ladder: Boss ' + (lad + 1) + ' of 7') + ' \u00B7 \uD83E\uDE99 ' + coinsGet() + '</div>' + clashLbHtml();
 }
 
