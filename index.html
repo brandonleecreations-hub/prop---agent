@@ -998,7 +998,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <div class="row" style="margin:4px 0 8px"><img id="agAvatarImg" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;display:none"><div><b id="agFeatured">No profile card set</b><br><span class="note">Pick a character below, or set your profile pic from any unlocked card in My Cards (Board tab) — it saves to your cloud profile for everyone to see.</span></div></div>
   <div class="fld"><label>Username</label><input type="text" id="agName" placeholder="e.g. Brandon_23" autocomplete="off"></div>
   <p class="note" id="agNameHint" style="margin:-4px 0 8px">Pick your own unique username — 3-20 characters, letters, numbers and _ only. It's the name other agents see; your email always stays private.</p>
-  <div class="fld"><label>Pick your agent — comic book style</label><div id="agAvatars" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div><p class="note">Your character shows on all your tier cards and becomes your profile pic.</p></div>
+  <div class="cardsec" id="profCharSec"><button type="button" class="cardsec-h" id="profCharToggle"><span>🎭 PICK YOUR CHARACTER</span><span class="csbtn" id="profCharBtn">▾ HIDE</span></button><div class="cardsec-b"><div id="agAvatars" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div><p class="note" style="margin-top:8px">Your character shows on all your tier cards and becomes your profile pic.</p></div></div>
   <div class="fld"><label>Account — email &amp; password</label>
     <div id="agAuthOut">
       <input type="email" id="agEmail" placeholder="you@example.com" autocomplete="email">
@@ -4743,6 +4743,14 @@ $("agentBtn").addEventListener("click", function(){
   $("agentDlg").showModal();
 });
 $("agClose").addEventListener("click", function(){ $("agentDlg").close(); });
+(function(){
+  var sec = $("profCharSec"), tog = $("profCharToggle"), btn = $("profCharBtn");
+  if (!sec || !tog) return;
+  function profCharOpen(){ var st = lsGet("pa_cardsecs", {}); return ("profchar" in st) ? !!st["profchar"] : true; }
+  function applyProfChar(){ var open = profCharOpen(); sec.classList.toggle("closed", !open); if (btn) btn.textContent = open ? "▾ HIDE" : "▸ SHOW"; }
+  tog.addEventListener("click", function(){ var st = lsGet("pa_cardsecs", {}); st["profchar"] = !profCharOpen(); lsSet("pa_cardsecs", st); applyProfChar(); sfx("click"); });
+  applyProfChar();
+})();
 $("agSave").addEventListener("click", function(){
   var nm = $("agName").value.trim();
   var finishSave = function(){
