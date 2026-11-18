@@ -2774,16 +2774,16 @@ async function downloadCard(kind, idx, btn){
 function charArt(){ var c = (profile && profile.char) || ""; return /^(\/api\/(avatars|battle)\?s=|https?:)/.test(c) ? c : ""; }
 var CHARNAMES = ["THE CLOSER","THE BOSS","THE OPERATOR","ALL-AMERICAN","THE DEALMAKER","THE EXECUTIVE","THE SLUGGER","THE PLAYMAKER","THE CAPTAIN","THE FRANCHISE","THE ACE","THE ISLANDER"];
 var POWERS = [
-  {name:"CLUTCH TIME", style:"ATTACK", desc:"Once per game: +1 star in the first round where any card is one hit from elimination."},
+  {name:"CLUTCH TIME", style:"ATTACK", desc:"Once per game: +1 damage on his attack when any fighter is one hit from elimination."},
   {name:"AUTHORITY", style:"CONTROL", desc:"Once per game: shuts down the enemy card's power the first round it would fire against her."},
-  {name:"INTEL", style:"TRICK", desc:"Once per game: see where the CPU will place its next grid mark."},
-  {name:"HAIL MARY", style:"LUCK", desc:"Once per game: a round he lost counts as a win instead."},
-  {name:"NEGOTIATOR", style:"TRICK", desc:"Once per game: a tied clash counts as a win for his card."},
-  {name:"FINE PRINT", style:"CONTROL", desc:"Once per game: enemies facing her fight at -1 star for one round."},
-  {name:"HOME RUN", style:"ATTACK", desc:"Once per game: winning a round by 3+ stars deals DOUBLE damage."},
-  {name:"FAST BREAK", style:"ATTACK", desc:"Once per game: +1 star in the opening round."},
-  {name:"RALLY", style:"COMEBACK", desc:"Once per game: +1 star for every hit his team is behind, for one round."},
-  {name:"STAR POWER", style:"ATTACK", desc:"Once per game: +1 star in one clash."},
+  {name:"INTEL", style:"TRICK", desc:"INTEL: reads the grid — shows the square the CPU wants next."},
+  {name:"HAIL MARY", style:"LUCK", desc:"Once per game: his attack breaks through a block and lands anyway."},
+  {name:"NEGOTIATOR", style:"TRICK", desc:"Once per game: when he would take a hit, he takes no damage and places the grid mark himself."},
+  {name:"FINE PRINT", style:"CONTROL", desc:"Once per game: an enemy hit on her deals 1 less damage."},
+  {name:"HOME RUN", style:"ATTACK", desc:"Once per game: his attack deals DOUBLE damage to a fighter at full life."},
+  {name:"FAST BREAK", style:"ATTACK", desc:"Once per game: his attack in round 1 deals +1 damage."},
+  {name:"RALLY", style:"COMEBACK", desc:"Once per game: +1 damage on his attack when his team is behind on health."},
+  {name:"STAR POWER", style:"ATTACK", desc:"Once per game: his attack deals +2 damage."},
   {name:"ACE SERVE", style:"DEFENSE", desc:"Once per game: she can't take a hit in the first round."},
   {name:"ISLAND CALM", style:"DEFENSE", desc:"Once per game: a hit against him is blocked."}
 ];
@@ -3325,11 +3325,11 @@ function ttPick(g, mark){
   return g.indexOf("");
 }
 var ABILITIES = [
-  { id: "overdrive", icon: "⭐", name: "OVERDRIVE", color: "#f5b942", desc: "+1 star for the rest of the battle" },
+  { id: "overdrive", icon: "⭐", name: "OVERDRIVE", color: "#f5b942", desc: "+1 damage on all your attacks for the rest of the battle (max +2)" },
   { id: "sneak", icon: "💥", name: "SNEAK STRIKE", color: "#ff5470", desc: "Free hit on the enemy's active card" },
   { id: "heal", icon: "❤️", name: "SECOND WIND", color: "#2fbf71", desc: "Heal 2 damage from your most-hurt fighter" },
   { id: "guard", icon: "🛡️", name: "IRON GUARD", color: "#7dd3fc", desc: "Block the next 2 hits against your team" },
-  { id: "momentum", icon: "🔥", name: "MOMENTUM", color: "#ff8a3d", desc: "+2 stars on your next round" },
+  { id: "momentum", icon: "🔥", name: "MOMENTUM", color: "#ff8a3d", desc: "+2 damage on your next attack" },
   { id: "headstart", icon: "🎯", name: "HEAD START", color: "#b26bff", desc: "Place 2 free marks on the fresh grid" }
 ];
 function abilityName(id){ var n = id; ABILITIES.forEach(function(x){ if (x.id === id) n = x.name; }); return n; }
@@ -3468,20 +3468,20 @@ function guideOn(){ return lsGet("pa_guide", 1) !== 0; }
 function turnSplashHTML(){
   if (!CL || CL.over || CL.phase === "flip") return "";
   if (CL.round >= 60 && !CL._sdSplash) { CL._sdSplash = 1; return '<div class="turnsplash sd">\u23F0 SUDDEN DEATH!</div>'; }
-  var key = null;
-  if (CL.placing === "cpu") key = "cpu";
-  else if (CL.placing === "me" || CL.abilityPick || !CL.busy) key = "me";
+  if (!CL.turn) return "";
+  var key = CL.turn + ":" + CL.turnNo;
   var prev = CL._turnKey;
   CL._turnKey = key;
-  if (!key || key === prev) return "";
-  return '<div class="turnsplash' + (key === "cpu" ? ' cpu' : '') + '">' + (key === "cpu" ? "⭕ OPPONENT'S TURN" : "⚔️ YOUR TURN") + '</div>';
+  if (key === prev) return "";
+  return '<div class="turnsplash' + (CL.turn === "cpu" ? ' cpu' : '') + '">' + (CL.turn === "cpu" ? "⭕ OPPONENT'S TURN" : "⚔️ YOUR TURN") + '</div>';
 }
 function turnBannerHTML(){
   if (!CL || CL.over || CL.phase === "flip") return "";
   if (CL.abilityPick) return '<div class="turnbanner">🏆 YOUR TURN — PICK AN ABILITY!</div>';
   if (CL.placing === "me") return '<div class="turnbanner">✖ YOUR TURN — PLACE YOUR MARK!</div>';
-  if (CL.placing === "cpu") return '<div class="turnbanner cpu">⭕ CPU\'S TURN…</div>';
-  if (CL.busy) return '<div class="turnbanner cpu">⚔️ CLASHING…</div>';
+  if (CL.placing === "cpu") return '<div class="turnbanner cpu">⭕ CPU PLACES ITS MARK…</div>';
+  if (CL.turn === "cpu") return '<div class="turnbanner cpu">⭕ CPU\'S TURN…</div>';
+  if (CL.busy) return '<div class="turnbanner">⚔️ ATTACKING…</div>';
   return '<div class="turnbanner">⚔️ YOUR TURN</div>';
 }
 function clashZoom(ci, ti){
@@ -3553,18 +3553,18 @@ function clashMenu(){
   CL = null;
   var b = battlesGet(), lad = ladderGet();
   clashPanel('<div class="clashttl">⚔️ AGENT CLASH</div>'
-    + '<div class="clashsub">Pick 2 battle cards — a Starter and a Tag Partner. A shiny 🔴🔵 coin flip decides who goes first — winner goes first, but the first player can\'t strike on Turn 1. Every turn you may play ONE 🎴 item from your hand (a free bonus) AND make one move: ATTACK ⚔️, DEFEND 🛡️, or TAG 🔁 (🔁 TAG is a move too — the fresh fighter steps in right away, but can\'t strike that turn). Landing a hit costs 🔮 Energy cards from your hand — your 44-card deck (20 Energy + 24 items, shuffled at the start) starts you with EMPTY hands — no Energy, no items — and every turn starts with a random pull from the deck; spent cards go to the discard pile. Land a hit, place your ✖ on the Clash Grid — 3 in a row wins an ability. A card is out when its life (❤️ on the card) is gone.</div>'
+    + '<div class="clashsub">Pick 2 battle cards — a Starter and a Tag Partner. A shiny 🔴🔵 coin flip decides who goes first — winner goes first, but the first player can\'t strike on Turn 1. Every turn you may play ONE 🎴 item from your hand (a free bonus) AND make one move: ATTACK ⚔️, DEFEND 🛡️, TAG 🔁, or END TURN ⏭️ (🔁 TAG is a move too — the fresh fighter steps in right away, but can\'t strike that turn). Landing a hit costs 🔮 Energy cards from your hand — your 44-card deck (20 Energy + 24 items, shuffled at the start) starts you with EMPTY hands — no Energy, no items — and every turn starts with a random pull from the deck; spent cards go to the discard pile. Land a hit, place your ✖ on the Clash Grid — 3 in a row wins an ability. A card is out when its life (❤️ on the card) is gone.</div>'
     + '<button class="clashbig" data-clashmode="quick">⚡ QUICK CLASH<span>Friendly fight — CPU cards match your tiers, never stronger</span></button>'
     + '<button class="clashbig gold" data-clashmode="ladder">🏆 LADDER' + (lad >= 7 ? ' — CHAMPION 🏆' : ' — BOSS ' + (lad + 1) + ' OF 7') + '<span>' + (lad >= 7 ? 'Every boss beaten. Replay Boss 7 for coins.' : 'Beat bosses in order. Boss ' + (lad + 1) + ' pays ' + (10 + (lad + 1) * 5) + ' 🪙') + '</span></button>'
     + '<div class="clashmeta">🪙 <b>' + coinsGet() + '</b> Clash Coins · Record <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b><br>Wins pay Clash Coins — spend them on packs (1 pack = ' + CLASH_PACK_COST + ' 🪙, in My Packs below)</div>'
     + '<div class="clashmeta">🏆 <b>One ladder everywhere:</b> your ' + maxWins() + ' tier wins \u2014 from prop tickets, plus every battle win \u2014 unlock these tier cards \u2014 the same cards you battle with \u2014 AND the foil tiers inside packs. Clash Coins buy those same packs too.</div>'
-    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars = your card\'s tier — higher total wins the round.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Prop Agent logo. Both players start with EMPTY hands — no Energy, no items. After the coin flip everyone makes an opening pull (1 random card), and every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>ATTACK COSTS 2 ENERGY — PAID UP FRONT:</b> the moment you choose ATTACK, 2 Energy cards go to your discard pile, win or lose — blocked or not, that Energy is spent. Same price for every card, Rookie to Legend. Can\'t pay? Your attack can\'t land — defend, tag, or play an item instead. DEFEND pays its 2 Energy up front too, and it\'s discarded when you block.<br>🎴 <b>ITEMS:</b> you can play ONE item per turn from your hand AND still attack or defend — the item is a bonus play, then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> nobody sees a defend coming — the CPU locks in its move without knowing yours, and a block only reveals itself when it stops a hit. (The 👁️ Scout item peeks at the CPU\'s plan.)<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 4) and live longer (Rookie 3 life → Legend 9). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>🛡️ <b>DEFEND costs 2 🔮 Energy:</b> every turn you can DEFEND instead of attacking — pay 2 Energy cards and the hit is fully blocked. The CPU pays the same 2 Energy to defend — same rules both sides.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Holding two-in-a-row on the grid gives +1★ until it breaks.<br>🤝 A tied round: both players pull +1 🔮 Energy from their decks, then the decks reshuffle. And on a tie, any PAID attack still lands its hit — if you didn\'t block, you lose health. Only clean clash wins earn grid squares.<br>⏭️ <b>END TURN</b> passes your move — the next player goes. Careful: if they attack and you didn\'t block, you can lose health.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>'
+    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars are just your card\'s tier level — they do NOT decide attacks. Turns alternate: only the player whose turn it is can swing, and an attack lands unless it\'s blocked. Tiers set a card\'s DAMAGE and LIFE.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Prop Agent logo. Both players start with EMPTY hands — no Energy, no items. After the coin flip everyone makes an opening pull (1 random card), and every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>ATTACK COSTS 2 ENERGY — PAID UP FRONT:</b> on your turn, pay 2 Energy cards and your attack LANDS for its damage — unless the enemy blocked on their turn. Same price for every card, Rookie to Legend. Can\'t pay? Attack locks — defend, tag, play an item, or end your turn while your pulls build Energy back up.<br>🎴 <b>ITEMS:</b> you can play ONE item per turn from your hand AND still attack or defend — the item is a bonus play, then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> you pay for your block on YOUR turn and it stays armed for the enemy\'s turn — nobody sees it coming, and it only reveals itself when it stops a hit. (The 👁️ Scout item peeks at the CPU\'s plan.)<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 4) and live longer (Rookie 3 life → Legend 9). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>🛡️ <b>DEFEND costs 2 🔮 Energy:</b> on your turn you can DEFEND instead of attacking — pay 2 Energy cards and your block stays armed: the enemy\'s next attack is fully blocked. If you don\'t block, their attack takes your health. The CPU plays by the same rules.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Two-in-a-row threatens the line — finish 3 in a row to win the ability.<br>🚫 <b>NO TIES, NO SIMULTANEOUS SWINGS:</b> fighters take turns — only the player whose turn it is attacks, so attacks never cancel out. Only landed hits earn grid squares.<br>⏭️ <b>END TURN</b> passes your move — the next player goes. Careful: if they attack and you didn\'t block, you can lose health.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>'
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>');
 }
 function clashSetup(mode){
   var boss = mode === "ladder" ? Math.min(ladderGet() + 1, 7) : 0;
-  CL = { mode: mode, boss: boss, sel: 0, mine: [null, null], cpu: null, myActive: 0, cpuActive: 0, round: 1, busy: false, over: false, tagged: false, lastHit: null, lastWin: null, lastBlock: null, log: [], grid: ["", "", "", "", "", "", "", "", ""], myBonus: 0, cpuBonus: 0, myGuard: 0, cpuGuard: 0, myTemp: 0, cpuTemp: 0, placing: null, abilityPick: null, ttLine: null, ttResolve: null, abResolve: null, phase: null, flip: null, firstPlayer: null, myDeck: [], cpuDeck: [], myHand: [], cpuHand: [], myPile: [], cpuPile: [], drawPop: 0, statSurge: 0, justShuffled: false, itemUsedRound: 0, cpuItemRound: 0, myFreeHit: false, cpuFreeHit: false, planned: false, scoutText: null };
+  CL = { mode: mode, boss: boss, sel: 0, mine: [null, null], cpu: null, myActive: 0, cpuActive: 0, round: 1, busy: false, over: false, tagged: false, lastHit: null, lastWin: null, lastBlock: null, log: [], grid: ["", "", "", "", "", "", "", "", ""], myBonus: 0, cpuBonus: 0, myGuard: 0, cpuGuard: 0, myTemp: 0, cpuTemp: 0, placing: null, abilityPick: null, ttLine: null, ttResolve: null, abResolve: null, phase: null, flip: null, firstPlayer: null, myDeck: [], cpuDeck: [], myHand: [], cpuHand: [], myPile: [], cpuPile: [], drawPop: 0, statSurge: 0, justShuffled: false, itemUsedRound: 0, cpuItemRound: 0, myFreeHit: false, cpuFreeHit: false, planned: false, scoutText: null, turn: null, turnNo: 0, myDef: false, cpuDef: false, plan: null };
   clashPickRender();
 }
 function clashPickRender(){
@@ -3618,7 +3618,7 @@ function clashCpuPair(){
 function clashStartFight(){
   CL.cpu = clashCpuPair();
   CL.myActive = 0; CL.cpuActive = 0; CL.round = 1; CL.busy = false; CL.over = false; CL.tagged = false; CL.lastHit = null; CL.lastWin = null; CL.lastBlock = null; CL.lastTag = null; CL.grid = ["", "", "", "", "", "", "", "", ""]; CL.myBonus = 0; CL.cpuBonus = 0; CL.myGuard = 0; CL.cpuGuard = 0; CL.myTemp = 0; CL.cpuTemp = 0; CL.placing = null; CL.abilityPick = null; CL.ttLine = null; CL.ttResolve = null; CL.abResolve = null;
-  CL.phase = "flip"; CL.flip = null; CL.firstPlayer = null; CL.myDeck = buildDeck(); CL.cpuDeck = buildDeck(); CL.myHand = []; CL.cpuHand = []; CL.myPile = []; CL.cpuPile = []; CL.pulledMe = []; CL.pulledCpu = []; CL.drawPop = 0; CL.statSurge = 0; CL.justShuffled = true; CL.itemUsedRound = 0; CL.cpuItemRound = 0; CL.myFreeHit = false; CL.cpuFreeHit = false; CL.planned = false; CL.scoutText = null; CL.lastDrawn = [];
+  CL.phase = "flip"; CL.flip = null; CL.firstPlayer = null; CL.myDeck = buildDeck(); CL.cpuDeck = buildDeck(); CL.myHand = []; CL.cpuHand = []; CL.myPile = []; CL.cpuPile = []; CL.pulledMe = []; CL.pulledCpu = []; CL.drawPop = 0; CL.statSurge = 0; CL.justShuffled = true; CL.itemUsedRound = 0; CL.cpuItemRound = 0; CL.myFreeHit = false; CL.cpuFreeHit = false; CL.planned = false; CL.scoutText = null; CL.lastDrawn = []; CL.turn = null; CL.turnNo = 0; CL.myDef = false; CL.cpuDef = false; CL.plan = null; CL._turnKey = null; CL._sdSplash = 0;
   CL.log = ["🥊 " + fName(CL.mine[0]) + " & " + fName(CL.mine[1]) + " vs " + fName(CL.cpu[0]) + " & " + fName(CL.cpu[1]) + " — FIGHT!"];
   clashArena();
 }
@@ -3673,24 +3673,24 @@ function applyItem(side, id){
   else if (id === "supply") { drawItems(side, 2); CL.log.push("📦 Drew 2 cards."); }
   else if (id === "reset") { CL.grid = ["", "", "", "", "", "", "", "", ""]; CL.log.push("⏪ GRID RESET — the board is wiped clean!"); }
   else if (id === "token") { if (mine) CL.myFreeHit = true; else CL.cpuFreeHit = true; CL.log.push("🎟️ Next landed hit costs 0 Energy for " + (mine ? "you" : "CPU") + "."); }
-  else if (id === "scout") { if (!CL.planned) { cpuPlan(); CL.planned = true; } CL.scoutText = "👁️ SCOUT: CPU " + (CL.cpuTagged ? "tags in " + fName(CL.cpu[CL.cpuActive]) + ", then " : "will ") + (CL.cpuStance === "def" ? "DEFEND" : "ATTACK") + (CL.cpuTagged ? "" : " with " + fName(CL.cpu[CL.cpuActive])); CL.log.push(CL.scoutText + "."); }
+  else if (id === "scout") { if (!CL.planned) { cpuPlan(); CL.planned = true; } var pl2 = CL.plan || { stance: "atk", tag: false }; CL.scoutText = "👁️ SCOUT — CPU's next move: " + (pl2.tag ? "🔁 TAG in " + fName(CL.cpu[1 - CL.cpuActive]) : pl2.stance === "def" ? "🛡️ DEFEND (a block will be armed)" : pl2.stance === "pass" ? "⏭️ END TURN" : "⚔️ ATTACK with " + fName(CL.cpu[CL.cpuActive])) + "."; CL.log.push(CL.scoutText); }
 }
 function useItem(id){
-  if (!CL || CL.over || CL.busy || CL.placing || CL.abilityPick || CL.phase === "flip") return;
-  if (CL.itemUsedRound === CL.round) return;
+  if (!CL || CL.over || CL.busy || CL.turn !== "me" || CL.placing || CL.abilityPick || CL.phase === "flip") return;
+  if (CL.itemUsedRound === CL.turnNo) return;
   var ix = CL.myHand.indexOf(id); if (ix < 0) return;
   var why = itemPlayable("me", id);
   if (why) { CL.log.push("🚫 " + ITEM_MAP[id].name + ": " + why + "."); clashArena(); return; }
-  CL.myHand.splice(ix, 1); CL.myPile.push(id); CL.itemUsedRound = CL.round;
+  CL.myHand.splice(ix, 1); CL.myPile.push(id); CL.itemUsedRound = CL.turnNo;
   sfx("ability");
   applyItem("me", id);
   if (CL && !CL.over) { CL.log.push("🎴 Item played — you can still ⚔️ ATTACK, 🛡️ DEFEND, or 🔁 TAG this turn."); clashArena(); }
 }
 function cpuUseItem(){
-  if (!CL || CL.cpuItemRound === CL.round || !CL.cpuHand.length) return;
+  if (!CL || CL.cpuItemRound === CL.turnNo || !CL.cpuHand.length) return;
   var a = CL.cpu[CL.cpuActive], foe = CL.mine[CL.myActive];
   function has(id){ return CL.cpuHand.indexOf(id) >= 0 && itemPlayable("cpu", id) === ""; }
-  function use(id){ CL.cpuHand.splice(CL.cpuHand.indexOf(id), 1); CL.cpuPile.push(id); CL.cpuItemRound = CL.round; applyItem("cpu", id); return true; }
+  function use(id){ CL.cpuHand.splice(CL.cpuHand.indexOf(id), 1); CL.cpuPile.push(id); CL.cpuItemRound = CL.turnNo; applyItem("cpu", id); return true; }
   var r = Math.random();
   if (has("sneak") && lifeOf(foe) - foe.hits <= dmgOf(a) && r < 0.75) return use("sneak");
   if (has("patch") && r < 0.55) return use("patch");
@@ -3704,7 +3704,7 @@ function cpuUseItem(){
 }
 var ITEMS_OPEN = true;
 function itemHTML(){
-  var canPlay = !CL.busy && !CL.over && !CL.placing && !CL.abilityPick && CL.phase !== "flip" && CL.itemUsedRound !== CL.round;
+  var canPlay = !CL.busy && !CL.over && CL.turn === "me" && !CL.placing && !CL.abilityPick && CL.phase !== "flip" && CL.itemUsedRound !== CL.turnNo;
   var counts = {}; CL.myHand.forEach(function(id){ if (id !== "energy") counts[id] = (counts[id] || 0) + 1; });
   var cards = Object.keys(counts).map(function(id){ var it = ITEM_MAP[id]; return '<button class="itemcard' + (canPlay && guideOn() ? ' guideglow' : '') + '" data-item="' + id + '" style="--ic:' + it.color + '" title="' + it.desc + '"' + (canPlay ? '' : ' disabled') + '><span class="iic">' + it.icon + '</span><span class="inm">' + it.name + '</span>' + (counts[id] > 1 ? '<span class="istk">×' + counts[id] + '</span>' : '') + '</button>'; }).join("");
   if (!cards) cards = '<span class="enone">No items right now — draws come every round</span>';
@@ -3720,16 +3720,16 @@ function itemHTML(){
   var pile = '<div class="pilewrap"><div class="zonelab">DISCARD</div><div class="pileback"></div><div class="deckcount">×' + CL.myPile.length + '</div></div>';
   var handInner = ITEMS_OPEN ? '<div class="itemhand">' + cards + '</div>' : '';
   var pull = (CL.pulledMe && CL.pulledMe.length) ? '<div class="pullrow"><span class="pulllab">⬇️ YOU PULLED</span>' + CL.pulledMe.map(function(id){ var it3 = id === "energy" ? { icon: "🔮", name: "ENERGY" } : ITEM_MAP[id]; return it3 ? '<span class="pullmini"><i>' + it3.icon + '</i><span>' + it3.name + '</span></span>' : ""; }).join("") + '</div>' : '';
-  return '<div class="itemrow">' + pull + '<div class="itemlab">🎴 YOUR CARDS · 1 item per turn + your move' + (CL.itemUsedRound === CL.round ? ' · <span style="color:#f5b942">played ✓</span>' : '') + '<button class="itog" data-itemtoggle="1">' + (ITEMS_OPEN ? '▾ HIDE ITEMS' : '▸ SHOW ITEMS (' + itemCount("me") + ')') + '</button></div><div class="deckrow">' + deck + espot + '<div class="itemhandwrap">' + handInner + '</div>' + pile + '</div></div>';
+  return '<div class="itemrow">' + pull + '<div class="itemlab">🎴 YOUR CARDS · 1 item per turn + your move' + (CL.itemUsedRound === CL.turnNo ? ' · <span style="color:#f5b942">played ✓</span>' : '') + '<button class="itog" data-itemtoggle="1">' + (ITEMS_OPEN ? '▾ HIDE ITEMS' : '▸ SHOW ITEMS (' + itemCount("me") + ')') + '</button></div><div class="deckrow">' + deck + espot + '<div class="itemhandwrap">' + handInner + '</div>' + pile + '</div></div>';
 }
 function openItemView(id){
   var it = ITEM_MAP[id]; if (!it || !CL) return;
   var pop = document.getElementById("itemPop"); if (!pop) return;
   var held = CL.myHand.filter(function(x){ return x === id; }).length;
   var why = itemPlayable("me", id);
-  var canPlay = !CL.busy && !CL.over && !CL.placing && !CL.abilityPick && CL.phase !== "flip" && CL.itemUsedRound !== CL.round && why === "";
+  var canPlay = !CL.busy && !CL.over && CL.turn === "me" && !CL.placing && !CL.abilityPick && CL.phase !== "flip" && CL.itemUsedRound !== CL.turnNo && why === "";
   var status = "";
-  if (CL.itemUsedRound === CL.round) status = "You already played an item this turn — 1 per turn.";
+  if (CL.itemUsedRound === CL.turnNo) status = "You already played an item this turn — 1 per turn.";
   else if (why) status = "Can't play right now: " + why + ".";
   else if (!canPlay) status = "Wait for your turn to play it.";
   pop.innerHTML = '<div class="itemview" style="--ic:' + it.color + '"><div class="ivicon">' + it.icon + '</div><div class="ivname">' + it.name + '</div><div class="ivdesc">' + it.desc + '</div><div class="ivmeta">In your hand: ×' + held + ' · You can play ONE item per turn and still attack or defend after — then it goes to the discard pile.</div>' + (status ? '<div class="ivstatus">' + status + '</div>' : '') + '<div class="clashbtns"><button class="cbtn atk" data-playitem="' + id + '"' + (canPlay ? '' : ' disabled') + '>▶ PLAY ITEM</button><button class="cbtn def" data-itemclose="1">CLOSE</button></div></div>';
@@ -3750,9 +3750,9 @@ async function flipResolve(call){
   drawItems("me", 1); drawItems("cpu", 1);
   if (CL.flip.winner === "me") { CL.log.push("🪙 " + result.toUpperCase() + "! You picked " + call.toUpperCase() + " — YOU go first. Opening pull: everyone draws a card. On Turn 1 you can play an item or defend — no strike. The CPU can strike."); }
   else { CL.log.push("🪙 " + result.toUpperCase() + "! You picked " + call.toUpperCase() + " — CPU goes first. Opening pull: everyone draws a card. CPU can't strike on Turn 1 — YOU can."); }
-  CL.phase = null;
+  CL.phase = "arena";
   sfx("charge"); sfx("shuffle");
-  clashArena();
+  beginTurn(CL.firstPlayer, B);
 }
 function pipsHTML(f){ var s = '<span class="pips">'; for (var i = 0; i < lifeOf(f); i++) s += '<i class="' + (i < f.hits ? 'hit' : '') + '"></i>'; return s + '</span>'; }
 function fxFor(side, f){ if (!CL || !f) return ""; if (CL.lastKO === f) return "ko"; if (CL.lastHit === side) return "pain"; if (CL.lastBlock === side) return "smug"; if (CL.lastHit && CL.lastWin === side) return "rage"; if (CL.lastTag === side) return "tag"; return ""; }
@@ -3790,9 +3790,9 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
   var meExtra = CL.lastHit === "me" ? " hitshake" : (CL.lastWin === "me" ? " lunge" : "");
   var cpExtra = CL.lastHit === "cpu" ? " hitshake" : (CL.lastWin === "cpu" ? " lunge" : "");
   var myE = energyCount("me");
-  var hasItem2 = CL.itemUsedRound !== CL.round && CL.myHand.some(function(x){ return x !== "energy" && !itemPlayable("me", x); });
-  var atkBroke = myE < hitCost(me) && (myE >= 2 || (!CL.tagged && fAlive(mp) && !(CL.round === 1 && CL.firstPlayer === "me")) || hasItem2);
-  var passOk = CL.round === 1 && CL.firstPlayer === "me" && myE < 2 && !hasItem2 && !CL.busy && !CL.over && !CL.placing && !CL.abilityPick;
+  var hasItem2 = CL.itemUsedRound !== CL.turnNo && CL.myHand.some(function(x){ return x !== "energy" && !itemPlayable("me", x); });
+  var atkBroke = myE < hitCost(me);
+
   var g = guideOn();
   var guide = "";
   if (g && !CL.over) {
@@ -3800,11 +3800,11 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
     if (CL.abilityPick) hint = "🏆 You won the grid! Tap one glowing ABILITY card to use it.";
     else if (CL.placing === "me") hint = "👇 You landed a hit! Tap a glowing square to place your ✖.";
     else if (CL.placing === "cpu") hint = "Watch out — the CPU is placing its ⭕.";
-    else if (!CL.busy && CL.round === 1 && CL.firstPlayer === "me") hint = "🏆 You won the flip — first move is DEFEND or an item only: no attack and no tag on Turn 1. Play a 🎴 item if you have one, and 🛡️ DEFEND. Striking unlocks next round.";
-    else if (!CL.busy && atkBroke) hint = "🔮 ATTACK is locked — it needs 2 Energy and you have " + myE + ". A PAID attack lands when you win the clash — and even on a TIE if they didn't block. No block = lost health. 🛡️ DEFEND (2 🔮), play an item, or 🔁 TAG while your pulls build Energy back up.";
-    else if (!CL.busy && myE < hitCost(me)) hint = "🔮 You can't pay for an attack (needs ×2) and have no other move — a free swing contests the clash, but the hit can't land. Your pulls rebuild Energy every round.";
-    else if (!CL.busy && CL.itemUsedRound !== CL.round && CL.myHand.length) hint = "\uD83C\uDCB4 Tap an item card to READ it, then \u25B6 PLAY it \u2014 ONE item per turn, and you can STILL \u2694\uFE0F ATTACK / \uD83D\uDEE1\uFE0F DEFEND / \uD83D\uDD01 TAG after. You draw 1 card every round.";
-    else if (!CL.busy) hint = "👉 Your move: ⚔️ ATTACK to clash (a landed hit costs 2 🔮) · 🛡️ DEFEND blocks a hit (costs 2 🔮) · 🔁 TAG swaps fighters · ⏭️ END TURN passes with no move. Powers fire once per game — tap any card to zoom in and read.";
+    else if (CL.turn === "cpu" && !CL.abilityPick) hint = "⭕ CPU's turn — it will attack, defend, tag, or end its turn. If you set a block on your turn, it's armed.";
+    else if (!CL.busy && CL.turnNo === 1 && CL.firstPlayer === "me") hint = "🏆 You won the flip — first move is DEFEND or an item only: no attack and no tag on Turn 1. Play a 🎴 item if you have one, and 🛡️ DEFEND. Striking unlocks next round.";
+    else if (!CL.busy && CL.turn === "me" && atkBroke) hint = "🔮 ATTACK is locked — it needs 2 Energy and you have " + myE + ". DEFEND needs 2 too. Play an item, 🔁 TAG, or ⏭️ END TURN while your pulls build Energy. Careful: if they attack on their turn and you didn't block, you lose health.";
+    else if (!CL.busy && CL.turn === "me" && CL.itemUsedRound !== CL.turnNo && CL.myHand.length) hint = "\uD83C\uDCB4 Tap an item card to READ it, then \u25B6 PLAY it \u2014 ONE item per turn, and you can STILL \u2694\uFE0F ATTACK / \uD83D\uDEE1\uFE0F DEFEND / \uD83D\uDD01 TAG after. You draw 1 card at the start of your turn.";
+    else if (!CL.busy && CL.turn === "me") hint = "👉 Your turn — ONE move: ⚔️ ATTACK (2 🔮) lands unless they blocked · 🛡️ DEFEND (2 🔮) arms a block for their turn · 🔁 TAG swaps · ⏭️ END TURN passes. Stars don't decide attacks — damage and blocks do.";
     if (CL.round >= 60 && !CL.abilityPick && CL.placing !== "me") hint = "⏰ SUDDEN DEATH RULES: every round BOTH active fighters take 1 damage — hit or miss, the clock burns whoever is in the fight. Win the race: land hits and finish them first. ❤️ Heals buy rounds · 🛡️ DEFEND blocks their hit (not the tick) · 🔁 TAG brings in a fresh fighter — the tick only burns the ACTIVE one.";
     if (hint) guide = '<div class="guidebar' + (CL.round >= 60 ? ' sd' : '') + '"><span>' + hint + '</span><button class="guideoff" data-guideoff="1">✕ TURN GUIDE OFF</button></div>';
   }
@@ -3818,9 +3818,9 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
     + abilityHTML()
     + turnBannerHTML()
     + '<div class="clashbtns">'
-    + '<button class="cbtn atk' + (phase && g && !atkBroke && !(CL.round === 1 && CL.firstPlayer === "me") ? ' guideglow' : '') + '" data-clashact="atk"' + (CL.busy || CL.over || atkBroke || (CL.round === 1 && CL.firstPlayer === "me") ? ' disabled' : '') + '>⚔️ ATTACK \uD83D\uDD2E\u00D7' + hitCost(me) + '</button>'
-    + '<button class="cbtn def' + (phase && g && atkBroke && energyCount("me") >= 2 ? ' guideglow' : '') + '" data-clashact="def"' + (CL.busy || CL.over || energyCount("me") < 2 ? ' disabled' : '') + '>🛡️ DEFEND \uD83D\uDD2E\u00D72</button>'
-    + '<button class="cbtn tag" data-clashact="tag"' + (CL.busy || CL.over || CL.tagged || !fAlive(mp) || (CL.round === 1 && CL.firstPlayer === "me") ? ' disabled' : '') + '>🔁 TAG</button>' + '<button class="cbtn def" data-clashact="pass"' + (CL.busy || CL.over ? ' disabled' : '') + '>⏭️ END TURN</button>' 
+    + '<button class="cbtn atk' + (phase && g && !atkBroke && !(CL.turnNo === 1 && CL.firstPlayer === "me") ? ' guideglow' : '') + '" data-clashact="atk"' + (CL.busy || CL.over || CL.turn !== "me" || atkBroke || (CL.turnNo === 1 && CL.firstPlayer === "me") ? ' disabled' : '') + '>⚔️ ATTACK \uD83D\uDD2E\u00D7' + hitCost(me) + '</button>'
+    + '<button class="cbtn def' + (phase && g && atkBroke && energyCount("me") >= 2 ? ' guideglow' : '') + '" data-clashact="def"' + (CL.busy || CL.over || CL.turn !== "me" || energyCount("me") < 2 ? ' disabled' : '') + '>🛡️ DEFEND \uD83D\uDD2E\u00D72</button>'
+    + '<button class="cbtn tag" data-clashact="tag"' + (CL.busy || CL.over || CL.turn !== "me" || CL.tagged || !fAlive(mp) || (CL.turnNo === 1 && CL.firstPlayer === "me") ? ' disabled' : '') + '>🔁 TAG</button>' + '<button class="cbtn def" data-clashact="pass"' + (CL.busy || CL.over || CL.turn !== "me" ? ' disabled' : '') + '>⏭️ END TURN</button>' 
     + '</div>'
     + '<button class="openbtn" data-clashquit="1" style="width:100%;margin-top:8px"' + (CL.busy ? ' disabled' : '') + '>Quit battle</button>'
     + (g ? '' : '<button class="openbtn" data-guideon="1" style="width:100%;margin-top:6px">❓ Turn guide on</button>'));
@@ -3828,17 +3828,19 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
 
 function cpuPlan(){
   var a = CL.cpu[CL.cpuActive], p = CL.cpu[1 - CL.cpuActive];
-  CL.cpuStance = "atk"; CL.cpuTagged = false;
+  var plan = { stance: "atk", tag: false };
   var r = Math.random();
-  var t1fp = CL.round === 1 && CL.firstPlayer === "cpu";
-  if (!t1fp && fAlive(p) && a.hits >= lifeOf(a) - 1 && p.hits === 0 && r < 0.22) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.cpuStance = "tag"; CL.lastTag = "cpu"; CL.log.push("🔁 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + "!"); return; }
-  if (energyCount("cpu") >= 2 && a.hits >= lifeOf(a) - 1 && r < 0.20) CL.cpuStance = "def";
-  else if (energyCount("cpu") >= 2 && r < 0.07) CL.cpuStance = "def";
-  if (CL.cpuStance === "atk" && !CL.cpuTagged && energyCount("cpu") < hitCost(CL.cpu[CL.cpuActive])) {
-    var pp = CL.cpu[1 - CL.cpuActive];
-    if (!t1fp && fAlive(pp) && hitCost(pp) <= energyCount("cpu") && Math.random() < 0.5) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.cpuStance = "tag"; CL.lastTag = "cpu"; CL.log.push("\uD83D\uDD01 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + " \u2014 saving energy!"); }
-    else if (energyCount("cpu") >= 2 && Math.random() < 0.45) { CL.cpuStance = "def"; CL.log.push("\uD83D\uDEE1\uFE0F CPU defends \u2014 collecting energy."); }
+  var t1fp = CL.turnNo === 1 && CL.firstPlayer === "cpu";
+  if (!t1fp && fAlive(p) && a.hits >= lifeOf(a) - 1 && p.hits === 0 && r < 0.22) plan = { stance: "tag", tag: true };
+  else if (t1fp) plan.stance = energyCount("cpu") >= 2 ? "def" : "pass";
+  else if (energyCount("cpu") >= 2 && a.hits >= lifeOf(a) - 1 && r < 0.20) plan.stance = "def";
+  else if (energyCount("cpu") >= 2 && r < 0.07) plan.stance = "def";
+  else if (energyCount("cpu") < hitCost(a)) {
+    if (!t1fp && fAlive(p) && hitCost(p) <= energyCount("cpu") && Math.random() < 0.5) plan = { stance: "tag", tag: true };
+    else if (energyCount("cpu") >= 2 && Math.random() < 0.45) plan.stance = "def";
+    else plan.stance = "pass";
   }
+  CL.plan = plan; CL.cpuStance = plan.stance; CL.cpuTagged = plan.tag;
 }
 function clashSleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
 function applyHit(side, dmg, target, targetStance, foe){
@@ -3852,116 +3854,158 @@ function applyHit(side, dmg, target, targetStance, foe){
   CL.log.push((side === "me" ? "\uD83D\uDCA5 Your " : "\uD83D\uDCA5 CPU's ") + fName(target) + " takes " + dmg + " DAMAGE!" + (target.hits >= lifeOf(target) ? " ELIMINATED!" : ""));
   return "hit";
 }
+function tryFire(f, foe){
+  if (!f || f.used.pwr) return false;
+  if (foe && foe.ci === 2 && !foe.used.pwr) { foe.used.pwr = 1; CL.log.push("👑 AUTHORITY! " + fName(foe) + " shuts off " + fName(f) + "'s " + POWERS[f.ci - 1].name + "!"); return false; }
+  f.used.pwr = 1; return true;
+}
+async function resolveAttack(atkSide, B){
+  var defSide = atkSide === "me" ? "cpu" : "me";
+  var A = atkSide === "me" ? CL.mine[CL.myActive] : CL.cpu[CL.cpuActive];
+  var D = defSide === "me" ? CL.mine[CL.myActive] : CL.cpu[CL.cpuActive];
+  var defStance = (defSide === "me" ? CL.myDef : CL.cpuDef) ? "def" : "atk";
+  CL.lastWin = atkSide;
+  var dmg = dmgOf(A) + (atkSide === "me" ? (CL.myBonus || 0) : (CL.cpuBonus || 0));
+  var tempKey = atkSide === "me" ? "myTemp" : "cpuTemp";
+  dmg += (CL[tempKey] || 0); CL[tempKey] = 0;
+  var marks = 1;
+  if (!A.used.pwr) {
+    if (A.ci === 7 && D.hits === 0) { if (tryFire(A, D)) { dmg *= 2; marks = 2; CL.log.push("⚾ HOME RUN! " + fName(A) + " deals DOUBLE damage to a full-life fighter!"); } }
+    else if (A.ci === 10) { if (tryFire(A, D)) { dmg += 2; CL.log.push("🌟 STAR POWER! " + fName(A) + " deals +2 damage!"); } }
+    else if (A.ci === 1 && CL.mine.concat(CL.cpu).some(function(f){ return fAlive(f) && f.hits === lifeOf(f) - 1; })) { if (tryFire(A, D)) { dmg += 1; CL.log.push("⏰ CLUTCH TIME! " + fName(A) + " deals +1 damage!"); } }
+    else if (A.ci === 9) { var aLife = (atkSide === "me" ? CL.mine : CL.cpu).reduce(function(s2, f){ return s2 + lifeOf(f) - f.hits; }, 0), dLife = (defSide === "me" ? CL.mine : CL.cpu).reduce(function(s2, f){ return s2 + lifeOf(f) - f.hits; }, 0); if (aLife < dLife && tryFire(A, D)) { dmg += 1; CL.log.push("📣 RALLY! " + fName(A) + " deals +1 damage!"); } }
+    else if (A.ci === 8 && CL.round === 1) { if (tryFire(A, D)) { dmg += 1; CL.log.push("⚡ FAST BREAK! " + fName(A) + " deals +1 damage!"); } }
+  }
+  if (defStance === "def") {
+    var hail = A.ci === 4 && tryFire(A, D);
+    if (hail) { CL.log.push("🏈 HAIL MARY! " + fName(A) + "'s attack breaks through the block!"); defStance = "atk"; if (defSide === "me") CL.myDef = false; else CL.cpuDef = false; }
+    else { var rb = applyHit(defSide, dmg, D, "def", A); CL.lastBlock = defSide; if (defSide === "me") CL.myDef = false; else CL.cpuDef = false; clashArena(); await clashSleep(500); return; }
+  }
+  if (D.ci === 5 && tryFire(D, A)) {
+    CL.log.push("🤝 NEGOTIATOR! " + fName(D) + " takes no damage — and places the grid mark himself!");
+    CL.lastBlock = defSide; sfx("ability");
+    await doMarks(defSide, 1, B);
+    return;
+  }
+  var execCut = false;
+  if (D.ci === 6 && !D.used.pwr && !(A.ci === 2 && !A.used.pwr)) { dmg = Math.max(0, dmg - 1); execCut = true; }
+  if (dmg <= 0) { if (execCut) { D.used.pwr = 1; CL.log.push("📋 FINE PRINT! The hit is reduced to nothing — no damage, no mark."); } CL.lastBlock = defSide; clashArena(); await clashSleep(500); return; }
+  var res = applyHit(defSide, dmg, D, "atk", A);
+  if (res === "hit") {
+    if (execCut) { D.used.pwr = 1; CL.log.push("📋 FINE PRINT — the hit deals 1 less damage."); }
+    CL.lastHit = defSide;
+    clashArena();
+    await clashSleep(600); if (CL !== B) return;
+    await doMarks(atkSide, marks, B);
+  } else {
+    CL.lastBlock = defSide;
+    clashArena();
+    await clashSleep(500);
+  }
+}
 async function clashRound(stance){
-  if (!CL || CL.busy || CL.over) return;
+  if (!CL || CL.busy || CL.over || CL.turn !== "me" || CL.placing || CL.abilityPick) return;
   var B = CL;
-  if (stance === "tag") {
-    if (CL.tagged || !fAlive(CL.mine[1 - CL.myActive])) return;
-    CL.myActive = 1 - CL.myActive; CL.tagged = true; sfx("tag");
-    CL.log.push("🔁 You tag in " + fName(CL.mine[CL.myActive]) + " — that's your move this turn.");
-  }
-  CL.busy = true; CL.lastHit = null; CL.lastWin = null; CL.lastBlock = null; CL.lastDmg = null; CL.lastKO = null; CL.lastTag = null; if (stance === "tag") CL.lastTag = "me"; sfx("charge");
-  if (stance === "def") {
-    if (energyCount("me") >= 2) { payEnergy("me", 2); CL.log.push("\uD83D\uDEE1\uFE0F You pay 2 \uD83D\uDD2E Energy to DEFEND."); }
-    else { stance = "atk"; CL.log.push("\uD83D\uDEAB Not enough \uD83D\uDD2E Energy to DEFEND (needs 1) \u2014 you attack instead!"); }
-  }
-  if (stance === "pass") CL.log.push("⏭️ You end your turn — no move. Next player goes.");
+  var me = CL.mine[CL.myActive];
+  if (stance === "tag" && (CL.tagged || !fAlive(CL.mine[1 - CL.myActive]))) return;
+  if (stance === "tag" && CL.turnNo === 1 && CL.firstPlayer === "me") return;
+  if (stance === "def" && energyCount("me") < 2) return;
+  if (stance === "atk" && CL.turnNo === 1 && CL.firstPlayer === "me") return;
+  if (stance === "atk" && !CL.myFreeHit && energyCount("me") < hitCost(me)) return;
+  CL.busy = true; CL.lastHit = null; CL.lastWin = null; CL.lastBlock = null; CL.lastDmg = null; CL.lastKO = null; CL.lastTag = null;
   CL.pulledMe = []; CL.pulledCpu = [];
-  CL.myPaid = false;
-  if (stance === "atk") {
-    if (CL.myFreeHit) { CL.myFreeHit = false; CL.myPaid = true; CL.log.push("🎟️ FREE HIT TOKEN — your attack costs 0 Energy!"); }
-    else if (energyCount("me") >= hitCost(CL.mine[CL.myActive])) { payEnergy("me", hitCost(CL.mine[CL.myActive])); CL.myPaid = true; CL.log.push("⚔️ You pay " + hitCost(CL.mine[CL.myActive]) + " 🔮 Energy to ATTACK — discarded, win or lose."); }
-    else CL.log.push("⚔️ You attack without paying (needs " + hitCost(CL.mine[CL.myActive]) + " 🔮) — your hit can't land this round.");
+  if (stance === "tag") {
+    CL.myActive = 1 - CL.myActive; CL.tagged = true; CL.lastTag = "me"; sfx("tag");
+    CL.log.push("🔁 You tag in " + fName(CL.mine[CL.myActive]) + " — that's your move this turn.");
+    clashArena(); await clashSleep(500); if (CL !== B) return;
+    return endTurn(B);
   }
+  if (stance === "def") {
+    payEnergy("me", 2); CL.myDef = true; sfx("charge");
+    CL.log.push("🛡️ You pay 2 🔮 Energy and set your guard — your block is armed for the CPU's turn.");
+    clashArena(); await clashSleep(500); if (CL !== B) return;
+    return endTurn(B);
+  }
+  if (stance === "pass") {
+    CL.log.push("⏭️ You end your turn — no move. Next player goes.");
+    clashArena(); await clashSleep(400); if (CL !== B) return;
+    return endTurn(B);
+  }
+  if (CL.myFreeHit) { CL.myFreeHit = false; CL.log.push("🎟️ FREE HIT TOKEN — your attack costs 0 Energy!"); }
+  else { payEnergy("me", hitCost(me)); CL.log.push("⚔️ You pay " + hitCost(me) + " 🔮 Energy to ATTACK."); }
+  sfx("charge");
+  clashArena();
+  await clashSleep(650); if (CL !== B) return;
+  await resolveAttack("me", B);
+  if (CL !== B || CL.over) return;
+  return endTurn(B);
+}
+async function endTurn(B){
+  if (CL !== B || CL.over) return;
+  CL.turn = null;
+  CL.busy = false;
+  if (clashCheckEnd()) return;
+  clashArena();
+  await clashSleep(650);
+  if (CL !== B || CL.over) return;
+  beginTurn(CL.turnNo % 2 === 1 ? (CL.firstPlayer === "me" ? "cpu" : "me") : CL.firstPlayer, B);
+}
+function beginTurn(side, B){
+  if (!CL || CL.over) return;
+  CL.turn = side; CL.turnNo = (CL.turnNo || 0) + 1;
+  if (side === "me") { CL.myDef = false; CL.scoutText = null; } else CL.cpuDef = false;
+  CL.itemUsedRound = 0; CL.cpuItemRound = 0; CL.tagged = false;
+  if (side === CL.firstPlayer && CL.turnNo > 1) {
+    CL.round++;
+    if (CL.round === 2) CL.mine.concat(CL.cpu).forEach(function(f){ if (f.ci === 8 || f.ci === 11) f.used.pwr = 1; });
+    if (CL.round >= 60) {
+      CL.log.push(CL.round === 60 ? "⏰⏰ SUDDEN DEATH! From now on BOTH active fighters take 1 damage at the start of every round — finish them before the clock finishes you!" : "⏰ SUDDEN DEATH — both active fighters take 1 damage.");
+      var sdm = CL.mine[CL.myActive], sdc = CL.cpu[CL.cpuActive];
+      sdm.hits = Math.min(lifeOf(sdm), sdm.hits + 1); sdc.hits = Math.min(lifeOf(sdc), sdc.hits + 1);
+      if (clashCheckEnd()) return;
+    } else CL.log.push("🎴 Round " + CL.round + "!");
+  }
+  if (CL.turnNo > 2) drawItems(side, 1);
+  clashArena();
+  if (side === "cpu") cpuTurn(B);
+}
+async function cpuTurn(B){
+  if (CL !== B || CL.over) return;
+  CL.busy = true;
+  clashArena();
+  await clashSleep(900); if (CL !== B || CL.over) return;
+  cpuUseItem();
+  clashArena();
+  await clashSleep(450); if (CL !== B || CL.over) return;
   if (!CL.planned) cpuPlan();
   CL.planned = false;
-  if (CL.round === 1 && CL.firstPlayer === "cpu" && CL.cpuStance === "atk") CL.cpuStance = energyCount("cpu") >= 2 ? "def" : "pass";
-  cpuUseItem();
-  if (CL.cpuStance === "def") {
-    if (energyCount("cpu") >= 2) { payEnergy("cpu", 2); }
-    else { var t1c = CL.round === 1 && CL.firstPlayer === "cpu"; CL.cpuStance = t1c ? "pass" : "atk"; CL.log.push(t1c ? "\uD83D\uDEAB CPU can't afford to DEFEND \u2014 it passes." : "\uD83D\uDEAB CPU can't afford to DEFEND \u2014 it attacks instead!"); }
+  var plan = CL.plan || { stance: "atk", tag: false };
+  CL.plan = null;
+  CL.lastHit = null; CL.lastWin = null; CL.lastBlock = null; CL.lastDmg = null; CL.lastKO = null; CL.lastTag = null;
+  CL.pulledMe = []; CL.pulledCpu = [];
+  if (plan.tag) {
+    CL.cpuActive = 1 - CL.cpuActive; CL.lastTag = "cpu"; sfx("tag");
+    CL.log.push("🔁 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + "!");
+    clashArena(); await clashSleep(550); if (CL !== B) return;
+    return endTurn(B);
   }
-  CL.cpuPaid = false;
-  if (CL.cpuStance === "atk") {
-    if (CL.cpuFreeHit) { CL.cpuFreeHit = false; CL.cpuPaid = true; }
-    else if (energyCount("cpu") >= hitCost(CL.cpu[CL.cpuActive])) { payEnergy("cpu", hitCost(CL.cpu[CL.cpuActive])); CL.cpuPaid = true; }
+  if (plan.stance === "def") {
+    if (energyCount("cpu") >= 2) { payEnergy("cpu", 2); CL.cpuDef = true; }
+    else { CL.log.push("⏭️ CPU ends its turn."); }
+    clashArena(); await clashSleep(550); if (CL !== B) return;
+    return endTurn(B);
   }
-  if (CL.over) return;
+  if (plan.stance === "pass") { CL.log.push("⏭️ CPU ends its turn."); clashArena(); await clashSleep(450); if (CL !== B) return; return endTurn(B); }
+  var cp = CL.cpu[CL.cpuActive];
+  if (CL.cpuFreeHit) { CL.cpuFreeHit = false; CL.log.push("🎟️ CPU uses a FREE HIT TOKEN!"); }
+  else if (energyCount("cpu") >= hitCost(cp)) { payEnergy("cpu", hitCost(cp)); CL.log.push("⚔️ CPU pays " + hitCost(cp) + " 🔮 Energy to ATTACK."); }
+  else { CL.log.push("⏭️ CPU can't afford to attack — it ends its turn."); clashArena(); await clashSleep(450); if (CL !== B) return; return endTurn(B); }
+  sfx("charge");
   clashArena();
-  var me = CL.mine[CL.myActive], cp = CL.cpu[CL.cpuActive];
-  var myEff = effStar(me, cp, CL.mine, CL.cpu, stance, CL.cpuStance);
-  var cpEff = effStar(cp, me, CL.cpu, CL.mine, CL.cpuStance, stance);
-  var myGrid = ttBonus(CL.grid, "X"), cpGrid = ttBonus(CL.grid, "O");
-  var myTotal = myEff.star + myGrid + (CL.myBonus || 0) + (CL.myTemp || 0);
-  var cpTotal = cpEff.star + cpGrid + (CL.cpuBonus || 0) + (CL.cpuTemp || 0);
-    await clashSleep(650);
-  if (CL !== B) return;
-  CL.myTemp = 0; CL.cpuTemp = 0;
-  var nums = $("clashNums");
-  if (nums) nums.innerHTML = '<b class="me">' + myTotal + '</b><span>★ ' + myEff.star + (myGrid ? ' + ⚡grid 1' : '') + (CL.myBonus ? ' + ⭐ ' + CL.myBonus : '') + '' + '</span><i>vs</i><span>★ ' + cpEff.star + (cpGrid ? ' + ⚡grid 1' : '') + (CL.cpuBonus ? ' + ⭐ ' + CL.cpuBonus : '') + '' + '</span><b class="cpu">' + cpTotal + '</b>';
-  myEff.notes.concat(cpEff.notes).forEach(function(n){ CL.log.push(n); });
-  [me, cp].forEach(function(f){ if (f._fired) { f._fired = false; if (!f.used.pwr) { f.used.pwr = 1; CL.log.push("⚡ " + fName(f) + "'s " + POWERS[f.ci - 1].name + " is used up — once per game."); } } });
-  if (CL._intelOp) { CL._intelOp.used.pwr = 1; CL.log.push("⚡ INTEL is used up — once per game."); CL._intelOp = null; }
-  if (myGrid) CL.log.push("⚡ GRID THREAT +1★ — your two-in-a-row is live!");
-  if (cpGrid) CL.log.push("⚡ CPU GRID THREAT +1★!");
-  await clashSleep(950);
-  if (CL !== B) return;
-  var loser = null, slugger = false, tied = false;
-  var margin = Math.abs(myTotal - cpTotal);
-  if (myTotal > cpTotal) { loser = "cpu"; if (me.ci === 7 && margin >= 3 && powerActive(me, cp, stance)) { slugger = true; me.used.pwr = 1; CL.log.push("⚾ HOME RUN! Won by 3+ — DOUBLE DAMAGE!"); } }
-  else if (cpTotal > myTotal) { loser = "me"; if (cp.ci === 7 && margin >= 3 && powerActive(cp, me, CL.cpuStance)) { slugger = true; cp.used.pwr = 1; CL.log.push("⚾ CPU HOME RUN! DOUBLE DAMAGE!"); } }
-  else {
-    if (me.ci === 5 && powerActive(me, cp, stance)) { loser = "cpu"; me.used.pwr = 1; CL.log.push("🤝 TIE — but your NEGOTIATOR takes the round!"); }
-    else if (cp.ci === 5 && powerActive(cp, me, CL.cpuStance)) { loser = "me"; cp.used.pwr = 1; CL.log.push("🤝 TIE — CPU's NEGOTIATOR takes the round!"); }
-    else { var myLand = stance === "atk" && CL.myPaid && !(CL.round === 1 && CL.firstPlayer === "me"), cpuLand = CL.cpuStance === "atk" && CL.cpuPaid && !(CL.round === 1 && CL.firstPlayer === "cpu"), tieHit = false;
-      if (cpuLand) { var tr1 = applyHit("me", dmgOf(cp), me, stance, cp); if (tr1 === "hit") { CL.lastHit = "me"; tieHit = true; } else CL.lastBlock = "me"; }
-      if (myLand) { var tr2 = applyHit("cpu", dmgOf(me), cp, CL.cpuStance, me); if (tr2 === "hit") { CL.lastHit = "cpu"; tieHit = true; } else CL.lastBlock = "cpu"; }
-      var teM = tieEnergyDraw("me"), teC = tieEnergyDraw("cpu"); CL.log.push("🤝 Clash tied — " + (tieHit ? "but the paid attacks still LAND: no block, so the attackers draw blood! No squares on a tie." : "no hits, no squares.") + (teM && teC ? " Both players pull +1 🔮 Energy from their decks — decks reshuffled!" : teM ? " You pull +1 🔮 Energy from your deck — deck reshuffled!" : teC ? " CPU pulls +1 🔮 Energy from its deck — deck reshuffled!" : " No Energy left in the decks!")); tied = true; }
-  }
-  if (loser) {
-    var loseF = loser === "me" ? me : cp, winF = loser === "me" ? cp : me;
-    var loseStance = loser === "me" ? stance : CL.cpuStance;
-    if (loseF.ci === 4 && !loseF.used.hail && powerActive(loseF, winF, loseStance)) {
-      loseF.used.hail = 1; loseF.used.pwr = 1;
-      CL.log.push("🏈 HAIL MARY! " + fName(loseF) + " flips the round!");
-      loser = loser === "me" ? "cpu" : "me"; slugger = false;
-      loseF = loser === "me" ? me : cp; winF = loser === "me" ? cp : me;
-      loseStance = loser === "me" ? stance : CL.cpuStance;
-    }
-    var winSide = loser === "me" ? "cpu" : "me";
-    var winStance = winSide === "me" ? stance : CL.cpuStance;
-    if (winStance === "item" || winStance === "tag" || winStance === "pass") {
-      CL.log.push((winStance === "tag" ? "🔁 " : winStance === "pass" ? "⏭️ " : "🎴 ") + (winSide === "me" ? "You " : "CPU ") + (winStance === "tag" ? "tagged this turn" : winStance === "pass" ? "passed this turn" : "used an item this turn") + " — no hit, so no grid square. Squares come only from landed hits.");
-      CL.lastHit = null; CL.lastWin = winSide;
-    } else if (CL.round === 1 && winSide === CL.firstPlayer) {
-      CL.log.push("\uD83D\uDEAB " + (winSide === "me" ? "You go" : "CPU goes") + " first \u2014 no strike on Turn 1! No hit, so no grid square.");
-      CL.lastHit = null; CL.lastWin = loser;
-    } else {
-    var landedHits = 0, res = "";
-    var dmg = dmgOf(winF) * (slugger ? 2 : 1);
-    var paidKey = winSide === "me" ? "myPaid" : "cpuPaid";
-    if (loseStance === "def") { res = applyHit(loser, dmg, loseF, loseStance, winF); }
-    else if (!CL[paidKey]) { CL.log.push("\u2728 " + fName(winF) + "'s hit FIZZLES \u2014 the attack wasn't paid for! (needs \u00D7" + hitCost(winF) + " \uD83D\uDD2E Energy)"); res = "fizzle"; }
-    else {
-      res = applyHit(loser, dmg, loseF, loseStance, winF);
-      if (res === "hit") landedHits = slugger ? 2 : 1;
-    }
-    var landed = landedHits > 0;
-    CL.lastHit = landed ? loser : null; CL.lastBlock = (!landed && (res === "def" || res === "save")) ? loser : null;
-    CL.lastWin = winSide;
-    if (landed) { await doMarks(winSide, landedHits, B); if (CL !== B) return; }
-    else if (res === "def") { CL.log.push("\u2716 Blocked — no hit landed, so no grid square. Squares come only from landed hits."); }
-    else if (res === "fizzle") { CL.log.push("\u2716 Fizzle — no hit landed, so no grid square. Squares come only from landed hits."); }
-    }
-  }
-  else if (tied) { /* tied rounds earn no squares — hits only */ }
-  await clashSleep(450);
-  if (CL !== B) return;
-  if (CL.round >= 60) { CL.log.push(CL.round === 60 ? "⏰⏰ SUDDEN DEATH ROUND! From now on BOTH active fighters take 1 damage EVERY round — heal, defend, tag, and finish them before the clock finishes you!" : "⏰ SUDDEN DEATH — the ring closes in! Both fighters take 1 damage."); var sdm = CL.mine[CL.myActive], sdc = CL.cpu[CL.cpuActive]; sdm.hits = Math.min(lifeOf(sdm), sdm.hits + 1); sdc.hits = Math.min(lifeOf(sdc), sdc.hits + 1); }
-  var ended = clashCheckEnd();
-  if (CL.round === 1) { CL.mine.concat(CL.cpu).forEach(function(f){ if (f.ci === 8 || f.ci === 11) f.used.pwr = 1; }); }
-  CL.round++; CL.tagged = false; CL.busy = false;
-  if (!ended) { drawItems("me", 1); drawItems("cpu", 1); CL.scoutText = null; CL.log.push("\uD83C\uDCB4 +1 card each \u2014 Round " + CL.round + "!"); clashArena(); }
+  await clashSleep(650); if (CL !== B) return;
+  await resolveAttack("cpu", B);
+  if (CL !== B || CL.over) return;
+  return endTurn(B);
 }
 function clashCheckEnd(){
   [["mine", "myActive"], ["cpu", "cpuActive"]].forEach(function(pr){
