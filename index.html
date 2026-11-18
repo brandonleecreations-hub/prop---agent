@@ -4902,7 +4902,7 @@ function renderAvatarGrid(){
     im.src = u; im.alt = "Character " + n; im.loading = "lazy";
     im.style.cssText = "width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;cursor:pointer;border:3px solid " + (cur === u ? "#7C3AED" : "rgba(255,255,255,.08)");
     im.addEventListener("click", function(){
-      profile.char = u; profile.avatar = u; lsSet("pa_profile", profile);
+      profile.char = u; profile.avatar = u; profile.featured = CHARNAMES[n-1] + " · " + TIERS[charTierIdx(n)].name + " Card"; lsSet("pa_profile", profile); var af = $("agFeatured"); if (af) af.textContent = profile.featured;
       var ai = $("agAvatarImg"); if (ai) { ai.src = u; ai.style.display = ""; } applyAvatarFrame(ai, profile.featured);
       refreshAgentBtn(); renderBoard(); renderAvatarGrid(); cloudSave();
     });
