@@ -555,6 +555,12 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .itemcard .iic{font-size:17px}
 .turnbanner{font-size:13px;padding:4px}
 .clashlog{font-size:11px}
+.side{position:relative}
+.cpuflywrap{position:absolute;top:-8px;right:4px;display:flex;gap:4px;z-index:6;pointer-events:none}
+.cpufly{display:inline-flex;flex-direction:column;align-items:center;width:32px;padding:2px 0 1px;border-radius:5px;background:linear-gradient(160deg,#4a1060,#1d0b33);border:1px solid #f5b942;box-shadow:0 4px 10px rgba(0,0,0,.5);animation:cpuflyA 1.6s ease forwards}
+.cpufly i{font-style:normal;font-size:13px;line-height:1}
+.cpufly span{font-size:6px;font-weight:800;color:#fde68a;letter-spacing:.2px;text-align:center;line-height:1.1}
+@keyframes cpuflyA{0%{transform:translateY(-16px) scale(.6);opacity:0}18%{transform:translateY(0) scale(1.06);opacity:1}32%{transform:translateY(2px) scale(1)}72%{opacity:1}100%{transform:translateY(12px) scale(.85);opacity:0}}
 .pullrow{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:2px 0 4px}
 .pullrow.cpu{justify-content:flex-end;margin:2px 0 0}
 .pulllab{font-size:8.5px;font-weight:900;letter-spacing:1px;color:#f5b942}
@@ -3621,8 +3627,8 @@ function buildDeck(){ var d = []; ITEMS.forEach(function(it){ d.push(it.id, it.i
 function energyCount(side){ var hand = side === "me" ? CL.myHand : CL.cpuHand; return hand.filter(function(id){ return id === "energy"; }).length; }
 function itemCount(side){ var hand = side === "me" ? CL.myHand : CL.cpuHand; return hand.filter(function(id){ return id !== "energy"; }).length; }
 function payEnergy(side, n){ var hand = side === "me" ? CL.myHand : CL.cpuHand, pile = side === "me" ? CL.myPile : CL.cpuPile; for (var i = 0; i < n; i++) { var ix = hand.indexOf("energy"); if (ix < 0) return false; hand.splice(ix, 1); pile.push("energy"); } return true; }
-function tieEnergyDraw(side){ if (!CL) return false; var deck = side === "me" ? CL.myDeck : CL.cpuDeck, hand = side === "me" ? CL.myHand : CL.cpuHand, pile = side === "me" ? CL.myPile : CL.cpuPile; var ix = deck.indexOf("energy"); if (ix < 0 && pile.length) { while (pile.length) deck.push(pile.pop()); ix = deck.indexOf("energy"); } if (ix < 0) return false; deck.splice(ix, 1); hand.push("energy"); for (var s = deck.length - 1; s > 0; s--) { var r = Math.floor(Math.random() * (s + 1)); var tmp = deck[s]; deck[s] = deck[r]; deck[r] = tmp; } if (side === "me") { CL.pulledMe = (CL.pulledMe || []).concat(["energy"]); sfx("shuffle"); } else CL.pulledCpu = (CL.pulledCpu || []).concat(["energy"]); return true; }
-function drawItems(side, n){ if (!CL) return; var deck = side === "me" ? CL.myDeck : CL.cpuDeck, hand = side === "me" ? CL.myHand : CL.cpuHand, pile = side === "me" ? CL.myPile : CL.cpuPile, drew = 0, got = []; for (var i = 0; i < n; i++) { if (!deck.length && pile.length) { while (pile.length) deck.push(pile.pop()); for (var s = deck.length - 1; s > 0; s--) { var r = Math.floor(Math.random() * (s + 1)); var tmp = deck[s]; deck[s] = deck[r]; deck[r] = tmp; } CL.log.push("🔀 " + (side === "me" ? "Your" : "CPU's") + " discard pile shuffles back into the deck!"); if (side === "me") sfx("shuffle"); } if (!deck.length) break; var c = deck.pop(); hand.push(c); got.push(c); drew++; } if (drew > 0) { if (side === "me") { CL.drawPop = (CL.drawPop || 0) + drew; CL.lastDrawn = got; CL.pulledMe = (CL.pulledMe || []).concat(got); } else CL.pulledCpu = (CL.pulledCpu || []).concat(got); } }
+function tieEnergyDraw(side){ if (!CL) return false; var deck = side === "me" ? CL.myDeck : CL.cpuDeck, hand = side === "me" ? CL.myHand : CL.cpuHand, pile = side === "me" ? CL.myPile : CL.cpuPile; var ix = deck.indexOf("energy"); if (ix < 0 && pile.length) { while (pile.length) deck.push(pile.pop()); ix = deck.indexOf("energy"); } if (ix < 0) return false; deck.splice(ix, 1); hand.push("energy"); for (var s = deck.length - 1; s > 0; s--) { var r = Math.floor(Math.random() * (s + 1)); var tmp = deck[s]; deck[s] = deck[r]; deck[r] = tmp; } if (side === "me") { CL.pulledMe = (CL.pulledMe || []).concat(["energy"]); sfx("shuffle"); } else { CL.pulledCpu = (CL.pulledCpu || []).concat(["energy"]); CL.cpuDrawn = (CL.cpuDrawn || []).concat(["energy"]); } return true; }
+function drawItems(side, n){ if (!CL) return; var deck = side === "me" ? CL.myDeck : CL.cpuDeck, hand = side === "me" ? CL.myHand : CL.cpuHand, pile = side === "me" ? CL.myPile : CL.cpuPile, drew = 0, got = []; for (var i = 0; i < n; i++) { if (!deck.length && pile.length) { while (pile.length) deck.push(pile.pop()); for (var s = deck.length - 1; s > 0; s--) { var r = Math.floor(Math.random() * (s + 1)); var tmp = deck[s]; deck[s] = deck[r]; deck[r] = tmp; } CL.log.push("🔀 " + (side === "me" ? "Your" : "CPU's") + " discard pile shuffles back into the deck!"); if (side === "me") sfx("shuffle"); } if (!deck.length) break; var c = deck.pop(); hand.push(c); got.push(c); drew++; } if (drew > 0) { if (side === "me") { CL.drawPop = (CL.drawPop || 0) + drew; CL.lastDrawn = got; CL.pulledMe = (CL.pulledMe || []).concat(got); } else { CL.pulledCpu = (CL.pulledCpu || []).concat(got); CL.cpuDrawn = (CL.cpuDrawn || []).concat(got); } } }
 function itemPlayable(side, id){
   var mine = side === "me";
   var myPair = mine ? CL.mine : CL.cpu, foePair = mine ? CL.cpu : CL.mine;
@@ -3757,7 +3763,8 @@ function clashArena(){
 var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
   var cp = CL.cpu[CL.cpuActive], cpp = CL.cpu[1 - CL.cpuActive];
   var logHtml = CL.log.slice(-2).map(function(l){ return '<div class="clashlog">' + l + '</div>'; }).join("");
-  var cpuPull = (CL.pulledCpu && CL.pulledCpu.length) ? '<div class="pullrow cpu"><span class="pulllab">⬇️ CPU PULLED</span>' + CL.pulledCpu.map(function(id){ var it3 = id === "energy" ? { icon: "🔮", name: "ENERGY" } : ITEM_MAP[id]; return it3 ? '<span class="pullmini"><i>' + it3.icon + '</i><span>' + it3.name + '</span></span>' : ""; }).join("") + '</div>' : '';
+  var cpuFly = (CL.cpuDrawn && CL.cpuDrawn.length) ? '<div class="cpuflywrap">' + CL.cpuDrawn.map(function(id){ var it3 = id === "energy" ? { icon: "🔮", name: "ENERGY" } : ITEM_MAP[id]; return it3 ? '<span class="cpufly"><i>' + it3.icon + '</i><span>' + it3.name + '</span></span>' : ""; }).join("") + '</div>' : '';
+  CL.cpuDrawn = null;
   var intel = "";
   if (!CL.busy && !CL.over && me.ci === 3 && !me.used.pwr && !(cp.ci === 2 && !cp.used.pwr) && CL.grid.indexOf("") >= 0) {
     var want = ttPick(CL.grid, "O");
@@ -3788,7 +3795,7 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
   var phase = !CL.busy && !CL.over && !CL.placing && !CL.abilityPick;
   clashPanel('<div class="clashround">' + (CL.mode === "ladder" ? '🏆 BOSS ' + CL.boss + ' · ' : '') + 'ROUND ' + CL.round + (CL.round >= 60 ? ' · <span style="color:#ff6b6b">⏰ SUDDEN DEATH</span>' : '') + '</div>'
     + guide
-    + '<div class="field3d' + (CL.lastHit ? ' shakehit' : '') + '">' + turnSplashHTML() + '<div class="side cpu"><div class="sidetag">CPU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("cpu") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("cpu") + ' \u00B7 DECK ' + CL.cpuDeck.length + '</div><div class="frow">' + fighterHTML(cp, true, cpExtra, CL.lastHit === "cpu" ? "fist" : (CL.lastBlock === "cpu" ? "shield" : "")) + fighterHTML(cpp, false, "") + '</div>' + cpuPull + '</div>'
+    + '<div class="field3d' + (CL.lastHit ? ' shakehit' : '') + '">' + turnSplashHTML() + '<div class="side cpu"><div class="sidetag">CPU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("cpu") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("cpu") + ' \u00B7 DECK ' + CL.cpuDeck.length + '</div><div class="frow">' + fighterHTML(cp, true, cpExtra, CL.lastHit === "cpu" ? "fist" : (CL.lastBlock === "cpu" ? "shield" : "")) + fighterHTML(cpp, false, "") + '</div>' + cpuFly + '</div>'
     + '<div class="clashmid"><span class="vsbadge">VS</span><div class="zonelab">CLASH GRID · 3 IN A ROW = ABILITY</div>' + ttHTML() + '<div class="clashnums" id="clashNums"></div>' + intel + scoutHtml + logHtml + '</div>'
     + '<div class="side me"><div class="sidetag">YOU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("me") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("me") + '</div><div class="frow">' + fighterHTML(me, true, meExtra, CL.lastHit === "me" ? "fist" : (CL.lastBlock === "me" ? "shield" : "")) + fighterHTML(mp, false, "") + '</div></div></div>'
     + itemHTML()
