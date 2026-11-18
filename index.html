@@ -2122,6 +2122,29 @@ function renderLive(){
     if (setHtml(lc, html)) lc.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
   });
 }
+var gcRosterCache = {}, gcRosterFetching = {};
+function gcFetchRosters(lg, cs, key, s){
+  gcRosterFetching[key] = 1;
+  var jobs = cs.map(function(c){
+    var tid = c.team && c.team.id; var tname = (c.team && (c.team.displayName || c.team.shortDisplayName)) || "";
+    if (!tid) return Promise.resolve([]);
+    return fetchJson(ESPN + lg.sport + "/" + lg.league + "/teams/" + tid + "/roster").then(function(r){
+      var out = [];
+      ((r && r.athletes) || []).forEach(function(e){
+        var list = e && e.items ? e.items : [e];
+        list.forEach(function(a){ var nm = a && (a.displayName || (a.athlete && a.athlete.displayName)); if (nm) out.push({ln: lastNameOf(nm), team: tname}); });
+      });
+      return out;
+    }).catch(function(){ return null; });
+  });
+  Promise.all(jobs).then(function(rs){
+    delete gcRosterFetching[key];
+    if (rs.indexOf(null) > -1) return;
+    var all = []; rs.forEach(function(r){ all = all.concat(r); });
+    gcRosterCache[key] = all;
+    if (window._openGame && String(window._openGame.eventId).split(":").pop() === key) renderGameProps(lg, s);
+  });
+}
 function renderGameProps(lg, s){
   var box = $("gameProps"); if (!box) return;
   var comp = (s.header && s.header.competitions || [])[0] || {};
@@ -2138,6 +2161,10 @@ function renderGameProps(lg, s){
     var names = {}, teamNames = {};
     try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ (tp.athletes||[]).forEach(function(a){ if (a.athlete && a.athlete.displayName) names[lastNameOf(a.athlete.displayName)] = 1; }); }); } catch(e){}
     try { (s.rosters || []).forEach(function(rt){ (rt.athletes || []).forEach(function(a){ var an = a.athlete && a.athlete.displayName; if (an) names[lastNameOf(an)] = 1; }); }); } catch(e){}
+    var gcKey = String(comp.id || "");
+    var gcCached = gcRosterCache[gcKey];
+    if (gcCached) gcCached.forEach(function(en){ names[en.ln] = 1; });
+    if (!Object.keys(names).length && cs.length === 2 && cs[0].team && cs[0].team.id && cs[1].team && cs[1].team.id && !gcCached && !gcRosterFetching[gcKey]) gcFetchRosters(lg, cs, gcKey, s);
     cs.forEach(function(c){ if (c.team){ if (c.team.displayName) teamNames[c.team.displayName.toLowerCase()] = 1; if (c.team.shortDisplayName) teamNames[c.team.shortDisplayName.toLowerCase()] = 1; } });
     var gstart = Date.parse(comp.date || "");
     var mset = {};
@@ -2153,12 +2180,13 @@ function renderGameProps(lg, s){
       if (names[lastNameOf(p.player)]) return true;
       return false;
     });
-    if (!hits.length){ box.innerHTML = head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'; return; }
+    if (!hits.length){ box.innerHTML = head + (gcRosterFetching[gcKey] ? '<p class="empty">Loading player props\u2026</p>' : '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'); return; }
     var gs = sortGroups(playerGroups(hits), "pct");
     /* Compact rows organized by team (Brandon 2026-11-17): small player
        rows under a team header; tap a player for all their props. */
     var teamOf = {};
     try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ var tn = (tp.team && (tp.team.displayName || tp.team.shortDisplayName)) || ""; (tp.athletes || []).forEach(function(a){ if (a.athlete && a.athlete.displayName) teamOf[lastNameOf(a.athlete.displayName)] = tn; }); }); } catch(e){}
+    if (gcCached) gcCached.forEach(function(en){ if (!teamOf[en.ln]) teamOf[en.ln] = en.team; });
     var compTeams = cs.map(function(c){ return c.team ? {name: c.team.displayName || c.team.shortDisplayName || "", away: c.homeAway === "away", logo: logoUrl(c)} : null; }).filter(function(x){ return x && x.name; });
     compTeams.sort(function(a, b){ return (b.away ? 1 : 0) - (a.away ? 1 : 0); });
     var buckets = compTeams.map(function(t){ return {name: t.name, logo: t.logo, groups: []}; });
