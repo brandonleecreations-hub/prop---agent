@@ -3766,7 +3766,7 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
     if (CL.abilityPick) hint = "🏆 You won the grid! Tap one glowing ABILITY card to use it.";
     else if (CL.placing === "me") hint = "👇 You landed a hit! Tap a glowing square to place your ✖.";
     else if (CL.placing === "cpu") hint = "Watch out — the CPU is placing its ⭕.";
-    else if (!CL.busy && CL.round === 1 && CL.firstPlayer === "me") hint = "🏆 You won the flip — but NO strike on Turn 1: play a 🎴 item, 🛡️ DEFEND, or 🔁 TAG. Striking unlocks next round.";
+    else if (!CL.busy && CL.round === 1 && CL.firstPlayer === "me") hint = "🏆 You won the flip — first move is DEFEND or an item only: no attack and no tag on Turn 1. Play a 🎴 item if you have one, and 🛡️ DEFEND. Striking unlocks next round.";
     else if (!CL.busy && CL.itemUsedRound !== CL.round && CL.myHand.length) hint = "\uD83C\uDCB4 Tap an item card to READ it, then \u25B6 PLAY it \u2014 ONE item per turn, and you can STILL \u2694\uFE0F ATTACK / \uD83D\uDEE1\uFE0F DEFEND / \uD83D\uDD01 TAG after. You draw 1 card every round.";
     else if (!CL.busy && energyCount("me") < hitCost(me)) hint = "\uD83D\uDD2E Not enough Energy cards for " + fName(me) + " (needs \u00D7" + hitCost(me) + ") \u2014 \uD83D\uDEE1\uFE0F DEFEND (1 \uD83D\uDD2E), play an item, or \uD83D\uDD01 TAG \u2014 an unpaid attack can\'t land. You draw 1 card every round.";
     else if (!CL.busy) hint = "👉 Your move: ⚔️ ATTACK to clash (a landed hit costs 2 🔮) · 🛡️ DEFEND blocks a hit (costs 1 🔮) · 🔁 TAG swaps fighters. Powers fire once per game — tap any card to zoom in and read.";
@@ -3785,7 +3785,7 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
     + '<div class="clashbtns">'
     + '<button class="cbtn atk' + (phase && g ? ' guideglow' : '') + '" data-clashact="atk"' + (CL.busy || CL.over || (CL.round === 1 && CL.firstPlayer === "me") ? ' disabled' : '') + '>⚔️ ATTACK \uD83D\uDD2E\u00D7' + hitCost(me) + '</button>'
     + '<button class="cbtn def" data-clashact="def"' + (CL.busy || CL.over || energyCount("me") < 1 ? ' disabled' : '') + '>🛡️ DEFEND \uD83D\uDD2E\u00D71</button>'
-    + '<button class="cbtn tag" data-clashact="tag"' + (CL.busy || CL.over || CL.tagged || !fAlive(mp) ? ' disabled' : '') + '>🔁 TAG</button>'
+    + '<button class="cbtn tag" data-clashact="tag"' + (CL.busy || CL.over || CL.tagged || !fAlive(mp) || (CL.round === 1 && CL.firstPlayer === "me") ? ' disabled' : '') + '>🔁 TAG</button>'
     + '</div>'
     + '<button class="openbtn" data-clashquit="1" style="width:100%;margin-top:8px"' + (CL.busy ? ' disabled' : '') + '>Quit battle</button>'
     + (g ? '' : '<button class="openbtn" data-guideon="1" style="width:100%;margin-top:6px">❓ Turn guide on</button>'));
@@ -3795,12 +3795,13 @@ function cpuPlan(){
   var a = CL.cpu[CL.cpuActive], p = CL.cpu[1 - CL.cpuActive];
   CL.cpuStance = "atk"; CL.cpuTagged = false;
   var r = Math.random();
-  if (fAlive(p) && a.hits >= lifeOf(a) - 1 && p.hits === 0 && r < 0.22) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.cpuStance = "tag"; CL.log.push("🔁 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + "!"); return; }
+  var t1fp = CL.round === 1 && CL.firstPlayer === "cpu";
+  if (!t1fp && fAlive(p) && a.hits >= lifeOf(a) - 1 && p.hits === 0 && r < 0.22) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.cpuStance = "tag"; CL.log.push("🔁 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + "!"); return; }
   if (a.hits >= lifeOf(a) - 1 && r < 0.20) CL.cpuStance = "def";
   else if (r < 0.07) CL.cpuStance = "def";
   if (CL.cpuStance === "atk" && !CL.cpuTagged && energyCount("cpu") < hitCost(CL.cpu[CL.cpuActive])) {
     var pp = CL.cpu[1 - CL.cpuActive];
-    if (fAlive(pp) && hitCost(pp) <= energyCount("cpu") && Math.random() < 0.5) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.cpuStance = "tag"; CL.log.push("\uD83D\uDD01 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + " \u2014 saving energy!"); }
+    if (!t1fp && fAlive(pp) && hitCost(pp) <= energyCount("cpu") && Math.random() < 0.5) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.cpuStance = "tag"; CL.log.push("\uD83D\uDD01 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + " \u2014 saving energy!"); }
     else if (Math.random() < 0.45) { CL.cpuStance = "def"; CL.log.push("\uD83D\uDEE1\uFE0F CPU defends \u2014 collecting energy."); }
   }
 }
