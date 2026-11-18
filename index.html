@@ -862,7 +862,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <!-- LIVE CENTER -->
   <section class="view" id="view-live">
     <h2>Live Center</h2>
-    <p class="sub">Games are grouped by <b>Live Games</b> (happening now) and <b>Future Games</b> (upcoming). Tap a game to open its score by period, team stats, player stats, and play-by-play. Auto-refreshes every 30 seconds. <b>College games are listed only when a player in that game has a real PrizePicks prop</b> — every other college game is left out.</p>
+    <p class="sub">Games are grouped by <b>Live Games</b> (happening now) and <b>Future Games</b> (upcoming). Tap a game to open its score by period, team stats, player stats, and play-by-play. Auto-refreshes every 30 seconds. <b>Every upcoming game shows up here</b> — open a game and its player props are inside whenever any are posted.</p>
     <div class="tabs" id="liveTabs"></div>
     <p class="note" id="liveStatus"></p>
     <div id="liveCenter"><p class="empty">Fetching fresh scores from ESPN…</p></div>
@@ -2074,34 +2074,6 @@ function gameCard(lg, ev){
   return '<div class="card game" data-game="'+lg.key+'|'+(ev._tour ? ev._tour.toLowerCase()+":" : "")+ev.id+'" style="cursor:pointer"><div class="row" style="justify-content:space-between"><span class="note" style="text-transform:uppercase;letter-spacing:1px">'+esc(leagueLine)+'</span><span class="note">'+esc(right)+'</span></div><div style="margin-top:6px">'+rows+'</div>'+extra+'<div class="note" style="margin-top:6px">'+sub+'</div></div>';
 }
 
-var collegeCheck = {}; // eventId -> {ok, ts}
-function lastNameOf(n){ var p = String(n||"").toLowerCase().replace(/[^a-z ]/g,"").split(/\s+/).filter(Boolean); var last = p[p.length-1]||""; if (["jr","sr","ii","iii","iv"].indexOf(last)>-1) last = p[p.length-2]||last; return last; }
-function collegeGameHasProp(lg, ev){
-  var hit = collegeCheck[ev.id];
-  if (hit && Date.now()-hit.ts < 5*60*1000) return Promise.resolve(hit.ok);
-  return buildProps(lg).then(function(ps){
-    if (!ps.length) { collegeCheck[ev.id] = {ok:false, ts:Date.now()}; return false; }
-    /* Exact first: props carry their game's matchup ("Away @ Home") — compare with this event's teams. */
-    try {
-      var ec = ((ev.competitions || [])[0] || {}).competitors || [];
-      if (ec.length === 2) {
-        var vA = [], vB = [];
-        [ec[0], ec[1]].forEach(function(c, ix){ var t = c.team || {}; [t.displayName, t.shortDisplayName].forEach(function(nm){ if (nm) (ix ? vB : vA).push(nm.toLowerCase()); }); });
-        var mset = {};
-        vA.forEach(function(a){ vB.forEach(function(b){ mset[a + " @ " + b] = 1; mset[b + " @ " + a] = 1; }); });
-        for (var i = 0; i < ps.length; i++) { var pm = (ps[i].matchup || "").toLowerCase(); if (pm && mset[pm]) { collegeCheck[ev.id] = {ok:true, ts:Date.now()}; return true; } }
-      }
-    } catch(e){}
-    var names = {}; ps.forEach(function(p){ names[lastNameOf(p.player)] = 1; });
-    return fetchJson(ESPN+lg.sport+"/"+lg.league+"/summary?event="+encodeURIComponent(ev.id)).then(function(sm){
-      var found = false;
-      try { ((sm.boxscore && sm.boxscore.players) || []).forEach(function(tp){ (tp.athletes||[]).forEach(function(a){ if (names[lastNameOf(a.athlete && a.athlete.displayName)]) found = true; }); }); } catch(e){}
-      try { (sm.rosters || []).forEach(function(rt){ (rt.athletes || []).forEach(function(a){ if (names[lastNameOf(a.athlete && a.athlete.displayName)]) found = true; }); }); } catch(e){}
-      collegeCheck[ev.id] = {ok:found, ts:Date.now()};
-      return found;
-    }).catch(function(){ return true; });
-  });
-}
 function renderLive(){
   var leagues = LEAGUES.slice(1).filter(function(lg){ return liveFilter==="all" || lg.key===liveFilter; });
   var jobs = leagues.map(function(lg){
@@ -2122,21 +2094,15 @@ function renderLive(){
       else if (st==="pre") fut.push({lg:r.lg, ev:ev});
     }); });
     fut.sort(function(a,b){ return new Date(a.ev.date)-new Date(b.ev.date); });
-    var college = live.concat(fut).filter(function(g){ return ["cfb","cbb","wbb"].indexOf(g.lg.key)>-1; });
-    var checks = college.slice(0,16).map(function(g){ return collegeGameHasProp(g.lg, g.ev).then(function(ok){ g._propOk = ok; }); });
-    college.slice(16).forEach(function(g){ g._propOk = true; });
-    return Promise.all(checks).then(function(){
-      var keep = function(g){ return ["cfb","cbb","wbb"].indexOf(g.lg.key)===-1 || g._propOk !== false; };
-      live = live.filter(keep); fut = fut.filter(keep).slice(0,40);
-      var ls = $("liveStatus"); if (ls) ls.textContent = "Updated " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}) + " · fresh from ESPN · auto-refreshes every 30s and whenever you come back to this tab";
-      var html =
-        '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Live Games</h2><span style="color:var(--purp-lt);font-weight:700">' + live.length + ' game' + (live.length===1?"":"s") + '</span></div>'
-        + (live.length ? live.map(function(g){ return gameCard(g.lg, g.ev); }).join("") : '<p class="empty">No games live right now.</p>')
-        + '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Future Games</h2><span style="color:var(--purp-lt);font-weight:700">' + fut.length + ' game' + (fut.length===1?"":"s") + '</span></div>'
-        + (fut.length ? fut.map(function(g){ return gameCard(g.lg, g.ev); }).join("") : '<p class="empty">No future games in the next two days.</p>');
-      var lc = $("liveCenter");
-      if (setHtml(lc, html)) lc.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
-    });
+    fut = fut.slice(0, 40);
+    var ls = $("liveStatus"); if (ls) ls.textContent = "Updated " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}) + " · fresh from ESPN · auto-refreshes every 30s and whenever you come back to this tab";
+    var html =
+      '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Live Games</h2><span style="color:var(--purp-lt);font-weight:700">' + live.length + ' game' + (live.length===1?"":"s") + '</span></div>'
+      + (live.length ? live.map(function(g){ return gameCard(g.lg, g.ev); }).join("") : '<p class="empty">No games live right now.</p>')
+      + '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Future Games</h2><span style="color:var(--purp-lt);font-weight:700">' + fut.length + ' game' + (fut.length===1?"":"s") + '</span></div>'
+      + (fut.length ? fut.map(function(g){ return gameCard(g.lg, g.ev); }).join("") : '<p class="empty">No future games in the next two days.</p>');
+    var lc = $("liveCenter");
+    if (setHtml(lc, html)) lc.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
   });
 }
 function renderGameProps(lg, s){
