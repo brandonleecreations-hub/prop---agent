@@ -4553,7 +4553,7 @@ function clashFinish(won){
     var pay = CL.mode === "ladder" ? 10 + CL.boss * 5 : 10;
     earned = clashGrant(pay); capped = earned < pay; if (earned > 0) setTimeout(function(){ sfx("coin"); }, 550);
     CL.bwPoint = true;
-    lsSet("pa_battlewins", (parseInt(lsGet("pa_battlewins", 0), 10) || 0) + 1);
+    lsSet("pa_battlewins", (parseInt(lsGet("pa_battlewins", 0), 10) || 0) + 5);
     attributePoints();
     if (CL.mode === "ladder" && CL.boss === ladderGet() + 1 && CL.boss <= 7) lsSet("pa_ladder", CL.boss);
     cloudSave();
@@ -4561,7 +4561,7 @@ function clashFinish(won){
   renderClash(); renderPacks();
   clashPanel('<div class="clashresult">' + (won ? '<div class="reswin">🏆 VICTORY!</div>' : '<div class="reslose">DEFEAT</div>')
     + '<div class="clashsub">' + (won ? 'Your pair takes the night! ' + (earned > 0 ? '<b style="color:#f5c518">+' + earned + ' 🪙 Clash Coins</b>' + (capped ? ' (daily coin cap hit — more tomorrow)' : '') : '<b>Daily coin cap reached — wins pay again tomorrow.</b>') : 'The CPU pair takes this one. Watch their powers, time your tags, and run it back.') + '</div>'
-    + '<div class="clashmeta">Battle Record: <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b> · 🪙 <b>' + coinsGet() + '</b>' + (won ? (CL.bwPoint ? ' \u00B7 \uD83C\uDFC6 <b>+1 Tier Point</b> \u2014 ' + CHARNAMES[tierCharIdx() - 1] + ' now has ' + charWins(tierCharIdx()) + ' pts' : ' \u00B7 Every battle win earns a tier point') : '') + (CL.mode === "ladder" && won && CL.boss < 7 ? ' · Next up: Boss ' + (CL.boss + 1) : '') + (CL.mode === "ladder" && won && CL.boss === 7 ? ' · 🏆 LADDER CHAMPION!' : '') + '</div>'
+    + '<div class="clashmeta">Battle Record: <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b> · 🪙 <b>' + coinsGet() + '</b>' + (won ? (CL.bwPoint ? ' \u00B7 \uD83C\uDFC6 <b>+5 Tier Points</b> \u2014 ' + CHARNAMES[tierCharIdx() - 1] + ' now has ' + charWins(tierCharIdx()) + ' pts' : ' \u00B7 Every battle win earns 5 tier points') : '') + (CL.mode === "ladder" && won && CL.boss < 7 ? ' · Next up: Boss ' + (CL.boss + 1) : '') + (CL.mode === "ladder" && won && CL.boss === 7 ? ' · 🏆 LADDER CHAMPION!' : '') + '</div>'
     + '<button class="clashbig gold" data-clashrematch="1">🔁 REMATCH<span>' + (CL.mode === "ladder" ? 'Boss ' + CL.boss + ' again' : 'New CPU pair, same tiers') + '</span></button>'
     + '<button class="clashbig" data-clashmode="' + CL.mode + '">🔄 NEW PAIR<span>Pick different fighters</span></button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:8px">Done</button></div>');
