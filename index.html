@@ -179,14 +179,14 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .tbtick em{position:absolute;top:7px;left:0;transform:translateX(-50%);font-style:normal;font-size:8px;color:#9a8bc7}
 .tierminis{display:flex;gap:5px}
 .tiermini{flex:1;min-width:0;text-align:center;background:#171331;border:1.5px solid var(--tc);border-radius:9px;padding:4px 2px 3px}
-.tiermini img{width:100%;height:34px;object-fit:cover;object-position:top;border-radius:5px;display:block}
+.tiermini img{width:100%;height:46px;object-fit:cover;object-position:top;border-radius:5px;display:block}
 .tiermini.lk img{filter:grayscale(1);opacity:.45}
 .tiermini .tmn{display:block;font-size:8px;font-weight:800;color:var(--tc);letter-spacing:.3px;margin-top:3px;white-space:nowrap;overflow:hidden}
 .tiermini .tms{display:block;font-size:8px;color:#9a8bc7}
 .tiermini.cur{box-shadow:0 0 0 2px #f5b942,0 0 12px rgba(245,185,66,.45)}
 .tcstrip{display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;margin-bottom:2px;scrollbar-width:none}
 .tcstrip::-webkit-scrollbar{display:none}
-.tcface{width:26px;height:26px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid #3a2f66;flex:none;cursor:pointer}
+.tcface{width:34px;height:34px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid #3a2f66;flex:none;cursor:pointer}
 .tcface.on{border-color:#f5b942;box-shadow:0 0 8px rgba(245,185,66,.65)}
 .cardsec-b{margin-top:9px}
 .cardsec.closed .cardsec-b{display:none}
@@ -869,6 +869,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
       <button class="ghostbtn" id="tkRefresh" style="margin-top:10px;background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none;font-weight:800;padding:10px 16px">⟳ Refresh stats now</button>
     </div>
     <div id="myTickets"><p class="empty">No tickets yet — lock one in from the builder.</p></div>
+    <div id="hlTicket" style="margin-top:14px"></div>
   </section>
 
   <!-- LIVE CENTER -->
@@ -879,14 +880,8 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <p class="note" id="liveStatus"></p>
     <div id="liveCenter"><p class="empty">Fetching fresh scores from ESPN…</p></div>
     <div id="gameDetail"></div>
-  </section>
-
-  <!-- HIGHLIGHTS -->
-  <section class="view" id="view-highlights">
-    <h2>Highlights</h2>
     <div id="hlLiveWrap" style="display:none"><h2 style="font-size:17px">🔴 Your Players — Live Highlights</h2><p class="sub">In-game clips of the players on your running tickets — this section goes away when their games end.</p><div class="hlrail" id="hlLiveRail"></div></div>
-    <div id="hlWeekly"></div>
-    <div id="hlTicket"></div>
+    <div id="liveSportHl"></div>
   </section>
 
   <!-- BUILD / ADD TICKET -->
@@ -952,7 +947,6 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <button data-nav="home" class="on"><span class="ni"><svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 3.1 2.9 10.9h2.6v8.9h13v-8.9h2.6L12 3.1Z M10.3 19.8v-5h3.4v5h-3.4Z"/></svg></span>Home</button>
     <button data-nav="tickets"><span class="ni"><svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.5 5h13A2.5 2.5 0 0 1 21 7.5v2a2.75 2.75 0 0 0 0 5v2a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5v-2a2.75 2.75 0 0 0 0-5v-2A2.5 2.5 0 0 1 5.5 5Zm8.7 2.2h1.6v1.9h-1.6V7.2Zm0 4h1.6v1.9h-1.6v-1.9Zm0 4h1.6v1.9h-1.6v-1.9Z"/></svg></span>Tickets</button>
     <button data-nav="live"><span class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.9" stroke-linecap="round"><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/><path d="M8.9 15.1a4.4 4.4 0 0 1 0-6.2M15.1 8.9a4.4 4.4 0 0 1 0 6.2M6.1 17.9a8.4 8.4 0 0 1 0-11.8M17.9 6.1a8.4 8.4 0 0 1 0 11.8"/></svg></span>Live</button>
-    <button data-nav="highlights"><span class="ni"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.8v12.4L18.5 12Z"/></svg></span>Highlights</button>
     <button data-nav="build" class="addbtn"><span class="addcircle">+</span>Add Ticket</button>
     <button data-nav="board"><span class="ni"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.8a6.2 6.2 0 1 1 0 12.4 6.2 6.2 0 0 1 0-12.4Z"/><path d="M8.6 13.9 6.5 21.2 12 18l5.5 3.2-2.1-7.3-2.1 1.1a3.4 3.4 0 0 1-2.6 0L8.6 13.9Z"/></svg></span>Board</button>
   </div>
@@ -2050,20 +2044,23 @@ function renderLiveHighlights(){
     rail.innerHTML = html || '<p class="empty">No clips posted for your players yet — they land as the game goes.</p>';
   });
 }
-var hlWeeklyAt = 0;
-function renderWeeklyHighlights(){
-  var box = $("hlWeekly"); if (!box) return;
-  if (!box.innerHTML){
-    box.innerHTML = '<h2 style="font-size:17px">🏆 Best of the Week</h2>'
-      + '<div class="teamhead" style="margin-top:10px">NBA</div><div class="hlrail" id="hlw-nba"><p class="empty">Loading…</p></div>'
-      + '<div class="teamhead" style="margin-top:6px">NFL</div><div class="hlrail" id="hlw-nfl"><p class="empty">Loading…</p></div>'
-      + '<div class="teamhead" style="margin-top:6px">NHL</div><div class="hlrail" id="hlw-nhl"><p class="empty">Loading…</p></div>';
+var hlSportAt = {}, hlSportSig = "";
+var HL_QUERIES = { nba: "NBA highlights", nfl: "NFL highlights", nhl: "NHL highlights", cfb: "College Football highlights", cbb: "College Basketball highlights", wbb: "Women's College Basketball highlights", mlb: "MLB highlights", tennis: "Tennis highlights" };
+function renderLiveSportHl(){
+  var box = $("liveSportHl"); if (!box) return;
+  var lgs = liveFilter === "all" ? ["nba", "nfl", "nhl"] : [liveFilter];
+  var sig = lgs.join(",");
+  if (sig !== hlSportSig) {
+    hlSportSig = sig;
+    box.innerHTML = '<h2 style="font-size:17px;margin-top:16px">🎬 Highlights</h2>' + lgs.map(function(k){ var lg = leagueByKey(k); return '<div id="hlsp-' + k + '"><div class="teamhead" style="margin-top:10px">' + esc(lg ? lg.label : k.toUpperCase()) + '</div><div class="hlrail" id="hlrail-' + k + '"><p class="empty">Loading…</p></div></div>'; }).join("");
   }
-  if (Date.now() - hlWeeklyAt < 30*60*1000) return; hlWeeklyAt = Date.now();
-  [["NBA highlights","hlw-nba"],["NFL highlights","hlw-nfl"],["NHL highlights","hlw-nhl"]].forEach(function(pair){
-    searchClips(pair[0], 8).then(function(clips){
-      var rail = $(pair[1]); if (!rail) return;
-      rail.innerHTML = clips.length ? clips.map(function(c){ return hlClipCard(c, "ESPN clip"); }).join("") : '<p class="empty">No clips right now.</p>';
+  lgs.forEach(function(k){
+    if (Date.now() - (hlSportAt[k] || 0) < 30*60*1000) return; hlSportAt[k] = Date.now();
+    searchClips(HL_QUERIES[k] || (k.toUpperCase() + " highlights"), 8).then(function(clips){
+      var wrap = $("hlsp-" + k), rail = $("hlrail-" + k); if (!rail) return;
+      if (!clips.length) { if (wrap) wrap.style.display = "none"; return; }
+      if (wrap) wrap.style.display = "";
+      rail.innerHTML = clips.map(function(c){ return hlClipCard(c, "ESPN clip"); }).join("");
     });
   });
 }
@@ -2197,6 +2194,7 @@ function renderLive(){
       + (fut.length ? fut.map(function(g){ return gameCard(g.lg, g.ev); }).join("") : '<p class="empty">No future games in the next two days.</p>');
     var lc = $("liveCenter");
     if (setHtml(lc, html)) lc.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
+    renderLiveSportHl(); renderLiveHighlights();
   });
 }
 var gcRosterCache = {}, gcRosterFetching = {};
@@ -4932,10 +4930,9 @@ function showView(name){
   var navName = name==="sport" ? "home" : name;
   document.querySelectorAll("nav.bottom button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-nav")===navName); });
   if (name==="live") renderLive();
-  if (name==="tickets") renderTickets();
+  if (name==="tickets"){ renderTickets(); renderTicketHighlights(); }
   if (name==="board") renderBoard();
   if (name==="build") renderBuild();
-  if (name==="highlights"){ renderTicketHighlights(); renderLiveHighlights(); renderWeeklyHighlights(); }
   window._view = name; lsSet("pa_tab", name); updateSlipChip();
   window.scrollTo(0,0);
 }
@@ -5021,13 +5018,14 @@ renderBoard();
 cloudInit();
 (function bootTab(){
   var t = lsGet("pa_tab", "home");
+  if (t === "highlights") t = "home";
   if (t === "sport") { var bs = lsGet("pa_sport", "all"); if (bs && bs !== "all") { setSport(bs); return; } showView("home"); return; }
   if (t && t !== "home") { showView(t); return; }
   showView("home");
 })();
 if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").catch(function(){}); }
 setInterval(function(){ boardCache = {}; refreshHome(); if ($("view-live").classList.contains("on")){ renderLive(); if (window._openGame) openGame(window._openGame.key, window._openGame.eventId, true); }
-  if (window._view === "highlights") renderLiveHighlights();
+  if (window._view === "live") renderLiveHighlights();
   if (window._view === "sport" && currentSport !== "all"){ getScoreboard(leagueByKey(currentSport), 1).then(function(){ var bmI = breakMap[currentSport] || {}; if (Object.keys(bmI).length || window._brkWasOpen){ window._brkWasOpen = !!Object.keys(bmI).length; renderBoards(); } }).catch(function(){}); }
 }, 30000);
 setInterval(function(){
