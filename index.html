@@ -273,7 +273,7 @@ table.lb th{color:var(--mut);font-size:10.5px;text-transform:uppercase;letter-sp
 .slotread{top:6px;right:6px}
 #clashZoom .zoomcard{animation:zoomin .28s cubic-bezier(.2,.9,.3,1.35) both}
 @keyframes zoomin{from{opacity:0;transform:perspective(700px) rotateX(10deg) scale(.82)}to{opacity:1;transform:none}}
-.readbtn{position:absolute;top:4px;right:4px;background:rgba(10,6,20,.82);border:1px solid #7C3AED;border-radius:50%;width:22px;height:22px;font-size:11px;display:flex;align-items:center;justify-content:center;z-index:2}
+.readbtn{position:absolute;top:52px;right:4px;background:rgba(10,6,20,.85);border:1px solid #7C3AED;border-radius:50%;width:30px;height:30px;font-size:15px;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.5)}
 .pickpw3{font-size:10.5px;color:#c9c9d6;line-height:1.35;margin-top:2px}
 .ttwrap{text-align:center;margin:2px 0 4px}
 .ttt{display:grid;grid-template-columns:repeat(3,42px);gap:5px;justify-content:center;transform:perspective(520px) rotateX(13deg)}
@@ -314,9 +314,10 @@ table.lb th{color:var(--mut);font-size:10.5px;text-transform:uppercase;letter-sp
 @keyframes turnpulse{0%,100%{outline:2px solid rgba(245,185,66,0)}50%{outline:3px solid rgba(245,185,66,.65)}}
 @keyframes guidepulse{0%,100%{outline:2px solid rgba(245,185,66,0)}50%{outline:3px solid rgba(245,185,66,.85)}}
 #musBtn{position:absolute;top:10px;right:12px;z-index:6;width:38px;height:38px;border-radius:50%;background:#1d1430;border:1px solid #7C3AED;font-size:17px;cursor:pointer;color:#fff}
-#clashZoom{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,8,16,.94);z-index:7;padding:18px}
+#clashZoom{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,8,16,.94);z-index:7;padding:18px;overflow-y:auto}
 #clashZoom.open{display:flex}
 #clashZoom .zoomcard{width:min(76vw,290px)}
+#clashZoom.bigzoom .zoomcard{width:min(94vw,360px)}
 #clashZoom .tiercard{min-height:0}
 #cardZoom{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,8,16,.96);z-index:120;padding:18px}
 #cardZoom.open{display:flex}
@@ -3975,14 +3976,15 @@ function turnBannerHTML(){
   if (CL.busy) return '<div class="turnbanner">⚔️ ATTACKING…</div>';
   return '<div class="turnbanner">⚔️ YOUR TURN</div>';
 }
-function clashZoom(ci, ti){
+function clashZoom(ci, ti, big){
   ensureClashPop();
   var z = $("clashZoom"); if (!z) return;
   z.innerHTML = '<div class="zoomcard">' + tierCardHTML(TIERS[ti], 999, false, ci) + '</div><div class="zoomhint">Tap the card to flip it · tap outside to close</div>';
+  z.classList.toggle("bigzoom", !!big);
   z.classList.add("open");
   sfx("click");
 }
-function closeZoom(){ var z = $("clashZoom"); if (z) { z.classList.remove("open"); z.innerHTML = ""; } }
+function closeZoom(){ var z = $("clashZoom"); if (z) { z.classList.remove("open"); z.classList.remove("bigzoom"); z.innerHTML = ""; } }
 function openCardZoom(cardEl){
   var z = $("cardZoom");
   if (!z) {
@@ -4573,7 +4575,7 @@ document.addEventListener("click", function(e){
   var cell = e.target.closest("[data-ttcell]"); if (cell) { ttPlace(parseInt(cell.getAttribute("data-ttcell"), 10)); return; }
   var ab = e.target.closest("[data-ability]"); if (ab) { abPick(ab.getAttribute("data-ability")); return; }
   var zc = e.target.closest("[data-zci]"); if (zc) { clashZoom(parseInt(zc.getAttribute("data-zci"), 10), parseInt(zc.getAttribute("data-zti"), 10)); return; }
-  var rc = e.target.closest("[data-readcard]"); if (rc) { var rci = parseInt(rc.getAttribute("data-readcard"), 10); var rti = bestPickTier(rci); if (CL) { for (var si = 0; si < 2; si++) if (CL.mine[si] && CL.mine[si].ci === rci) rti = CL.mine[si].ti; } clashZoom(rci, rti); return; }
+  var rc = e.target.closest("[data-readcard]"); if (rc) { var rci = parseInt(rc.getAttribute("data-readcard"), 10); var rti = bestPickTier(rci); if (CL) { for (var si = 0; si < 2; si++) if (CL.mine[si] && CL.mine[si].ci === rci) rti = CL.mine[si].ti; } clashZoom(rci, rti, true); return; }
   if (e.target.closest("[data-guideoff]")) { lsSet("pa_guide", 0); if (CL && CL.cpu) clashArena(); else if (CL) clashPickRender(); else clashMenu(); return; }
   if (e.target.closest("[data-guideon]")) { lsSet("pa_guide", 1); if (CL && CL.cpu) clashArena(); else if (CL) clashPickRender(); else clashMenu(); return; }
   if ((t = e.target.closest("[data-clashclose]"))) { closeClash(); return; }
