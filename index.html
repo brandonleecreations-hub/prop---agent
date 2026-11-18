@@ -366,6 +366,13 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .yours-tag{display:inline-block;background:rgba(245,197,24,.16);color:var(--gold);border:1px solid rgba(245,197,24,.4);font-size:10px;font-weight:800;border-radius:999px;padding:1px 7px;letter-spacing:.4px}
 #news,#hlNba,#hlNfl,#hlYours{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 #news::-webkit-scrollbar,#hlNba::-webkit-scrollbar,#hlNfl::-webkit-scrollbar,#hlYours::-webkit-scrollbar{display:none}
+.hlrail{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.hlrail::-webkit-scrollbar{display:none}
+.vcard{flex:0 0 158px;scroll-snap-align:start;text-decoration:none;color:inherit}
+.vcard .vthumb{position:relative;display:block;width:158px;height:89px;border-radius:10px;overflow:hidden;background:linear-gradient(135deg,#3b1470,#1b1030)}
+.vcard .vthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.vcard .vtitle{display:block;margin-top:6px;font-size:12.5px;font-weight:700;line-height:1.3}
+.vcard .vsrc{display:block;margin-top:2px}
 .newsrail{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .newsrail::-webkit-scrollbar{display:none}
 .newsitem{flex:0 0 78%;max-width:300px;scroll-snap-align:start;display:flex;gap:9px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px;text-decoration:none;color:var(--ink)}
@@ -872,22 +879,9 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <!-- HIGHLIGHTS -->
   <section class="view" id="view-highlights">
     <h2>Highlights</h2>
+    <div id="hlLiveWrap" style="display:none"><h2 style="font-size:17px">🔴 Your Players — Live Highlights</h2><p class="sub">In-game clips of the players on your running tickets — this section goes away when their games end.</p><div class="hlrail" id="hlLiveRail"></div></div>
+    <div id="hlWeekly"></div>
     <div id="hlTicket"></div>
-    <div id="hlYoursWrap" style="display:none"><h2 style="font-size:17px">Your Players — Videos</h2><p class="sub">Highlight clips of the players on your tickets — updates the moment you lock a ticket in.</p><div class="card" id="hlVideos" style="padding:4px 16px"></div></div>
-    <div class="card hlfeed">
-      <img class="hlimg" src="/api/banners?s=nba" alt="">
-      <div class="hlbody"><div class="hltitle">NBA — Top Plays Feed</div>
-      <p class="sub">Plays will appear here once a basketball game you open is underway.</p>
-      <button class="hlopen" data-goto="live">Open a game in Live Center</button>
-      <div class="news" id="hlNba" style="margin-top:8px"><p class="empty">Loading latest plays…</p></div></div>
-    </div>
-    <div class="card hlfeed">
-      <img class="hlimg" src="/api/banners?s=nfl" alt="">
-      <div class="hlbody"><div class="hltitle">NFL — Top Plays Feed</div>
-      <p class="sub">Plays will appear here once a football game you open is underway.</p>
-      <button class="hlopen" data-goto="live">Open a game in Live Center</button>
-      <div class="news" id="hlNfl" style="margin-top:8px"><p class="empty">Loading latest plays…</p></div></div>
-    </div>
   </section>
 
   <!-- BUILD / ADD TICKET -->
@@ -1989,6 +1983,66 @@ function renderYourVideos(){
       return head + vids + yt;
     }).join("");
     setHtml(box, html || '<p class="empty">No clips found for your players yet.</p>');
+  });
+}
+function searchClips(query, cap){
+  return fetchJson("https://site.api.espn.com/apis/search/v2?query="+encodeURIComponent(query)+"&limit=12").then(function(r){
+    var clips = [];
+    try { (r.results||[]).forEach(function(g){ if (g.type!=="clips") return; (g.contents||[]).forEach(function(c){ if (c.type==="vod" && clips.length<cap) clips.push(c); }); }); } catch(e){}
+    return clips;
+  }).catch(function(){ return []; });
+}
+function hlClipCard(c, sub){
+  var href = (c.link && c.link.web) || "https://www.espn.com";
+  var img = (c.image && c.image.default) || "";
+  return '<a class="vcard" href="'+esc(href)+'" target="_blank" rel="noopener"><span class="vthumb">'+(img ? '<img src="'+esc(img)+'" alt="" loading="lazy" onerror="this.remove()">' : '')+'<span class="vidplay">▶</span></span><span class="vtitle">'+esc(c.displayName||"Highlight")+'</span><span class="vsrc note">'+esc(sub||"ESPN clip")+' · tap to watch</span></a>';
+}
+function liveTicketPlayers(){
+  var now = Date.now(), out = [], seen = {};
+  tickets.forEach(function(t){
+    if (t.result) return;
+    var live = (t.legs||[]).some(function(l){ var st = l.starts ? Date.parse(l.starts) : 0; return st && st <= now && now - st < 5*3600*1000; });
+    if (!live) return;
+    (t.legs||[]).forEach(function(l){ if (l.player && !seen[l.player]){ seen[l.player] = 1; out.push(l.player); } });
+  });
+  return out;
+}
+var hlLiveSig = "";
+function renderLiveHighlights(){
+  var wrap = $("hlLiveWrap"), rail = $("hlLiveRail"); if (!wrap || !rail) return;
+  var players = liveTicketPlayers();
+  if (!players.length){ wrap.style.display = "none"; hlLiveSig = ""; return; }
+  wrap.style.display = "";
+  var sig = players.join("|");
+  if (sig === hlLiveSig) return; hlLiveSig = sig;
+  rail.innerHTML = '<p class="empty">Loading live clips of your players…</p>';
+  Promise.all(players.slice(0,4).map(function(name){
+    return searchClips(name, 3).then(function(clips){ return {name:name, clips:clips}; });
+  })).then(function(rs){
+    if (hlLiveSig !== sig) return;
+    var html = "";
+    rs.forEach(function(x){
+      x.clips.forEach(function(c){ html += hlClipCard(c, x.name); });
+      if (!x.clips.length) html += '<a class="vcard" href="https://www.youtube.com/results?search_query='+encodeURIComponent(x.name+" highlights")+'" target="_blank" rel="noopener"><span class="vthumb"><span class="vidplay">▶</span></span><span class="vtitle">More '+esc(x.name)+' highlights</span><span class="vsrc note">YouTube · tap to watch</span></a>';
+    });
+    rail.innerHTML = html || '<p class="empty">No clips posted for your players yet — they land as the game goes.</p>';
+  });
+}
+var hlWeeklyAt = 0;
+function renderWeeklyHighlights(){
+  var box = $("hlWeekly"); if (!box) return;
+  if (!box.innerHTML){
+    box.innerHTML = '<h2 style="font-size:17px">🏆 Best of the Week</h2>'
+      + '<div class="teamhead" style="margin-top:10px">NBA</div><div class="hlrail" id="hlw-nba"><p class="empty">Loading…</p></div>'
+      + '<div class="teamhead" style="margin-top:6px">NFL</div><div class="hlrail" id="hlw-nfl"><p class="empty">Loading…</p></div>'
+      + '<div class="teamhead" style="margin-top:6px">NHL</div><div class="hlrail" id="hlw-nhl"><p class="empty">Loading…</p></div>';
+  }
+  if (Date.now() - hlWeeklyAt < 30*60*1000) return; hlWeeklyAt = Date.now();
+  [["NBA highlights","hlw-nba"],["NFL highlights","hlw-nfl"],["NHL highlights","hlw-nhl"]].forEach(function(pair){
+    searchClips(pair[0], 8).then(function(clips){
+      var rail = $(pair[1]); if (!rail) return;
+      rail.innerHTML = clips.length ? clips.map(function(c){ return hlClipCard(c, "ESPN clip"); }).join("") : '<p class="empty">No clips right now.</p>';
+    });
   });
 }
 function renderNews(){
@@ -4822,7 +4876,7 @@ function showView(name){
   if (name==="tickets") renderTickets();
   if (name==="board") renderBoard();
   if (name==="build") renderBuild();
-  if (name==="highlights"){ renderTicketHighlights(); renderYourVideos(); }
+  if (name==="highlights"){ renderTicketHighlights(); renderLiveHighlights(); renderWeeklyHighlights(); }
   window._view = name; lsSet("pa_tab", name); updateSlipChip();
   window.scrollTo(0,0);
 }
@@ -4914,6 +4968,7 @@ cloudInit();
 })();
 if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").catch(function(){}); }
 setInterval(function(){ boardCache = {}; refreshHome(); if ($("view-live").classList.contains("on")){ renderLive(); if (window._openGame) openGame(window._openGame.key, window._openGame.eventId, true); }
+  if (window._view === "highlights") renderLiveHighlights();
   if (window._view === "sport" && currentSport !== "all"){ getScoreboard(leagueByKey(currentSport), 1).then(function(){ var bmI = breakMap[currentSport] || {}; if (Object.keys(bmI).length || window._brkWasOpen){ window._brkWasOpen = !!Object.keys(bmI).length; renderBoards(); } }).catch(function(){}); }
 }, 30000);
 setInterval(function(){
