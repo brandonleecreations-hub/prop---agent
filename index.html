@@ -262,6 +262,13 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .abds{display:block;font-size:10px;color:#c9c9d6;margin-top:3px;line-height:1.35}
 .guidebar.sd{border-color:#ff5a5a;background:linear-gradient(90deg,rgba(255,60,60,.30),rgba(245,185,66,.22));animation:sdpulse 1.1s ease-in-out infinite}
 @keyframes sdpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,90,90,0)}50%{box-shadow:0 0 14px 2px rgba(255,90,90,.5)}}
+.guidebar{animation:guidein .35s ease both}
+@keyframes guidein{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.gptr{display:inline-block;font-size:13px;animation:gptrbounce .9s ease-in-out infinite}
+@keyframes gptrbounce{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
+.guidepoint{position:relative}
+.guidepoint::after{content:"\25BC";position:absolute;left:50%;top:-13px;transform:translateX(-50%);color:#ffd94d;font-size:11px;text-shadow:0 0 6px rgba(245,185,66,.85);animation:gptarrow .8s ease-in-out infinite;pointer-events:none;z-index:5}
+@keyframes gptarrow{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(3px)}}
 .guidebar{display:flex;gap:8px;align-items:center;background:linear-gradient(90deg,rgba(245,185,66,.20),rgba(124,58,237,.20));border:1px solid #f5b942;border-radius:10px;padding:6px 8px;font-size:11.5px;margin-bottom:7px;line-height:1.4}
 .guideoff{margin-left:auto;flex:0 0 auto;background:rgba(245,185,66,.16);border:1.5px solid #f5b942;color:#fff;font-weight:800;border-radius:999px;font-size:11.5px;padding:5px 10px;cursor:pointer}
 .guideglow{animation:guidepulse 1.1s ease-in-out infinite !important}
@@ -302,7 +309,7 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .clashad .clashbtn{flex:0 0 auto;position:relative;z-index:1;animation:btnpulse 1.8s ease-in-out infinite}
 @keyframes btnpulse{0%,100%{box-shadow:0 0 0 rgba(245,185,66,0)}50%{box-shadow:0 0 20px rgba(245,185,66,.85)}}
 .clashad .coinpill{position:absolute;top:7px;right:9px;z-index:1}
-@media (prefers-reduced-motion: reduce){#myCards .tiercard,#myCards .tcwin .cardart,#myCards .tcwin::after,#myCards .tiercard.unlocked .flipfront,#myCards .tcspark,.clashad::after,.clashad .caface,.clashad .cavs,.clashad .clashbtn,.caspark,.homeclash::after,.homeclash .caface,.homeclash .cavs{animation:none}}
+@media (prefers-reduced-motion: reduce){#myCards .tiercard,#myCards .tcwin .cardart,#myCards .tcwin::after,#myCards .tiercard.unlocked .flipfront,#myCards .tcspark,.clashad::after,.clashad .caface,.clashad .cavs,.clashad .clashbtn,.caspark,.homeclash::after,.homeclash .caface,.homeclash .cavs,.deck3d,.gptr,.guidepoint::after,.guidebar{animation:none}}
 .charstrip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px}
 .charstrip img{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid var(--line);cursor:pointer;flex:0 0 auto}
 .charstrip img.on{border-color:#a78bfa;box-shadow:0 0 12px rgba(124,58,237,.8)}
@@ -609,8 +616,10 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .coinface span{font-size:12px;letter-spacing:3px;font-weight:900}
 .deckrow{display:flex;gap:10px;align-items:flex-start}
 .deckwrap{position:relative;flex:0 0 auto;text-align:center;width:62px}
-.deck3d{position:relative;width:50px;height:68px;margin:0 auto;transform:perspective(500px) rotateX(6deg) rotateY(-8deg)}
-.deckback{position:absolute;inset:0;border-radius:8px;background:#17102e url(/api/icons?s=192) center/34px no-repeat;border:2px solid #f5b942;box-shadow:3px 3px 0 #241a4a,6px 6px 0 #120b28,0 10px 18px rgba(0,0,0,.5);overflow:hidden}
+.deck3d{position:relative;width:50px;height:68px;margin:0 auto;transform:perspective(500px) rotateX(6deg) rotateY(-8deg);animation:decksway3d 4.6s ease-in-out infinite}
+.deck3d::before{content:"";position:absolute;inset:0;border-radius:8px;background:linear-gradient(160deg,#3a2768,#150c29);border:2px solid rgba(245,185,66,.4);transform:translate(7px,7px)}
+@keyframes decksway3d{0%,100%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg)}50%{transform:perspective(500px) rotateX(11deg) rotateY(-18deg) translateY(-2px)}}
+.deckback{position:absolute;inset:0;border-radius:8px;background:#17102e url(/api/icons?s=192) center/34px no-repeat;border:2px solid #f5b942;box-shadow:2px 2px 0 #2a1e52,4px 4px 0 #241a4a,6px 6px 0 #1b1236,8px 8px 0 #120b28,0 14px 22px rgba(0,0,0,.55);overflow:hidden}
 .deckback::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%);background-size:250% 250%;background-position:110% 0;animation:coinshine 3.4s ease-in-out infinite}
 .deck3d.shuffling{animation:deckshuffle .9s ease}
 @keyframes deckshuffle{0%,100%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(0deg)}15%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(-5deg) translateX(-3px)}30%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(5deg) translateX(3px)}45%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(-4deg) translateY(-2px)}60%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(4deg)}75%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(-2deg) translateX(-2px)}}
@@ -4132,11 +4141,10 @@ function itemHTML(){
   var orbs = ""; var shown = Math.min(ec, 6); for (var oi = 0; oi < shown; oi++) orbs += '<span class="eorb"></span>';
   if (ec > 6) orbs += '<span class="emore">+' + (ec - 6) + '</span>';
   var espot = '<div class="espot"><div class="zonelab">🔮 ENERGY</div><div class="espotcards">' + (ec ? orbs : '<span class="enone">empty</span>') + '</div><div class="deckcount">' + ec + ' held</div></div>';
-  var glow = guideOn() && (CL.round === 1 || ec < hitCost(CL.mine[CL.myActive])) ? ' guideglow' : '';
   var shuf = CL.justShuffled ? ' shuffling' : ''; if (CL.justShuffled) CL.justShuffled = false;
   var pop = CL.drawPop > 0 ? '<span class="drawpop">+' + CL.drawPop + ' drawn</span>' : ''; CL.drawPop = 0;
   var fly = ''; (CL.lastDrawn || []).forEach(function(id, ix){ var it2 = id === 'energy' ? { icon: '🔮', name: 'ENERGY' } : ITEM_MAP[id]; if (it2) fly += '<div class="drawfly face" style="animation-delay:' + (ix * 140) + 'ms"><span class="dfic">' + it2.icon + '</span><span class="dfnm">' + it2.name + '</span></div>'; }); CL.lastDrawn = [];
-  var deck = '<div class="deckwrap"><div class="zonelab">' + (shuf ? '🔀 SHUFFLING…' : 'DECK') + '</div><div class="deck3d' + shuf + glow + '"><div class="deckback"></div>' + pop + fly + '</div><div class="deckcount">' + CL.myDeck.length + ' left</div></div>';
+  var deck = '<div class="deckwrap"><div class="zonelab">' + (shuf ? '🔀 SHUFFLING…' : 'DECK') + '</div><div class="deck3d' + shuf + '"><div class="deckback"></div>' + pop + fly + '</div><div class="deckcount">' + CL.myDeck.length + ' left</div></div>';
   var pile = '<div class="pilewrap"><div class="zonelab">DISCARD</div><div class="pileback"></div><div class="deckcount">×' + CL.myPile.length + '</div></div>';
   var handInner = ITEMS_OPEN ? '<div class="itemhand">' + cards + '</div>' : '';
   var pull = (CL.pulledMe && CL.pulledMe.length) ? '<div class="pullrow"><span class="pulllab">⬇️ YOU PULLED</span>' + CL.pulledMe.map(function(id){ var it3 = id === "energy" ? { icon: "🔮", name: "ENERGY" } : ITEM_MAP[id]; return it3 ? '<span class="pullmini"><i>' + it3.icon + '</i><span>' + it3.name + '</span></span>' : ""; }).join("") + '</div>' : '';
@@ -4190,7 +4198,7 @@ function fighterHTML(f, active, extra, fx){
 function clashArena(){
     if (CL.phase === "flip") {
     var fl = CL.flip, inner;
-    var fguide = guideOn() ? '<div class="guidebar"><span>👉 Call it — tap 🔴 RED or 🔵 BLUE. Winner goes first — but the first player can\'t strike on Turn 1.</span><button class="guideoff" data-guideoff="1">✕ TURN GUIDE OFF</button></div>' : '<button class="openbtn" data-guideon="1" style="width:100%;margin-bottom:8px">❓ Turn guide on</button>';
+    var fguide = guideOn() ? '<div class="guidebar"><span class="gptr">👉</span><span>Call it — tap 🔴 RED or 🔵 BLUE. Winner goes first — but the first player can\'t strike on Turn 1.</span><button class="guideoff" data-guideoff="1">✕ TURN GUIDE OFF</button></div>' : '<button class="openbtn" data-guideon="1" style="width:100%;margin-bottom:8px">❓ Turn guide on</button>';
     if (!fl) inner = '<div class="coinwrap"><div class="coin3d idle"><div class="coinface red">★<span>RED</span></div><div class="coinface blue">★<span>BLUE</span></div></div></div><div class="clashsub" style="text-align:center">🪙 <b>COIN FLIP</b> — pick a side! Winner goes first — but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.</div><div class="clashbtns"><button class="cbtn atk" data-flipcall="red">🔴 RED</button><button class="cbtn def" data-flipcall="blue">🔵 BLUE</button></div>';
     else inner = '<div class="coinwrap"><div class="coin3d flipping ' + fl.result + '"><div class="coinface red">★<span>RED</span></div><div class="coinface blue">★<span>BLUE</span></div></div></div><div class="clashsub" style="text-align:center">You picked <b>' + fl.call.toUpperCase() + '</b> — flipping…</div>';
     clashPanel('<div class="clashround">🪙 COIN FLIP — WHO GOES FIRST?</div>' + fguide + '<div class="field3d flipfield">' + inner + '</div><button class="openbtn" data-clashquit="1" style="width:100%;margin-top:8px">Quit battle</button>');
@@ -4226,7 +4234,8 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
     else if (!CL.busy && CL.turn === "me" && CL.itemUsedRound !== CL.turnNo && CL.myHand.length) hint = "\uD83C\uDCB4 Tap an item card to READ it, then \u25B6 PLAY it \u2014 ONE item per turn, and you can STILL \u2694\uFE0F ATTACK / \uD83D\uDEE1\uFE0F DEFEND / \uD83D\uDD01 TAG after. You draw 1 card at the start of your turn.";
     else if (!CL.busy && CL.turn === "me") hint = "👉 Your turn — ONE move: ⚔️ ATTACK (2 🔮) lands unless they blocked · 🛡️ DEFEND (2 🔮) arms a block for their turn · 🔁 TAG swaps · ⏭️ END TURN passes. Stars don't decide attacks — damage and blocks do.";
     if (CL.round >= 60 && !CL.abilityPick && CL.placing !== "me") hint = "⏰ SUDDEN DEATH RULES: every round BOTH active fighters take 1 damage — hit or miss, the clock burns whoever is in the fight. Win the race: land hits and finish them first. ❤️ Heals buy rounds · 🛡️ DEFEND blocks their hit (not the tick) · 🔁 TAG brings in a fresh fighter — the tick only burns the ACTIVE one.";
-    if (hint) guide = '<div class="guidebar' + (CL.round >= 60 ? ' sd' : '') + '"><span>' + hint + '</span><button class="guideoff" data-guideoff="1">✕ TURN GUIDE OFF</button></div>';
+    if (hint && g && CL.turn === "me" && !CL.abilityPick && !CL.placing && CL.turnNo > 1) { var GTIPS = ["DEFEND stays armed — it blocks the CPU's next attack.", "Items are a free bonus play — 1 per turn, then take your move.", "Land a hit to earn a grid ✖ — 3 in a row wins an ABILITY.", "Energy comes from card draws — Energy Surge and Supply Drop grant more.", "A fighter's power fires ONCE per game — timing is everything.", "Round 60 starts SUDDEN DEATH — both fighters take 1 damage a round."]; hint += ' 💡 ' + GTIPS[CL.turnNo % GTIPS.length]; }
+    if (hint) guide = '<div class="guidebar' + (CL.round >= 60 ? ' sd' : '') + '"><span class="gptr">👉</span><span>' + hint + '</span><button class="guideoff" data-guideoff="1">✕ TURN GUIDE OFF</button></div>';
   }
   var phase = !CL.busy && !CL.over && !CL.placing && !CL.abilityPick;
   clashPanel('<div class="clashround">' + (CL.mode === "ladder" ? '🏆 BOSS ' + CL.boss + ' · ' : '') + 'ROUND ' + CL.round + (CL.round >= 60 ? ' · <span style="color:#ff6b6b">⏰ SUDDEN DEATH</span>' : '') + '</div>'
@@ -4238,8 +4247,8 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
     + abilityHTML()
     + turnBannerHTML()
     + '<div class="clashbtns">'
-    + '<button class="cbtn atk' + (phase && g && !atkBroke && !(CL.turnNo === 1 && CL.firstPlayer === "me") ? ' guideglow' : '') + '" data-clashact="atk"' + (CL.busy || CL.over || CL.turn !== "me" || atkBroke || (CL.turnNo === 1 && CL.firstPlayer === "me") ? ' disabled' : '') + '>⚔️ ATTACK \uD83D\uDD2E\u00D7' + hitCost(me) + '</button>'
-    + '<button class="cbtn def' + (phase && g && atkBroke && energyCount("me") >= 2 ? ' guideglow' : '') + '" data-clashact="def"' + (CL.busy || CL.over || CL.turn !== "me" || energyCount("me") < 2 ? ' disabled' : '') + '>🛡️ DEFEND \uD83D\uDD2E\u00D72</button>'
+    + '<button class="cbtn atk' + (phase && g && !atkBroke && !(CL.turnNo === 1 && CL.firstPlayer === "me") ? ' guideglow guidepoint' : '') + '" data-clashact="atk"' + (CL.busy || CL.over || CL.turn !== "me" || atkBroke || (CL.turnNo === 1 && CL.firstPlayer === "me") ? ' disabled' : '') + '>⚔️ ATTACK \uD83D\uDD2E\u00D7' + hitCost(me) + '</button>'
+    + '<button class="cbtn def' + (phase && g && atkBroke && energyCount("me") >= 2 ? ' guideglow guidepoint' : '') + '" data-clashact="def"' + (CL.busy || CL.over || CL.turn !== "me" || energyCount("me") < 2 ? ' disabled' : '') + '>🛡️ DEFEND \uD83D\uDD2E\u00D72</button>'
     + '<button class="cbtn tag" data-clashact="tag"' + (CL.busy || CL.over || CL.turn !== "me" || CL.tagged || !fAlive(mp) || (CL.turnNo === 1 && CL.firstPlayer === "me") ? ' disabled' : '') + '>🔁 TAG</button>' + '<button class="cbtn def" data-clashact="pass"' + (CL.busy || CL.over || CL.turn !== "me" ? ' disabled' : '') + '>⏭️ END TURN</button>' 
     + '</div>'
     + '<button class="openbtn" data-clashquit="1" style="width:100%;margin-top:8px"' + (CL.busy ? ' disabled' : '') + '>Quit battle</button>'
