@@ -1243,6 +1243,8 @@ function nextGameFor(events, teamId){
 /* ---------- props (real PrizePicks lines via Parlay API) ---------- */
 var PARLAY_KEYS = {nba:"basketball_nba", nfl:"americanfootball_nfl", cfb:"americanfootball_ncaaf", cbb:"basketball_ncaab", wbb:"basketball_wncaab", nhl:"icehockey_nhl", mlb:"baseball_mlb", tennis:"tennis_atp"};
 var propsCache = {};   // leagueKey -> [prop]
+var propsAt = {};      // leagueKey -> last fetch time (ms)
+var propsRefreshing = {};
 var propsConfigured = true;
 function slugify(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
 function ingestProps(lg, rows){
@@ -1277,10 +1279,25 @@ function buildProps(lg){
   return fetchJson("/api/props?sport=" + sk).then(function(res){
     if (res && res.configured === false) propsConfigured = false;
     var out = ingestProps(lg, (res && res.props) || []);
-    propsCache[lg.key] = out;
+    propsCache[lg.key] = out; propsAt[lg.key] = Date.now();
     resolvePhotos(lg, out);
     return out;
-  }).catch(function(){ propsCache[lg.key] = []; return []; });
+  }).catch(function(){ propsCache[lg.key] = []; propsAt[lg.key] = Date.now(); return []; });
+}
+function refreshProps(lg){
+  var sk = PARLAY_KEYS[lg.key];
+  if (!sk) return Promise.resolve([]);
+  if (propsRefreshing[lg.key]) return propsRefreshing[lg.key];
+  var pr = fetchJson("/api/props?sport=" + sk).then(function(res){
+    if (res && res.configured === false) propsConfigured = false;
+    var out = ingestProps(lg, (res && res.props) || []);
+    propsCache[lg.key] = out; propsAt[lg.key] = Date.now();
+    resolvePhotos(lg, out);
+    delete propsRefreshing[lg.key];
+    return out;
+  }).catch(function(){ propsAt[lg.key] = Date.now(); delete propsRefreshing[lg.key]; return propsCache[lg.key] || []; });
+  propsRefreshing[lg.key] = pr;
+  return pr;
 }
 var brkFetchAt = {};
 function refreshPropsBrk(lg){
@@ -2353,6 +2370,9 @@ function openGame(key, eventId, isRefresh){
     window.scrollTo(0, 0);
   }
   var lg = leagueByKey(key);
+  if (!isRefresh && PARLAY_KEYS[lg.key] && (!propsAt[lg.key] || Date.now() - propsAt[lg.key] > 5*60*1000)) {
+    refreshProps(lg).then(function(){ if (window._openGame && String(window._openGame.eventId) === String(eventId)) openGame(key, eventId, true); });
+  }
   var tourLg = lg.league, eid = String(eventId);
   var ci = eid.indexOf(":");
   if (ci>0){ tourLg = eid.slice(0, ci); eid = eid.slice(ci+1); }
@@ -4866,7 +4886,10 @@ if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").c
 setInterval(function(){ boardCache = {}; refreshHome(); if ($("view-live").classList.contains("on")){ renderLive(); if (window._openGame) openGame(window._openGame.key, window._openGame.eventId, true); }
   if (window._view === "sport" && currentSport !== "all"){ getScoreboard(leagueByKey(currentSport), 1).then(function(){ var bmI = breakMap[currentSport] || {}; if (Object.keys(bmI).length || window._brkWasOpen){ window._brkWasOpen = !!Object.keys(bmI).length; renderBoards(); } }).catch(function(){}); }
 }, 30000);
-setInterval(function(){ propsCache = {}; if (currentSport!=="all") renderBoards(); }, 30*60*1000);
+setInterval(function(){
+  if (window._openGame) { var glg = leagueByKey(window._openGame.key); if (glg) refreshProps(glg); }
+  if (currentSport !== "all") { var slg = leagueByKey(currentSport); if (slg && PARLAY_KEYS[slg.key]) refreshProps(slg).then(function(){ renderBoards(); }); }
+}, 5*60*1000);
 </script>
 <button id="slipChip" type="button"></button>
 </body>
