@@ -208,6 +208,16 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .clashad .clashbtn{font-family:'Bungee','Archivo Black',system-ui,sans-serif;letter-spacing:.5px;background:linear-gradient(180deg,#a855f7,#7C3AED 60%,#5b21b6);box-shadow:0 6px 0 #3b1470, 0 12px 20px rgba(0,0,0,.5), 0 0 16px rgba(168,85,247,.55)}
 .clashad .clashbtn:active{transform:translateY(4px);box-shadow:0 2px 0 #3b1470, 0 6px 12px rgba(0,0,0,.5)}
 .caspark{position:absolute;font-size:13px;pointer-events:none;animation:sparkfloat 2.8s ease-in-out infinite;z-index:1}
+.homeclash{position:relative;margin-top:14px;padding:10px 12px;border-radius:14px;background:linear-gradient(120deg,#241147,#150a2e 60%,#1d0b38);border:1px solid rgba(245,185,66,.55);box-shadow:0 10px 22px rgba(0,0,0,.5),0 0 16px rgba(245,185,66,.25);cursor:pointer;overflow:hidden}
+.homeclash::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.13) 50%,transparent 58%);background-size:250% 100%;animation:winshine 3.6s ease-in-out infinite;pointer-events:none}
+.homeclash .hcrow{display:flex;align-items:center;gap:8px;position:relative;z-index:1}
+.homeclash .caface{width:44px;height:44px;border-radius:10px;object-fit:cover;flex:none;box-shadow:0 6px 12px rgba(0,0,0,.6),0 0 10px rgba(245,185,66,.35);animation:cafL 3.4s ease-in-out infinite}
+.homeclash .caface.r{animation:cafR 3.4s ease-in-out infinite}
+.homeclash .cavs{background:linear-gradient(180deg,#ffd94d,#f59e0b);color:#231300;font-family:'Bungee','Archivo Black',sans-serif;font-size:10.5px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 3px 8px rgba(0,0,0,.5),0 0 10px rgba(245,185,66,.5);animation:cavspulse 1.6s ease-in-out infinite,cavs3d 5s ease-in-out infinite}
+.homeclash .catitle{font-family:'Bungee','Archivo Black',system-ui,sans-serif;font-size:14.5px;letter-spacing:.8px;background:linear-gradient(180deg,#fff7d6,#ffd94d 55%,#ff9d2e);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#ffd94d;filter:drop-shadow(0 1px 0 rgba(90,40,0,.55)) drop-shadow(0 0 10px rgba(245,185,66,.45))}
+.homeclash .casub{font-family:'Archivo',system-ui,sans-serif;font-weight:700;font-size:11px;color:#e6dcff;line-height:1.35;margin-top:2px}
+.homeclash .hcbtn{position:relative;z-index:1;width:100%;margin-top:9px;font-family:'Bungee','Archivo Black',sans-serif;font-size:12px;letter-spacing:.5px;padding:9px 10px;border:none;border-radius:10px;background:linear-gradient(180deg,#a855f7,#7C3AED 60%,#5b21b6);color:#fff;box-shadow:0 4px 0 #3b1470,0 8px 14px rgba(0,0,0,.5),0 0 12px rgba(168,85,247,.5);cursor:pointer}
+.homeclash .hcbtn:active{transform:translateY(3px);box-shadow:0 1px 0 #3b1470,0 4px 8px rgba(0,0,0,.5)}
 @keyframes sparkfloat{0%,100%{transform:translateY(0) scale(1);opacity:.9}50%{transform:translateY(-6px) scale(1.25);opacity:1}}
 .clashlb{margin:-4px 0 12px;background:linear-gradient(120deg,rgba(27,15,56,.92),rgba(18,8,31,.92));border:1px solid rgba(245,185,66,.5);border-radius:12px;padding:8px 11px}
 .clashlb-t{font-family:'Archivo',system-ui,sans-serif;font-weight:900;font-size:11px;letter-spacing:.8px;color:#f5c518;margin-bottom:5px}
@@ -292,7 +302,7 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .clashad .clashbtn{flex:0 0 auto;position:relative;z-index:1;animation:btnpulse 1.8s ease-in-out infinite}
 @keyframes btnpulse{0%,100%{box-shadow:0 0 0 rgba(245,185,66,0)}50%{box-shadow:0 0 20px rgba(245,185,66,.85)}}
 .clashad .coinpill{position:absolute;top:7px;right:9px;z-index:1}
-@media (prefers-reduced-motion: reduce){#myCards .tiercard,#myCards .tcwin .cardart,#myCards .tcwin::after,#myCards .tiercard.unlocked .flipfront,#myCards .tcspark,.clashad::after,.clashad .caface,.clashad .cavs,.clashad .clashbtn,.caspark{animation:none}}
+@media (prefers-reduced-motion: reduce){#myCards .tiercard,#myCards .tcwin .cardart,#myCards .tcwin::after,#myCards .tiercard.unlocked .flipfront,#myCards .tcspark,.clashad::after,.clashad .caface,.clashad .cavs,.clashad .clashbtn,.caspark,.homeclash::after,.homeclash .caface,.homeclash .cavs{animation:none}}
 .charstrip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px}
 .charstrip img{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid var(--line);cursor:pointer;flex:0 0 auto}
 .charstrip img.on{border-color:#a78bfa;box-shadow:0 0 12px rgba(124,58,237,.8)}
@@ -856,6 +866,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <h2>Sports News</h2>
     <p class="sub" id="newsNote">Latest headlines from ESPN · refreshes automatically</p>
     <div class="card news" id="news"><p class="empty">Loading the top headlines…</p></div>
+    <div class="homeclash" id="clashHomeAd"><div class="hcrow"><img class="caface l" src="/api/battle?s=10" alt=""><span class="cavs">VS</span><img class="caface r" src="/api/battle?s=1" alt=""><div style="flex:1;min-width:0"><div class="catitle">⚔️ AGENT CLASH</div><div class="casub">Head to the Board tab to play — every win earns a tier point 🏆 + 🪙 Clash Coins for packs. Start your tier climb!</div></div></div><button type="button" class="hcbtn">⚔️ PLAY — GO TO BOARD →</button><span class="caspark" style="right:12%;top:4px">✨</span></div>
     <div class="card" id="installCard" style="display:none;margin-top:20px;padding:0;overflow:hidden;border:2px solid #f5b942;background:radial-gradient(130% 150% at 15% 0%, #4c1d95 0%, #2a1650 46%, #12082b 100%);box-shadow:0 14px 44px rgba(124,58,237,.5)">
       <div style="display:flex;gap:14px;align-items:center;padding:18px 18px 6px">
         <img src="/api/icons?s=512" alt="" style="width:76px;height:76px;border-radius:18px;box-shadow:0 8px 26px rgba(0,0,0,.55);flex:0 0 auto">
@@ -3650,6 +3661,7 @@ function clashLbHtml(){
   if (!list.length) return '<div class="clashlb"><div class="clashlb-t">\uD83C\uDFC6 TOP CLASHERS \u2014 most Grid Clash wins</div><div class="clashlb-none">No battle wins yet \u2014 be the first on this board!</div></div>';
   return '<div class="clashlb"><div class="clashlb-t">\uD83C\uDFC6 TOP CLASHERS \u2014 most Grid Clash wins</div>' + list.map(function(c, i){ return '<div class="clashlb-r' + (c.me ? ' me' : '') + '"><span class="clashlb-rk">' + (i + 1) + '</span>' + (c.avatar ? '<img src="' + esc(c.avatar) + '" alt=""' + (frameStyle(c.featured, 2) ? ' style="' + frameStyle(c.featured, 2) + '"' : '') + '>' : '') + '<span class="clashlb-nm">' + esc(c.name) + (c.me ? ' (You)' : '') + '</span><span class="clashlb-w">' + c.w + 'W \u2013 ' + c.l + 'L</span></div>'; }).join("") + '</div>';
 }
+var clashHomeAdEl = $("clashHomeAd"); if (clashHomeAdEl) clashHomeAdEl.addEventListener("click", function(){ sfx("click"); showView("board"); window.scrollTo(0, 0); });
 function renderClash(){
   var box = $("clashBox"); if (!box) return;
   var b = battlesGet(), lad = ladderGet();
