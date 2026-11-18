@@ -163,6 +163,7 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 @keyframes sparkdrift{from{transform:translateY(0)}to{transform:translateY(-7px)}}
 #myCards{display:block}
 .cardsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
+.cardsgrid.packgrid{grid-template-columns:repeat(auto-fill,minmax(102px,1fr));gap:8px}
 .cardsec{margin-bottom:14px}
 .cardsec-h{width:100%;display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,rgba(124,58,237,.25),rgba(245,185,66,.12));border:1px solid rgba(167,139,250,.45);border-radius:11px;padding:9px 12px;color:#fff;font-weight:900;font-size:13px;letter-spacing:.4px;cursor:pointer;text-align:left}
 .cscount{margin-left:auto;font-size:11px;color:#f5c518;font-weight:800;white-space:nowrap}
@@ -363,6 +364,15 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .tickchip span{display:block;color:var(--mut)}
 .tickchip .tickfrom{color:var(--gold);font-weight:700}
 .yours-tag{display:inline-block;background:rgba(245,197,24,.16);color:var(--gold);border:1px solid rgba(245,197,24,.4);font-size:10px;font-weight:800;border-radius:999px;padding:1px 7px;letter-spacing:.4px}
+#news,#hlNba,#hlNfl,#hlYours{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#news::-webkit-scrollbar,#hlNba::-webkit-scrollbar,#hlNfl::-webkit-scrollbar,#hlYours::-webkit-scrollbar{display:none}
+.newsrail{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.newsrail::-webkit-scrollbar{display:none}
+.newsitem{flex:0 0 78%;max-width:300px;scroll-snap-align:start;display:flex;gap:9px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px;text-decoration:none;color:var(--ink)}
+.newsitem .nimg{width:56px;height:56px;flex:none;border-radius:9px;object-fit:cover;background:#1b1030}
+.newsitem .nbody{display:flex;flex-direction:column;gap:3px;min-width:0}
+.newsitem .nhead{font-size:13px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.newsitem .nsrc{color:var(--mut);font-size:11px;font-weight:400}
 .pctchip{display:inline-block;background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.45);border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:800;letter-spacing:.4px}
 .closed .pickrow{display:none}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(106px,1fr));gap:10px}
@@ -402,12 +412,12 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #playerDlg .pdlgbody{max-height:62vh;overflow-y:auto}
 
 
-.pickem{border:2px solid #f5c518;border-radius:16px;padding:14px;background:radial-gradient(120% 140% at 20% 0%,#3b2f0b 0%,#17130a 55%,#101018 100%);box-shadow:0 0 24px #f5c51833;margin:10px 0}
+.pickem{border:2px solid #f5c518;border-radius:14px;padding:10px 12px;background:radial-gradient(120% 140% at 20% 0%,#3b2f0b 0%,#17130a 55%,#101018 100%);box-shadow:0 0 24px #f5c51833;margin:10px 0}
 .pk-kick{color:#f5c518;font-weight:900;letter-spacing:1.5px;font-size:12px}
 .pk-title{font-size:19px;font-weight:900;margin:4px 0 2px}
-.pickbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:#17171f;border:1.5px solid #33333f;color:#fff;border-radius:12px;padding:11px 12px;font-weight:800;font-size:15px;margin-top:8px;cursor:pointer}
+.pickbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:#17171f;border:1.5px solid #33333f;color:#fff;border-radius:11px;padding:8px 10px;font-weight:800;font-size:13.5px;margin-top:6px;cursor:pointer}
 .pickbtn.on{border-color:#f5c518;background:#2a230d;box-shadow:0 0 12px #f5c51844}
-.pickbtn img{width:24px;height:24px;object-fit:contain}
+.pickbtn img{width:20px;height:20px;object-fit:contain}
 .specialback{background:radial-gradient(120% 90% at 50% 0%, #3a2c07 0%, #0d0a18 65%);border:2px solid #f5c518}
 .sbring{width:132px;height:132px;border-radius:50%;border:3px solid #f5c518;box-shadow:0 0 22px #f5c51855, inset 0 0 18px #f5c51833;display:flex;align-items:center;justify-content:center;background:#0d0d13}
 .specialback .sbring img{width:104px;height:104px;object-fit:contain;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.08) drop-shadow(0 0 10px rgba(245,197,24,.45))}
@@ -725,10 +735,15 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 @keyframes packsway3d{from{transform:rotateY(-14deg) rotateX(3deg) translateY(0)}to{transform:rotateY(14deg) rotateX(-2deg) translateY(-7px)}}
 .packstage.torn .packfloat{animation:none}
 .packshine{position:absolute;inset:0;background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.20) 48%,rgba(245,197,24,.16) 52%,transparent 68%);transform:translateX(-130%);animation:pkshine 3.4s ease-in-out infinite;pointer-events:none;-webkit-mask-image:url(/api/banners?s=packcut);-webkit-mask-size:100% 100%;mask-image:url(/api/banners?s=packcut);mask-size:100% 100%}
-.packrefl{height:84px;overflow:hidden;opacity:.5;filter:blur(1.5px) brightness(.85);-webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,.85),transparent 92%);mask-image:linear-gradient(to bottom,rgba(0,0,0,.85),transparent 92%);margin-top:2px}
-.packrefl .reflIn{width:100%;aspect-ratio:427/640;background-image:url(/api/banners?s=packcut);background-size:100% 100%;transform:scaleY(-1)}
-.packstage.torn .packrefl{animation:reflfade .35s ease-out both}
-@keyframes reflfade{to{opacity:0}}
+.packaura{position:relative;height:30px;margin-top:4px;pointer-events:none}
+.packaura i{position:absolute;left:50%;top:50%;width:170px;height:30px;margin:-15px 0 0 -85px;border-radius:50%;border:2px solid rgba(245,197,24,.75);box-shadow:0 0 18px rgba(245,197,24,.35),inset 0 0 14px rgba(124,58,237,.5);animation:auraring 1.9s ease-out infinite}
+.packaura i:nth-child(2){animation-delay:.63s;border-color:rgba(124,58,237,.7)}
+.packaura i:nth-child(3){animation-delay:1.26s;border-color:rgba(56,189,248,.6)}
+@keyframes auraring{0%{transform:scale(.35);opacity:0}25%{opacity:.95}100%{transform:scale(1.25);opacity:0}}
+.packstage.torn .packaura{opacity:0;transition:opacity .3s}
+
+
+
 @keyframes splitT{0%{transform:translate(0,0) rotate(0);opacity:1}28%{transform:translate(-7px,-10px) rotate(-2.5deg);opacity:1}72%{opacity:1}100%{transform:translate(-48px,-88px) rotate(-15deg);opacity:0}}
 @keyframes splitB{0%{transform:translate(0,0) rotate(0);opacity:1}28%{transform:translate(7px,10px) rotate(2.5deg);opacity:1}72%{opacity:1}100%{transform:translate(48px,88px) rotate(13deg);opacity:0}}
 .ph-t{clip-path:polygon(0 0,100% 0,100% 100%,91% calc(100% - 3px),83% 100%,74% calc(100% - 3px),66% 100%,58% calc(100% - 3px),50% 100%,41% calc(100% - 3px),33% 100%,25% calc(100% - 3px),16% 100%,8% calc(100% - 3px),0 100%)}
@@ -1649,7 +1664,7 @@ function renderSportNews(lg){
   if (sportNewsCache[lg.key]){ done(sportNewsCache[lg.key]); return; }
   fetchJson(ESPN+lg.sport+"/"+lg.league+"/news?limit=6").then(function(r){
     var arts = (r && r.articles) || [];
-    var html = arts.length ? '<div class="card" style="margin-top:12px"><div style="font-weight:800;margin-bottom:6px">Latest '+esc(lg.label)+' News</div>' + arts.map(function(a){ return articleHtml(a, []); }).join("") + '</div>' : "";
+    var html = arts.length ? '<div class="card" style="margin-top:12px;padding:10px 12px"><div style="font-weight:800;font-size:14px;margin-bottom:6px">Latest '+esc(lg.label)+' News</div><div class="newsrail">' + arts.map(function(a){ return articleHtml(a, []); }).join("") + '</div></div>' : "";
     sportNewsCache[lg.key] = html;
     done(html);
   }).catch(function(){ done(""); });
@@ -1915,7 +1930,8 @@ function renderUpcoming(){
 function articleHtml(a, picks){
   var href = a.links && a.links.web && a.links.web.href || "https://www.espn.com";
   var tag = picks && picks.length && mentionsPicks(a, picks) ? ' <span class="yours-tag">⭐ YOUR PLAYER</span>' : '';
-  return '<a href="'+esc(href)+'" target="_blank" rel="noopener"><span class="nhead">'+esc(a.headline||"")+tag+'</span><span class="nsrc">ESPN · '+esc(fmtDay(a.published))+'</span></a>';
+  var img = (a.images && a.images[0] && a.images[0].url) || "";
+  return '<a class="newsitem" href="'+esc(href)+'" target="_blank" rel="noopener">' + (img ? '<img class="nimg" src="'+esc(img)+'" alt="" loading="lazy" onerror="this.remove()">' : '') + '<span class="nbody"><span class="nhead">'+esc(a.headline||"")+tag+'</span><span class="nsrc">ESPN · '+esc(fmtDay(a.published))+'</span></span></a>';
 }
 var vidSig = "";
 function renderTicketHighlights(){
@@ -2128,14 +2144,15 @@ function renderGameProps(lg, s){
   (inBrk ? refreshPropsBrk(lg).then(function(){ return buildProps(lg); }) : buildProps(lg)).then(function(ps){
     var head = '<div style="font-size:16px;margin-top:14px"><b>Player Props — This Game</b> <span class="note">best on top · tap a player for all their props</span></div>' + (inBrk ? '<p class="sub" style="color:var(--gold);margin-top:6px">⏸ At the break — fresh props just posted for the next part of the game. Pick before play resumes.</p>' : '');
     if (!ps.length){ box.innerHTML = head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'; return; }
-    var names = {}, teamNames = {}, teamLast = {};
+    var names = {}, teamNames = {};
     try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ (tp.athletes||[]).forEach(function(a){ if (a.athlete && a.athlete.displayName) names[lastNameOf(a.athlete.displayName)] = 1; }); }); } catch(e){}
-    cs.forEach(function(c){ if (c.team){ if (c.team.displayName){ teamNames[c.team.displayName.toLowerCase()] = 1; teamLast[lastNameOf(c.team.displayName)] = 1; } if (c.team.shortDisplayName) teamNames[c.team.shortDisplayName.toLowerCase()] = 1; } });
-    var lastWords = Object.keys(teamLast);
+    try { (s.rosters || []).forEach(function(rt){ (rt.athletes || []).forEach(function(a){ var an = a.athlete && a.athlete.displayName; if (an) names[lastNameOf(an)] = 1; }); }); } catch(e){}
+    cs.forEach(function(c){ if (c.team){ if (c.team.displayName) teamNames[c.team.displayName.toLowerCase()] = 1; if (c.team.shortDisplayName) teamNames[c.team.shortDisplayName.toLowerCase()] = 1; } });
+    var gstart = Date.parse(comp.date || "");
     var hits = ps.filter(function(p){
+      if (gstart && p.starts) { var pt = Date.parse(p.starts); if (pt && Math.abs(pt - gstart) > 9 * 3600 * 1000) return false; }
       if (p.team && teamNames[p.team.toLowerCase()]) return true;
       if (names[lastNameOf(p.player)]) return true;
-      if (p.team && lastWords.length === 2 && lastWords[0] !== lastWords[1] && teamLast[lastNameOf(p.team)]) return true;
       return false;
     });
     if (!hits.length){ box.innerHTML = head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'; return; }
@@ -2382,6 +2399,7 @@ function openGame(key, eventId, isRefresh){
         return '<tr><td>' + teamLogo(c,24) + esc((c.team && c.team.displayName) || "") + '</td>' + cells + '<td style="color:var(--purp-lt);font-weight:800">' + esc(c.score!=null ? c.score : "") + '</td></tr>';
       }).join("") + '</table>';
     }
+    if (st.state === "pre") html += '<div id="gameProps"></div>';
     html += trackerHtml(lg, s, comp, cs);
     if (isT){
       var setNo = Math.max(1, nper);
@@ -2417,7 +2435,7 @@ function openGame(key, eventId, isRefresh){
     var plays = summaryPlays(s).slice().reverse();
       if (plays.length) html += '<div style="font-size:14px;margin-top:14px"><b>Play by Play</b> <span class="note">ticker - latest first - updates every 30s</span></div><div style="border:1px solid var(--line);border-radius:12px;background:#0d0d13;padding:6px 10px;margin-top:6px">' + plays.slice(0, 15).map(fmtPlay).join("") + (plays.length > 15 ? '<div id="pbpAll" style="display:' + (window._pbpOpen ? '' : 'none') + '">' + (window._pbpOpen ? plays.slice(15).map(fmtPlay).join("") : "") + '</div>' : '') + '</div>' + (plays.length > 15 ? '<button type="button" class="ghostbtn" id="pbpBtn" style="margin-top:8px;font-size:12px;padding:6px 11px">' + (window._pbpOpen ? 'Show fewer plays' : 'Show all ' + plays.length + ' plays') + '</button>' : '');
     else html += '<div style="font-size:14px;margin-top:14px"><b>Play by Play</b></div><p class="note" style="margin-top:6px">' + (lg.key === "tennis" ? "ESPN does not report point-by-point plays for tennis - live set and game scores are in the Match Tracker above." : "No plays reported yet - they will show here as the game goes.") + '</p>';
-    html += '<div id="gameProps"></div></div>';
+    html += (st.state === "pre" ? '' : '<div id="gameProps"></div>') + '</div>';
     $("gameDetail").innerHTML = '<button class="gcBack" type="button">← All games</button>' + html;
     if (isRefresh && keepY) window.scrollTo(0, keepY);
     var pbpBtn = $("pbpBtn");
@@ -2702,7 +2720,7 @@ async function downloadTradingCard(ti, ci, btn){
   var t = TIERS[ti]; if (!t) return;
   var W = 630, H = 900, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
   var ctx = cv.getContext("2d");
-  var wins = charWins(ci); var un = wins >= t.wins;
+  var wins = charWins(ci); var un = wins >= t.wins || packUnlockHas(ci, ti);
   if (!un) { if (btn) { var o0 = btn.textContent; btn.textContent = "Locked — unlock it first"; setTimeout(function(){ btn.textContent = o0; }, 1600); } return; }
   var accent = t.color; var cname = CHARNAMES[ci - 1] || "YOUR AGENT";
   var num = ("00" + ((ci - 1) * 7 + ti + 1)).slice(-3);
@@ -2825,7 +2843,7 @@ var POWERS = [
   {name:"NEGOTIATOR", style:"TRICK", desc:"Once per game: when he would take a hit, he takes no damage and places the grid mark himself."},
   {name:"FINE PRINT", style:"CONTROL", desc:"Once per game: an enemy hit on her deals 1 less damage."},
   {name:"HOME RUN", style:"ATTACK", desc:"Once per game: his attack deals DOUBLE damage to a fighter at full life."},
-  {name:"FAST BREAK", style:"ATTACK", desc:"Once per game: his attack in round 1 deals +1 damage."},
+  {name:"FAST BREAK", style:"ATTACK", desc:"Once per game: her attack in round 1 deals +1 damage."},
   {name:"RALLY", style:"COMEBACK", desc:"Once per game: +1 damage on his attack when his team is behind on health."},
   {name:"STAR POWER", style:"ATTACK", desc:"Once per game: his attack deals +2 damage."},
   {name:"ACE SERVE", style:"DEFENSE", desc:"Once per game: she can't take a hit in the first round."},
@@ -2837,9 +2855,9 @@ function cardBackHTML(title, sub){
   return '<div class="flipback"><img src="/api/icons?s=512" alt=""><div class="bkname">PROP AGENT</div><div class="bksub"><b style="color:#fff">' + title + '</b><br>' + sub + '</div></div>';
 }
 function tierCardHTML(t, wins, withBtns, ci){
-  var un = wins >= t.wins;
   var ti = TIERS.indexOf(t);
   ci = ci || charIdxOf();
+  var un = wins >= t.wins || (ci >= 1 && packUnlockHas(ci, ti));
   var art = ci >= 1 ? "/api/battle?s=" + ci : charArt();
   var cname = ci >= 1 ? CHARNAMES[ci - 1] : "YOUR AGENT";
   var num = ci >= 1 ? ((ci - 1) * 7 + ti + 1) : 0;
@@ -2852,7 +2870,7 @@ function tierCardHTML(t, wins, withBtns, ci){
   var front = '<div class="flipfront" style="border:' + bw + 'px solid ' + t.color + ';--tc:' + t.color + ';box-shadow:0 12px 26px rgba(0,0,0,.38)' + glow + ', inset 0 1px 0 rgba(255,255,255,.05)">'
     + '<div class="tcplate"><span class="tcname">' + cname + gems + '</span><span class="tcno">' + numTxt + '</span></div>'
     + '<div class="tcwin">' + (art ? '<img class="cardart" src="' + esc(art) + '" alt="">' : '<div class="cardart ph" style="color:' + t.color + '">' + t.name.charAt(0) + '</div>') + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
-    + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:' + t.color + '">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:' + t.color + '">' + t.rarity + '</span></div>'
+    + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:' + t.color + '">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:' + t.color + '">' + t.rarity + '</span>' + (un && wins < t.wins ? '<span class="rarpill" style="background:#f5c518;color:#1a1405">\uD83C\uDF81 PACK</span>' : '') + '</div>'
     + '<div style="margin-top:5px;font-weight:900;font-size:12.5px;color:#f5b942">\u26A1 ' + pw.name + ' <span style="color:#9aa7bd;font-weight:700;font-size:10px;letter-spacing:1px">' + pw.style + '</span></div>'
     + '<div class="tierto" style="margin-top:2px">' + pw.desc + '</div>'
     + '<div style="margin-top:5px"><span class="atkchip">\uD83D\uDCA5 DMG ' + (1 + Math.floor(ti / 2)) + ' · \u2764\uFE0F LIFE ' + (3 + ti) + '</span> <span class="atkchip alt">Hit cost \u00D7' + 2 + '</span></div>'
@@ -2864,10 +2882,10 @@ function tierCardHTML(t, wins, withBtns, ci){
   return '<div class="tiercard' + (ti === 6 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · ' + t.name + ' · ' + t.rarity, pw.name + ' \u2014 ' + pw.desc + '<br><br>Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits. Grid Clash: DMG ' + (1 + Math.floor(ti / 2)) + ' · LIFE ' + (3 + ti) + ' — landing a hit costs 2 energy cards. Its power fires once per game.') + '</div></div>';
 }
 
-function cardSec(id, title, count, inner, openDefault){
+function cardSec(id, title, count, inner, openDefault, gridCls){
   var st = lsGet("pa_cardsecs", {});
   var open = (id in st) ? !!st[id] : openDefault;
-  return '<div class="cardsec' + (open ? '' : ' closed') + '"><button class="cardsec-h" data-cardsec="' + id + '"><span>' + title + '</span><span class="cscount">' + count + '</span><span class="csbtn">' + (open ? '\u25BE HIDE' : '\u25B8 SHOW') + '</span></button><div class="cardsec-b"><div class="cardsgrid">' + inner + '</div></div></div>';
+  return '<div class="cardsec' + (open ? '' : ' closed') + '"><button class="cardsec-h" data-cardsec="' + id + '"><span>' + title + '</span><span class="cscount">' + count + '</span><span class="csbtn">' + (open ? '\u25BE HIDE' : '\u25B8 SHOW') + '</span></button><div class="cardsec-b"><div class="cardsgrid' + (gridCls ? ' ' + gridCls : '') + '">' + inner + '</div></div></div>';
 }
 function charWinsMap(){ return lsGet("pa_charwins", {}) || {}; }
 function charWins(ci){ var m = charWinsMap(); return parseInt(m[ci], 10) || 0; }
@@ -2897,7 +2915,7 @@ function tierProgressHTML(wins, ci){
   var head = '<div class="tbhead"><span>\uD83C\uDFC6 <b style="color:' + cur.color + '">' + cur.name.toUpperCase() + '</b> \u00B7 ' + wins + ' pts</span><span>' + (nxt ? (nxt.wins - wins) + ' pts to <b style="color:' + nxt.color + '">' + nxt.name.toUpperCase() + '</b>' : '\uD83D\uDC51 TOP TIER') + '</span></div>';
   var bar = '<div class="tierbar"><div class="tbfill" style="width:' + pct + '%"></div>' + ticks + '</div>';
   var minis = '<div class="tierminis">' + TIERS.map(function(t, ti){
-    var un = wins >= t.wins;
+    var un = wins >= t.wins || packUnlockHas(ci, ti);
     return '<div class="tiermini' + (un ? ' un' : ' lk') + (ti === curIdx ? ' cur' : '') + '" style="--tc:' + t.color + '"><img src="/api/battle?s=' + ci + '" alt=""><span class="tmn">' + t.name + '</span><span class="tms">' + (un ? "\u2605".repeat(ti + 1) : '\uD83D\uDD12 ' + t.wins) + '</span></div>';
   }).join("") + '</div>';
   return '<div class="tierprog">' + strip + head + bar + minis + '</div>';
@@ -2932,13 +2950,13 @@ function renderBoard(){
   renderPacks();
   renderClash();
   var stampCardsOnly = CHARNAMES.map(function(nm, ix){ return stampCardHTML(ix + 1); }).join("");
-  var unlockedN = TIERS.filter(function(t){ return wins >= t.wins; }).length;
+  var unlockedN = TIERS.filter(function(t, ti2){ return charWins(cci) >= t.wins || packUnlockHas(cci, ti2); }).length;
   var specN = (specialUnlocked() ? 1 : 0) + (lsGet("pa_ring", 0) ? 1 : 0);
   $("myCards").innerHTML =
     cardSec("tier", "🃏 TIER CARDS — " + CHARNAMES[cci - 1], unlockedN + " of 7 unlocked \u00B7 Grid Clash cards", tierCards, true)
     + (cards.length ? cardSec("player", "🏆 PLAYER CARDS — winning tickets", cards.length + " earned", playerCards, false) : "")
     + cardSec("stamps", "🌟 GOLD FOIL STAMPS — 1 in ~7 packs", stampsGet().length + " of 12", stampCardsOnly, false)
-    + (fl0.length ? cardSec("foils", "✨ FOIL CARDS — from packs", fl0.length + " pulled", foilCardsOnly, false) : "")
+    + (fl0.length ? cardSec("foils", "🎁 PACK PULLS — from packs", fl0.length + " pulled", foilCardsOnly, false, "packgrid") : "")
     + cardSec("special", "⭐ SPECIAL CARDS — Pick'em & chase", specN + " of 2", specialCardHTML() + ringCardHTML(), false);
   document.querySelectorAll(".cardsec-h").forEach(function(h){ h.addEventListener("click", function(){ var sec = h.parentElement; var nowClosed = sec.classList.toggle("closed"); var st = lsGet("pa_cardsecs", {}); st[h.getAttribute("data-cardsec")] = !nowClosed; lsSet("pa_cardsecs", st); var ch = h.querySelector(".csbtn"); if (ch) ch.textContent = nowClosed ? "\u25B8 SHOW" : "\u25BE HIDE"; sfx("click"); }); });
   document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); var av0 = b.getAttribute("data-avatar")||""; profile.avatar = av0; profile.featured = b.getAttribute("data-featured")||""; if (av0.indexOf("/api/avatars") === 0) profile.char = av0; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
@@ -3001,13 +3019,13 @@ function renderPickem(){
   } else if (state === "in" || started){
     body = '<div style="margin-top:10px"><span class="livepill"><span class="dot"></span>LIVE</span> <b>Picking is closed</b>' + (mine ? ' — your pick: <b style="color:#f5c518">' + (mine === "home" ? cfg.home : cfg.away) + '</b>. Good luck!' : ' — the game has started, so the pick is gone for this week.') + '</div>';
   } else {
-    var artRow = '<div style="display:flex;gap:10px;align-items:center;margin-top:9px"><span style="text-align:center;flex:none"><img class="pkthumb" data-cardpop="1" src="' + cfg.art + '" alt="" style="width:52px;height:62px;object-fit:cover;border-radius:8px;border:1.5px solid #f5c518;cursor:pointer"><span style="display:block;font-size:9px;color:#f5c518;font-weight:800;letter-spacing:.6px;margin-top:3px">TAP TO VIEW</span></span><div class="note" style="color:#e5e9f2">Call it right and unlock <b style="color:#f5c518">' + cfg.cardName + '</b> — a rare special card for your collection — plus <b style="color:#f5c518">+1 win</b> toward your tiers.</div></div>';
+    var artRow = '<div style="display:flex;gap:10px;align-items:center;margin-top:6px"><span style="text-align:center;flex:none"><img class="pkthumb" data-cardpop="1" src="' + cfg.art + '" alt="" style="width:40px;height:48px;object-fit:cover;border-radius:7px;border:1.5px solid #f5c518;cursor:pointer"><span style="display:block;font-size:9px;color:#f5c518;font-weight:800;letter-spacing:.6px;margin-top:3px">TAP TO VIEW</span></span><div class="note" style="color:#e5e9f2">Call it right and unlock <b style="color:#f5c518">' + cfg.cardName + '</b> — a rare special card for your collection — plus <b style="color:#f5c518">+1 win</b> toward your tiers.</div></div>';
     var btn = function(side, name, logo){ return '<button class="pickbtn' + (mine === side ? ' on' : '') + '" data-pickem="' + side + '">' + (logo ? '<img src="' + logo + '" alt="">' : '') + name + (mine === side ? ' ✓' : '') + '</button>'; };
     body = artRow + btn("away", cfg.away, ev ? ev.awayLogo : "") + btn("home", cfg.home, ev ? ev.homeLogo : "")
       + '<div class="note" style="margin-top:7px">' + (mine ? 'Pick saved — you can change it until kickoff. It locks the second the game starts.' : 'Tap a team to make your pick. It locks the second the game starts.') + '</div>';
   }
   var h = (state === "pre" && !started)
-    ? '<div class="pickem"><img class="pkart" src="' + cfg.bannerArt + '" alt="" style="width:100%;border-radius:10px;display:block"><div class="pk-title" style="margin-top:10px">' + cfg.awayShort + ' @ ' + cfg.homeShort + '</div><div class="note">' + pickemWhen() + ' MST · ' + cfg.note + '</div>' + body + '</div>'
+    ? '<div class="pickem"><img class="pkart" src="' + cfg.bannerArt + '" alt="" style="width:100%;height:84px;object-fit:cover;border-radius:9px;display:block"><div class="pk-title" style="margin-top:6px">' + cfg.awayShort + ' @ ' + cfg.homeShort + '</div><div class="note">' + pickemWhen() + ' MST · ' + cfg.note + '</div>' + body + '</div>'
     : '<div class="pickem">' + head + body + '</div>';
   boxes.forEach(function(b){ b.innerHTML = h; });
 }
@@ -3015,6 +3033,13 @@ function renderPickem(){
 function packsGet(){ var p = lsGet("pa_packs", { n: 0, g: 0 }); if (p.g) { p.n = (p.n || 0) + p.g; p.g = 0; lsSet("pa_packs", p); } return p; }
 function packsSet(p){ lsSet("pa_packs", p); }
 function foilsGet(){ return lsGet("pa_foils", []); }
+function packUnlocksGet(){ return lsGet("pa_packunlock", []); }
+function packUnlockHas(ci, ti){ return packUnlocksGet().indexOf(ci + "-" + ti) >= 0; }
+function cardUnlocked(ci, ti){ return charTierIdx(ci) >= ti || packUnlockHas(ci, ti); }
+function pickTiers(ci){ var out = []; for (var ti = 0; ti <= charTierIdx(ci); ti++) out.push(ti); packUnlocksGet().forEach(function(k){ var pp = k.split("-"); if (parseInt(pp[0], 10) === ci) { var t2 = parseInt(pp[1], 10); if (out.indexOf(t2) < 0) out.push(t2); } }); return out.sort(function(a, b){ return a - b; }); }
+function bestPickTier(ci){ var pt = pickTiers(ci); return pt[pt.length - 1]; }
+var PACK_TIER_W = [34, 25, 17, 11, 6.5, 4, 2.5];
+function drawPackTier(){ var tot = 0, i; for (i = 0; i < 7; i++) tot += PACK_TIER_W[i]; var r = Math.random() * tot; for (i = 0; i < 7; i++) { r -= PACK_TIER_W[i]; if (r <= 0) return i; } return 0; }
 function dayStr(){ var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
 function maxTierIdx(){ var w = maxWins(), idx = 0; TIERS.forEach(function(t, i){ if (w >= t.wins) idx = i; }); return idx; }
 function awardTicketPack(t){
@@ -3221,7 +3246,7 @@ function pullPack(demo){
   var pulls = [];
   for (var i = 0; i < 3; i++){
     var ci = 1 + Math.floor(Math.random() * 12);
-    var ti = Math.random() < 0.25 ? drawPremiumTier() : Math.floor(Math.random() * (charTierIdx(ci) + 1));
+    var ti = drawPackTier();
     pulls.push({ ci: ci, ti: ti });
   }
   if (isRing) { if (!demo) lsSet("pa_ring", 1); pulls[2] = { ring: true }; }
@@ -3230,10 +3255,11 @@ function pullPack(demo){
     if (!sDup) { stArr.push(stampCi); lsSet("pa_stamps", stArr); }
     pulls[2] = { stamp: true, ci: stampCi, dup: sDup };
   }
-  var fl = foilsGet();
-  var seen = {};
-  pulls.forEach(function(pu){ if (!pu.ring && !pu.stamp) { var k = pu.ci + "-" + pu.ti; pu.dup = (fl.indexOf(k) >= 0) || !!seen[k]; seen[k] = 1; if (!pu.dup) fl.push(k); } });
-  if (!demo) lsSet("pa_foils", fl);
+  var fl = foilsGet(), pu2 = packUnlocksGet(), fseen = {};
+  pulls.forEach(function(pu){ if (pu.ring || pu.stamp) return; var k = pu.ci + "-" + pu.ti;
+    if (charTierIdx(pu.ci) < pu.ti && pu2.indexOf(k) < 0) { pu2.push(k); pu.unlock = true; }
+    else { pu.dup = (fl.indexOf(k) >= 0) || !!fseen[k]; fseen[k] = 1; if (!pu.dup) { fl.push(k); pu.foil = true; } } });
+  if (!demo) { lsSet("pa_foils", fl); lsSet("pa_packunlock", pu2); }
   return pulls;
 }
 function stampCelebration(ci){
@@ -3289,8 +3315,8 @@ function viewPulledCard(i){
   } else {
     var t = TIERS[pu.ti], cname = CHARNAMES[pu.ci - 1];
     front.style.borderColor = t.color;
-    front.innerHTML = '<img src="/api/battle?s=' + pu.ci + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + cname + '</b><span class="rarpill" style="background:#f5c518;color:#1a1405">✨ ' + t.name.toUpperCase() + ' FOIL</span></div>';
-    back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">PROP AGENT</b><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">' + cname + ' · FOIL<br>' + t.name + ' tier gold foil edition<br>Pulled from a Prop Agent pack.</div>';
+    front.innerHTML = '<img src="/api/battle?s=' + pu.ci + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + cname + '</b>' + (pu.unlock ? '<span class="rarpill" style="background:' + t.color + '">' + t.name.toUpperCase() + ' · UNLOCKED</span>' : '<span class="rarpill" style="background:#f5c518;color:#1a1405">✨ ' + t.name.toUpperCase() + ' FOIL</span>') + '<span style="display:none"></span></div>';
+    back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">PROP AGENT</b><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">' + (pu.unlock ? cname + ' · ' + t.name.toUpperCase() + ' BATTLE CARD<br>Unlocked from a pack — it is on your tier list now.<br>Battle with it in Grid Clash!' : cname + ' · FOIL<br>' + t.name + ' tier gold foil edition<br>Pulled from a Prop Agent pack.') + '</div>';
   }
   document.getElementById("pullView").classList.add("open");
 }
@@ -3632,7 +3658,7 @@ function clashMenu(){
   var b = battlesGet(), lad = ladderGet();
   clashPanel('<div class="clashttl">⚔️ AGENT CLASH</div>'
     + '<div class="clashsub">Pick 2 battle cards — a Starter and a Tag Partner. A shiny 🔴🔵 coin flip decides who goes first — winner goes first, but the first player can\'t strike on Turn 1. Every turn you may play ONE 🎴 item from your hand (a free bonus) AND make one move: ATTACK ⚔️, DEFEND 🛡️, TAG 🔁, or END TURN ⏭️ (🔁 TAG is a move too — the fresh fighter steps in right away, but can\'t strike that turn). Landing a hit costs 🔮 Energy cards from your hand — your 44-card deck (20 Energy + 24 items, shuffled at the start) starts you with EMPTY hands — no Energy, no items — and every turn starts with a random pull from the deck; spent cards go to the discard pile. Land a hit, place your ✖ on the Clash Grid — 3 in a row wins an ability. A card is out when its life (❤️ on the card) is gone.</div>'
-    + '<button class="clashbig" data-clashmode="quick">⚡ QUICK CLASH<span>Friendly fight — CPU cards match your tiers, never stronger</span></button>'
+    + '<button class="clashbig" data-clashmode="quick">⚡ QUICK CLASH<span>Friendly fight — the CPU fields the same tier cards you bring</span></button>'
     + '<button class="clashbig gold" data-clashmode="ladder">🏆 LADDER' + (lad >= 7 ? ' — CHAMPION 🏆' : ' — BOSS ' + (lad + 1) + ' OF 7') + '<span>' + (lad >= 7 ? 'Every boss beaten. Replay Boss 7 for coins.' : 'Beat bosses in order. Boss ' + (lad + 1) + ' pays ' + (10 + (lad + 1) * 5) + ' 🪙') + '</span></button>'
     + '<div class="clashmeta">🪙 <b>' + coinsGet() + '</b> Clash Coins · Record <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b><br>Wins pay Clash Coins — spend them on packs (1 pack = ' + CLASH_PACK_COST + ' 🪙, in My Packs below)</div>'
     + '<div class="clashmeta">🏆 <b>Every agent climbs their own ladder:</b> ticket wins and battle wins add points to the agent set on your tier bar \u2014 right now that\u2019s <b>' + CHARNAMES[tierCharIdx() - 1] + '</b> (' + charWins(tierCharIdx()) + ' pts). Switch the bar on the Board tab to feed a different agent. Each agent\u2019s cards and battle tier unlock with their own points.</div>'
@@ -3667,7 +3693,7 @@ function clashPickRender(){
   var cur = CL.mine[CL.sel];
   if (cur) {
     tiers = '<div class="tierchips"><span>TIER:</span>';
-    for (var ti = 0; ti <= charTierIdx(cur.ci); ti++) tiers += '<button class="tierchip' + (cur.ti === ti ? ' on' : '') + '" data-picktier="' + ti + '" style="--tc:' + TIERS[ti].color + '">' + TIERS[ti].name + ' ★' + (ti + 1) + '</button>';
+    pickTiers(cur.ci).forEach(function(ti){ tiers += '<button class="tierchip' + (cur.ti === ti ? ' on' : '') + '" data-picktier="' + ti + '" style="--tc:' + TIERS[ti].color + '">' + TIERS[ti].name + ' ★' + (ti + 1) + '</button>'; });
     tiers += '</div>';
   }
   var ready = CL.mine[0] && CL.mine[1];
@@ -3686,12 +3712,10 @@ function clashCpuPair(){
     if (CL.boss === 7) return [mkFighter(10, lt[0]), mkFighter(1, lt[1])];
     return [mkFighter(pickAgent(), lt[0]), mkFighter(pickAgent(), lt[1])];
   }
-  var myTotal = fStar(CL.mine[0]) + fStar(CL.mine[1]);
-  var cap = Math.max(CL.mine[0].ti, CL.mine[1].ti) + 1;
-  var total = Math.max(2, myTotal - (Math.random() < 0.35 ? 1 : 0));
-  var s1 = Math.max(1, Math.min(cap, Math.round(total / 2) + (Math.random() < 0.5 ? 0 : (Math.random() < 0.5 ? 1 : -1))));
-  var s2 = Math.max(1, Math.min(cap, total - s1)); s1 = Math.max(1, Math.min(cap, total - s2));
-  return [mkFighter(pickAgent(), s1 - 1), mkFighter(pickAgent(), s2 - 1)];
+  /* Brandon 2026-11-18: the CPU fields the SAME tiers you bring. */
+  var mt1 = CL.mine[0].ti, mt2 = CL.mine[1].ti;
+  if (Math.random() < 0.5) { var msw = mt1; mt1 = mt2; mt2 = msw; }
+  return [mkFighter(pickAgent(), mt1), mkFighter(pickAgent(), mt2)];
 }
 function clashStartFight(){
   CL.cpu = clashCpuPair();
@@ -4136,14 +4160,14 @@ document.addEventListener("click", function(e){
   var cell = e.target.closest("[data-ttcell]"); if (cell) { ttPlace(parseInt(cell.getAttribute("data-ttcell"), 10)); return; }
   var ab = e.target.closest("[data-ability]"); if (ab) { abPick(ab.getAttribute("data-ability")); return; }
   var zc = e.target.closest("[data-zci]"); if (zc) { clashZoom(parseInt(zc.getAttribute("data-zci"), 10), parseInt(zc.getAttribute("data-zti"), 10)); return; }
-  var rc = e.target.closest("[data-readcard]"); if (rc) { var rci = parseInt(rc.getAttribute("data-readcard"), 10); var rti = charTierIdx(rci); if (CL) { for (var si = 0; si < 2; si++) if (CL.mine[si] && CL.mine[si].ci === rci) rti = CL.mine[si].ti; } clashZoom(rci, rti); return; }
+  var rc = e.target.closest("[data-readcard]"); if (rc) { var rci = parseInt(rc.getAttribute("data-readcard"), 10); var rti = bestPickTier(rci); if (CL) { for (var si = 0; si < 2; si++) if (CL.mine[si] && CL.mine[si].ci === rci) rti = CL.mine[si].ti; } clashZoom(rci, rti); return; }
   if (e.target.closest("[data-guideoff]")) { lsSet("pa_guide", 0); if (CL && CL.cpu) clashArena(); else if (CL) clashPickRender(); else clashMenu(); return; }
   if (e.target.closest("[data-guideon]")) { lsSet("pa_guide", 1); if (CL && CL.cpu) clashArena(); else if (CL) clashPickRender(); else clashMenu(); return; }
   if ((t = e.target.closest("[data-clashclose]"))) { closeClash(); return; }
   if ((t = e.target.closest("[data-clashmenu]"))) { clashMenu(); return; }
   if ((t = e.target.closest("[data-clashmode]"))) { clashSetup(t.getAttribute("data-clashmode")); return; }
   if ((t = e.target.closest("[data-pickslot]"))) { if (CL) { CL.sel = parseInt(t.getAttribute("data-pickslot"), 10); clashPickRender(); } return; }
-  if ((t = e.target.closest("[data-pickagent]"))) { if (CL) { var ci = parseInt(t.getAttribute("data-pickagent"), 10); CL.mine[CL.sel] = mkFighter(ci, charTierIdx(ci)); if (!CL.mine[1 - CL.sel]) CL.sel = 1 - CL.sel; clashPickRender(); } return; }
+  if ((t = e.target.closest("[data-pickagent]"))) { if (CL) { var ci = parseInt(t.getAttribute("data-pickagent"), 10); CL.mine[CL.sel] = mkFighter(ci, bestPickTier(ci)); if (!CL.mine[1 - CL.sel]) CL.sel = 1 - CL.sel; clashPickRender(); } return; }
   if ((t = e.target.closest("[data-picktier]"))) { if (CL && CL.mine[CL.sel]) { CL.mine[CL.sel].ti = parseInt(t.getAttribute("data-picktier"), 10); clashPickRender(); } return; }
   if ((t = e.target.closest("[data-clashfight]"))) { if (CL && CL.mine[0] && CL.mine[1]) clashStartFight(); return; }
   if ((t = e.target.closest("[data-clashrematch]"))) { if (CL) { CL.mine = CL.mine.map(function(f){ return mkFighter(f.ci, f.ti); }); clashStartFight(); } return; }
@@ -4187,14 +4211,14 @@ function ensurePackPop(){
         if (pu.ring) return '<div class="revealcard ringcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's,1.05s;width:118px;cursor:pointer"><img src="/api/avatars?s=14" alt="" style="height:118px"><div class="rvinfo"><b style="color:#f5c518">🏆 THE RING</b><br>SIGNED · ONE OF A KIND</div></div>';
         if (pu.stamp) return '<div class="revealcard stampcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer;width:112px"><div style="position:relative"><img src="/api/battle?s=' + pu.ci + '" alt="" style="height:112px;width:100%;object-fit:cover;display:block"><span class="stampbadge">FOIL</span></div><div class="rvinfo"><b style="color:#f5c518">🌟 ' + CHARNAMES[pu.ci - 1] + '</b><br>GOLD FOIL STAMP' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
         var t = TIERS[pu.ti];
-        return '<div class="revealcard' + (i === 2 || pu.ti >= 3 ? ' bestcard' : '') + '" data-view="' + i + '" style="border-color:' + t.color + ';--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer"><img src="/api/battle?s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">✨ ' + t.name + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
+        return '<div class="revealcard' + (i === 2 || pu.ti >= 3 ? ' bestcard' : '') + '" data-view="' + i + '" style="border-color:' + t.color + ';--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer"><img src="/api/battle?s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">' + (pu.unlock ? '🔓 ' + t.name + ' UNLOCKED</span><br><span style="color:#4fe3c1;font-weight:800">On your tier list — battle with it!' : '✨ ' + t.name + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '<br><span style="color:#9aa7bd;font-weight:700">Foil copy — saved to Pack Pulls</span>')) + '</div></div>';
       }).join("");
-      var newN = pulls.filter(function(pu){ return !pu.ring && !pu.stamp && !pu.dup; }).length;
+      var unN = pulls.filter(function(pu){ return pu.unlock; }).length;
+      var foilN = pulls.filter(function(pu){ return pu.foil; }).length;
       var dupN = pulls.filter(function(pu){ return pu.dup; }).length;
-      var premN = pulls.filter(function(pu){ return !pu.ring && !pu.stamp && pu.ti >= 3 && !pu.dup; }).length;
       if (pulls.some(function(pu){ return pu.ring; })) { cap.textContent = window._packDemo ? "DEMO — that's the chase celebration! Nothing was saved." : "🏆 YOU PULLED THE RING!! Signed, one of a kind — the rarest card in the game!"; ringCelebration(); }
       else if (pulls.some(function(pu){ return pu.stamp; })) { var spu = pulls.filter(function(pu){ return pu.stamp; })[0]; cap.textContent = spu.dup ? "🌟 GOLD FOIL STAMP — " + CHARNAMES[spu.ci - 1] + " again! Duplicate — already in your collection." : "🌟 GOLD FOIL STAMP PULLED — " + CHARNAMES[spu.ci - 1] + "! One of only 12 stamp cards."; if (!spu.dup) stampCelebration(spu.ci); }
-      else cap.textContent = (window._packDemo ? "DEMO — " : "") + newN + " new foil card" + (newN === 1 ? "" : "s") + " added to My Cards ✨" + (dupN ? " · " + dupN + " duplicate" + (dupN === 1 ? "" : "s") + " not saved" : "") + (premN ? " · ✨ " + premN + " GOLD FOIL" + (premN === 1 ? "" : "S") + "!" : "");
+      else cap.textContent = (window._packDemo ? "DEMO — " : "") + (unN ? "🔓 " + unN + " NEW CARD" + (unN === 1 ? "" : "S") + " UNLOCKED on your tier list! " : "") + (foilN ? "✨ " + foilN + " foil cop" + (foilN === 1 ? "y" : "ies") + " saved to Pack Pulls" : "") + (dupN ? " · " + dupN + " duplicate" + (dupN === 1 ? "" : "s") + " not saved" : "");
     }, 1330);
   });
 }
@@ -4212,7 +4236,7 @@ function openPackPop(demo){
   var gl = $("packGlow"); if (gl) gl.style.display = "none";
   var ph2 = $("packHint"); if (ph2) ph2.style.display = "none";
   stage.style.display = "block"; stage.classList.remove("torn"); stage.classList.remove("charging");
-  stage.innerHTML = '<div class="packfloat"><div class="packsplit"><div class="ph ph-t"></div><div class="ph ph-b"></div><div class="packshine"></div><div class="packflash"></div></div><div class="packrefl"><div class="reflIn"></div></div></div><div style="font-weight:900;margin-top:10px;color:#f5c518;letter-spacing:1px">' + (demo ? "DEMO PACK" : "PROP AGENT PACK") + '</div><div class="note">Tap to open</div>';
+  stage.innerHTML = '<div class="packfloat"><div class="packsplit"><div class="ph ph-t"></div><div class="ph ph-b"></div><div class="packshine"></div><div class="packflash"></div></div><div class="packaura"><i></i><i></i><i></i></div></div><div style="font-weight:900;margin-top:10px;color:#f5c518;letter-spacing:1px">' + (demo ? "DEMO PACK" : "PROP AGENT PACK") + '</div><div class="note">Tap to open</div>';
   cap.textContent = "";
   $("packPop").classList.add("open");
 }

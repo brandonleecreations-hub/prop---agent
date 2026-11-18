@@ -52,9 +52,6 @@
 @keyframes packsway3d{from{transform:rotateY(-14deg) rotateX(3deg) translateY(0)}to{transform:rotateY(14deg) rotateX(-2deg) translateY(-7px)}}
 .packstage.torn .packfloat{animation:none}
 .packshine{position:absolute;inset:0;background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.20) 48%,rgba(245,197,24,.16) 52%,transparent 68%);transform:translateX(-130%);animation:pkshine 3.4s ease-in-out infinite;pointer-events:none;-webkit-mask-image:url(/api/banners?s=packcut);-webkit-mask-size:100% 100%;mask-image:url(/api/banners?s=packcut);mask-size:100% 100%}
-.packrefl{height:84px;overflow:hidden;opacity:.5;filter:blur(1.5px) brightness(.85);-webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,.85),transparent 92%);mask-image:linear-gradient(to bottom,rgba(0,0,0,.85),transparent 92%);margin-top:2px}
-.packrefl .reflIn{width:100%;aspect-ratio:427/640;background-image:url(/api/banners?s=packcut);background-size:100% 100%;transform:scaleY(-1)}
-.packstage.torn .packrefl{animation:reflfade .35s ease-out both}
 @keyframes reflfade{to{opacity:0}}
   @keyframes charge { 0% { transform: scale(1); } 30% { transform: scale(1.03) rotate(-1.2deg); } 55% { transform: scale(1.05) rotate(1.2deg); } 80% { transform: scale(1.07) rotate(-1.6deg); } 100% { transform: scale(1.08); } }
   .packstage.charging .ph { filter: drop-shadow(0 0 22px rgba(245,197,24,.55)); }
@@ -67,7 +64,13 @@
   .packstage.torn .packsplit::after { content: ""; position: absolute; left: 3%; right: 3%; top: 49.2%; height: 4px; border-radius: 99px; background: linear-gradient(90deg,transparent,#fff 30%,#f5c518 50%,#fff 70%,transparent); filter: blur(1px); animation: tearlineA .65s ease-out both; pointer-events: none; z-index: 3; }
   @keyframes tearlineA { 0% { opacity: 0; transform: scaleX(.15); } 25% { opacity: 1; } 100% { opacity: 0; transform: scaleX(1.12); } }
   .packflash { position: absolute; left: 50%; top: 50%; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; background: radial-gradient(circle,#fff 0%,rgba(245,197,24,.85) 40%,transparent 70%); opacity: 0; pointer-events: none; }
-  .packstage.torn .packflash { animation: flashA .55s ease-out both; }
+  .packstage.torn .packflash { animation: flashA .7s ease-out both; }
+  .packaura { position: relative; height: 30px; margin-top: 4px; pointer-events: none; }
+  .packaura i { position: absolute; left: 50%; top: 50%; width: 170px; height: 30px; margin: -15px 0 0 -85px; border-radius: 50%; border: 2px solid rgba(245,197,24,.75); box-shadow: 0 0 18px rgba(245,197,24,.35), inset 0 0 14px rgba(124,58,237,.5); animation: auraring 1.9s ease-out infinite; }
+  .packaura i:nth-child(2) { animation-delay: .63s; border-color: rgba(124,58,237,.7); }
+  .packaura i:nth-child(3) { animation-delay: 1.26s; border-color: rgba(56,189,248,.6); }
+  @keyframes auraring { 0% { transform: scale(.35); opacity: 0; } 25% { opacity: .95; } 100% { transform: scale(1.25); opacity: 0; } }
+  .packstage.torn .packaura { opacity: 0; transition: opacity .3s; }
   @keyframes flashA { 0% { opacity: 0; transform: scale(.4); } 25% { opacity: 1; } 100% { opacity: 0; transform: scale(3.2); } }
   .revealglow { position: absolute; left: 50%; top: 46%; width: 340px; height: 340px; transform: translate(-50%,-50%); background: radial-gradient(circle,rgba(245,197,24,.20) 0%,rgba(124,58,237,.14) 45%,transparent 70%); pointer-events: none; animation: glowpulse 2.6s ease-in-out infinite alternate; }
   @keyframes glowpulse { from { opacity: .65; } to { opacity: 1; } }
@@ -122,7 +125,7 @@
   <div><span class="demoflag">DEMO — NOTHING SAVES</span></div>
 
   <div class="packstage" id="packStage" title="Tap to open">
-    <div class="packfloat"><div class="packsplit"><div class="ph ph-t"></div><div class="ph ph-b"></div><div class="packshine"></div><div class="packflash"></div></div><div class="packrefl"><div class="reflIn"></div></div></div>
+    <div class="packfloat"><div class="packsplit"><div class="ph ph-t"></div><div class="ph ph-b"></div><div class="packshine"></div><div class="packflash"></div></div><div class="packaura"><i></i><i></i><i></i></div></div>
   </div>
   <div class="note" style="margin-top:2px">Tap the pack, or use the buttons</div>
 
@@ -145,7 +148,7 @@
     <div class="collrow" id="coll"><span class="empty">No foils yet — open a pack.</span></div>
   </div>
 
-  <p class="note">This demo works exactly like the real game: every pack holds 3 foil cards, duplicates don't stack. Gold foil cards (Gold tier and up) hide in packs too — a little tough to pull, about 1 slot in 4. Gold FOIL STAMP cards — one for every agent, gold back included — hide in about 1 pack in 7 — and THE RING — the signed, one-of-a-kind chase card — hides in about 1 pack in 50. The <b style="color:#f5c518">Demo Chase Pull</b> button guarantees a Ring pull in this demo so you can see the celebration — in the real game there is no chase pack: THE RING hides in regular packs. The 🌟 Demo Stamp Pull button likewise guarantees a stamp card in this demo so you can see its celebration.<br><br>Play the real thing: <a href="https://prop-agent-bre.vercel.app/">prop-agent-bre.vercel.app</a> — Board tab → 🎁 My Packs.</p>
+  <p class="note">This demo works exactly like the real game: every pack holds 3 foil cards, duplicates don't stack. Higher tier cards hide in packs too — the higher the tier, the tougher the pull (a Legend is about 1 slot in 40). In the real game, pulling a card you do not own yet UNLOCKS it on your tier list — ready to battle in Grid Clash; pulling one you already own saves a foil copy instead. Gold FOIL STAMP cards — one for every agent, gold back included — hide in about 1 pack in 7 — and THE RING — the signed, one-of-a-kind chase card — hides in about 1 pack in 50. The <b style="color:#f5c518">Demo Chase Pull</b> button guarantees a Ring pull in this demo so you can see the celebration — in the real game there is no chase pack: THE RING hides in regular packs. The 🌟 Demo Stamp Pull button likewise guarantees a stamp card in this demo so you can see its celebration.<br><br>Play the real thing: <a href="https://prop-agent-bre.vercel.app/">prop-agent-bre.vercel.app</a> — Board tab → 🎁 My Packs.</p>
 </div>
 
 <div id="pullView">
@@ -191,6 +194,13 @@ function pickBase() {
   var r = Math.random();
   if (r < 0.45) return 0; if (r < 0.78) return 1; return 2;
 }
+function pickPackTier() {
+  var W = [34, 25, 17, 11, 6.5, 4, 2.5], tot = 0, i;
+  for (i = 0; i < 7; i++) tot += W[i];
+  var r = Math.random() * tot;
+  for (i = 0; i < 7; i++) { r -= W[i]; if (r <= 0) return i; }
+  return 0;
+}
 function pickPremium() {
   var r = Math.random();
   if (r < 0.55) return 3; if (r < 0.80) return 4; if (r < 0.93) return 5; return 6;
@@ -201,7 +211,7 @@ function pullPack(chase, forceStamp) {
   var isStamp = !isRing && (forceStamp || Math.random() < 0.15), stampCi = 1 + Math.floor(Math.random() * 12);
   if (forceStamp) { var un = []; for (var a = 1; a <= 12; a++) if (!stampOwned[a]) un.push(a); if (un.length) stampCi = un[Math.floor(Math.random() * un.length)]; }
   for (var i = 0; i < 3; i++) {
-    pulls.push({ ci: 1 + Math.floor(Math.random() * 12), ti: Math.random() < 0.25 ? pickPremium() : pickBase() });
+    pulls.push({ ci: 1 + Math.floor(Math.random() * 12), ti: pickPackTier() });
   }
   if (isRing) { pulls[2] = { ring: true }; ringPulled = true; }
   if (isStamp) { pulls[2] = { stamp: true, ci: stampCi, dup: !!stampOwned[stampCi] }; if (!pulls[2].dup) { stampOwned[stampCi] = 1; stampCount++; } }
