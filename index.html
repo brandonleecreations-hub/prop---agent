@@ -319,6 +319,10 @@ dialog h3{margin:0 0 6px;font-size:18px}
 .statline b{color:var(--txt)}
 .stepper{display:inline-flex;align-items:center;gap:8px}
 .fstats{display:flex;flex-wrap:wrap;gap:4px;padding:2px 0 9px;align-items:center}
+.gstrip{font-size:11.5px;color:#9aa7bd;padding:1px 0 7px;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.gstrip b{color:#fff}
+.gstrip .gslive{color:#ff5470;font-weight:900;letter-spacing:.5px}
+.gstrip .gsfin{color:#f5b942;font-weight:800}
 .fchip{background:#171331;border:1px solid #2c2350;border-radius:6px;padding:2px 6px;font-size:10.5px;color:#9aa7bd;white-space:nowrap}
 .fchip b{color:#fff}
 .fchip.tag{background:#f5b942;border-color:#f5b942;color:#1a1405;font-weight:900;letter-spacing:.5px}
@@ -2856,6 +2860,69 @@ function togglePlayerPlays(btn){
   }).catch(function(){ panel.innerHTML = '<p class="note" style="padding:6px 0">Play by play could not load right now.</p>'; });
 }
 
+function stripHtmlFor(ev, leg){
+  var ts = eventTeams(ev); if (ts.length < 2) return "";
+  var st = (ev.status && ev.status.type) || {};
+  var state = st.state || "pre";
+  var mine = (leg.team || "").toLowerCase();
+  function side(c){
+    var nm = (c.name || "").toLowerCase();
+    var isMine = mine && (nm === mine || nm.indexOf(mine) > -1 || mine.indexOf(nm) > -1);
+    var s = esc(c.abbr || c.name || "") + (state === "pre" ? "" : " " + (c.score != null && c.score !== "" ? c.score : ""));
+    return isMine ? "<b>" + s + "</b>" : s;
+  }
+  var away = ts.filter(function(c){ return c.homeAway === "away"; })[0] || ts[0];
+  var home = ts.filter(function(c){ return c.homeAway === "home"; })[0] || ts[1];
+  var mid = state === "pre" ? " @ " : " — ";
+  var when = state === "in" ? '<span class="gslive">● LIVE</span> ' + esc(st.shortDetail || st.detail || "")
+    : state === "post" ? '<span class="gsfin">' + esc(st.shortDetail || "Final") + '</span>'
+    : esc(fmtTime(ev.date));
+  return side(away) + mid + side(home) + ' <span style="opacity:.65">·</span> ' + when;
+}
+function athleteIdInSummary(s, player){
+  var found = null, surnameHits = [];
+  try {
+    (s.boxscore && s.boxscore.players || []).forEach(function(tp){ (tp.statistics || []).forEach(function(g){ (g.athletes || []).forEach(function(a){
+      if (!a.athlete) return;
+      if ((a.athlete.displayName || "").toLowerCase() === String(player || "").toLowerCase()) found = String(a.athlete.id);
+      else if (lastNameOf(a.athlete.displayName) === lastNameOf(player)) surnameHits.push(String(a.athlete.id));
+    }); }); });
+  } catch(e){}
+  if (found) return found;
+  var uniq = surnameHits.filter(function(v, i, arr){ return arr.indexOf(v) === i; });
+  return uniq.length === 1 ? uniq[0] : null;
+}
+function fillGameStrips(box){
+  var byLeague = {};
+  tickets.forEach(function(t){ t.legs.forEach(function(l){
+    if (l.custom) return;
+    var el = box.querySelector('[data-gstrip="' + t.id + '|' + l.id + '"]'); if (!el) return;
+    findEventForLeg(t, l).then(function(eid){
+      if (!eid) return;
+      var lg = leagueByKey(l.league); if (!lg) return;
+      if (!byLeague[lg.key]) byLeague[lg.key] = getScoreboard(lg, 2).catch(function(){ return []; });
+      byLeague[lg.key].then(function(evs){
+        var ev = null; evs.forEach(function(e){ if (String(e.id) === String(eid)) ev = e; });
+        if (!ev || !el.isConnected) return;
+        var html = stripHtmlFor(ev, l);
+        if (!html) return;
+        el.innerHTML = html;
+        var state = ev.status && ev.status.type && ev.status.type.state;
+        var isManual = !l.eventId || !l.athleteId;
+        if (isManual && (state === "in" || state === "post")) {
+          summaryForEvent(lg, eid).then(function(s){
+            var aid = l.athleteId || athleteIdInSummary(s, l.player);
+            if (!aid) return;
+            var val = findPlayerStat(s, aid, l.stat);
+            if (val == null || !el.isConnected) return;
+            var g = legGrade(l, val);
+            el.innerHTML = html + ' <span style="opacity:.65">·</span> ' + esc(lastNameOf(l.player).toUpperCase()) + ' live: <b>' + val + '</b> ' + (g === "hit" ? '<span class="hit">HIT</span>' : g === "miss" ? '<span class="miss">MISS</span>' : g === "push" ? '<span class="pend">PUSH</span>' : '');
+          }).catch(function(){});
+        }
+      });
+    }).catch(function(){});
+  }); });
+}
 function renderTickets(){
   var box = $("myTickets");
   if (!tickets.length) { box.innerHTML = '<div class="card" style="text-align:center;padding:26px 18px"><div style="font-size:21px;font-weight:800">No tickets yet</div><p class="sub" style="margin:10px auto 16px;max-width:420px">Build your first one from your own slip — add the lines your site shows you, pick More or Less on each, and lock it in. It takes about 20 seconds.</p><button class="ghostbtn" id="tkBuild" style="background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none;font-weight:800;padding:12px 20px">+ Build a ticket</button></div>'; var tb = $("tkBuild"); if (tb) tb.addEventListener("click", function(){ showView("build"); }); return; }
@@ -2863,6 +2930,7 @@ function renderTickets(){
     var res = t.result==="win" ? ' <span class="hit">· WON</span>' : t.result==="loss" ? ' <span class="miss">· LOST</span>' : ' <span class="pend">· LIVE / PENDING</span>';
     var legs = t.legs.map(function(l){
       return '<div class="leg"><span class="dir '+(l.dir==="MORE"?"more":"less")+'">'+l.dir+'</span><div style="flex:1"><b>'+esc(l.player)+'</b> — '+esc(l.stat)+' '+l.line+'<br><span class="note">'+esc(l.matchup||l.team||"")+(l.starts?' · '+esc(fmtTime(l.starts)):"")+' · '+esc(l.src)+'</span></div><span data-grade="'+esc(t.id)+'|'+esc(l.id)+'"><span class="pend">…</span></span></div>'
+        + '<div class="gstrip" data-gstrip="'+esc(t.id)+'|'+esc(l.id)+'"></div>'
         + '<div data-stepper="'+esc(t.id)+'|'+esc(l.id)+'"></div>'
         + '<div class="fstats" data-fstats="'+esc(t.id)+'|'+esc(l.id)+'"></div>'
         + (l.player ? '<div style="padding:2px 0 8px"><button type="button" class="ghostbtn" data-pplay="'+esc(t.id)+'|'+esc(l.id)+'" style="font-size:12px;padding:5px 11px">Play by play - '+esc(l.player)+'</button><div data-pplays="'+esc(t.id)+'|'+esc(l.id)+'"></div></div>' : '');
@@ -2870,6 +2938,7 @@ function renderTickets(){
     return '<div class="card" data-ticket="'+t.id+'"'+(t.result?' style="padding-bottom:38px"':'')+'><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span>' + res + (t.pub === false ? ' · 🔒 Private' : '') + (ticketHasCustom(t) ? ' · 🧩 Custom' : '') + '</span></div>' + likeChip(t) + (ticketHasCustom(t) ? '<div class="note">🧩 Custom ticket — earns no tier points or packs.</div>' : '') + '<span class="stampmini">LOCKED IN</span>'+(t.result?'<span class="stampmini resstamp '+(t.result==="win"?"won":"lost")+'">'+(t.result==="win"?"★ WON":"✗ LOST")+'</span>':'')+legs+'</div>';
   }).join("");
   box.querySelectorAll("[data-pplay]").forEach(function(b){ b.addEventListener("click", function(){ togglePlayerPlays(b); }); });
+  fillGameStrips(box);
   tickets.forEach(function(t){
     gradeTicket(t).then(function(map){
       var fsDirty = false;
