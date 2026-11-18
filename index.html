@@ -365,6 +365,10 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .likebtn .hrt{color:#ff5d7a}
 .agentclick{cursor:pointer}
 .stampmini{position:absolute;top:12px;right:12px;border:3px solid var(--grn);color:var(--grn);background:var(--panel);font-size:11px;font-weight:900;letter-spacing:1.5px;padding:3px 9px;border-radius:6px;transform:rotate(-10deg);opacity:.92;pointer-events:none;z-index:2}
+.resstamp{top:auto;bottom:10px;transform:rotate(7deg);font-size:12.5px;padding:4px 11px}
+.resstamp.won{border-color:#f5b942;color:#f5b942}
+.resstamp.lost{border-color:#ff5470;color:#ff5470}
+.resstamp.slam{animation:stampIn .45s cubic-bezier(.2,2.4,.4,1) both}
 .gteam{overflow-wrap:break-word}
 .redxwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(24,0,0,.45);border-radius:var(--r);z-index:5;pointer-events:none;animation:xfade 1.6s ease both}
 .redxwrap svg{width:110px;height:110px}
@@ -2862,7 +2866,7 @@ function renderTickets(){
         + '<div class="fstats" data-fstats="'+esc(t.id)+'|'+esc(l.id)+'"></div>'
         + (l.player ? '<div style="padding:2px 0 8px"><button type="button" class="ghostbtn" data-pplay="'+esc(t.id)+'|'+esc(l.id)+'" style="font-size:12px;padding:5px 11px">Play by play - '+esc(l.player)+'</button><div data-pplays="'+esc(t.id)+'|'+esc(l.id)+'"></div></div>' : '');
     }).join("");
-    return '<div class="card" data-ticket="'+t.id+'"><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span>' + res + (t.pub === false ? ' · 🔒 Private' : '') + (ticketHasCustom(t) ? ' · 🧩 Custom' : '') + '</span></div>' + likeChip(t) + (ticketHasCustom(t) ? '<div class="note">🧩 Custom ticket — earns no tier points or packs.</div>' : '') + '<span class="stampmini">LOCKED IN</span>'+legs+'</div>';
+    return '<div class="card" data-ticket="'+t.id+'"'+(t.result?' style="padding-bottom:38px"':'')+'><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span>' + res + (t.pub === false ? ' · 🔒 Private' : '') + (ticketHasCustom(t) ? ' · 🧩 Custom' : '') + '</span></div>' + likeChip(t) + (ticketHasCustom(t) ? '<div class="note">🧩 Custom ticket — earns no tier points or packs.</div>' : '') + '<span class="stampmini">LOCKED IN</span>'+(t.result?'<span class="stampmini resstamp '+(t.result==="win"?"won":"lost")+'">'+(t.result==="win"?"★ WON":"✗ LOST")+'</span>':'')+legs+'</div>';
   }).join("");
   box.querySelectorAll("[data-pplay]").forEach(function(b){ b.addEventListener("click", function(){ togglePlayerPlays(b); }); });
   tickets.forEach(function(t){
@@ -4821,6 +4825,8 @@ $("ppEnable").addEventListener("click", function(){
 /* ---------- result animations (the only animations in the app) ----------
    LOCKED IN stamp on lock-in, animated red X on a loss, confetti on a win. */
 var animSeen = lsGet("pa_anim_seen", {});
+var packSeen = lsGet("pa_pack_seen", null);
+if (packSeen === null) { packSeen = {}; for (var pk in animSeen) packSeen[pk] = 1; lsSet("pa_pack_seen", packSeen); }
 function playStamp(container){
   if (!container) return;
   var o = document.createElement("div");
@@ -4855,12 +4861,18 @@ function confetti(){
   })();
 }
 function celebrateCheck(t){
-  if (!t.result || animSeen[t.id]) return;
+  if (!t.result) return;
+  if (!packSeen[t.id]) { packSeen[t.id] = 1; lsSet("pa_pack_seen", packSeen); if (t.result === "win") awardTicketPack(t); }
+  if (animSeen[t.id]) return;
+  if (window._view !== "tickets") return; /* the moment waits until he opens the ticket */
   animSeen[t.id] = 1; lsSet("pa_anim_seen", animSeen);
-  if (t.result==="win"){ confetti(); awardTicketPack(t); }
-  else if (t.result==="loss"){
-    var card = document.querySelector('[data-ticket="'+t.id+'"]');
-    if (card) setTimeout(function(){ playRedX(card); }, 250);
+  var card = document.querySelector('[data-ticket="' + t.id + '"]');
+  if (!card) { renderTickets(); card = document.querySelector('[data-ticket="' + t.id + '"]'); }
+  if (t.result === "win") confetti();
+  else if (card) setTimeout(function(){ playRedX(card); }, 250);
+  if (card) {
+    var st = card.querySelector(".resstamp");
+    if (st) { st.classList.remove("slam"); void st.offsetWidth; st.classList.add("slam"); }
   }
 }
 
@@ -5129,7 +5141,7 @@ cloudInit();
   showView("home");
 })();
 if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").catch(function(){}); }
-setInterval(function(){ boardCache = {}; refreshHome(); if ($("view-live").classList.contains("on")){ renderLive(); if (window._openGame) openGame(window._openGame.key, window._openGame.eventId, true); }
+setInterval(function(){ boardCache = {}; refreshHome(); if (window._view === "tickets") renderTickets(); if ($("view-live").classList.contains("on")){ renderLive(); if (window._openGame) openGame(window._openGame.key, window._openGame.eventId, true); }
   if (window._view === "live") renderLiveHighlights();
   if (window._view === "sport" && currentSport !== "all"){ getScoreboard(leagueByKey(currentSport), 1).then(function(){ var bmI = breakMap[currentSport] || {}; if (Object.keys(bmI).length || window._brkWasOpen){ window._brkWasOpen = !!Object.keys(bmI).length; renderBoards(); } }).catch(function(){}); }
 }, 30000);
