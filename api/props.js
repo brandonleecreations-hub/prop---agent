@@ -697,7 +697,16 @@ module.exports = async (req, res) => {
   // sport, all day: the board is served from cache (free), and a pull
   // can only ever fire when a game is actually coming up or on. The
   // old one-evening-look-ahead exception is removed for every sport.
-  if (!(await gamesToday(sport))) {
+  const gateOk = await gamesToday(sport);
+  // Tennis exception (Brandon 2026-11-18): ESPN's tennis scoreboard only
+  // carries top-tour tournaments and marks them "post" while Challenger /
+  // ITF matches that PrizePicks lists are still being played, so an ESPN
+  // "no games" answer cannot be trusted for tennis. Tennis falls through
+  // to the shared-cache path below, which still pays for at most ONE
+  // claimed fetch per window under the global cap -- if Parlay has no
+  // tennis props, the empty board is cached and costs nothing more.
+  const tennisBlind = !gateOk && (sport === "tennis_atp" || sport === "tennis_wta");
+  if (!gateOk && !tennisBlind) {
     res.setHeader("Cache-Control", "public, s-maxage=900, stale-while-revalidate=900");
     res.status(200).json({ ok: true, configured: true, noGames: true, props: hit ? hit.props : [] });
     return;
@@ -728,6 +737,13 @@ module.exports = async (req, res) => {
       await serveStaleOrFallback(res, sport, hit, freshRow === undefined ? sbRow : freshRow);
       return;
     }
+  }
+  if (tennisBlind && sbRow === undefined) {
+    // Shared store unreachable: without it we cannot prove a fetch would
+    // be the window's one allowed pull, so serve cache instead of paying.
+    res.setHeader("Cache-Control", "public, s-maxage=900, stale-while-revalidate=900");
+    res.status(200).json({ ok: true, configured: true, noGames: true, props: hit ? hit.props : [] });
+    return;
   }
   // Budget brake: never let a runaway loop drain the account. Serve the
   // last board we have (even stale) rather than paying for another fetch.
