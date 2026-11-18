@@ -619,6 +619,15 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .fcard.hitshake{animation:hitshakeA .5s ease}
 @keyframes lungeA{30%{transform:scale(1.07) translateY(-4px)}}
 @keyframes hitshakeA{15%,45%,75%{transform:translateX(-5px) rotate(-2deg)}30%,60%,90%{transform:translateX(5px) rotate(2deg)}}
+.fcard.active img{animation:artlife 3.4s ease-in-out infinite alternate}
+@keyframes artlife{from{transform:scale(1.03)}to{transform:scale(1.12) translateY(-1px)}}
+.facepop{position:absolute;top:-3px;left:50%;transform:translateX(-50%);font-size:22px;z-index:7;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.65));animation:facepopA .95s ease forwards}
+.fcard.bench .facepop{font-size:14px}
+.facepop.ko{animation:facekoA 1.5s ease forwards}
+@keyframes facepopA{0%{transform:translateX(-50%) scale(.3) rotate(-14deg);opacity:0}25%{transform:translateX(-50%) scale(1.35) rotate(6deg);opacity:1}45%{transform:translateX(-50%) scale(1)}78%{opacity:1}100%{transform:translateX(-50%) scale(1.05) translateY(-3px);opacity:0}}
+@keyframes facekoA{0%{transform:translateX(-50%) scale(.3);opacity:0}20%{transform:translateX(-50%) scale(1.3) rotate(-10deg);opacity:1}40%{transform:translateX(-50%) rotate(10deg)}60%{transform:translateX(-50%) rotate(-8deg)}80%{opacity:1}100%{transform:translateX(-50%) translateY(2px);opacity:0}}
+.fcard.tagin{animation:taginA .55s cubic-bezier(.2,2.2,.4,1)}
+@keyframes taginA{0%{transform:scale(.55) rotate(-9deg);opacity:.3}100%{transform:scale(1) rotate(0deg);opacity:1}}
 .fxpop{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:54px;z-index:6;pointer-events:none;filter:drop-shadow(0 12px 16px rgba(0,0,0,.65));animation:fxpopA .65s cubic-bezier(.2,1.6,.4,1)}
 @keyframes fxpopA{0%{transform:perspective(500px) scale(.2) rotate(-26deg) translateZ(-80px);opacity:0}40%{transform:perspective(500px) scale(1.35) rotate(8deg) translateZ(60px);opacity:1}65%{transform:perspective(500px) scale(1.02) rotate(0deg) translateZ(20px)}100%{transform:perspective(500px) scale(1.15) translateZ(30px)}}
 .fxpop.shield{font-size:50px;filter:drop-shadow(0 0 20px rgba(96,165,250,.9)) drop-shadow(0 12px 16px rgba(0,0,0,.6));animation-name:fxpopB}
@@ -3430,7 +3439,7 @@ async function applyAbility(side, id, B){
   else if (id === "momentum") { if (mine) CL.myTemp = 2; else CL.cpuTemp = 2; CL.log.push("🔥 " + (mine ? "Your" : "CPU") + " MOMENTUM — +2★ next round!"); }
   else if (id === "guard") { if (mine) CL.myGuard = Math.min(2, (CL.myGuard || 0) + 2); else CL.cpuGuard = Math.min(2, (CL.cpuGuard || 0) + 2); CL.log.push("🛡️ " + (mine ? "Your" : "CPU") + " IRON GUARD — next 2 hits blocked!"); }
   else if (id === "heal") { var hurt = null; myPair.forEach(function(f){ if (fAlive(f) && f.hits > 0 && (!hurt || f.hits > hurt.hits)) hurt = f; }); if (hurt) { hurt.hits = Math.max(0, hurt.hits - 2); sfx("heal"); CL.log.push("❤️ SECOND WIND — " + fName(hurt) + " heals 2 damage!"); } }
-  else if (id === "sneak") { if (CL.round === 1 && side === CL.firstPlayer) { CL.log.push("\uD83D\uDEAB SNEAK STRIKE held \u2014 the first player can't strike on Turn 1!"); } else if (fAlive(foeActive)) { var sd = dmgOf(mine ? CL.mine[CL.myActive] : CL.cpu[CL.cpuActive]); foeActive.hits = Math.min(lifeOf(foeActive), foeActive.hits + sd); sfx(foeActive.hits >= lifeOf(foeActive) ? "ko" : "hit"); CL.log.push("💥 SNEAK STRIKE — " + fName(foeActive) + " takes " + sd + " damage!" + (foeActive.hits >= lifeOf(foeActive) ? " ELIMINATED!" : "")); } }
+  else if (id === "sneak") { if (CL.round === 1 && side === CL.firstPlayer) { CL.log.push("\uD83D\uDEAB SNEAK STRIKE held \u2014 the first player can't strike on Turn 1!"); } else if (fAlive(foeActive)) { var sd = dmgOf(mine ? CL.mine[CL.myActive] : CL.cpu[CL.cpuActive]); foeActive.hits = Math.min(lifeOf(foeActive), foeActive.hits + sd); sfx(foeActive.hits >= lifeOf(foeActive) ? "ko" : "hit"); CL.lastHit = mine ? "cpu" : "me"; CL.lastWin = mine ? "me" : "cpu"; if (foeActive.hits >= lifeOf(foeActive)) CL.lastKO = foeActive; CL.log.push("💥 SNEAK STRIKE — " + fName(foeActive) + " takes " + sd + " damage!" + (foeActive.hits >= lifeOf(foeActive) ? " ELIMINATED!" : "")); } }
   else if (id === "headstart") { CL.log.push("🎯 " + (mine ? "Your" : "CPU") + " HEAD START — 2 free marks!"); clashArena(); for (var k = 0; k < 2; k++) { if (CL !== B) return; if (CL.grid.indexOf("") < 0) break; await placeOne(side, B); if (CL !== B) return; } }
   clashArena();
 }
@@ -3602,7 +3611,7 @@ function clashCpuPair(){
 }
 function clashStartFight(){
   CL.cpu = clashCpuPair();
-  CL.myActive = 0; CL.cpuActive = 0; CL.round = 1; CL.busy = false; CL.over = false; CL.tagged = false; CL.lastHit = null; CL.lastWin = null; CL.lastBlock = null; CL.grid = ["", "", "", "", "", "", "", "", ""]; CL.myBonus = 0; CL.cpuBonus = 0; CL.myGuard = 0; CL.cpuGuard = 0; CL.myTemp = 0; CL.cpuTemp = 0; CL.placing = null; CL.abilityPick = null; CL.ttLine = null; CL.ttResolve = null; CL.abResolve = null;
+  CL.myActive = 0; CL.cpuActive = 0; CL.round = 1; CL.busy = false; CL.over = false; CL.tagged = false; CL.lastHit = null; CL.lastWin = null; CL.lastBlock = null; CL.lastTag = null; CL.grid = ["", "", "", "", "", "", "", "", ""]; CL.myBonus = 0; CL.cpuBonus = 0; CL.myGuard = 0; CL.cpuGuard = 0; CL.myTemp = 0; CL.cpuTemp = 0; CL.placing = null; CL.abilityPick = null; CL.ttLine = null; CL.ttResolve = null; CL.abResolve = null;
   CL.phase = "flip"; CL.flip = null; CL.firstPlayer = null; CL.myDeck = buildDeck(); CL.cpuDeck = buildDeck(); CL.myHand = []; CL.cpuHand = []; CL.myPile = []; CL.cpuPile = []; CL.pulledMe = []; CL.pulledCpu = []; CL.drawPop = 0; CL.statSurge = 0; CL.justShuffled = true; CL.itemUsedRound = 0; CL.cpuItemRound = 0; CL.myFreeHit = false; CL.cpuFreeHit = false; CL.planned = false; CL.scoutText = null; CL.lastDrawn = [];
   CL.log = ["🥊 " + fName(CL.mine[0]) + " & " + fName(CL.mine[1]) + " vs " + fName(CL.cpu[0]) + " & " + fName(CL.cpu[1]) + " — FIGHT!"];
   clashArena();
@@ -3653,8 +3662,8 @@ function applyItem(side, id){
   else if (id === "power") { if (mine) CL.myTemp = 2; else CL.cpuTemp = 2; CL.log.push("🔥 +2★ this round for " + (mine ? "you" : "CPU") + "!"); }
   else if (id === "eraser") { var fm = mine ? "O" : "X", cellIx = -1; for (var li = 0; li < TT_LINES.length && cellIx < 0; li++) { var L = TT_LINES[li], mk = L.filter(function(c){ return CL.grid[c] === fm; }); if (mk.length === 2) cellIx = mk[0]; } if (cellIx < 0) cellIx = CL.grid.indexOf(fm); if (cellIx >= 0) { CL.grid[cellIx] = ""; CL.log.push("🎯 Erased the enemy mark on the " + TT_POS[cellIx] + " square!"); } }
   else if (id === "patch") { var pair = mine ? CL.mine : CL.cpu, hurt = null; pair.forEach(function(f){ if (fAlive(f) && f.hits > 0 && (!hurt || f.hits > hurt.hits)) hurt = f; }); if (hurt) { hurt.hits = Math.max(0, hurt.hits - 2); sfx("heal"); CL.log.push("❤️ " + fName(hurt) + " heals 2 damage!"); } }
-  else if (id === "sneak") { var foeA = mine ? CL.cpu[CL.cpuActive] : CL.mine[CL.myActive]; var gk = mine ? "cpuGuard" : "myGuard"; if ((CL[gk] || 0) > 0) { CL[gk]--; CL.log.push("🛡️ Sneak Hit BLOCKED by a guard!"); } else if (fAlive(foeA)) { var sd2 = dmgOf(mine ? CL.mine[CL.myActive] : CL.cpu[CL.cpuActive]); foeA.hits = Math.min(lifeOf(foeA), foeA.hits + sd2); sfx(foeA.hits >= lifeOf(foeA) ? "ko" : "hit"); CL.log.push("💥 SNEAK HIT — " + fName(foeA) + " takes " + sd2 + " damage!" + (foeA.hits >= lifeOf(foeA) ? " ELIMINATED!" : "")); } clashCheckEnd(); }
-  else if (id === "tag") { if (mine) CL.myActive = 1 - CL.myActive; else CL.cpuActive = 1 - CL.cpuActive; sfx("tag"); CL.log.push("🧲 Free Tag — " + fName(mine ? CL.mine[CL.myActive] : CL.cpu[CL.cpuActive]) + " swaps in free!"); }
+  else if (id === "sneak") { var foeA = mine ? CL.cpu[CL.cpuActive] : CL.mine[CL.myActive]; var gk = mine ? "cpuGuard" : "myGuard"; if ((CL[gk] || 0) > 0) { CL[gk]--; CL.log.push("🛡️ Sneak Hit BLOCKED by a guard!"); } else if (fAlive(foeA)) { var sd2 = dmgOf(mine ? CL.mine[CL.myActive] : CL.cpu[CL.cpuActive]); foeA.hits = Math.min(lifeOf(foeA), foeA.hits + sd2); sfx(foeA.hits >= lifeOf(foeA) ? "ko" : "hit"); CL.lastHit = mine ? "cpu" : "me"; CL.lastWin = mine ? "me" : "cpu"; if (foeA.hits >= lifeOf(foeA)) CL.lastKO = foeA; CL.log.push("💥 SNEAK HIT — " + fName(foeA) + " takes " + sd2 + " damage!" + (foeA.hits >= lifeOf(foeA) ? " ELIMINATED!" : "")); } clashCheckEnd(); }
+  else if (id === "tag") { if (mine) CL.myActive = 1 - CL.myActive; else CL.cpuActive = 1 - CL.cpuActive; CL.lastTag = mine ? "me" : "cpu"; sfx("tag"); CL.log.push("🧲 Free Tag — " + fName(mine ? CL.mine[CL.myActive] : CL.cpu[CL.cpuActive]) + " swaps in free!"); }
   else if (id === "supply") { drawItems(side, 2); CL.log.push("📦 Drew 2 cards."); }
   else if (id === "reset") { CL.grid = ["", "", "", "", "", "", "", "", ""]; CL.log.push("⏪ GRID RESET — the board is wiped clean!"); }
   else if (id === "token") { if (mine) CL.myFreeHit = true; else CL.cpuFreeHit = true; CL.log.push("🎟️ Next landed hit costs 0 Energy for " + (mine ? "you" : "CPU") + "."); }
@@ -3740,15 +3749,16 @@ async function flipResolve(call){
   clashArena();
 }
 function pipsHTML(f){ var s = '<span class="pips">'; for (var i = 0; i < lifeOf(f); i++) s += '<i class="' + (i < f.hits ? 'hit' : '') + '"></i>'; return s + '</span>'; }
+function fxFor(side, f){ if (!CL || !f) return ""; if (CL.lastKO === f) return "ko"; if (CL.lastHit === side) return "pain"; if (CL.lastBlock === side) return "smug"; if (CL.lastHit && CL.lastWin === side) return "rage"; if (CL.lastTag === side) return "tag"; return ""; }
 function fighterHTML(f, active, extra, fx){
   var t = TIERS[f.ti];
-  return '<div class="fcard' + (active ? ' active' : ' bench') + (fAlive(f) ? '' : ' ko') + (extra || '') + '" data-zci="' + f.ci + '" data-zti="' + f.ti + '" style="border-color:' + t.color + '">'
+  return '<div class="fcard' + (active ? ' active' : ' bench') + (fAlive(f) ? '' : ' ko') + (extra || '') + (fx === "tag" ? ' tagin' : '') + '" data-zci="' + f.ci + '" data-zti="' + f.ti + '" style="border-color:' + t.color + '">'
     + '<img src="/api/battle?s=' + f.ci + '" alt="">'
     + '<div class="fcnm">' + fName(f) + '</div>'
     + '<div class="fcst" style="color:' + t.color + '">' + t.name + ' ' + "★".repeat(f.ti + 1) + '</div>'
     + '<div class="fcpw' + ((f.used.pwr || f.used.hail || f.used.island) ? ' spent' : '') + '">⚡ ' + POWERS[f.ci - 1].name + ((f.used.pwr || f.used.hail || f.used.island) ? ' · USED' : '') + '</div><div class="fcatk">\uD83D\uDCA5 DMG ' + dmgOf(f) + ' · \u2764\uFE0F ' + (lifeOf(f) - f.hits) + '/' + lifeOf(f) + ' · cost \u00D7' + hitCost(f) + '</div>' + pipsHTML(f)
     + (fAlive(f) ? '' : '<div class="kotag">ELIMINATED</div>')
-    + (fx === "fist" ? '<div class="fxpop fist">\uD83D\uDC4A</div>' : (fx === "shield" ? '<div class="fxpop shield">\uD83D\uDEE1\uFE0F</div>' : '')) + (fx === "fist" && CL.lastDmg ? '<div class="dmgfloat">-' + CL.lastDmg + '</div>' : '') + (CL.lastKO === f ? '<div class="kofloat">KO!</div>' : '')
+    + (fx === "pain" ? '<div class="fxpop fist">\uD83D\uDC4A</div><div class="facepop">\uD83D\uDE16</div>' : (fx === "smug" ? '<div class="fxpop shield">\uD83D\uDEE1\uFE0F</div><div class="facepop">\uD83D\uDE0F</div>' : (fx === "ko" ? '<div class="facepop ko">\uD83D\uDE35</div>' : (fx === "rage" ? '<div class="facepop">\uD83D\uDE24</div>' : (fx === "tag" ? '<div class="facepop">\uD83E\uDD29</div>' : ''))))) + (fx === "pain" && CL.lastDmg ? '<div class="dmgfloat">-' + CL.lastDmg + '</div>' : '') + (CL.lastKO === f ? '<div class="kofloat">KO!</div>' : '')
     + '</div>';
 }
 function clashArena(){
@@ -3795,9 +3805,9 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
   var phase = !CL.busy && !CL.over && !CL.placing && !CL.abilityPick;
   clashPanel('<div class="clashround">' + (CL.mode === "ladder" ? '🏆 BOSS ' + CL.boss + ' · ' : '') + 'ROUND ' + CL.round + (CL.round >= 60 ? ' · <span style="color:#ff6b6b">⏰ SUDDEN DEATH</span>' : '') + '</div>'
     + guide
-    + '<div class="field3d' + (CL.lastHit ? ' shakehit' : '') + '">' + turnSplashHTML() + '<div class="side cpu"><div class="sidetag">CPU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("cpu") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("cpu") + ' \u00B7 DECK ' + CL.cpuDeck.length + '</div><div class="frow">' + fighterHTML(cp, true, cpExtra, CL.lastHit === "cpu" ? "fist" : (CL.lastBlock === "cpu" ? "shield" : "")) + fighterHTML(cpp, false, "") + '</div>' + cpuFly + '</div>'
+    + '<div class="field3d' + (CL.lastHit ? ' shakehit' : '') + '">' + turnSplashHTML() + '<div class="side cpu"><div class="sidetag">CPU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("cpu") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("cpu") + ' \u00B7 DECK ' + CL.cpuDeck.length + '</div><div class="frow">' + fighterHTML(cp, true, cpExtra, fxFor("cpu", cp)) + fighterHTML(cpp, false, "") + '</div>' + cpuFly + '</div>'
     + '<div class="clashmid"><span class="vsbadge">VS</span><div class="zonelab">CLASH GRID · 3 IN A ROW = ABILITY</div>' + ttHTML() + '<div class="clashnums" id="clashNums"></div>' + intel + scoutHtml + logHtml + '</div>'
-    + '<div class="side me"><div class="sidetag">YOU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("me") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("me") + '</div><div class="frow">' + fighterHTML(me, true, meExtra, CL.lastHit === "me" ? "fist" : (CL.lastBlock === "me" ? "shield" : "")) + fighterHTML(mp, false, "") + '</div></div></div>'
+    + '<div class="side me"><div class="sidetag">YOU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("me") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("me") + '</div><div class="frow">' + fighterHTML(me, true, meExtra, fxFor("me", me)) + fighterHTML(mp, false, "") + '</div></div></div>'
     + itemHTML()
     + abilityHTML()
     + turnBannerHTML()
@@ -3815,12 +3825,12 @@ function cpuPlan(){
   CL.cpuStance = "atk"; CL.cpuTagged = false;
   var r = Math.random();
   var t1fp = CL.round === 1 && CL.firstPlayer === "cpu";
-  if (!t1fp && fAlive(p) && a.hits >= lifeOf(a) - 1 && p.hits === 0 && r < 0.22) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.cpuStance = "tag"; CL.log.push("🔁 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + "!"); return; }
+  if (!t1fp && fAlive(p) && a.hits >= lifeOf(a) - 1 && p.hits === 0 && r < 0.22) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.cpuStance = "tag"; CL.lastTag = "cpu"; CL.log.push("🔁 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + "!"); return; }
   if (energyCount("cpu") >= 2 && a.hits >= lifeOf(a) - 1 && r < 0.20) CL.cpuStance = "def";
   else if (energyCount("cpu") >= 2 && r < 0.07) CL.cpuStance = "def";
   if (CL.cpuStance === "atk" && !CL.cpuTagged && energyCount("cpu") < hitCost(CL.cpu[CL.cpuActive])) {
     var pp = CL.cpu[1 - CL.cpuActive];
-    if (!t1fp && fAlive(pp) && hitCost(pp) <= energyCount("cpu") && Math.random() < 0.5) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.cpuStance = "tag"; CL.log.push("\uD83D\uDD01 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + " \u2014 saving energy!"); }
+    if (!t1fp && fAlive(pp) && hitCost(pp) <= energyCount("cpu") && Math.random() < 0.5) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.cpuStance = "tag"; CL.lastTag = "cpu"; CL.log.push("\uD83D\uDD01 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + " \u2014 saving energy!"); }
     else if (energyCount("cpu") >= 2 && Math.random() < 0.45) { CL.cpuStance = "def"; CL.log.push("\uD83D\uDEE1\uFE0F CPU defends \u2014 collecting energy."); }
   }
 }
@@ -3844,7 +3854,7 @@ async function clashRound(stance){
     CL.myActive = 1 - CL.myActive; CL.tagged = true; sfx("tag");
     CL.log.push("🔁 You tag in " + fName(CL.mine[CL.myActive]) + " — that's your move this turn.");
   }
-  CL.busy = true; CL.lastHit = null; CL.lastWin = null; CL.lastBlock = null; CL.lastDmg = null; CL.lastKO = null; sfx("charge");
+  CL.busy = true; CL.lastHit = null; CL.lastWin = null; CL.lastBlock = null; CL.lastDmg = null; CL.lastKO = null; CL.lastTag = null; if (stance === "tag") CL.lastTag = "me"; sfx("charge");
   if (stance === "def") {
     if (energyCount("me") >= 2) { payEnergy("me", 2); CL.log.push("\uD83D\uDEE1\uFE0F You pay 2 \uD83D\uDD2E Energy to DEFEND."); }
     else { stance = "atk"; CL.log.push("\uD83D\uDEAB Not enough \uD83D\uDD2E Energy to DEFEND (needs 1) \u2014 you attack instead!"); }
