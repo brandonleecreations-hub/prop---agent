@@ -323,19 +323,32 @@ function etToday() {
 // often fetches happen at all.
 const deadKeys = {}; // last-6-chars of key -> ET day it ran dry
 function keyAlive(k) { return deadKeys[String(k).slice(-6)] !== etToday(); }
+const PRIMARY_KEY = process.env.PARLAY_API_KEY_2 || process.env.PARLEY_API_KEY_2 || "";
+const goodToday = {}; // key tail -> ET day of its last successful fetch
+let probeDay = "";
+function markGood(k) { goodToday[String(k).slice(-6)] = etToday(); }
+function isGood(k) { return goodToday[String(k).slice(-6)] === etToday(); }
 let rotN = 0;
 async function fetchSport(sport, keys) {
   const all = (Array.isArray(keys) ? keys : [keys]).filter(Boolean);
-  let list = all;
-  if (all.length > 1) {
-    let h = 0; const seed = etToday() + ":" + sport; for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
-    const start = Math.abs(h + (rotN++)) % all.length;
-    list = all.slice(start).concat(all.slice(0, start));
+  const good = all.filter(isGood);
+  const rest = all.filter(function (k) { return !isGood(k); });
+  rest.sort(function (a, b) { return (b === PRIMARY_KEY) - (a === PRIMARY_KEY); });
+  let list;
+  if (good.length > 1) {
+    const start = (rotN++) % good.length;
+    list = good.slice(start).concat(good.slice(0, start)).concat(rest);
+  } else {
+    list = good.concat(rest);
+  }
+  if (probeDay !== etToday()) {
+    const cand = list.find(function (k) { return !isGood(k) && keyAlive(k); });
+    if (cand && list.length > 1) { probeDay = etToday(); list = [cand].concat(list.filter(function (k) { return k !== cand; })); }
   }
   let lastErr = null;
   for (const k of list) {
     if (!keyAlive(k)) continue;
-    try { return await fetchSportWithKey(sport, k); }
+    try { const out = await fetchSportWithKey(sport, k); markGood(k); return out; }
     catch (e) {
       lastErr = e;
       if (/CREDIT_LIMIT_REACHED|http 403/i.test(String((e && e.message) || e))) { deadKeys[String(k).slice(-6)] = etToday(); continue; }
@@ -737,7 +750,7 @@ module.exports = async (req, res) => {
     if (slot === 0 || slotUsed) { await serveStaleOrFallback(res, sport, hit, sbRow); return; }
     const allRows = await sbCacheAll();
     const usedToday = (allRows || []).reduce((sum, r) => sum + (String(r.count_day || "") === etToday() ? (r.credits_today | 0) : 0), 0);
-    if (usedToday + 6 > dailyCap()) { await serveStaleOrFallback(res, sport, hit, sbRow); return; }
+    if (usedToday + 6 > 100) { await serveStaleOrFallback(res, sport, hit, sbRow); return; } // hard stop 100; the 50 cap is the notify line (dailyCap, reported in the tally) — Brandon approved going over when needed
     sbClaimed = await sbClaim(sport, sbRow, slot);
     if (!sbClaimed) {
       const freshRow = await sbCacheRow(sport);
