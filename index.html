@@ -2150,6 +2150,7 @@ function renderGameProps(lg, s){
   var comp = (s.header && s.header.competitions || [])[0] || {};
   var cs = comp.competitors || [];
   var st = comp.status && comp.status.type || {};
+  if (st.state && st.state !== "pre"){ box.innerHTML = '<div style="font-size:16px;margin-top:14px"><b>Player Props — This Game</b></div><p class="empty">' + (st.state === "post" ? "Props closed — this game is over." : "Props closed — this game has started.") + '</p>'; return; }
   var inBrk = isBreakStatus({status: {type: st}});
   if (st.state === "in"){
     var lt = liveTeamsByLeague[lg.key] = liveTeamsByLeague[lg.key] || {};
