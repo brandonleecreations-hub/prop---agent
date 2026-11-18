@@ -2440,8 +2440,8 @@ function openGame(key, eventId, isRefresh){
     if (isRefresh && keepY) window.scrollTo(0, keepY);
     var pbpBtn = $("pbpBtn");
     if (pbpBtn) pbpBtn.addEventListener("click", function(){ var all = $("pbpAll"); if (!all) return; var open = all.style.display !== "none"; if (!open && !all.innerHTML) all.innerHTML = plays.slice(15).map(fmtPlay).join(""); all.style.display = open ? "none" : ""; window._pbpOpen = !open; pbpBtn.textContent = open ? "Show all plays" : "Show fewer plays"; });
-    var gtEl = $("gameTracker"), gpEl = $("gameProps");
-    if (gtEl && gpEl && gtEl.parentNode) gtEl.parentNode.insertBefore(gpEl, gtEl.nextSibling);
+    if (st.state !== "pre") { var gtEl = $("gameTracker"), gpEl = $("gameProps");
+    if (gtEl && gpEl && gtEl.parentNode) gtEl.parentNode.insertBefore(gpEl, gtEl.nextSibling); }
     renderGameProps(lg, s);
     /* Game Center opens instantly at the top — no scrolling. */
   }).catch(function(){ $("gameDetail").innerHTML = '<button class="gcBack" type="button">← All games</button><div class="card"><p class="err">Couldn\'t load that game\'s details from ESPN.</p></div>'; });
