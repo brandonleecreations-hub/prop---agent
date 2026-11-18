@@ -619,15 +619,21 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .fcard.hitshake{animation:hitshakeA .5s ease}
 @keyframes lungeA{30%{transform:scale(1.07) translateY(-4px)}}
 @keyframes hitshakeA{15%,45%,75%{transform:translateX(-5px) rotate(-2deg)}30%,60%,90%{transform:translateX(5px) rotate(2deg)}}
-.fcard.active img{animation:artlife 3.4s ease-in-out infinite alternate}
-@keyframes artlife{from{transform:scale(1.03)}to{transform:scale(1.12) translateY(-1px)}}
-.facepop{position:absolute;top:-3px;left:50%;transform:translateX(-50%);font-size:22px;z-index:7;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.65));animation:facepopA .95s ease forwards}
+.fcard.active img{animation:artmove 2.6s ease-in-out infinite alternate}
+@keyframes artmove{0%{transform:scale(1.07) translateY(0) rotate(-.7deg)}50%{transform:scale(1.17) translateY(-1.5px) rotate(.7deg)}100%{transform:scale(1.1) translateY(0) rotate(0deg)}}
+.fcard.active img.imgflinch{animation:flinchA .55s ease}
+@keyframes flinchA{0%{transform:translateX(0)}25%{transform:translateX(-5px) rotate(-5deg) scale(1.06);filter:brightness(1.7) sepia(1) hue-rotate(-55deg) saturate(3)}60%{transform:translateX(2px)}100%{transform:translateX(0)}}
+.fcard.active img.imgpunch{animation:punchA .5s ease}
+@keyframes punchA{0%{transform:scale(1.06)}35%{transform:scale(1.4) translateY(1px);filter:brightness(1.25)}100%{transform:scale(1.12)}}
+.facepop{position:absolute;top:-3px;left:50%;transform:translateX(-50%);font-size:26px;z-index:7;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.65));animation:facepopA .95s ease forwards}
 .fcard.bench .facepop{font-size:14px}
 .facepop.ko{animation:facekoA 1.5s ease forwards}
 @keyframes facepopA{0%{transform:translateX(-50%) scale(.3) rotate(-14deg);opacity:0}25%{transform:translateX(-50%) scale(1.35) rotate(6deg);opacity:1}45%{transform:translateX(-50%) scale(1)}78%{opacity:1}100%{transform:translateX(-50%) scale(1.05) translateY(-3px);opacity:0}}
 @keyframes facekoA{0%{transform:translateX(-50%) scale(.3);opacity:0}20%{transform:translateX(-50%) scale(1.3) rotate(-10deg);opacity:1}40%{transform:translateX(-50%) rotate(10deg)}60%{transform:translateX(-50%) rotate(-8deg)}80%{opacity:1}100%{transform:translateX(-50%) translateY(2px);opacity:0}}
 .fcard.tagin{animation:taginA .55s cubic-bezier(.2,2.2,.4,1)}
 @keyframes taginA{0%{transform:scale(.55) rotate(-9deg);opacity:.3}100%{transform:scale(1) rotate(0deg);opacity:1}}
+.deck3d.shuffling{animation:deckshuffle2 1.4s ease;box-shadow:0 0 22px rgba(245,185,66,.75)}
+@keyframes deckshuffle2{0%,100%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(0deg) scale(1)}12%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(-8deg) translateX(-6px) scale(1.22)}28%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(8deg) translateX(6px) scale(1.28)}44%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(-6deg) translateY(-4px) scale(1.22)}60%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(6deg) scale(1.26)}76%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(-3deg) translateX(-3px) scale(1.14)}88%{transform:perspective(500px) rotateX(6deg) rotateY(-8deg) rotate(2deg) scale(1.05)}}
 .fxpop{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:54px;z-index:6;pointer-events:none;filter:drop-shadow(0 12px 16px rgba(0,0,0,.65));animation:fxpopA .65s cubic-bezier(.2,1.6,.4,1)}
 @keyframes fxpopA{0%{transform:perspective(500px) scale(.2) rotate(-26deg) translateZ(-80px);opacity:0}40%{transform:perspective(500px) scale(1.35) rotate(8deg) translateZ(60px);opacity:1}65%{transform:perspective(500px) scale(1.02) rotate(0deg) translateZ(20px)}100%{transform:perspective(500px) scale(1.15) translateZ(30px)}}
 .fxpop.shield{font-size:50px;filter:drop-shadow(0 0 20px rgba(96,165,250,.9)) drop-shadow(0 12px 16px rgba(0,0,0,.6));animation-name:fxpopB}
@@ -3710,7 +3716,7 @@ function itemHTML(){
   var shuf = CL.justShuffled ? ' shuffling' : ''; if (CL.justShuffled) CL.justShuffled = false;
   var pop = CL.drawPop > 0 ? '<span class="drawpop">+' + CL.drawPop + ' drawn</span>' : ''; CL.drawPop = 0;
   var fly = ''; (CL.lastDrawn || []).forEach(function(id, ix){ var it2 = id === 'energy' ? { icon: '🔮', name: 'ENERGY' } : ITEM_MAP[id]; if (it2) fly += '<div class="drawfly face" style="animation-delay:' + (ix * 140) + 'ms"><span class="dfic">' + it2.icon + '</span><span class="dfnm">' + it2.name + '</span></div>'; }); CL.lastDrawn = [];
-  var deck = '<div class="deckwrap"><div class="zonelab">DECK</div><div class="deck3d' + shuf + glow + '"><div class="deckback"></div>' + pop + fly + '</div><div class="deckcount">' + CL.myDeck.length + ' left</div></div>';
+  var deck = '<div class="deckwrap"><div class="zonelab">' + (shuf ? '🔀 SHUFFLING…' : 'DECK') + '</div><div class="deck3d' + shuf + glow + '"><div class="deckback"></div>' + pop + fly + '</div><div class="deckcount">' + CL.myDeck.length + ' left</div></div>';
   var pile = '<div class="pilewrap"><div class="zonelab">DISCARD</div><div class="pileback"></div><div class="deckcount">×' + CL.myPile.length + '</div></div>';
   var handInner = ITEMS_OPEN ? '<div class="itemhand">' + cards + '</div>' : '';
   var pull = (CL.pulledMe && CL.pulledMe.length) ? '<div class="pullrow"><span class="pulllab">⬇️ YOU PULLED</span>' + CL.pulledMe.map(function(id){ var it3 = id === "energy" ? { icon: "🔮", name: "ENERGY" } : ITEM_MAP[id]; return it3 ? '<span class="pullmini"><i>' + it3.icon + '</i><span>' + it3.name + '</span></span>' : ""; }).join("") + '</div>' : '';
@@ -3753,7 +3759,7 @@ function fxFor(side, f){ if (!CL || !f) return ""; if (CL.lastKO === f) return "
 function fighterHTML(f, active, extra, fx){
   var t = TIERS[f.ti];
   return '<div class="fcard' + (active ? ' active' : ' bench') + (fAlive(f) ? '' : ' ko') + (extra || '') + (fx === "tag" ? ' tagin' : '') + '" data-zci="' + f.ci + '" data-zti="' + f.ti + '" style="border-color:' + t.color + '">'
-    + '<img src="/api/battle?s=' + f.ci + '" alt="">'
+    + '<img src="/api/battle?s=' + f.ci + '" alt=""' + (fx === "pain" ? ' class="imgflinch"' : fx === "rage" ? ' class="imgpunch"' : '') + '>'
     + '<div class="fcnm">' + fName(f) + '</div>'
     + '<div class="fcst" style="color:' + t.color + '">' + t.name + ' ' + "★".repeat(f.ti + 1) + '</div>'
     + '<div class="fcpw' + ((f.used.pwr || f.used.hail || f.used.island) ? ' spent' : '') + '">⚡ ' + POWERS[f.ci - 1].name + ((f.used.pwr || f.used.hail || f.used.island) ? ' · USED' : '') + '</div><div class="fcatk">\uD83D\uDCA5 DMG ' + dmgOf(f) + ' · \u2764\uFE0F ' + (lifeOf(f) - f.hits) + '/' + lifeOf(f) + ' · cost \u00D7' + hitCost(f) + '</div>' + pipsHTML(f)
@@ -3812,8 +3818,8 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
     + abilityHTML()
     + turnBannerHTML()
     + '<div class="clashbtns">'
-    + '<button class="cbtn atk' + (phase && g ? ' guideglow' : '') + '" data-clashact="atk"' + (CL.busy || CL.over || atkBroke || (CL.round === 1 && CL.firstPlayer === "me") ? ' disabled' : '') + '>⚔️ ATTACK \uD83D\uDD2E\u00D7' + hitCost(me) + '</button>'
-    + '<button class="cbtn def" data-clashact="def"' + (CL.busy || CL.over || energyCount("me") < 2 ? ' disabled' : '') + '>🛡️ DEFEND \uD83D\uDD2E\u00D72</button>'
+    + '<button class="cbtn atk' + (phase && g && !atkBroke && !(CL.round === 1 && CL.firstPlayer === "me") ? ' guideglow' : '') + '" data-clashact="atk"' + (CL.busy || CL.over || atkBroke || (CL.round === 1 && CL.firstPlayer === "me") ? ' disabled' : '') + '>⚔️ ATTACK \uD83D\uDD2E\u00D7' + hitCost(me) + '</button>'
+    + '<button class="cbtn def' + (phase && g && atkBroke && energyCount("me") >= 2 ? ' guideglow' : '') + '" data-clashact="def"' + (CL.busy || CL.over || energyCount("me") < 2 ? ' disabled' : '') + '>🛡️ DEFEND \uD83D\uDD2E\u00D72</button>'
     + '<button class="cbtn tag" data-clashact="tag"' + (CL.busy || CL.over || CL.tagged || !fAlive(mp) || (CL.round === 1 && CL.firstPlayer === "me") ? ' disabled' : '') + '>🔁 TAG</button>' + (passOk ? '<button class="cbtn def" data-clashact="pass">⏭️ PASS</button>' : '')
     + '</div>'
     + '<button class="openbtn" data-clashquit="1" style="width:100%;margin-top:8px"' + (CL.busy ? ' disabled' : '') + '>Quit battle</button>'
