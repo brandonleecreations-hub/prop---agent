@@ -806,7 +806,6 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <p class="sub">Ranked by most winning tickets — tap an agent to see their shared tickets.</p>
     <div id="topAgents"><p class="empty">Loading Top Agents…</p></div></div>
     <div id="secUpcoming"><h2>Upcoming Games</h2>
-    <p class="sub">A few big ones coming up — marquee matchups, primetime games, and games with props on the board. Tap one to open it in Live Center.</p>
     <div id="upcoming"><p class="empty">Loading upcoming games from ESPN…</p></div></div>
     <h2>Sports News</h2>
     <p class="sub" id="newsNote">Latest headlines from ESPN · refreshes automatically</p>
@@ -934,7 +933,6 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <p class="sub">Search members by username — tap a result to open their profile, or follow them right from the list.</p>
     <div class="card" style="margin-bottom:14px"><input type="text" id="agentSearch" placeholder="Search usernames…" autocomplete="off" style="width:100%;background:#101018;border:1px solid #2c2c3a;border-radius:10px;color:#fff;padding:11px 13px;font-size:15px;box-sizing:border-box"><div id="agentSearchResults" style="margin-top:6px"></div></div>
     <h2>🏆 Leaderboard</h2>
-    <p class="sub">Top 50 agents · ranked by most winning tickets · tap an agent to see their shared tickets and follow them.</p>
     <div class="card" id="leaderboard"><p class="empty">Loading the board…</p></div>
     <h2>👥 Following</h2>
     <p class="sub">Agents you follow and their latest shared tickets.</p>
@@ -943,12 +941,10 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <button type="button" id="tiersToggle" class="sectoggle">&#9660; HIDE THE TIERS</button><div id="tiersBody"><p class="sub">Climb the ladder by locking winning tickets. A win counts only when every leg on the ticket hits.</p>
     <div id="tiers"></div></div>
     <h2>🎁 My Packs</h2>
-    <p class="sub">One FREE pack every day — plus earn more by winning tickets and sharing the app. Every pack holds 3 foil cards. Gold foil cards (Gold tier &amp; up) hide in packs too — a little tough to pull, about 1 slot in 5… and one pack in a hundred hides THE RING 🏆</p>
     <div id="clashBox"></div>
     <div id="packsBox"></div>
     <h2>🃏 My Cards</h2>
-    <p class="sub">Your collection — player cards from winning tickets and your tier cards. Tap a card to flip it over.</p>
-    <div class="charstrip" id="cardStrip"></div><p class="note" style="margin:0 0 10px">Every agent has a card in every tier — tap an agent to see their full set. Higher tiers look rarer. Your wins unlock them.</p><div class="grid" id="myCards"><p class="empty">Loading cards…</p></div>
+    <div class="charstrip" id="cardStrip"></div><div class="grid" id="myCards"><p class="empty">Loading cards…</p></div>
   </section>
 </main>
 
@@ -3057,7 +3053,7 @@ function renderPacks(){
   box.innerHTML = '<div class="packpromo">'
     + '<div style="display:flex;gap:12px;align-items:center"><img class="packimg" src="/api/banners?s=packcut" alt="">'
     + '<div><div style="font-weight:900;font-size:17px">🎁 1 FREE PACK <span style="color:#f5c518">EVERY DAY</span></div>'
-    + '<div class="note" style="margin-top:3px">Every pack: <b style="color:#fff">3 foil cards</b>. Big ticket wins (4+ picks) earn 2 packs. And hiding in about 1 pack in 50… <b style="color:#f5c518">THE RING 🏆</b> — signed, one of a kind, the rarest card in the game.</div></div></div>'
+    + '</div></div>'
     + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'
     + (claimed ? '<button class="openbtn" disabled>✓ Free pack claimed — back tomorrow</button>' : '<button class="openbtn gold" data-claimpack="1">🎁 CLAIM FREE PACK</button>')
     + '<button class="openbtn" data-openpack="n"' + ((p.n || 0) > 0 ? '' : ' disabled') + '>Open Pack · ' + (p.n || 0) + '</button>'
@@ -3065,7 +3061,6 @@ function renderPacks(){
     
     + '<button class="openbtn" data-buypack="1"' + (coinsGet() >= CLASH_PACK_COST ? '' : ' disabled') + '>🪙 Buy a Pack · ' + CLASH_PACK_COST + ' Coins</button>'
     + '</div>'
-    + '<div class="note" style="margin-top:9px">Win a ticket → +1 pack (4+ picks → 2 packs). Foils collected: <b style="color:#f5c518">' + foils.length + '</b> · Gold stamps: <b style="color:#f5c518">' + stampsGet().length + ' of 12</b> · ' + (lsGet("pa_ring", 0) ? '🏆 THE RING: <b style="color:#f5c518">PULLED!</b>' : 'THE RING: still hiding…') + '</div>'
     + '</div>';
 }
 function ringBackHTML(){
