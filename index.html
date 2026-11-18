@@ -138,6 +138,11 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .tcspark{position:absolute;inset:0;pointer-events:none;opacity:.55;background-image:radial-gradient(2px 2px at 18% 26%,#fff 50%,transparent 52%),radial-gradient(1.6px 1.6px at 68% 16%,#fff 50%,transparent 52%),radial-gradient(2px 2px at 86% 60%,#fff 50%,transparent 52%),radial-gradient(1.5px 1.5px at 38% 82%,#fff 50%,transparent 52%),radial-gradient(1.8px 1.8px at 55% 44%,#fff 50%,transparent 52%)}
 #myCards{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
 #myCards .tiercard{min-height:0;filter:drop-shadow(0 14px 14px rgba(0,0,0,.45))}
+#myCards .tiercard{aspect-ratio:3/4.7}
+#myCards .tcwin{flex:0 0 34%}
+#myCards .tiercard.unlocked .tcwin{flex-basis:28%}
+#myCards .tcwin .cardart{object-position:top}
+#myCards .tcinfo .tierto{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 #myCards .flipfront{padding:8px}
 #myCards .flipback img{width:74px;height:74px}
 #myCards .tcname{font-size:11px}
@@ -312,6 +317,12 @@ dialog h3{margin:0 0 6px;font-size:18px}
 .statline{display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px;color:var(--mut)}
 .statline b{color:var(--txt)}
 .stepper{display:inline-flex;align-items:center;gap:8px}
+.fstats{display:flex;flex-wrap:wrap;gap:4px;padding:2px 0 9px;align-items:center}
+.fchip{background:#171331;border:1px solid #2c2350;border-radius:6px;padding:2px 6px;font-size:10.5px;color:#9aa7bd;white-space:nowrap}
+.fchip b{color:#fff}
+.fchip.tag{background:#f5b942;border-color:#f5b942;color:#1a1405;font-weight:900;letter-spacing:.5px}
+.fchip.hl{border-color:#f5b942;color:#ffd970}
+.fchip.hl b{color:#ffd970}
 .stepper button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:16px;font-weight:800}
 .hit{color:var(--grn);font-weight:800}.miss{color:var(--red);font-weight:800}.pend{color:var(--gold);font-weight:700}
 .searchbar{margin:0 0 12px}
@@ -2648,6 +2659,62 @@ function findPlayerStat(summary, athleteId, stat){
   } catch(e){}
   return null;
 }
+var FS_GTAG = { passing: "PASS", rushing: "RUSH", receiving: "REC", defensive: "DEF", batting: "BAT", pitching: "PITCH", goalie: "GOALIE", interceptions: "INT", kickReturns: "KR", puntReturns: "PR", kicking: "KICK", punting: "PUNT", fumbles: "FUM" };
+function buildLine(groups, athleteId, playerName){
+  var raw = [];
+  groups.forEach(function(g){
+    (g.athletes || []).forEach(function(a){
+      var match = athleteId ? String(a.athlete && a.athlete.id) === String(athleteId)
+        : (a.athlete && playerName && lastNameOf(a.athlete.displayName) === lastNameOf(playerName));
+      if (!match) return;
+      var labels = g.labels || g.names || [];
+      (a.stats || []).forEach(function(v, i){
+        var lab = labels[i];
+        if (!lab || v == null || v === "") return;
+        raw.push([lab, v, (g.name || "").toLowerCase()]);
+      });
+    });
+  });
+  var gs = {}; raw.forEach(function(e){ gs[e[2]] = 1; });
+  var multi = Object.keys(gs).length > 1;
+  return raw.map(function(e){ return [e[0], e[1], multi ? e[2] : ""]; });
+}
+function lineGroups(summary){
+  var groups = [];
+  try { (summary.boxscore && summary.boxscore.players || []).forEach(function(tp){ (tp.statistics || []).forEach(function(g){ groups.push(g); }); }); } catch(e){}
+  return groups;
+}
+function findPlayerLine(summary, athleteId){ return buildLine(lineGroups(summary), athleteId, null); }
+function findPlayerLineByName(summary, name){ return buildLine(lineGroups(summary), null, name); }
+var FS_HL = { "Points": ["PTS", ""], "Rebounds": ["REB", ""], "Assists": ["AST", ""], "Steals": ["STL", ""], "Blocks": ["BLK", ""], "Goals": ["G", ""], "Passing Yards": ["YDS", "passing"], "Rushing Yards": ["YDS", "rushing"], "Receiving Yards": ["YDS", "receiving"], "Shots on Goal": ["SOG", ""] };
+function fsLineHtml(line, leg){
+  var hl = FS_HL[leg.stat] || null;
+  var chips = line.map(function(e){
+    var tag = e[2] ? (FS_GTAG[e[2]] || e[2].toUpperCase()) + " " : "";
+    var isHl = hl && e[0] === hl[0] && (!hl[1] || e[2] === hl[1] || !e[2]);
+    return '<span class="fchip' + (isHl ? ' hl' : '') + '">' + esc(tag + e[0]) + ' <b>' + esc(e[1]) + '</b></span>';
+  }).join("");
+  return '<span class="fchip tag">FINAL STATS</span>' + chips;
+}
+var fsBusy = {};
+function backfillFinalStats(t, l, box){
+  var key = t.id + "|" + l.id;
+  if (fsBusy[key] || l.fsLine) return; fsBusy[key] = 1;
+  findEventForLeg(t, l).then(function(eid){
+    if (!eid) { fsBusy[key] = 0; return; }
+    var lg = leagueByKey(l.league); if (!lg) { fsBusy[key] = 0; return; }
+    return summaryForEvent(lg, eid).then(function(s){
+      var line = l.athleteId ? findPlayerLine(s, l.athleteId) : [];
+      if (!line.length) line = findPlayerLineByName(s, l.player);
+      fsBusy[key] = 0;
+      if (line.length) {
+        l.fsLine = line; lsSet("pa_tickets", tickets); cloudSave();
+        var d = box.querySelector('[data-fstats="' + t.id + '|' + l.id + '"]');
+        if (d) d.innerHTML = fsLineHtml(line, l);
+      }
+    });
+  }).catch(function(){ fsBusy[key] = 0; });
+}
 function legGrade(leg, val){
   if (val==null) return "pend";
   if (val===leg.line) return "push";
@@ -2668,7 +2735,7 @@ function gradeTicket(t){
       var final = false;
       try { var c = (s.header.competitions||[])[0]; final = c && c.status && c.status.type && c.status.type.state==="post"; } catch(e){}
       var val = findPlayerStat(s, leg.athleteId, leg.stat);
-      return {id:leg.id, val:val, status: val==null ? "pend" : legGrade(leg, val), final:!!final};
+      return {id:leg.id, val:val, status: val==null ? "pend" : legGrade(leg, val), final:!!final, line: final ? findPlayerLine(s, leg.athleteId) : null};
     }).catch(function(){ return {id:leg.id, val:null, status:"pend", final:false}; });
   });
   return Promise.all(jobs).then(function(rs){
@@ -2792,6 +2859,7 @@ function renderTickets(){
     var legs = t.legs.map(function(l){
       return '<div class="leg"><span class="dir '+(l.dir==="MORE"?"more":"less")+'">'+l.dir+'</span><div style="flex:1"><b>'+esc(l.player)+'</b> — '+esc(l.stat)+' '+l.line+'<br><span class="note">'+esc(l.matchup||l.team||"")+(l.starts?' · '+esc(fmtTime(l.starts)):"")+' · '+esc(l.src)+'</span></div><span data-grade="'+esc(t.id)+'|'+esc(l.id)+'"><span class="pend">…</span></span></div>'
         + '<div data-stepper="'+esc(t.id)+'|'+esc(l.id)+'"></div>'
+        + '<div class="fstats" data-fstats="'+esc(t.id)+'|'+esc(l.id)+'"></div>'
         + (l.player ? '<div style="padding:2px 0 8px"><button type="button" class="ghostbtn" data-pplay="'+esc(t.id)+'|'+esc(l.id)+'" style="font-size:12px;padding:5px 11px">Play by play - '+esc(l.player)+'</button><div data-pplays="'+esc(t.id)+'|'+esc(l.id)+'"></div></div>' : '');
     }).join("");
     return '<div class="card" data-ticket="'+t.id+'"><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span>' + res + (t.pub === false ? ' · 🔒 Private' : '') + (ticketHasCustom(t) ? ' · 🧩 Custom' : '') + '</span></div>' + likeChip(t) + (ticketHasCustom(t) ? '<div class="note">🧩 Custom ticket — earns no tier points or packs.</div>' : '') + '<span class="stampmini">LOCKED IN</span>'+legs+'</div>';
@@ -2799,11 +2867,20 @@ function renderTickets(){
   box.querySelectorAll("[data-pplay]").forEach(function(b){ b.addEventListener("click", function(){ togglePlayerPlays(b); }); });
   tickets.forEach(function(t){
     gradeTicket(t).then(function(map){
+      var fsDirty = false;
       t.legs.forEach(function(l){
         var g = map[l.id]; if (!g) return;
         var chip = box.querySelector('[data-grade="'+t.id+'|'+l.id+'"]');
         if (chip) chip.innerHTML = g.val==null ? '<span class="pend">'+(g.manual?"tap-to-track":"no stat yet")+'</span>'
           : '<b>'+g.val+'</b> '+(g.status==="hit"?'<span class="hit">HIT</span>':g.status==="miss"?'<span class="miss">MISS</span>':g.status==="push"?'<span class="pend">PUSH</span>':"");
+        if (t.result) {
+          var fd = box.querySelector('[data-fstats="' + t.id + '|' + l.id + '"]');
+          if (fd) {
+            if (g.line && g.line.length && JSON.stringify(l.fsLine || []) !== JSON.stringify(g.line)) { l.fsLine = g.line; fsDirty = true; }
+            if (l.fsLine && l.fsLine.length) fd.innerHTML = fsLineHtml(l.fsLine, l);
+            else if (!l.custom && l.league !== "tennis") backfillFinalStats(t, l, box);
+          }
+        }
         if (g.manual || g.val==null && (l.custom || !l.eventId)){
           var st = box.querySelector('[data-stepper="'+t.id+'|'+l.id+'"]');
           if (st){
@@ -2829,6 +2906,7 @@ function renderTickets(){
           }
         }
       });
+      if (fsDirty) { lsSet("pa_tickets", tickets); cloudSave(); }
       renderTopAgents(); renderBoard();
     });
   });
