@@ -4889,6 +4889,11 @@ function cloudInit(){
       }).filter(function(t){ return t.legs.length; });
       if (tickets.length) { lsSet("pa_tickets", tickets); restored = true; }
     }
+    if (j.profile && typeof j.profile.wins === "number" && !(parseInt(lsGet("pa_battlewins", 0), 10) || 0)) {
+      var twN = tickets.filter(function(t){ return t.result === "win" && !ticketHasCustom(t); }).length;
+      var rebuiltBw = j.profile.wins - twN - (parseInt(lsGet("pa_bonuswins", 0), 10) || 0) - (parseInt(lsGet("pa_winbank", 0), 10) || 0);
+      if (rebuiltBw > 0) { lsSet("pa_battlewins", rebuiltBw); restored = true; }
+    }
     if (restored) { renderAllSlips(); renderTickets(); renderTopAgents(); renderBoard(); renderTicker(); }
   }).catch(function(){});
 }
