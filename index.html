@@ -699,8 +699,8 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 
 .packstage{width:min(64vw,230px);cursor:pointer;animation:cardpopA .6s cubic-bezier(.2,.9,.3,1.2) both;text-align:center}
 .packstage img{width:100%;border-radius:14px;box-shadow:0 22px 50px rgba(0,0,0,.6),0 0 30px #7c3aed55;display:block}
-.packstage.torn{animation:packtear .55s ease-in both}
-@keyframes packtear{30%{transform:rotate(-2.5deg) scale(1.04)}55%{transform:rotate(2deg) scale(1.07)}100%{transform:scale(1.35);opacity:0}}
+.packstage.torn{animation:packtear .8s ease-in both}
+@keyframes packtear{30%{transform:rotate(-2deg) scale(1.03)}55%{transform:rotate(1.6deg) scale(1.05)}100%{transform:scale(1.12);opacity:0}}
 .revealrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .revealcard{width:104px;animation:cardpopA .6s cubic-bezier(.2,.9,.3,1.2) both;border-radius:12px;overflow:hidden;border:2px solid #f5c518;background:#0d0d13;box-shadow:0 14px 30px rgba(0,0,0,.5)}
 .revealcard img{width:100%;height:104px;object-fit:cover;display:block}
@@ -718,8 +718,8 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .packstage.charging .packsplit{animation:charge .48s ease-in-out both}
 @keyframes charge{0%{transform:scale(1)}30%{transform:scale(1.03) rotate(-1.2deg)}55%{transform:scale(1.05) rotate(1.2deg)}80%{transform:scale(1.07) rotate(-1.6deg)}100%{transform:scale(1.08)}}
 .packstage.charging .ph{filter:drop-shadow(0 0 22px rgba(245,197,24,.55))}
-.packstage.torn .ph-t{animation:splitT .55s ease-in both}
-.packstage.torn .ph-b{animation:splitB .55s ease-in both}
+.packstage.torn .ph-t{animation:splitT .8s cubic-bezier(.25,.7,.3,1) both}
+.packstage.torn .ph-b{animation:splitB .8s cubic-bezier(.25,.7,.3,1) both}
 .packstage{perspective:720px}
 .packfloat{transform-style:preserve-3d;animation:packsway3d 3.8s ease-in-out infinite alternate;will-change:transform}
 @keyframes packsway3d{from{transform:rotateY(-14deg) rotateX(3deg) translateY(0)}to{transform:rotateY(14deg) rotateX(-2deg) translateY(-7px)}}
@@ -729,10 +729,14 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .packrefl .reflIn{width:100%;aspect-ratio:427/640;background-image:url(/api/banners?s=packcut);background-size:100% 100%;transform:scaleY(-1)}
 .packstage.torn .packrefl{animation:reflfade .35s ease-out both}
 @keyframes reflfade{to{opacity:0}}
-@keyframes splitT{to{transform:translate(-26px,-44px) rotate(-9deg);opacity:0}}
-@keyframes splitB{to{transform:translate(26px,44px) rotate(8deg);opacity:0}}
+@keyframes splitT{0%{transform:translate(0,0) rotate(0);opacity:1}28%{transform:translate(-7px,-10px) rotate(-2.5deg);opacity:1}72%{opacity:1}100%{transform:translate(-48px,-88px) rotate(-15deg);opacity:0}}
+@keyframes splitB{0%{transform:translate(0,0) rotate(0);opacity:1}28%{transform:translate(7px,10px) rotate(2.5deg);opacity:1}72%{opacity:1}100%{transform:translate(48px,88px) rotate(13deg);opacity:0}}
+.ph-t{clip-path:polygon(0 0,100% 0,100% 100%,91% calc(100% - 3px),83% 100%,74% calc(100% - 3px),66% 100%,58% calc(100% - 3px),50% 100%,41% calc(100% - 3px),33% 100%,25% calc(100% - 3px),16% 100%,8% calc(100% - 3px),0 100%)}
+.ph-b{clip-path:polygon(0 3px,8% 0,16% 3px,25% 0,33% 3px,41% 0,50% 3px,58% 0,66% 3px,74% 0,83% 3px,91% 0,100% 3px,100% 100%,0 100%)}
+.packstage.torn .packsplit::after{content:"";position:absolute;left:3%;right:3%;top:49.2%;height:4px;border-radius:99px;background:linear-gradient(90deg,transparent,#fff 30%,#f5c518 50%,#fff 70%,transparent);filter:blur(1px);animation:tearlineA .65s ease-out both;pointer-events:none;z-index:3}
+@keyframes tearlineA{0%{opacity:0;transform:scaleX(.15)}25%{opacity:1}100%{opacity:0;transform:scaleX(1.12)}}
 .packflash{position:absolute;left:50%;top:50%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(245,197,24,.85) 40%,transparent 70%);opacity:0;pointer-events:none}
-.packstage.torn .packflash{animation:flashA .55s ease-out both}
+.packstage.torn .packflash{animation:flashA .7s ease-out both}
 @keyframes flashA{0%{opacity:0;transform:scale(.4)}25%{opacity:1}100%{opacity:0;transform:scale(3.2)}}
 .revealwrap{position:relative}
 .revealglow{position:absolute;left:50%;top:46%;width:340px;height:340px;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(245,197,24,.20) 0%,rgba(124,58,237,.14) 45%,transparent 70%);pointer-events:none;animation:glowpulse 2.6s ease-in-out infinite alternate}
@@ -3300,6 +3304,7 @@ function sfx(kind){ try {
   function tone(f0, f1, dur, type, vol, when){ var o = AC.createOscillator(), gn = AC.createGain(); o.type = type || "sine"; var s = t + (when || 0); o.frequency.setValueAtTime(f0, s); if (f1 && f1 !== f0) o.frequency.exponentialRampToValueAtTime(Math.max(f1, 1), s + dur); gn.gain.setValueAtTime(vol || 0.5, s); gn.gain.exponentialRampToValueAtTime(0.001, s + dur); o.connect(gn); gn.connect(g); o.start(s); o.stop(s + dur + 0.03); }
   if (kind === "click") tone(660, 660, 0.06, "triangle", 0.4);
   else if (kind === "charge") { tone(170, 740, 0.62, "sawtooth", 0.22); tone(85, 370, 0.62, "square", 0.10); }
+  else if (kind === "rip") { var nb = AC.createBuffer(1, AC.sampleRate * 0.38, AC.sampleRate), nd = nb.getChannelData(0); for (var ni = 0; ni < nd.length; ni++) nd[ni] = (Math.random() * 2 - 1) * (1 - ni / nd.length); var ns = AC.createBufferSource(); ns.buffer = nb; var bp = AC.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 1.1; bp.frequency.setValueAtTime(2600, t); bp.frequency.exponentialRampToValueAtTime(420, t + 0.36); var ng = AC.createGain(); ng.gain.setValueAtTime(0.9, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.38); ns.connect(bp); bp.connect(ng); ng.connect(g); ns.start(t); }
   else if (kind === "hit") { tone(160, 55, 0.18, "square", 0.6); tone(95, 45, 0.22, "sine", 0.7); }
   else if (kind === "block") { tone(1250, 900, 0.10, "triangle", 0.4); tone(700, 700, 0.09, "square", 0.18, 0.05); }
   else if (kind === "ko") { tone(620, 75, 0.5, "sawtooth", 0.38); tone(310, 40, 0.55, "square", 0.2, 0.03); }
@@ -4169,7 +4174,7 @@ function ensurePackPop(){
   document.getElementById("packStage").addEventListener("click", function(){
     if (window._packOpened) return; window._packOpened = true;
     var st = this; st.classList.add("charging");
-    setTimeout(function(){ st.classList.add("torn"); var bst = document.getElementById("packBurst"); if (bst) bst.style.display = "block"; neonBurst(); }, 480);
+    setTimeout(function(){ st.classList.add("torn"); var bst = document.getElementById("packBurst"); if (bst) bst.style.display = "block"; neonBurst(); sfx("rip"); }, 480);
     setTimeout(function(){
       neonBurst();
       st.style.display = "none";
@@ -4190,7 +4195,7 @@ function ensurePackPop(){
       if (pulls.some(function(pu){ return pu.ring; })) { cap.textContent = window._packDemo ? "DEMO — that's the chase celebration! Nothing was saved." : "🏆 YOU PULLED THE RING!! Signed, one of a kind — the rarest card in the game!"; ringCelebration(); }
       else if (pulls.some(function(pu){ return pu.stamp; })) { var spu = pulls.filter(function(pu){ return pu.stamp; })[0]; cap.textContent = spu.dup ? "🌟 GOLD FOIL STAMP — " + CHARNAMES[spu.ci - 1] + " again! Duplicate — already in your collection." : "🌟 GOLD FOIL STAMP PULLED — " + CHARNAMES[spu.ci - 1] + "! One of only 12 stamp cards."; if (!spu.dup) stampCelebration(spu.ci); }
       else cap.textContent = (window._packDemo ? "DEMO — " : "") + newN + " new foil card" + (newN === 1 ? "" : "s") + " added to My Cards ✨" + (dupN ? " · " + dupN + " duplicate" + (dupN === 1 ? "" : "s") + " not saved" : "") + (premN ? " · ✨ " + premN + " GOLD FOIL" + (premN === 1 ? "" : "S") + "!" : "");
-    }, 1030);
+    }, 1330);
   });
 }
 function neonBurst(){ var pp = document.getElementById("packPop"); if (!pp) return; pp.classList.remove("burst"); void pp.offsetWidth; pp.classList.add("burst"); }

@@ -15,8 +15,8 @@
   .packstage { margin: 26px auto 6px; width: min(58vw, 215px); cursor: pointer; transition: transform .15s; }
   .packstage:active { transform: scale(.97); }
   .packstage img { width: 100%; border-radius: 14px; box-shadow: 0 22px 50px rgba(0,0,0,.6), 0 0 30px rgba(124,58,237,.35); display: block; }
-  .packstage.torn { animation: tear .55s ease-in both; }
-  @keyframes tear { 30% { transform: rotate(-2.5deg) scale(1.04); } 55% { transform: rotate(2deg) scale(1.07); } 100% { transform: scale(1.35); opacity: 0; } }
+  .packstage.torn { animation: tear .8s ease-in both; }
+  @keyframes tear { 30% { transform: rotate(-2deg) scale(1.03); } 55% { transform: rotate(1.6deg) scale(1.05); } 100% { transform: scale(1.12); opacity: 0; } }
   .btnrow { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
   button { font: inherit; cursor: pointer; border: none; border-radius: 12px; padding: 13px 18px; font-weight: 900; font-size: 15px; }
   .btn-open { background: linear-gradient(135deg,#7C3AED,#5b21b6); color: #fff; box-shadow: 0 8px 22px rgba(124,58,237,.45); }
@@ -58,10 +58,14 @@
 @keyframes reflfade{to{opacity:0}}
   @keyframes charge { 0% { transform: scale(1); } 30% { transform: scale(1.03) rotate(-1.2deg); } 55% { transform: scale(1.05) rotate(1.2deg); } 80% { transform: scale(1.07) rotate(-1.6deg); } 100% { transform: scale(1.08); } }
   .packstage.charging .ph { filter: drop-shadow(0 0 22px rgba(245,197,24,.55)); }
-  .packstage.torn .ph-t { animation: splitT .55s ease-in both; }
-  .packstage.torn .ph-b { animation: splitB .55s ease-in both; }
-  @keyframes splitT { to { transform: translate(-26px,-44px) rotate(-9deg); opacity: 0; } }
-  @keyframes splitB { to { transform: translate(26px,44px) rotate(8deg); opacity: 0; } }
+  .packstage.torn .ph-t { animation: splitT .8s cubic-bezier(.25,.7,.3,1) both; }
+  .packstage.torn .ph-b { animation: splitB .8s cubic-bezier(.25,.7,.3,1) both; }
+  @keyframes splitT { 0% { transform: translate(0,0) rotate(0); opacity: 1; } 28% { transform: translate(-7px,-10px) rotate(-2.5deg); opacity: 1; } 72% { opacity: 1; } 100% { transform: translate(-48px,-88px) rotate(-15deg); opacity: 0; } }
+  @keyframes splitB { 0% { transform: translate(0,0) rotate(0); opacity: 1; } 28% { transform: translate(7px,10px) rotate(2.5deg); opacity: 1; } 72% { opacity: 1; } 100% { transform: translate(48px,88px) rotate(13deg); opacity: 0; } }
+  .ph-t { clip-path: polygon(0 0,100% 0,100% 100%,91% calc(100% - 3px),83% 100%,74% calc(100% - 3px),66% 100%,58% calc(100% - 3px),50% 100%,41% calc(100% - 3px),33% 100%,25% calc(100% - 3px),16% 100%,8% calc(100% - 3px),0 100%); }
+  .ph-b { clip-path: polygon(0 3px,8% 0,16% 3px,25% 0,33% 3px,41% 0,50% 3px,58% 0,66% 3px,74% 0,83% 3px,91% 0,100% 3px,100% 100%,0 100%); }
+  .packstage.torn .packsplit::after { content: ""; position: absolute; left: 3%; right: 3%; top: 49.2%; height: 4px; border-radius: 99px; background: linear-gradient(90deg,transparent,#fff 30%,#f5c518 50%,#fff 70%,transparent); filter: blur(1px); animation: tearlineA .65s ease-out both; pointer-events: none; z-index: 3; }
+  @keyframes tearlineA { 0% { opacity: 0; transform: scaleX(.15); } 25% { opacity: 1; } 100% { opacity: 0; transform: scaleX(1.12); } }
   .packflash { position: absolute; left: 50%; top: 50%; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; background: radial-gradient(circle,#fff 0%,rgba(245,197,24,.85) 40%,transparent 70%); opacity: 0; pointer-events: none; }
   .packstage.torn .packflash { animation: flashA .55s ease-out both; }
   @keyframes flashA { 0% { opacity: 0; transform: scale(.4); } 25% { opacity: 1; } 100% { opacity: 0; transform: scale(3.2); } }
@@ -253,7 +257,7 @@ function openPack(chase, forceStamp) {
     document.getElementById("tapHint").style.display = "block";
     document.getElementById("openBtn").disabled = false; document.getElementById("chaseBtn").disabled = false; document.getElementById("stampBtn").disabled = false;
     busy = false;
-  }, 1030);
+  }, 1330);
 }
 function confettiBurst() {
   var cv = document.getElementById("confettiCv"), x = cv.getContext("2d");
