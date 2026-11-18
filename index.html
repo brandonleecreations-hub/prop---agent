@@ -3797,12 +3797,12 @@ function cpuPlan(){
   var r = Math.random();
   var t1fp = CL.round === 1 && CL.firstPlayer === "cpu";
   if (!t1fp && fAlive(p) && a.hits >= lifeOf(a) - 1 && p.hits === 0 && r < 0.22) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.cpuStance = "tag"; CL.log.push("🔁 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + "!"); return; }
-  if (a.hits >= lifeOf(a) - 1 && r < 0.20) CL.cpuStance = "def";
-  else if (r < 0.07) CL.cpuStance = "def";
+  if (energyCount("cpu") >= 1 && a.hits >= lifeOf(a) - 1 && r < 0.20) CL.cpuStance = "def";
+  else if (energyCount("cpu") >= 1 && r < 0.07) CL.cpuStance = "def";
   if (CL.cpuStance === "atk" && !CL.cpuTagged && energyCount("cpu") < hitCost(CL.cpu[CL.cpuActive])) {
     var pp = CL.cpu[1 - CL.cpuActive];
     if (!t1fp && fAlive(pp) && hitCost(pp) <= energyCount("cpu") && Math.random() < 0.5) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.cpuStance = "tag"; CL.log.push("\uD83D\uDD01 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + " \u2014 saving energy!"); }
-    else if (Math.random() < 0.45) { CL.cpuStance = "def"; CL.log.push("\uD83D\uDEE1\uFE0F CPU defends \u2014 collecting energy."); }
+    else if (energyCount("cpu") >= 1 && Math.random() < 0.45) { CL.cpuStance = "def"; CL.log.push("\uD83D\uDEE1\uFE0F CPU defends \u2014 collecting energy."); }
   }
 }
 function clashSleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
