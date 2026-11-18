@@ -4841,9 +4841,9 @@ function setSport(key){
 }
 (function buildTabs(){
   var wrap = $("sportTabs");
-  LEAGUES.forEach(function(l){
+  LEAGUES.slice(1).forEach(function(l){
     var b = document.createElement("button");
-    b.className = "tab" + (l.key==="all" ? " on" : ""); b.textContent = l.label; b.setAttribute("data-sport", l.key);
+    b.className = "tab"; b.textContent = l.label; b.setAttribute("data-sport", l.key);
     b.addEventListener("click", function(){ setSport(l.key); });
     wrap.appendChild(b);
   });
