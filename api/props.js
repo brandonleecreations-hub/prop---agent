@@ -31,7 +31,7 @@
 const SPORT_KEYS = [
   "basketball_nba", "basketball_ncaab", "basketball_wncaab", "basketball_wnba",
   "americanfootball_nfl", "americanfootball_ncaaf",
-  "icehockey_nhl", "baseball_mlb", "tennis_atp", "tennis_wta",
+  "icehockey_nhl", "baseball_mlb", "tennis", "tennis_atp", "tennis_wta",
 ];
 
 const STAT_LABELS = {
@@ -705,7 +705,7 @@ module.exports = async (req, res) => {
   // to the shared-cache path below, which still pays for at most ONE
   // claimed fetch per window under the global cap -- if Parlay has no
   // tennis props, the empty board is cached and costs nothing more.
-  const tennisBlind = !gateOk && (sport === "tennis_atp" || sport === "tennis_wta");
+  const tennisBlind = !gateOk && (sport === "tennis" || sport === "tennis_atp" || sport === "tennis_wta");
   if (!gateOk && !tennisBlind) {
     res.setHeader("Cache-Control", "public, s-maxage=900, stale-while-revalidate=900");
     res.status(200).json({ ok: true, configured: true, noGames: true, props: hit ? hit.props : [] });
