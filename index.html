@@ -924,7 +924,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     </div>
     <div class="tabs" id="teamFilters" style="margin:0 0 8px"></div>
     <div class="tabs" id="propFilters" style="margin:0 0 12px"></div>
-    <div id="popWrap" style="display:none"><h3 style="margin:4px 0 8px;font-size:16px">Popular Players</h3><div class="pgrid" id="popTiles"></div><h3 style="margin:16px 0 8px;font-size:16px">All Players</h3></div>
+    <div id="popWrap" style="display:none"><h3 style="margin:4px 0 8px;font-size:16px">Popular Players</h3><div class="pgrid" id="popTiles"></div></div>
     <div class="pgrid" id="sportProps"><p class="empty">Loading props…</p></div>
     <div class="card slip" id="slipSport" style="margin-top:14px"></div>
   </section>
@@ -959,8 +959,8 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <p class="sub"><b>1 ·</b> Tap a player — all their props pop up &nbsp;·&nbsp; <b>2 ·</b> Tap MORE or LESS — it's on your slip &nbsp;·&nbsp; <b>3 ·</b> Pick at least 2 and lock in below. No money, no typing — just More or Less.</p>
     <div class="searchbar"><input type="text" id="searchInput" placeholder="Find a player — type a name or team (e.g. “Ball”)"></div>
     <div class="tabs" id="buildSort" style="margin:2px 0 8px">
-      <button type="button" class="tab on" data-bsort="popular">Popular first</button>
-      <button type="button" class="tab" data-bsort="pct">Best %</button>
+      <button type="button" class="tab" data-bsort="popular">Popular first</button>
+      <button type="button" class="tab on" data-bsort="pct">Best %</button>
       <button type="button" class="tab" data-bsort="time">Start time</button>
     </div>
     <div class="tabs" id="buildTeams" style="margin:0 0 4px"></div>
@@ -1504,7 +1504,7 @@ function propCard(p){
     + '</div></div>';
 }
 var boardQuery = "", boardSort = "popular", boardTeam = "all";
-var buildSort = "popular", buildTeam = "all";
+var buildSort = "pct", buildTeam = "all";
 var teamCache = lsGet("pa_teams", {});
 var aidCache = lsGet("pa_aids", {});
 var liveTeamsByLeague = {};
@@ -2650,10 +2650,11 @@ function renderBuild(){
     if (q) gs = gs.filter(function(g){ return (g.player+" "+g.team+" "+g.props.map(function(p){ return p.stat; }).join(" ")).toLowerCase().indexOf(q)>-1; });
     gs = sortGroups(gs, buildSort);
     if (!gs.length){ box.innerHTML = '<p class="empty">No matching players — try another name or team.</p>'; return; }
-    var byTeam = {}, order = [];
-    gs.forEach(function(g){ var t = g.team || "More players"; if (!byTeam[t]){ byTeam[t] = []; order.push(t); } byTeam[t].push(g); });
-    order.sort(function(a,b){ var am = a==="More players" ? 1 : 0, bm = b==="More players" ? 1 : 0; return am-bm || byTeam[b].length-byTeam[a].length; });
-    box.innerHTML = order.map(function(t){ return '<div class="teamhead">'+esc(t)+'</div><div class="pgrid">'+byTeam[t].map(tileHtml).join("")+'</div>'; }).join("");
+    var byLeague = {}, lorder = [];
+    gs.forEach(function(g){ var L = g.league || "other"; if (!byLeague[L]){ byLeague[L] = []; lorder.push(L); } byLeague[L].push(g); });
+    var PRIO = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
+    lorder.sort(function(a,b){ var ai = PRIO.indexOf(String(a).toLowerCase()), bi = PRIO.indexOf(String(b).toLowerCase()); ai = ai<0?99:ai; bi = bi<0?99:bi; return ai-bi; });
+    box.innerHTML = lorder.map(function(L){ var label = (byLeague[L][0] && byLeague[L][0].leagueLabel) || String(L).toUpperCase(); return '<div class="teamhead" style="font-size:17px;color:#f5b942;margin-top:20px;border-bottom:1px solid rgba(245,185,66,.35);padding-bottom:5px">'+esc(label)+' \u00b7 '+byLeague[L].length+' players</div><div class="pgrid">'+byLeague[L].map(tileHtml).join("")+'</div>'; }).join("");
     bindTiles(box);
   }).catch(function(){ box.innerHTML = '<p class="empty">Players could not load — check your connection and tap Refresh.</p>'; });
 }
