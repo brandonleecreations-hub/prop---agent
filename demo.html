@@ -43,10 +43,19 @@
   .note { margin-top: 30px; color: #9aa7bd; font-size: 13px; line-height: 1.55; }
   .note a { color: #c4a5ff; font-weight: 800; }
   .packsplit { position: relative; width: 100%; aspect-ratio: 427/640; }
-  .ph { position: absolute; left: 0; width: 100%; height: 50.6%; background-image: url(/api/banners?s=pack); background-size: 100% 200%; background-repeat: no-repeat; }
+  .ph { position: absolute; left: 0; width: 100%; height: 50.6%; background-image: url(/api/banners?s=packcut); background-size: 100% 200%; background-repeat: no-repeat; }
   .ph-t { top: 0; background-position: center top; border-radius: 14px 14px 0 0; }
   .ph-b { bottom: 0; background-position: center bottom; border-radius: 0 0 14px 14px; }
   .packstage.charging .packsplit { animation: charge .48s ease-in-out both; }
+.packstage{perspective:720px}
+.packfloat{transform-style:preserve-3d;animation:packsway3d 3.8s ease-in-out infinite alternate;will-change:transform}
+@keyframes packsway3d{from{transform:rotateY(-14deg) rotateX(3deg) translateY(0)}to{transform:rotateY(14deg) rotateX(-2deg) translateY(-7px)}}
+.packstage.torn .packfloat{animation:none}
+.packshine{position:absolute;inset:0;background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.20) 48%,rgba(245,197,24,.16) 52%,transparent 68%);transform:translateX(-130%);animation:pkshine 3.4s ease-in-out infinite;pointer-events:none;-webkit-mask-image:url(/api/banners?s=packcut);-webkit-mask-size:100% 100%;mask-image:url(/api/banners?s=packcut);mask-size:100% 100%}
+.packrefl{height:84px;overflow:hidden;opacity:.5;filter:blur(1.5px) brightness(.85);-webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,.85),transparent 92%);mask-image:linear-gradient(to bottom,rgba(0,0,0,.85),transparent 92%);margin-top:2px}
+.packrefl .reflIn{width:100%;aspect-ratio:427/640;background-image:url(/api/banners?s=packcut);background-size:100% 100%;transform:scaleY(-1)}
+.packstage.torn .packrefl{animation:reflfade .35s ease-out both}
+@keyframes reflfade{to{opacity:0}}
   @keyframes charge { 0% { transform: scale(1); } 30% { transform: scale(1.03) rotate(-1.2deg); } 55% { transform: scale(1.05) rotate(1.2deg); } 80% { transform: scale(1.07) rotate(-1.6deg); } 100% { transform: scale(1.08); } }
   .packstage.charging .ph { filter: drop-shadow(0 0 22px rgba(245,197,24,.55)); }
   .packstage.torn .ph-t { animation: splitT .55s ease-in both; }
@@ -109,7 +118,7 @@
   <div><span class="demoflag">DEMO — NOTHING SAVES</span></div>
 
   <div class="packstage" id="packStage" title="Tap to open">
-    <div class="packsplit"><div class="ph ph-t"></div><div class="ph ph-b"></div><div class="packflash"></div></div>
+    <div class="packfloat"><div class="packsplit"><div class="ph ph-t"></div><div class="ph ph-b"></div><div class="packshine"></div><div class="packflash"></div></div><div class="packrefl"><div class="reflIn"></div></div></div>
   </div>
   <div class="note" style="margin-top:2px">Tap the pack, or use the buttons</div>
 
