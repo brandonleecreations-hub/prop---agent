@@ -145,7 +145,7 @@ const DAILY_CREDIT_BUDGET = 30;
 // Brandon: one-day lifts -- on 2026-11-17 and 2026-11-18 (ET) the cap is 50
 // so the day's next pull can complete; never above 50 that day, and the
 // normal 30/day cap resumes by itself the next ET day.
-function dailyCap() { return (etToday() === "2026-11-17" || etToday() === "2026-11-18") ? 50 : DAILY_CREDIT_BUDGET; }
+function dailyCap() { return 50; } // Brandon 2026-11-18: permanent daily cap 50 (was flat 30 with one-day lifts)
 const SLOT_HOURS_ET = [6, 16];
 function etSlot() {
   const h = etHour();
@@ -323,8 +323,15 @@ function etToday() {
 // often fetches happen at all.
 const deadKeys = {}; // last-6-chars of key -> ET day it ran dry
 function keyAlive(k) { return deadKeys[String(k).slice(-6)] !== etToday(); }
+let rotN = 0;
 async function fetchSport(sport, keys) {
-  const list = (Array.isArray(keys) ? keys : [keys]).filter(Boolean);
+  const all = (Array.isArray(keys) ? keys : [keys]).filter(Boolean);
+  let list = all;
+  if (all.length > 1) {
+    let h = 0; const seed = etToday() + ":" + sport; for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
+    const start = Math.abs(h + (rotN++)) % all.length;
+    list = all.slice(start).concat(all.slice(0, start));
+  }
   let lastErr = null;
   for (const k of list) {
     if (!keyAlive(k)) continue;
