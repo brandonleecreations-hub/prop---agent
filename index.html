@@ -3521,12 +3521,12 @@ function clashMenu(){
   CL = null;
   var b = battlesGet(), lad = ladderGet();
   clashPanel('<div class="clashttl">⚔️ AGENT CLASH</div>'
-    + '<div class="clashsub">Pick 2 battle cards — a Starter and a Tag Partner. A shiny 🔴🔵 coin flip decides who goes first — winner goes first, but the first player can\'t strike on Turn 1. Every turn is ONE move: play a 🎴 item, ATTACK ⚔️, or DEFEND 🛡️ (🔁 TAG is a free swap). Landing a hit costs 🔮 Energy cards from your hand — your 44-card deck (20 Energy + 24 items, shuffled at the start) starts you with just 1 Energy card, and every turn starts with a random pull from the deck; spent cards go to the discard pile. Land a hit, place your ✖ on the Clash Grid — 3 in a row wins an ability. A card is out when its life (❤️ on the card) is gone.</div>'
+    + '<div class="clashsub">Pick 2 battle cards — a Starter and a Tag Partner. A shiny 🔴🔵 coin flip decides who goes first — winner goes first, but the first player can\'t strike on Turn 1. Every turn is ONE move: play a 🎴 item, ATTACK ⚔️, or DEFEND 🛡️ (🔁 TAG is a move too — the fresh fighter steps in right away, but can\'t strike that turn). Landing a hit costs 🔮 Energy cards from your hand — your 44-card deck (20 Energy + 24 items, shuffled at the start) starts you with just 1 Energy card, and every turn starts with a random pull from the deck; spent cards go to the discard pile. Land a hit, place your ✖ on the Clash Grid — 3 in a row wins an ability. A card is out when its life (❤️ on the card) is gone.</div>'
     + '<button class="clashbig" data-clashmode="quick">⚡ QUICK CLASH<span>Friendly fight — CPU cards match your tiers, never stronger</span></button>'
     + '<button class="clashbig gold" data-clashmode="ladder">🏆 LADDER' + (lad >= 7 ? ' — CHAMPION 🏆' : ' — BOSS ' + (lad + 1) + ' OF 7') + '<span>' + (lad >= 7 ? 'Every boss beaten. Replay Boss 7 for coins.' : 'Beat bosses in order. Boss ' + (lad + 1) + ' pays ' + (10 + (lad + 1) * 5) + ' 🪙') + '</span></button>'
     + '<div class="clashmeta">🪙 <b>' + coinsGet() + '</b> Clash Coins · Record <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b><br>Wins pay Clash Coins — spend them on packs (1 pack = ' + CLASH_PACK_COST + ' 🪙, in My Packs below)</div>'
     + '<div class="clashmeta">🏆 <b>One ladder everywhere:</b> your ' + maxWins() + ' tier wins \u2014 from prop tickets, plus every battle win \u2014 unlock these tier cards \u2014 the same cards you battle with \u2014 AND the foil tiers inside packs. Clash Coins buy those same packs too.</div>'
-    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars = your card\'s tier — higher total wins the round.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Prop Agent logo. You start with just 1 🔮 Energy card, pulled at random from your deck — nothing else. Every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>EVERY HIT COSTS 2 ENERGY:</b> same price for every card, Rookie to Legend — spent Energy goes to the discard pile. Not enough Energy? The hit fizzles — defend or tag while you draw!<br>🎴 <b>ITEMS:</b> playing an item is your WHOLE move for the turn — item OR attack OR defend, pick one. Then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> nobody sees a defend coming — the CPU locks in its move without knowing yours, and a block only reveals itself when it stops a hit. (The 👁️ Scout item peeks at the CPU\'s plan.)<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 4) and live longer (Rookie 3 life → Legend 9). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>🛡️ <b>DEFEND costs 1 🔮 Energy:</b> every turn you can DEFEND instead of attacking — pay 1 Energy card and the hit is fully blocked, costing the attacker nothing. The CPU pays the same 1 Energy to defend — same rules both sides.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Holding two-in-a-row on the grid gives +1★ until it breaks.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>'
+    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars = your card\'s tier — higher total wins the round.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Prop Agent logo. You start with just 1 🔮 Energy card, pulled at random from your deck — nothing else. Every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>ATTACK COSTS 2 ENERGY — PAID UP FRONT:</b> the moment you choose ATTACK, 2 Energy cards go to your discard pile, win or lose — blocked or not, that Energy is spent. Same price for every card, Rookie to Legend. Can\'t pay? Your attack can\'t land — defend, tag, or play an item instead. DEFEND pays its 1 Energy up front too, and it\'s discarded when you block.<br>🎴 <b>ITEMS:</b> playing an item is your WHOLE move for the turn — item OR attack OR defend, pick one. Then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> nobody sees a defend coming — the CPU locks in its move without knowing yours, and a block only reveals itself when it stops a hit. (The 👁️ Scout item peeks at the CPU\'s plan.)<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 4) and live longer (Rookie 3 life → Legend 9). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>🛡️ <b>DEFEND costs 1 🔮 Energy:</b> every turn you can DEFEND instead of attacking — pay 1 Energy card and the hit is fully blocked, costing the attacker nothing. The CPU pays the same 1 Energy to defend — same rules both sides.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Holding two-in-a-row on the grid gives +1★ until it breaks.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>'
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>');
 }
@@ -3598,7 +3598,7 @@ var ITEMS = [
   { id: "eraser", icon: "🎯", name: "GRID ERASER", color: "#ff5470", desc: "Remove 1 enemy mark from the grid" },
   { id: "patch", icon: "❤️", name: "PATCH UP", color: "#ff7ab6", desc: "Heal 2 damage from your most-hurt fighter" },
   { id: "sneak", icon: "💥", name: "SNEAK HIT", color: "#ff5470", desc: "Enemy active takes damage equal to your active card's DMG" },
-  { id: "tag", icon: "🧲", name: "FREE TAG", color: "#c4b5fd", desc: "Swap fighters free" },
+  { id: "tag", icon: "🧲", name: "FREE TAG", color: "#c4b5fd", desc: "Swap fighters right now (this item is your move — the fresh fighter steps in immediately)" },
   { id: "scout", icon: "👁️", name: "SCOUT", color: "#4fe3c1", desc: "See the CPU plan for this round" },
   { id: "supply", icon: "📦", name: "SUPPLY DROP", color: "#f5b942", desc: "Draw 2 cards" },
   { id: "reset", icon: "⏪", name: "GRID RESET", color: "#9aa7bd", desc: "Clear every mark off the grid" },
@@ -3762,7 +3762,7 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
     else if (CL.placing === "me") hint = "👇 You landed a hit! Tap a glowing square to place your ✖.";
     else if (CL.placing === "cpu") hint = "Watch out — the CPU is placing its ⭕.";
     else if (!CL.busy && CL.itemUsedRound !== CL.round && CL.myHand.length) hint = "\uD83C\uDCB4 Tap an item card to READ what it does, then \u25B6 PLAY it \u2014 playing an item IS your move this turn (no attack after). Or \u2694\uFE0F ATTACK / \uD83D\uDEE1\uFE0F DEFEND instead \u2014 ONE move per turn. You draw 1 card every round.";
-    else if (!CL.busy && energyCount("me") < hitCost(me)) hint = "\uD83D\uDD2E Not enough Energy cards for " + fName(me) + " (needs \u00D7" + hitCost(me) + ") \u2014 \uD83D\uDEE1\uFE0F DEFEND (1 \uD83D\uDD2E) or \uD83D\uDD01 TAG while you draw. You draw 1 card every round.";
+    else if (!CL.busy && energyCount("me") < hitCost(me)) hint = "\uD83D\uDD2E Not enough Energy cards for " + fName(me) + " (needs \u00D7" + hitCost(me) + ") \u2014 \uD83D\uDEE1\uFE0F DEFEND (1 \uD83D\uDD2E), play an item, or \uD83D\uDD01 TAG \u2014 an unpaid attack can\'t land. You draw 1 card every round.";
     else if (!CL.busy) hint = "👉 Your move: ⚔️ ATTACK to clash (a landed hit costs 2 🔮) · 🛡️ DEFEND blocks a hit (costs 1 🔮) · 🔁 TAG swaps fighters. Powers fire once per game — tap any card to zoom in and read.";
     if (hint) guide = '<div class="guidebar"><span>' + hint + '</span><button class="guideoff" data-guideoff="1">✕ TURN GUIDE OFF</button></div>';
   }
@@ -3788,12 +3788,12 @@ function cpuPlan(){
   var a = CL.cpu[CL.cpuActive], p = CL.cpu[1 - CL.cpuActive];
   CL.cpuStance = "atk"; CL.cpuTagged = false;
   var r = Math.random();
-  if (fAlive(p) && a.hits >= lifeOf(a) - 1 && p.hits === 0 && r < 0.22) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.log.push("🔁 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + "!"); return; }
+  if (fAlive(p) && a.hits >= lifeOf(a) - 1 && p.hits === 0 && r < 0.22) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.cpuStance = "tag"; CL.log.push("🔁 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + "!"); return; }
   if (a.hits >= lifeOf(a) - 1 && r < 0.20) CL.cpuStance = "def";
   else if (r < 0.07) CL.cpuStance = "def";
   if (CL.cpuStance === "atk" && !CL.cpuTagged && energyCount("cpu") < hitCost(CL.cpu[CL.cpuActive])) {
     var pp = CL.cpu[1 - CL.cpuActive];
-    if (fAlive(pp) && hitCost(pp) <= energyCount("cpu") && Math.random() < 0.5) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.log.push("\uD83D\uDD01 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + " \u2014 saving energy!"); }
+    if (fAlive(pp) && hitCost(pp) <= energyCount("cpu") && Math.random() < 0.5) { CL.cpuActive = 1 - CL.cpuActive; CL.cpuTagged = true; CL.cpuStance = "tag"; CL.log.push("\uD83D\uDD01 CPU tags in " + fName(CL.cpu[CL.cpuActive]) + " \u2014 saving energy!"); }
     else if (Math.random() < 0.45) { CL.cpuStance = "def"; CL.log.push("\uD83D\uDEE1\uFE0F CPU defends \u2014 collecting energy."); }
   }
 }
@@ -3814,14 +3814,19 @@ async function clashRound(stance){
   var B = CL;
   if (stance === "tag") {
     if (CL.tagged || !fAlive(CL.mine[1 - CL.myActive])) return;
-    CL.myActive = 1 - CL.myActive; CL.tagged = true; sfx("tag"); CL.lastHit = null; CL.lastWin = null; CL.lastBlock = null;
-    CL.log.push("🔁 You tag in " + fName(CL.mine[CL.myActive]) + "!");
-    clashArena(); return;
+    CL.myActive = 1 - CL.myActive; CL.tagged = true; sfx("tag");
+    CL.log.push("🔁 You tag in " + fName(CL.mine[CL.myActive]) + " — that's your move this turn.");
   }
   CL.busy = true; CL.lastHit = null; CL.lastWin = null; CL.lastBlock = null; CL.lastDmg = null; CL.lastKO = null; sfx("charge");
   if (stance === "def") {
     if (energyCount("me") >= 1) { payEnergy("me", 1); CL.log.push("\uD83D\uDEE1\uFE0F You pay 1 \uD83D\uDD2E Energy to DEFEND."); }
     else { stance = "atk"; CL.log.push("\uD83D\uDEAB Not enough \uD83D\uDD2E Energy to DEFEND (needs 1) \u2014 you attack instead!"); }
+  }
+  CL.myPaid = false;
+  if (stance === "atk") {
+    if (CL.myFreeHit) { CL.myFreeHit = false; CL.myPaid = true; CL.log.push("🎟️ FREE HIT TOKEN — your attack costs 0 Energy!"); }
+    else if (energyCount("me") >= hitCost(CL.mine[CL.myActive])) { payEnergy("me", hitCost(CL.mine[CL.myActive])); CL.myPaid = true; CL.log.push("⚔️ You pay " + hitCost(CL.mine[CL.myActive]) + " 🔮 Energy to ATTACK — discarded, win or lose."); }
+    else CL.log.push("⚔️ You attack without paying (needs " + hitCost(CL.mine[CL.myActive]) + " 🔮) — your hit can't land this round.");
   }
   if (!CL.planned) cpuPlan();
   CL.planned = false;
@@ -3829,6 +3834,11 @@ async function clashRound(stance){
   if (CL.cpuStance === "def") {
     if (energyCount("cpu") >= 1) { payEnergy("cpu", 1); }
     else { CL.cpuStance = "atk"; CL.log.push("\uD83D\uDEAB CPU can't afford to DEFEND \u2014 it attacks instead!"); }
+  }
+  CL.cpuPaid = false;
+  if (CL.cpuStance === "atk") {
+    if (CL.cpuFreeHit) { CL.cpuFreeHit = false; CL.cpuPaid = true; }
+    else if (energyCount("cpu") >= hitCost(CL.cpu[CL.cpuActive])) { payEnergy("cpu", hitCost(CL.cpu[CL.cpuActive])); CL.cpuPaid = true; }
   }
   if (CL.over) return;
   clashArena();
@@ -3871,26 +3881,21 @@ async function clashRound(stance){
     }
     var winSide = loser === "me" ? "cpu" : "me";
     var winStance = winSide === "me" ? stance : CL.cpuStance;
-    if (winStance === "item") {
-      CL.log.push("🎴 " + (winSide === "me" ? "You used" : "CPU used") + " an item this turn — no hit, so no grid square. Squares come only from landed hits.");
+    if (winStance === "item" || winStance === "tag") {
+      CL.log.push((winStance === "tag" ? "🔁 " : "🎴 ") + (winSide === "me" ? "You " : "CPU ") + (winStance === "tag" ? "tagged this turn" : "used an item this turn") + " — no hit, so no grid square. Squares come only from landed hits.");
       CL.lastHit = null; CL.lastWin = winSide;
     } else if (CL.round === 1 && winSide === CL.firstPlayer) {
       CL.log.push("\uD83D\uDEAB " + (winSide === "me" ? "You go" : "CPU goes") + " first \u2014 no strike on Turn 1! No hit, so no grid square.");
       CL.lastHit = null; CL.lastWin = loser;
     } else {
-    var cost = hitCost(winF);
-    var freeKey = winSide === "me" ? "myFreeHit" : "cpuFreeHit";
     var landedHits = 0, res = "";
     var dmg = dmgOf(winF) * (slugger ? 2 : 1);
+    var paidKey = winSide === "me" ? "myPaid" : "cpuPaid";
     if (loseStance === "def") { res = applyHit(loser, dmg, loseF, loseStance, winF); }
+    else if (!CL[paidKey]) { CL.log.push("\u2728 " + fName(winF) + "'s hit FIZZLES \u2014 the attack wasn't paid for! (needs \u00D7" + hitCost(winF) + " \uD83D\uDD2E Energy)"); res = "fizzle"; }
     else {
-      var effCost = CL[freeKey] ? 0 : cost;
-      if (energyCount(winSide) < effCost) { CL.log.push("\u2728 " + fName(winF) + "'s hit FIZZLES \u2014 not enough \uD83D\uDD2E Energy cards! (needs \u00D7" + cost + ", has " + energyCount(winSide) + ")"); res = "fizzle"; }
-      else {
-        var r1 = applyHit(loser, dmg, loseF, loseStance, winF);
-        res = r1;
-        if (r1 === "hit") { landedHits = slugger ? 2 : 1; if (CL[freeKey]) { CL[freeKey] = false; CL.log.push("\uD83C\uDF9F\uFE0F FREE HIT TOKEN \u2014 no energy spent!"); } else { payEnergy(winSide, cost); CL.log.push("\uD83D\uDD2E " + (winSide === "me" ? "You spend" : "CPU spends") + " " + cost + " Energy \u2192 discard pile. (" + energyCount(winSide) + " energy left)"); } }
-      }
+      res = applyHit(loser, dmg, loseF, loseStance, winF);
+      if (res === "hit") landedHits = slugger ? 2 : 1;
     }
     var landed = landedHits > 0;
     CL.lastHit = landed ? loser : null; CL.lastBlock = (!landed && (res === "def" || res === "save")) ? loser : null;
