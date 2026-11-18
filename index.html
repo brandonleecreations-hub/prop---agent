@@ -442,8 +442,11 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .ptile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:11px 8px;text-align:center;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.05);transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
 .ptile:active{transform:scale(.94)}
 #searchResults .ptile{animation:tilein .32s ease both}
-#searchResults .pgrid .ptile:nth-child(2){animation-delay:.03s}#searchResults .pgrid .ptile:nth-child(3){animation-delay:.06s}#searchResults .pgrid .ptile:nth-child(4){animation-delay:.09s}#searchResults .pgrid .ptile:nth-child(5){animation-delay:.12s}#searchResults .pgrid .ptile:nth-child(6){animation-delay:.15s}#searchResults .pgrid .ptile:nth-child(7){animation-delay:.18s}#searchResults .pgrid .ptile:nth-child(8){animation-delay:.21s}#searchResults .pgrid .ptile:nth-child(9){animation-delay:.24s}#searchResults .pgrid .ptile:nth-child(10){animation-delay:.27s}
+#searchResults .bslider .ptile:nth-child(2){animation-delay:.03s}#searchResults .bslider .ptile:nth-child(3){animation-delay:.06s}#searchResults .bslider .ptile:nth-child(4){animation-delay:.09s}#searchResults .bslider .ptile:nth-child(5){animation-delay:.12s}#searchResults .bslider .ptile:nth-child(6){animation-delay:.15s}#searchResults .bslider .ptile:nth-child(7){animation-delay:.18s}#searchResults .bslider .ptile:nth-child(8){animation-delay:.21s}#searchResults .bslider .ptile:nth-child(9){animation-delay:.24s}#searchResults .bslider .ptile:nth-child(10){animation-delay:.27s}
 @keyframes tilein{from{opacity:0;transform:translateY(9px) scale(.96)}to{opacity:1;transform:none}}
+#searchResults .bslider{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#searchResults .bslider::-webkit-scrollbar{display:none}
+#searchResults .bslider .ptile{flex:0 0 118px;scroll-snap-align:start}
 #searchResults .sporthead{display:flex;align-items:center;gap:8px;font-size:17px;color:#ffd970;background:linear-gradient(90deg,rgba(124,58,237,.30),rgba(245,185,66,.10) 55%,rgba(245,185,66,0));border:1px solid rgba(245,185,66,.35);border-radius:12px;padding:8px 12px;margin-top:20px;letter-spacing:.4px}
 #view-build .tab{transition:transform .13s ease,box-shadow .13s ease}
 #view-build .tab:active{transform:scale(.93)}
@@ -2665,7 +2668,7 @@ function renderBuild(){
     var EMO = {nfl:"\uD83C\uDFC8",nba:"\uD83C\uDFC0",nhl:"\uD83C\uDFD2",cfb:"\uD83C\uDFC8",cbb:"\uD83C\uDFC0",wbb:"\uD83C\uDFC0",mlb:"\u26BE",tennis:"\uD83C\uDFBE"};
     var PRIO = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
     lorder.sort(function(a,b){ var ai = PRIO.indexOf(String(a).toLowerCase()), bi = PRIO.indexOf(String(b).toLowerCase()); ai = ai<0?99:ai; bi = bi<0?99:bi; return ai-bi; });
-    box.innerHTML = lorder.map(function(L){ var label = (byLeague[L][0] && byLeague[L][0].leagueLabel) || String(L).toUpperCase(); return '<div class="teamhead sporthead">'+(EMO[String(L).toLowerCase()]||"\uD83C\uDFC5")+' '+esc(label)+' \u00b7 '+byLeague[L].length+' players</div><div class="pgrid">'+byLeague[L].map(tileHtml).join("")+'</div>'; }).join("");
+    box.innerHTML = lorder.map(function(L){ var label = (byLeague[L][0] && byLeague[L][0].leagueLabel) || String(L).toUpperCase(); return '<div class="teamhead sporthead">'+(EMO[String(L).toLowerCase()]||"\uD83C\uDFC5")+' '+esc(label)+' \u00b7 '+byLeague[L].length+' players<span style="margin-left:auto;font-size:11px;color:#cdbcf5;font-weight:800;letter-spacing:.6px">SWIPE \u203a</span></div><div class="bslider">'+byLeague[L].map(tileHtml).join("")+'</div>'; }).join("");
     bindTiles(box);
   }).catch(function(){ box.innerHTML = '<p class="empty">Players could not load — check your connection and tap Refresh.</p>'; });
 }
