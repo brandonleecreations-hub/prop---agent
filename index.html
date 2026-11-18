@@ -244,9 +244,10 @@ table.lb th{color:var(--mut);font-size:10.5px;text-transform:uppercase;letter-sp
 .dlpopt{font-size:15px;font-weight:800;color:#fff}
 .dlpopn{font-size:12px;color:#cfc4ee;margin:3px 22px 9px 0;line-height:1.45}
 .dlpoprow{display:flex;gap:8px}
-.dlpopb{flex:1;padding:9px 6px;border-radius:11px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:13px;cursor:pointer}
-.dlpopb.main{background:linear-gradient(180deg,#8b5cf6,#7c3aed);border-color:#a78bfa;animation:dlpopglow 1.8s ease-in-out infinite}
-@keyframes dlpopglow{0%,100%{box-shadow:0 0 0 rgba(167,139,250,0)}50%{box-shadow:0 0 16px rgba(167,139,250,.75)}}
+.dlpopb{flex:1;padding:9px 6px;border-radius:11px;border:1px solid rgba(255,255,255,.3);background:linear-gradient(180deg,#3d3757,#262040);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 0 #130f22,inset 0 1px 0 rgba(255,255,255,.28);transition:transform .08s ease,box-shadow .08s ease}
+.dlpopb.main{background:linear-gradient(180deg,#9d6bff,#7c3aed);border-color:#c4a7ff;box-shadow:0 4px 0 #4c1d95,inset 0 1px 0 rgba(255,255,255,.45);animation:dlpopglow 1.8s ease-in-out infinite}
+.dlpopb:active{transform:translateY(3px)}
+@keyframes dlpopglow{0%,100%{box-shadow:0 4px 0 #4c1d95,inset 0 1px 0 rgba(255,255,255,.45),0 0 0 rgba(167,139,250,0)}50%{box-shadow:0 4px 0 #4c1d95,inset 0 1px 0 rgba(255,255,255,.45),0 0 16px rgba(167,139,250,.85)}}
 .dlpopx{position:absolute;top:6px;right:8px;background:none;border:none;color:#b7a8e8;font-size:15px;cursor:pointer;padding:4px;z-index:2}
 @media (prefers-reduced-motion: reduce){.dlpop{animation:none}.dlpop::after{animation:none}.dlpopb.main{animation:none}}
 .posterad{position:relative;overflow:hidden}
@@ -941,12 +942,12 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <div class="card news" id="news"><p class="empty">Loading the top headlines…</p></div>
     <div class="homeclash posterad" id="clashHomeAd"><img src="/api/banners?s=clashposter&v=2" alt="Agent Clash Card Game — tap to play"></div>
     <div id="dlPop" class="dlpop" style="display:none">
-      <button class="dlpopx" id="dlPopX" type="button" aria-label="Close">\u2715</button>
-      <div class="dlpopt">\uD83D\uDCF2 Get the Prop Agent app</div>
-      <div class="dlpopn" id="dlPopNote">Download the app to your home screen &amp; turn on notifications \u2014 never miss a ticket start or result.</div>
+      <button class="dlpopx" id="dlPopX" type="button" aria-label="Close">✕</button>
+      <div class="dlpopt">📲 Get the Prop Agent App</div>
+      <div class="dlpopn" id="dlPopNote">Put it on your home screen and turn on notifications — never miss a ticket result.</div>
       <div class="dlpoprow">
-        <button class="dlpopb main" id="dlPopInstall" type="button">\u2B07 Download app</button>
-        <button class="dlpopb" id="dlPopNotif" type="button">\uD83D\uDD14 Notifications</button>
+        <button class="dlpopb main" id="dlPopInstall" type="button">⬇ Download App</button>
+        <button class="dlpopb" id="dlPopNotif" type="button">🔔 Notifications</button>
       </div>
     </div>
     <div class="card" id="installCard" style="display:none;margin-top:20px;padding:0;overflow:hidden;border:2px solid #f5b942;background:radial-gradient(130% 150% at 15% 0%, #4c1d95 0%, #2a1650 46%, #12082b 100%);box-shadow:0 14px 44px rgba(124,58,237,.5)">
