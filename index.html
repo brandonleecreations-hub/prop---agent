@@ -1236,7 +1236,7 @@ function nextGameFor(events, teamId){
 }
 
 /* ---------- props (real PrizePicks lines via Parlay API) ---------- */
-var PARLAY_KEYS = {nba:"basketball_nba", nfl:"americanfootball_nfl", cfb:"americanfootball_ncaaf", cbb:"basketball_ncaab", wbb:"basketball_wncaab", nhl:"icehockey_nhl", mlb:"baseball_mlb", tennis:"tennis_atp"};
+var PARLAY_KEYS = {nba:"basketball_nba", nfl:"americanfootball_nfl", cfb:"americanfootball_ncaaf", cbb:"basketball_ncaab", wbb:"basketball_wncaab", nhl:"icehockey_nhl", mlb:"baseball_mlb", tennis:["tennis_atp","tennis_wta"]};
 var propsCache = {};   // leagueKey -> [prop]
 var propsAt = {};      // leagueKey -> last fetch time (ms)
 var propsRefreshing = {};
@@ -1267,25 +1267,31 @@ function ingestProps(lg, rows){
   out.sort(function(a, b){ return (new Date(a.starts || 0) - new Date(b.starts || 0)) || a.player.localeCompare(b.player); });
   return out.slice(0, 240);
 }
+function fetchLeagueProps(lg){
+  var sk = PARLAY_KEYS[lg.key];
+  var keys = Array.isArray(sk) ? sk : (sk ? [sk] : []);
+  if (!keys.length) return Promise.resolve([]);
+  return Promise.all(keys.map(function(k){ return fetchJson("/api/props?sport=" + k).catch(function(){ return null; }); })).then(function(rs){
+    var rows = [];
+    rs.forEach(function(res){ if (res && res.configured === false) propsConfigured = false; if (res && res.props) rows = rows.concat(res.props); });
+    return rows;
+  });
+}
 function buildProps(lg){
   if (propsCache[lg.key]) return Promise.resolve(propsCache[lg.key]);
-  var sk = PARLAY_KEYS[lg.key];
-  if (!sk) { propsCache[lg.key] = []; return Promise.resolve([]); }
-  return fetchJson("/api/props?sport=" + sk).then(function(res){
-    if (res && res.configured === false) propsConfigured = false;
-    var out = ingestProps(lg, (res && res.props) || []);
+  if (!PARLAY_KEYS[lg.key]) { propsCache[lg.key] = []; return Promise.resolve([]); }
+  return fetchLeagueProps(lg).then(function(rows){
+    var out = ingestProps(lg, rows);
     propsCache[lg.key] = out; propsAt[lg.key] = Date.now();
     resolvePhotos(lg, out);
     return out;
   }).catch(function(){ propsCache[lg.key] = []; propsAt[lg.key] = Date.now(); return []; });
 }
 function refreshProps(lg){
-  var sk = PARLAY_KEYS[lg.key];
-  if (!sk) return Promise.resolve([]);
+  if (!PARLAY_KEYS[lg.key]) return Promise.resolve([]);
   if (propsRefreshing[lg.key]) return propsRefreshing[lg.key];
-  var pr = fetchJson("/api/props?sport=" + sk).then(function(res){
-    if (res && res.configured === false) propsConfigured = false;
-    var out = ingestProps(lg, (res && res.props) || []);
+  var pr = fetchLeagueProps(lg).then(function(rows){
+    var out = ingestProps(lg, rows);
     propsCache[lg.key] = out; propsAt[lg.key] = Date.now();
     resolvePhotos(lg, out);
     delete propsRefreshing[lg.key];
