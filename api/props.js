@@ -142,10 +142,10 @@ function noteFetch(sport) {
 const SB_URL = (process.env.SUPABASE_URL || "").replace(/\/+$/, "");
 const SB_SVC = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const DAILY_CREDIT_BUDGET = 30;
-// Brandon 2026-11-17: one-day lift -- on 2026-11-17 (ET) the cap is 50
+// Brandon: one-day lifts -- on 2026-11-17 and 2026-11-18 (ET) the cap is 50
 // so the day's next pull can complete; never above 50 that day, and the
 // normal 30/day cap resumes by itself the next ET day.
-function dailyCap() { return etToday() === "2026-11-17" ? 50 : DAILY_CREDIT_BUDGET; }
+function dailyCap() { return (etToday() === "2026-11-17" || etToday() === "2026-11-18") ? 50 : DAILY_CREDIT_BUDGET; }
 const SLOT_HOURS_ET = [6, 16];
 function etSlot() {
   const h = etHour();
