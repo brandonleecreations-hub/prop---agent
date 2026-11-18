@@ -1566,13 +1566,24 @@ function l5Fetch(lgKey, aid){
   l5Inflight[ck] = pr;
   return pr;
 }
+var l5Resolving = {};
 function hydrateL5(){
   document.querySelectorAll(".l5row[data-l5]").forEach(function(el){
-    el.removeAttribute("data-l5");
     var player = el.getAttribute("data-player") || "";
     var aid = el.getAttribute("data-aid") || aidCache[player.toLowerCase()] || "";
     var lgKey = el.getAttribute("data-lg"), stat = el.getAttribute("data-stat"), line = parseFloat(el.getAttribute("data-line"));
-    if (!aid || !lgKey || isNaN(line)) return;
+    if (!lgKey || isNaN(line)) { el.removeAttribute("data-l5"); return; }
+    if (!aid) {
+      var lk = player.toLowerCase();
+      if (aidCache[lk] === undefined && !l5Resolving[lk]) {
+        l5Resolving[lk] = 1;
+        var lgR = leagueByKey(lgKey);
+        if (lgR) resolvePhotos(lgR, [{player: player, league: lgKey}]);
+        setTimeout(function(){ delete l5Resolving[lk]; }, 15000);
+      }
+      return;
+    }
+    el.removeAttribute("data-l5");
     l5Fetch(lgKey, aid).then(function(g){
       if (!g) return;
       var vals = l5Series(g, stat);
@@ -4775,13 +4786,13 @@ function renderTicker(){
 /* ---------- player photos for Parlay props (ESPN search -> headshot, cached) ---------- */
 var photoCache = lsGet("pa_photos", {});
 function resolvePhotos(lg, list){
-  var need = (list||[]).filter(function(p){ return p.player && ((photoCache[p.player.toLowerCase()]===undefined && !p.img) || (teamCache[p.player.toLowerCase()]===undefined && !p.team)); }).slice(0,60);
+  var need = (list||[]).filter(function(p){ return p.player && ((photoCache[p.player.toLowerCase()]===undefined && !p.img) || (teamCache[p.player.toLowerCase()]===undefined && !p.team) || (aidCache[p.player.toLowerCase()]===undefined && lg && lg.key!=="tennis")); }).slice(0,60);
   if (!need.length) return;
   var chain = Promise.resolve();
   need.forEach(function(p){
     chain = chain.then(function(){
       var key = p.player.toLowerCase();
-      if (photoCache[key]!==undefined && teamCache[key]!==undefined){ if (photoCache[key]) p.img = photoCache[key]; if (teamCache[key] && !p.team) p.team = teamCache[key]; if (aidCache[key] && !p.athleteId) p.athleteId = aidCache[key]; return; }
+      if (photoCache[key]!==undefined && teamCache[key]!==undefined && aidCache[key]!==undefined){ if (photoCache[key]) p.img = photoCache[key]; if (teamCache[key] && !p.team) p.team = teamCache[key]; if (aidCache[key] && !p.athleteId) p.athleteId = aidCache[key]; return; }
       return fetchJson("https://site.api.espn.com/apis/search/v2?query="+encodeURIComponent(p.player)+"&limit=5").then(function(r){
         var url = "";
         try { (r.results||[]).forEach(function(g){ (g.contents||[]).forEach(function(c){
@@ -4790,6 +4801,14 @@ function resolvePhotos(lg, list){
             var mm2 = /a:(\d+)/.exec(c.uid||""); if (mm2 && !p.athleteId) { p.athleteId = mm2[1]; aidCache[p.player.toLowerCase()] = mm2[1]; lsSet("pa_aids", aidCache); }
           }
         }); }); } catch(e){}
+        try {
+          if (!p.athleteId) {
+            var cands = [];
+            (r.results||[]).forEach(function(g){ (g.contents||[]).forEach(function(c){ if (c.type==="player" && c.uid && lastNameOf(c.displayName||"")===lastNameOf(p.player)) cands.push(c); }); });
+            if (cands.length===1) { var mm3 = /a:(\d+)/.exec(cands[0].uid||""); if (mm3) { p.athleteId = mm3[1]; aidCache[p.player.toLowerCase()] = mm3[1]; lsSet("pa_aids", aidCache); if (cands[0].subtitle && !p.team) { p.team = cands[0].subtitle; teamCache[p.player.toLowerCase()] = cands[0].subtitle; lsSet("pa_teams", teamCache); } } }
+            if (!p.athleteId && aidCache[p.player.toLowerCase()]===undefined && (r.results||[]).length) { aidCache[p.player.toLowerCase()] = ""; lsSet("pa_aids", aidCache); }
+          }
+        } catch(e){}
         try {
           var res = (r && r.results) || [];
           for (var i=0;i<res.length && !url;i++){
@@ -4810,6 +4829,7 @@ function resolvePhotos(lg, list){
       }).catch(function(){ photoCache[key] = ""; lsSet("pa_photos", photoCache); if (teamCache[key]===undefined){ teamCache[key] = ""; lsSet("pa_teams", teamCache); } });
     });
   });
+  return chain.then(function(){ try { hydrateL5(); } catch(e){} });
 }
 
 /* ---------- Supabase cloud sync: profile + progress saved per device ----------
