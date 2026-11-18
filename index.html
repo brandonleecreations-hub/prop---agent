@@ -227,7 +227,11 @@ table.lb th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spac
 .guidebar{display:flex;gap:8px;align-items:center;background:linear-gradient(90deg,rgba(245,185,66,.20),rgba(124,58,237,.20));border:1px solid #f5b942;border-radius:10px;padding:6px 8px;font-size:11.5px;margin-bottom:7px;line-height:1.4}
 .guideoff{margin-left:auto;flex:0 0 auto;background:rgba(245,185,66,.16);border:1.5px solid #f5b942;color:#fff;font-weight:800;border-radius:999px;font-size:11.5px;padding:5px 10px;cursor:pointer}
 .guideglow{animation:guidepulse 1.1s ease-in-out infinite !important}
-@keyframes guidepulse{0%,100%{box-shadow:0 0 0 0 rgba(245,185,66,0)}50%{box-shadow:0 0 16px 3px rgba(245,185,66,.75)}}
+.turnbanner{text-align:center;font-family:Bungee,'Archivo Black',sans-serif;font-size:15px;letter-spacing:1px;color:#fff;background:linear-gradient(90deg,#7C3AED,#b26bff);border:2px solid #f5b942;border-radius:10px;padding:6px 4px;margin:6px 0 2px;animation:turnpop .45s ease,turnpulse 1.6s ease-in-out infinite}
+.turnbanner.cpu{background:#241a3f;border-color:#57534e;color:#d6d0ea;animation:turnpop .35s ease}
+@keyframes turnpop{0%{transform:scale(.7);opacity:0}60%{transform:scale(1.06);opacity:1}100%{transform:scale(1)}}
+@keyframes turnpulse{0%,100%{outline:2px solid rgba(245,185,66,0)}50%{outline:3px solid rgba(245,185,66,.65)}}
+@keyframes guidepulse{0%,100%{outline:2px solid rgba(245,185,66,0)}50%{outline:3px solid rgba(245,185,66,.85)}}
 #musBtn{position:absolute;top:10px;right:12px;z-index:6;width:38px;height:38px;border-radius:50%;background:#1d1430;border:1px solid #7C3AED;font-size:17px;cursor:pointer;color:#fff}
 #clashZoom{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,8,16,.94);z-index:7;padding:18px}
 #clashZoom.open{display:flex}
@@ -3400,6 +3404,14 @@ function abilityHTML(){
   return '<div class="abwrap"><div class="abttl">🏆 GRID WON — PICK YOUR ABILITY</div><div class="abrow">' + cards + '</div></div>';
 }
 function guideOn(){ return lsGet("pa_guide", 1) !== 0; }
+function turnBannerHTML(){
+  if (!CL || CL.over || CL.phase === "flip") return "";
+  if (CL.abilityPick) return '<div class="turnbanner">🏆 YOUR TURN — PICK AN ABILITY!</div>';
+  if (CL.placing === "me") return '<div class="turnbanner">✖ YOUR TURN — PLACE YOUR MARK!</div>';
+  if (CL.placing === "cpu") return '<div class="turnbanner cpu">⭕ CPU\'S TURN…</div>';
+  if (CL.busy) return '<div class="turnbanner cpu">⚔️ CLASHING…</div>';
+  return '<div class="turnbanner">⚔️ YOUR TURN</div>';
+}
 function clashZoom(ci, ti){
   ensureClashPop();
   var z = $("clashZoom"); if (!z) return;
@@ -3719,6 +3731,7 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
     + '<div class="side me"><div class="sidetag">YOU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("me") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("me") + '</div><div class="frow">' + fighterHTML(me, true, meExtra, CL.lastHit === "me" ? "fist" : (CL.lastBlock === "me" ? "shield" : "")) + fighterHTML(mp, false, "") + '</div></div></div>'
     + itemHTML()
     + abilityHTML()
+    + turnBannerHTML()
     + '<div class="clashbtns">'
     + '<button class="cbtn atk' + (phase && g ? ' guideglow' : '') + '" data-clashact="atk"' + (CL.busy || CL.over ? ' disabled' : '') + '>⚔️ ATTACK \uD83D\uDD2E\u00D7' + hitCost(me) + '</button>'
     + '<button class="cbtn def" data-clashact="def"' + (CL.busy || CL.over || energyCount("me") < 1 ? ' disabled' : '') + '>🛡️ DEFEND \uD83D\uDD2E\u00D71</button>'
