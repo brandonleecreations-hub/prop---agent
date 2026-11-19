@@ -1606,17 +1606,22 @@ function allProps(){
 function slipHas(id, dir){ return slip.some(function(l){ return l.id===id && l.dir===dir; }); }
 function togglePick(prop, dir){
   var i = slip.findIndex(function(l){ return l.id===prop.id; });
+  var refused = false;
   if (i>-1 && slip[i].dir===dir) slip.splice(i,1);
   else {
     var leg = {id:prop.id, player:prop.player, team:prop.team, league:prop.league, stat:prop.stat, line:prop.line, dir:dir, matchup:prop.matchup||"", starts:prop.starts||"", src:prop.src||"ESPN Leaders", custom:!!prop.custom, athleteId:prop.athleteId||"", eventId:prop.eventId||""};
-    if (i>-1) slip[i]=leg; else slip.push(leg);
+    if (i>-1) slip[i]=leg;
+    else if (slip.length >= MAX_SLIP_LEGS) refused = true;
+    else slip.push(leg);
   }
   lsSet("pa_slip", slip); renderAllSlips(); renderBoards(); renderTicker(); refreshPlayerDlg(); updateSlipChip();
+  return !refused;
 }
 function removeLeg(id){ slip = slip.filter(function(l){ return l.id!==id; }); lsSet("pa_slip", slip); renderAllSlips(); renderBoards(); renderTicker(); refreshPlayerDlg(); updateSlipChip(); }
 var PAYOUTS = {2:3, 3:5, 4:10, 5:20, 6:37.5};
 var slipPublic = lsGet("pa_slipub", true) !== false;
 var DAILY_TICKET_LIMIT = 8;
+var MAX_SLIP_LEGS = 6;
 function locksToday(){
   var rec = lsGet("pa_lockday", null);
   if (!rec || rec.day !== dayStr()) return 0;
@@ -1668,8 +1673,9 @@ function slipHtml(){
   var canLock = can && !limitHit && !hedge && !startedMsg;
   return '<h3 style="margin:0 0 6px">Your slip ('+n+' pick'+(n===1?"":"s")+')</h3>'
     + (n ? legs : '<p class="empty">No picks yet — tap a sport tab above, then tap MORE or LESS on any prop card. It lands here instantly; tap the same pick again to take it off.</p>')
-    + '<div class="row" style="margin-top:12px"><span class="pay">'+(can ? n+' picks — ready to lock in' : 'Pick at least 2 to lock a ticket')+'</span></div>'
+    + '<div class="row" style="margin-top:12px"><span class="pay">'+(can ? n+' of '+MAX_SLIP_LEGS+' picks — ready to lock in' : 'Pick at least 2 to lock a ticket (max '+MAX_SLIP_LEGS+')')+'</span></div>'
     + '<div class="note" style="margin-top:6px">🎟️ Tickets today: '+locks+' of '+DAILY_TICKET_LIMIT+(limitHit ? ' — daily limit reached, back tomorrow' : '')+'</div>'
+    + (n >= MAX_SLIP_LEGS ? '<div class="note" style="margin-top:4px;color:#f87171;font-weight:700">🧢 Max '+MAX_SLIP_LEGS+' legs per ticket — remove a pick to add another.</div>' : '')
     + (hedge ? '<div class="note" style="margin-top:4px;color:#f87171;font-weight:700">🚫 Anti-hedge: '+esc(hedge)+'</div>' : '')
     + (startedMsg ? '<div class="note" style="margin-top:4px;color:#f87171;font-weight:700">🚫 Game started: '+esc(startedMsg)+'</div>' : '')
     + (slip.some(function(l){ return !!l.custom; }) ? '<div class="note" style="margin-top:4px;color:#f5c518;font-weight:700">🧩 Custom pick on this slip — tickets with custom picks earn no tier points, coins or packs. Custom picks are graded by you, not the box score.</div>' : '')
@@ -3227,7 +3233,7 @@ $("cAdd").addEventListener("click", function(){
   err.textContent = "";
   var lg = leagueByKey($("cSport").value);
   var prop = {id:"custom_"+Date.now(), player:player, team:"", league:lg.key, leagueLabel:lg.label, stat:stat, line:line, matchup:"", starts:"", img:"", src:$("cSrc").value, custom:true};
-  togglePick(prop, $("cDir").value);
+  if (togglePick(prop, $("cDir").value) === false) { err.textContent = "Slip is full — max " + MAX_SLIP_LEGS + " legs per ticket. Remove a pick first."; }
   showView("build");
 });
 
