@@ -453,6 +453,10 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .card.game.lv .gteam{display:flex;align-items:center;gap:7px;font-size:13.5px;margin-top:3px}
 .card.game.lv .gteam img{width:19px;height:19px}
 .card.game.lv .gscore{margin-left:auto;font-size:14.5px}
+.card.game.fin .fwin .gscore{color:#ffd970}
+.card.game.fin .flose{opacity:.5}
+.card.game.fin .tset{font-size:12px;letter-spacing:.4px}
+.finstar{font-size:11.5px;line-height:1.35;color:var(--purp-lt);font-weight:700;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pbptick{display:flex;align-items:center;gap:7px;background:#07070c;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:4px 8px;margin-top:8px;overflow:hidden;min-height:24px}
 .pbptick:empty{display:none}
 .pbptick .tkchip{flex:0 0 auto;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;font-size:9px;font-weight:900;letter-spacing:1px;border-radius:5px;padding:2px 5px}
@@ -2531,6 +2535,110 @@ function futSliders(fut){
     return '<div class="fsport"><span>'+esc(gr.lg.key==="tennis" ? "Tennis" : gr.lg.label)+'</span><span class="fcount">'+gr.items.length+' game'+(gr.items.length===1?"":"s")+'</span></div><div class="fslider">'+gr.items.map(function(g){ return futureCard(g.lg, g.ev); }).join("")+'</div>';
   }).join("");
 }
+/* ===== Finished games: last-5-per-sport saved results (localStorage store) ===== */
+var FIN_KEY = "pa_fin_results", FIN_CAP = 5;
+function finStarText(ev){
+  var cs = ((ev.competitions||[])[0]||{}).competitors||[];
+  var best = null, fb = null;
+  cs.forEach(function(c){
+    (c.leaders||[]).forEach(function(cat){
+      var L = (cat.leaders||[])[0]; if (!L || !L.athlete) return;
+      var nm = L.athlete.displayName || L.athlete.fullName || ""; if (!nm) return;
+      var item = { name: nm, val: L.displayValue != null ? String(L.displayValue) : (L.value != null ? String(L.value) : ""), num: (typeof L.value === "number" ? L.value : parseFloat(L.displayValue)), label: String(cat.abbreviation || cat.shortDisplayName || cat.displayName || "").toUpperCase() };
+      if (item.val === "") return;
+      if (cat.name === "points"){ if (!best || (item.num||0) > (best.num||0)) best = item; }
+      else if (!fb) fb = item;
+    });
+  });
+  var p = best || fb; if (!p) return "";
+  return p.name + " \u00B7 " + p.val + (p.label ? " " + p.label : "");
+}
+function finTennisMatches(ev, dayStr){
+  var out = [];
+  (ev.groupings||[]).forEach(function(g){ (g.competitions||[]).forEach(function(comp){
+    var st = comp.status && comp.status.type && comp.status.type.state;
+    if (st !== "post" || !comp.date) return;
+    if (ymd(new Date(comp.date)) !== dayStr) return;
+    out.push(comp);
+  }); });
+  return out;
+}
+function finSetScore(c){
+  return (c.linescores||[]).map(function(x){
+    if (x.displayValue != null) return String(x.displayValue);
+    if (x.value == null) return "";
+    return String(Math.round(x.value)) + (x.tiebreak != null ? "(" + x.tiebreak + ")" : "");
+  }).join(" ");
+}
+function finTeamOf(c, isT){
+  var nm = (c.team && (c.team.shortDisplayName || c.team.displayName)) || (c.roster && c.roster.displayName) || (c.athlete && c.athlete.displayName) || "";
+  if (!nm && c.roster && c.roster.athletes) nm = c.roster.athletes.map(function(a){ return a.displayName || ""; }).filter(Boolean).join(" / ");
+  var logo = logoUrl(c) || (c.athlete && c.athlete.flag && c.athlete.flag.href) || (c.roster && c.roster.athletes && c.roster.athletes[0] && c.roster.athletes[0].flag && c.roster.athletes[0].flag.href) || "";
+  return { n: nm, logo: logo, s: isT ? finSetScore(c) : (c.score != null ? String(c.score) : ""), w: c.winner === true, sc: (c.score != null && !isNaN(parseFloat(c.score))) ? parseFloat(c.score) : null };
+}
+function finEntry(lg, ev, match){
+  var isT = lg.key === "tennis";
+  var comp = match || ((ev.competitions||[])[0]||{});
+  var cs = comp.competitors||[];
+  var teams = cs.map(function(c){ return finTeamOf(c, isT); });
+  var anyW = teams.some(function(t){ return t.w; });
+  if (!anyW && teams.length === 2 && teams[0].sc != null && teams[1].sc != null && teams[0].sc !== teams[1].sc){ teams[teams[0].sc > teams[1].sc ? 0 : 1].w = true; }
+  teams.forEach(function(t){ delete t.sc; });
+  var st = (match ? (match.status && match.status.type) : (ev.status && ev.status.type)) || {};
+  return {
+    id: lg.key + "|" + (ev._tour ? ev._tour.toLowerCase() + ":" : "") + ev.id + (match ? "|m" + match.id : ""),
+    gid: (ev._tour ? ev._tour.toLowerCase() + ":" : "") + ev.id,
+    lg: lg.key, label: isT ? "Tennis" : lg.label, tour: ev._tour || "",
+    d: match ? (match.date || ev.date || "") : (ev.date || ""),
+    detail: st.shortDetail || st.detail || "Final",
+    star: match ? "" : finStarText(ev),
+    teams: teams, ts: Date.now()
+  };
+}
+function finLoad(){ try { var raw = localStorage.getItem(FIN_KEY); var o = raw ? JSON.parse(raw) : {}; return (o && typeof o === "object" && !Array.isArray(o)) ? o : {}; } catch(e){ return {}; } }
+function finSave(store){ try { localStorage.setItem(FIN_KEY, JSON.stringify(store)); } catch(e){} }
+function finSortArr(arr){ arr.sort(function(a, b){ var dd = new Date(b.d) - new Date(a.d); return dd !== 0 ? dd : (b.ts||0) - (a.ts||0); }); }
+function finUpsert(entries){
+  if (!entries || !entries.length) return;
+  var store = finLoad(), touched = {};
+  entries.forEach(function(en){
+    var arr = store[en.lg] || (store[en.lg] = []);
+    var ix = -1; for (var i = 0; i < arr.length; i++) if (arr[i].id === en.id){ ix = i; break; }
+    if (ix > -1){ en.ts = arr[ix].ts || en.ts; arr[ix] = en; } else arr.push(en);
+    touched[en.lg] = 1;
+  });
+  Object.keys(touched).forEach(function(k){ finSortArr(store[k]); store[k] = store[k].slice(0, FIN_CAP); });
+  finSave(store);
+}
+function finEntriesFor(keys){
+  var store = finLoad(), out = [];
+  (keys || []).forEach(function(k){ var arr = (store[k] || []).slice(); finSortArr(arr); arr.slice(0, FIN_CAP).forEach(function(en){ out.push(en); }); });
+  return out;
+}
+function finFind(key, gid){
+  var arr = finLoad()[key] || [];
+  for (var i = 0; i < arr.length; i++) if (arr[i].gid === String(gid)) return arr[i];
+  return null;
+}
+function finCardHtml(en){
+  var isT = en.lg === "tennis";
+  var anyW = (en.teams || []).some(function(t){ return t.w; });
+  var rows = (en.teams || []).map(function(t){
+    var cls = anyW ? (t.w ? " fwin" : " flose") : "";
+    var logo = t.logo ? '<img class="tlogo" style="margin-right:6px" src="' + esc(t.logo) + '" width="20" height="20" alt="" loading="lazy" onerror="this.remove()">' : "";
+    return '<div class="gteam' + cls + '">' + logo + esc(t.n) + ' <span class="gscore' + (isT ? " tset" : "") + '">' + esc(t.s) + '</span></div>';
+  }).join("");
+  var leagueLine = isT ? "Tennis" + (en.tour ? " \u00B7 " + en.tour : " \u00B7 ATP") : en.label;
+  var right = en.detail + (en.d ? " \u00B7 " + fmtDay(en.d) : "");
+  return '<div class="card game lv fin" data-game="' + en.lg + '|' + en.gid + '" style="cursor:pointer"><div class="row" style="justify-content:space-between"><span class="note" style="text-transform:uppercase;letter-spacing:1px">' + esc(leagueLine) + '</span><span class="note">' + esc(right) + '</span></div><div style="margin-top:6px">' + rows + '</div>' + (en.star ? '<div class="finstar">\u2605 ' + esc(en.star) + '</div>' : '') + '</div>';
+}
+function finFallbackHtml(en){
+  var rows = (en.teams || []).map(function(t){
+    var logo = t.logo ? '<img class="tlogo" style="margin-right:6px" src="' + esc(t.logo) + '" width="22" height="22" alt="" loading="lazy" onerror="this.remove()">' : "";
+    return '<div class="gteam">' + logo + esc(t.n) + ' <span class="gscore">' + esc(t.s) + '</span></div>';
+  }).join("");
+  return '<div class="card"><div class="note" style="text-transform:uppercase;letter-spacing:1px">' + esc(en.label) + (en.d ? ' \u00B7 ' + esc(fmtDay(en.d)) : '') + '</div><div style="margin-top:6px">' + rows + '</div>' + (en.star ? '<div class="finstar">\u2605 ' + esc(en.star) + '</div>' : '') + '<p class="empty" style="margin-top:8px">Final result saved on this device \u2014 the full Game Center could not load from ESPN right now.</p></div>';
+}
 var pbpMiniCache = {};
 function fmtTickPlay(pl){
   var per = (((pl.period && (pl.period.displayValue || (pl.period.number ? "Q" + pl.period.number : ""))) || "") + " " + ((pl.clock && pl.clock.displayValue) || "")).trim();
@@ -2593,12 +2701,19 @@ function renderLive(){
     return getScoreboard(lg, 2).then(function(ev){ return {lg:lg, ev:ev}; }).catch(function(){ return {lg:lg, ev:[]}; });
   });
   Promise.all(jobs).then(function(rs){
-    var live = [], fut = [];
+    var live = [], fut = [], finNew = [], finSeen = {};
+    var finDay = ymd(new Date());
     rs.forEach(function(r){ r.ev.forEach(function(ev){
       var st = ev.status && ev.status.type && ev.status.type.state;
       if (st==="in") live.push({lg:r.lg, ev:ev});
       else if (st==="pre") fut.push({lg:r.lg, ev:ev});
+      else if (st==="post"){
+        var fcomps = ((ev.competitions||[])[0]||{}).competitors||[];
+        if (fcomps.length){ var fen = finEntry(r.lg, ev, null); if (!finSeen[fen.id]){ finSeen[fen.id] = 1; finNew.push(fen); } }
+      }
+      if (!(((ev.competitions||[])[0]||{}).competitors||[]).length && ev.groupings){ finTennisMatches(ev, finDay).forEach(function(m){ var men = finEntry(r.lg, ev, m); if (!finSeen[men.id]){ finSeen[men.id] = 1; finNew.push(men); } }); }
     }); });
+    finUpsert(finNew);
     fut.sort(function(a,b){ return new Date(a.ev.date)-new Date(b.ev.date); });
     fut = fut.slice(0, 40);
     var ls = $("liveStatus"); if (ls) ls.textContent = "Updated " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}) + " · fresh from ESPN · auto-refreshes every 30s and whenever you come back to this tab";
@@ -2607,9 +2722,16 @@ function renderLive(){
     var PRIO_LIVE = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
     lorder.sort(function(a, b){ var ai = PRIO_LIVE.indexOf(a), bi = PRIO_LIVE.indexOf(b); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; });
     var liveHtml = lorder.map(function(k2){ var gr = lgroups[k2]; return '<div class="fsport"><span>' + esc(gr.lg.key === "tennis" ? "Tennis" : gr.lg.label) + '</span><span class="fcount">' + gr.items.length + ' live</span></div>' + gr.items.map(function(g){ return gameCard(g.lg, g.ev); }).join(""); }).join("");
+    var finAll = finEntriesFor(leagues.map(function(l){ return l.key; }));
+    var forder = [], fgroups = {};
+    finAll.forEach(function(en){ var k3 = en.lg; if (!fgroups[k3]){ fgroups[k3] = { label: en.label, items: [] }; forder.push(k3); } fgroups[k3].items.push(en); });
+    var PRIO_FIN = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
+    forder.sort(function(a, b){ var ai = PRIO_FIN.indexOf(a), bi = PRIO_FIN.indexOf(b); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; });
+    var finHtml = forder.map(function(k3){ var gr = fgroups[k3]; return '<div class="fsport"><span>' + esc(k3 === "tennis" ? "Tennis" : gr.label) + '</span><span class="fcount">' + gr.items.length + ' final' + (gr.items.length===1?"":"s") + '</span></div>' + gr.items.map(function(en){ return finCardHtml(en); }).join(""); }).join("");
     var html =
       '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Live Games</h2><span style="color:var(--purp-lt);font-weight:700">' + live.length + ' game' + (live.length===1?"":"s") + '</span></div>'
       + (live.length ? liveHtml : '<p class="empty">No games live right now.</p>')
+      + (finAll.length ? '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Finished Games</h2><span style="color:var(--purp-lt);font-weight:700">' + finAll.length + ' game' + (finAll.length===1?"":"s") + '</span></div>' + finHtml : '')
       + '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Future Games</h2><span style="color:var(--purp-lt);font-weight:700">' + fut.length + ' game' + (fut.length===1?"":"s") + '</span></div>'
       + (fut.length ? futSliders(fut) : '<p class="empty">No future games in the next two days.</p>');
     var lc = $("liveCenter");
@@ -3009,7 +3131,7 @@ function openGame(key, eventId, isRefresh){
     } else if (st.state !== "pre" && gtEl && gpEl && gtEl.parentNode) gtEl.parentNode.insertBefore(gpEl, gtEl.nextSibling);
     renderGameProps(lg, s);
     /* Game Center opens instantly at the top — no scrolling. */
-  }).catch(function(){ $("gameDetail").innerHTML = '<button class="gcBack" type="button">← All games</button><div class="card"><p class="err">Couldn\'t load that game\'s details from ESPN.</p></div>'; });
+  }).catch(function(){ var fe = finFind(key, eventId); $("gameDetail").innerHTML = '<button class="gcBack" type="button">\u2190 All games</button>' + (fe ? finFallbackHtml(fe) : '<div class="card"><p class="err">Couldn\'t load that game\'s details from ESPN.</p></div>'); });
 }
 
 /* ---------- search + custom legs ---------- */
@@ -4382,7 +4504,7 @@ function clashMenu(){
     + '<div class="clashmeta">🏆 <b>Every agent climbs their own ladder:</b> ticket wins and battle wins add points to the agent set on your tier bar \u2014 right now that\u2019s <b>' + CHARNAMES[tierCharIdx() - 1] + '</b> (' + charWins(tierCharIdx()) + ' pts). Switch the bar on the Board tab to feed a different agent. Each agent\u2019s cards and battle tier unlock with their own points.</div>'
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>'
-    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div><video controls playsinline preload="none" poster="/api/banners?s=clashbg&v=1" src="/api/banners?s=clashdemo&v=1" style="width:100%;border-radius:12px;background:#000;margin-bottom:8px"></video>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars are just your card\'s tier level — they do NOT decide attacks. Turns alternate: only the player whose turn it is can swing, and an attack lands unless it\'s blocked. Tiers set a card\'s DAMAGE and LIFE.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Prop Agent logo. Both players start with EMPTY hands — no Energy, no items. After the coin flip everyone makes an opening pull (1 random card), and every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>ATTACK COSTS 2 ENERGY — PAID UP FRONT:</b> on your turn, pay 2 Energy cards and your attack LANDS for its damage — unless the enemy blocked on their turn. Same price for every card, Rookie to Legend. Can\'t pay? Attack locks — defend, tag, play an item, or end your turn while your pulls build Energy back up.<br>🎴 <b>ITEMS:</b> you can play ONE item per turn from your hand AND still attack or defend — the item is a bonus play, then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> you pay for your block on YOUR turn and it stays armed for the enemy\'s turn — nobody sees it coming, and it only reveals itself when it stops a hit.<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 4) and live longer (Rookie 3 life → Legend 9). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>🛡️ <b>DEFEND costs 2 🔮 Energy:</b> on your turn you can DEFEND instead of attacking — pay 2 Energy cards and your block stays armed: the enemy\'s next attack is fully blocked. If you don\'t block, their attack takes your health. The CPU plays by the same rules.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Two-in-a-row threatens the line — finish 3 in a row to win the ability.<br>🚫 <b>NO TIES, NO SIMULTANEOUS SWINGS:</b> fighters take turns — only the player whose turn it is attacks, so attacks never cancel out. Only landed hits earn grid squares.<br>⏭️ <b>END TURN</b> passes your move — the next player goes. Careful: if they attack and you didn\'t block, you can lose health.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>');
+    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars are just your card\'s tier level — they do NOT decide attacks. Turns alternate: only the player whose turn it is can swing, and an attack lands unless it\'s blocked. Tiers set a card\'s DAMAGE and LIFE.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Prop Agent logo. Both players start with EMPTY hands — no Energy, no items. After the coin flip everyone makes an opening pull (1 random card), and every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>ATTACK COSTS 2 ENERGY — PAID UP FRONT:</b> on your turn, pay 2 Energy cards and your attack LANDS for its damage — unless the enemy blocked on their turn. Same price for every card, Rookie to Legend. Can\'t pay? Attack locks — defend, tag, play an item, or end your turn while your pulls build Energy back up.<br>🎴 <b>ITEMS:</b> you can play ONE item per turn from your hand AND still attack or defend — the item is a bonus play, then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> you pay for your block on YOUR turn and it stays armed for the enemy\'s turn — nobody sees it coming, and it only reveals itself when it stops a hit.<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 4) and live longer (Rookie 3 life → Legend 9). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>🛡️ <b>DEFEND costs 2 🔮 Energy:</b> on your turn you can DEFEND instead of attacking — pay 2 Energy cards and your block stays armed: the enemy\'s next attack is fully blocked. If you don\'t block, their attack takes your health. The CPU plays by the same rules.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Two-in-a-row threatens the line — finish 3 in a row to win the ability.<br>🚫 <b>NO TIES, NO SIMULTANEOUS SWINGS:</b> fighters take turns — only the player whose turn it is attacks, so attacks never cancel out. Only landed hits earn grid squares.<br>⏭️ <b>END TURN</b> passes your move — the next player goes. Careful: if they attack and you didn\'t block, you can lose health.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>');
   var cp2 = $("clashPanel"); if (cp2) cp2.classList.add("startbg"); cp2.classList.add("menufit");
 }
 function clashSetup(mode){
