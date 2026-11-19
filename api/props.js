@@ -702,6 +702,20 @@ module.exports = async (req, res) => {
       prevFetch[sport] = { ts: Date.now(), keys: fullKeys };
       stampSeen(sport, props);
       cache[sport] = { ts: Date.now(), props, pregameRefreshed: true };
+      // A break pull that lands a FULLER board also refreshes the shared
+      // cache, so every phone picks up the new slate on the normal lane
+      // instead of only this instance's memory. The pull's credits are
+      // added to the shared day tally so the count stays honest.
+      try {
+        const sbBefore = await sbCacheRow(sport);
+        if (sbBefore !== undefined && fullProps.length > ((sbBefore && Array.isArray(sbBefore.props)) ? sbBefore.props.length : 0)) {
+          await sbCachePut(sport, fullProps, 0, 0);
+          const sbAfter = await sbCacheRow(sport);
+          if (sbAfter && String(sbAfter.count_day || "") === etToday()) {
+            await sbReq("props_cache?sport=eq." + encodeURIComponent(sport), { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ credits_today: (sbAfter.credits_today | 0) + ((rows.pagesUsed || 1) * 3) }) });
+          }
+        }
+      } catch (e) {}
       res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=120");
       res.status(200).json({ ok: true, configured: true, cached: false, brk: true, props });
     } catch (err) {
