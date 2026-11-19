@@ -5730,9 +5730,49 @@ function toggleFollow(id){
   });
 }
 function statusChip(st){ return st === "win" ? '<span class="hit">WON</span>' : st === "loss" ? '<span class="miss">LOST</span>' : '<span class="pend">ACTIVE</span>'; }
+var vaFsBusy = {};
+function vaResolveLeg(t, l, box){
+  // Profile view (another agent's ticket): resolve a finished leg's final
+  // stat line + picked-stat result from ESPN at render time — the same
+  // machinery the owner's Tickets tab uses (findEventForLeg ->
+  // summaryForEvent -> findPlayerLine / liveStatFor / legGrade). The
+  // resolved line is cached on the in-memory ticket object only: foreign
+  // tickets are NEVER written to pa_tickets or cloudSave.
+  if (!l || l.custom || l.league === "tennis") return;
+  var key = t.id + "|" + l.id;
+  var fd0 = box.querySelector('[data-fstats="' + t.id + '|' + l.id + '"]');
+  if (fd0 && l.fsLine && l.fsLine.length) fd0.innerHTML = fsLineHtml(l.fsLine, l);
+  if (vaFsBusy[key]) return; vaFsBusy[key] = 1;
+  findEventForLeg(t, l).then(function(eid){
+    if (!eid) { vaFsBusy[key] = 0; return; }
+    var lg = leagueByKey(l.league); if (!lg) { vaFsBusy[key] = 0; return; }
+    return summaryForEvent(lg, eid).then(function(s){
+      vaFsBusy[key] = 0;
+      var line = l.athleteId ? findPlayerLine(s, l.athleteId) : [];
+      if (!line.length) line = findPlayerLineByName(s, l.player);
+      if (line.length) {
+        l.fsLine = line;
+        var fd = box.querySelector('[data-fstats="' + t.id + '|' + l.id + '"]');
+        if (fd) fd.innerHTML = fsLineHtml(line, l);
+      }
+      var v = liveStatFor(s, l);
+      if (v == null && /anytime tds/i.test(l.stat || "") && line.length) {
+        var sum = 0, any = false;
+        line.forEach(function(e){ if (String(e[0]).toUpperCase() === "TD") { var n = parseFloat(e[1]); if (isFinite(n)) { sum += n; any = true; } } });
+        if (any) v = sum;
+      }
+      var chip = box.querySelector('[data-fgrade="' + t.id + '|' + l.id + '"]');
+      if (chip && v != null) {
+        var g = legGrade(l, v);
+        chip.innerHTML = '<b>' + v + '</b> ' + (g === "hit" ? '<span class="hit">HIT</span>' : g === "miss" ? '<span class="miss">MISS</span>' : g === "push" ? '<span class="pend">PUSH</span>' : '');
+      }
+    });
+  }).catch(function(){ vaFsBusy[key] = 0; });
+}
 function foreignTicketHtml(t, ownerName){
+  var fin = (t.status === "win" || t.status === "loss");
   var legs = (t.legs || []).map(function(l){
-    return '<div class="leg"><span class="dir ' + (l.dir === "MORE" ? "more" : "less") + '">' + esc(l.dir || "") + '</span><div style="flex:1"><b>' + esc(l.player || "") + '</b> — ' + esc(l.stat || "") + ' ' + (l.line != null ? l.line : "") + '<br><span class="note">' + esc(l.matchup || l.team || "") + (l.starts ? ' · ' + esc(fmtTime(l.starts)) : '') + '</span></div></div>';
+    return '<div class="leg"><span class="dir ' + (l.dir === "MORE" ? "more" : "less") + '">' + esc(l.dir || "") + '</span><div style="flex:1"><b>' + esc(l.player || "") + '</b> — ' + esc(l.stat || "") + ' ' + (l.line != null ? l.line : "") + '<br><span class="note">' + esc(l.matchup || l.team || "") + (l.starts ? ' · ' + esc(fmtTime(l.starts)) : '') + '</span></div>' + (fin ? '<span data-fgrade="' + t.id + '|' + l.id + '"></span>' : '') + '</div>' + (fin ? '<div class="fstats" data-fstats="' + t.id + '|' + l.id + '"></div>' : '');
   }).join("");
   var mine = t.user_id === cloudUid;
   return '<div class="card" style="margin-top:10px"><div class="row" style="justify-content:space-between;padding-right:108px"><b>' + (ownerName ? esc(fmtUser(ownerName)) + ' · ' : '') + 'Ticket · ' + new Date(t.created_at).toLocaleString() + '</b><span>' + statusChip(t.status) + '</span></div><span class="stampmini">LOCKED IN</span>' + legs
@@ -5761,6 +5801,7 @@ function openVaTicket(idx){
   var t = (window._vaTickets || [])[idx]; if (!t) return;
   var pop = $("vaTkPop"), pb = $("vaTkPopBody"); if (!pop || !pb) return;
   pb.innerHTML = foreignTicketHtml(t, window._vaOwnerName || null);
+  if (t.status === "win" || t.status === "loss") (t.legs || []).forEach(function(l){ vaResolveLeg(t, l, pb); });
   pop.style.display = "";
   pop.scrollTop = 0;
 }
