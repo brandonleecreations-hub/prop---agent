@@ -5384,10 +5384,8 @@ renderBoard();
 })();
 cloudInit();
 (function bootTab(){
-  var t = lsGet("pa_tab", "home");
-  if (t === "highlights") t = "home";
-  if (t === "sport") { var bs = lsGet("pa_sport", "all"); if (bs && bs !== "all") { setSport(bs); return; } showView("home"); return; }
-  if (t && t !== "home") { showView(t); return; }
+  /* Brandon 2026-11-18: opening the app ALWAYS starts on Home. New users
+     get the 10-second welcome first (it overlays), then land on Home. */
   showView("home");
 })();
 if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").catch(function(){}); }
