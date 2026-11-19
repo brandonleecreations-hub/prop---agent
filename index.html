@@ -4460,15 +4460,44 @@ function ensurePullView(){
     + '<div class="popface front" id="pullViewFront"></div>'
     + '<div class="popface back" id="pullViewBack"></div>'
     + '</div></div>'
-    + '<div class="note" style="text-align:center;margin-top:10px">Tap the card to flip it</div>'
+    + '<div class="note" id="pullViewNote" style="text-align:center;margin-top:10px">Tap the card to flip it</div>'
     + '<button class="mini" id="pullViewClose" style="background:#17171f;border:1px solid #33333f;color:#fff;padding:9px 18px;border-radius:10px;font-weight:800;margin-top:8px">✕ Close</button>';
   document.body.appendChild(el);
-  el.addEventListener("click", function(e){ if (e.target === el) el.classList.remove("open"); });
-  document.getElementById("pullViewClose").addEventListener("click", function(){ el.classList.remove("open"); });
-  document.getElementById("pullViewWrap").addEventListener("click", function(){ this.classList.toggle("flipped"); });
+  el.addEventListener("click", function(e){ if (Date.now() - pullSwipeAt < 500) return; if (e.target === el) el.classList.remove("open"); });
+  document.getElementById("pullViewClose").addEventListener("click", function(){ if (Date.now() - pullSwipeAt < 500) return; el.classList.remove("open"); });
+  document.getElementById("pullViewWrap").addEventListener("click", function(){ if (Date.now() - pullSwipeAt < 500) return; this.classList.toggle("flipped"); });
+}
+/* Pulled-card view swipe (Brandon 2026-11-19): step through this pack's pulls in order. */
+var pullIdx = 0, pullSwipeAt = 0, pullTouch = null;
+function pullSwipeDir(dx, dy){ return (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.4) ? (dx < 0 ? 1 : -1) : 0; }
+function pullStepTo(dir){
+  var pulls = window._packPulls || [];
+  var n = pullIdx + dir;
+  if (n < 0 || n >= pulls.length) return false;
+  viewPulledCard(n); return true;
+}
+function pullWireTouch(){
+  var el = document.getElementById("pullView");
+  if (!el || el._swipeWired) return;
+  el._swipeWired = 1;
+  el.addEventListener("touchstart", function(e){
+    var t = e.changedTouches && e.changedTouches[0];
+    pullTouch = t ? { x: t.clientX, y: t.clientY } : null;
+  }, { passive: true });
+  el.addEventListener("touchend", function(e){
+    if (!pullTouch) return;
+    var t = e.changedTouches && e.changedTouches[0];
+    if (!t) { pullTouch = null; return; }
+    var dir = pullSwipeDir(t.clientX - pullTouch.x, t.clientY - pullTouch.y);
+    pullTouch = null;
+    if (dir && pullStepTo(dir)) pullSwipeAt = Date.now();
+  }, { passive: true });
 }
 function viewPulledCard(i){
   var pu = (window._packPulls || [])[i]; if (!pu) return;
+  pullIdx = i; pullWireTouch();
+  var pnote = document.getElementById("pullViewNote");
+  if (pnote) pnote.textContent = "Tap the card to flip it" + ((window._packPulls || []).length > 1 ? " · Swipe for more · " + (i + 1) + " of " + (window._packPulls || []).length : "");
   ensurePullView();
   var front = document.getElementById("pullViewFront"), back = document.getElementById("pullViewBack");
   document.getElementById("pullViewWrap").classList.remove("flipped");
@@ -4759,27 +4788,55 @@ function clashZoom(ci, ti, big){
   sfx("click");
 }
 function closeZoom(){ var z = $("clashZoom"); if (z) { z.classList.remove("open"); z.classList.remove("bigzoom"); z.innerHTML = ""; } }
+/* Card zoom swipe (Brandon 2026-11-19): swiping steps through the cards of the
+   SECTION the zoom was opened from — that rail's cards, in display order. Ends stop. */
+var zoomList = [], zoomIdx = 0, zoomSwipeAt = 0, zoomTouch = null;
+function zoomSwipeDir(dx, dy){ return (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.4) ? (dx < 0 ? 1 : -1) : 0; }
+function zoomRender(){
+  var z = $("cardZoom"); if (!z || !zoomList.length) return;
+  var multi = zoomList.length > 1;
+  z.innerHTML = '<div class="zoomcard">' + zoomList[zoomIdx] + '</div>'
+    + '<div class="zoomhint">' + (zoomList[zoomIdx].indexOf('data-noflip') >= 0 ? 'Tap outside to close' : 'Tap the card to flip it · tap outside to close')
+    + (multi ? '<br>Swipe for more cards · ' + (zoomIdx + 1) + ' of ' + zoomList.length : '') + '</div>';
+}
+function zoomStepTo(dir){
+  var n = zoomIdx + dir;
+  if (n < 0 || n >= zoomList.length) return false;
+  zoomIdx = n; zoomRender(); sfx("click"); return true;
+}
 function openCardZoom(cardEl){
   var z = $("cardZoom");
   if (!z) {
     z = document.createElement("div"); z.id = "cardZoom"; document.body.appendChild(z);
     z.addEventListener("click", function(e){
+      if (Date.now() - zoomSwipeAt < 500) return;
       var c = e.target.closest ? e.target.closest(".tiercard") : null;
       if (c) { if (!c.getAttribute("data-noflip")) c.classList.toggle("flipped"); }
       else closeCardZoom();
     });
+    z.addEventListener("touchstart", function(e){
+      var t = e.changedTouches && e.changedTouches[0];
+      zoomTouch = t ? { x: t.clientX, y: t.clientY } : null;
+    }, { passive: true });
+    z.addEventListener("touchend", function(e){
+      if (!zoomTouch) return;
+      var t = e.changedTouches && e.changedTouches[0];
+      if (!t) { zoomTouch = null; return; }
+      var dir = zoomSwipeDir(t.clientX - zoomTouch.x, t.clientY - zoomTouch.y);
+      zoomTouch = null;
+      if (dir && zoomStepTo(dir)) zoomSwipeAt = Date.now();
+    }, { passive: true });
   }
-  var clone = cardEl.cloneNode(true);
-  clone.classList.remove("flipped");
-  z.innerHTML = "";
-  var wrap = document.createElement("div"); wrap.className = "zoomcard"; wrap.appendChild(clone); z.appendChild(wrap);
-  var hint = document.createElement("div"); hint.className = "zoomhint";
-  hint.textContent = clone.getAttribute("data-noflip") ? "Tap outside to close" : "Tap the card to flip it · tap outside to close";
-  z.appendChild(hint);
+  var rail = (cardEl.closest && (cardEl.closest(".cardrail") || cardEl.closest(".foilrail"))) || null;
+  var els = rail ? Array.prototype.slice.call(rail.querySelectorAll(".tiercard")) : [cardEl];
+  if (els.indexOf(cardEl) < 0) els = [cardEl];
+  zoomList = els.map(function(el){ var c = el.cloneNode(true); c.classList.remove("flipped"); return c.outerHTML; });
+  zoomIdx = els.indexOf(cardEl);
+  zoomRender();
   z.classList.add("open");
   sfx("click");
 }
-function closeCardZoom(){ var z = $("cardZoom"); if (z) { z.classList.remove("open"); z.innerHTML = ""; } }
+function closeCardZoom(){ var z = $("cardZoom"); if (z) { z.classList.remove("open"); z.innerHTML = ""; } zoomList = []; zoomIdx = 0; }
 /* ---------- smooth beats — 3 synthesized chill songs ---------- */
 var MUS = { on: false, timer: null, track: 0, beat: 0, bus: null };
 var SONGS = [
