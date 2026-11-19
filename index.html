@@ -106,6 +106,13 @@ input[type=number]{width:110px}
 table.lb{width:100%;border-collapse:collapse;font-size:13px}
 table.lb td,table.lb th{padding:4px 5px;border-bottom:1px solid var(--line);text-align:left;font-size:12.5px}
 table.lb th{color:var(--mut);font-size:10.5px;text-transform:uppercase;letter-spacing:.5px}
+table.tstats{width:100%;border-collapse:collapse;table-layout:fixed;font-size:11.5px;margin-top:6px}
+table.tstats th,table.tstats td{padding:3px 4px;border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+table.tstats th{color:var(--mut);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+table.tstats .tsA{text-align:right}
+table.tstats .tsL{text-align:center;color:var(--mut);font-size:11px}
+table.tstats .tsB{text-align:left}
+table.tstats td.tsA,table.tstats td.tsB{font-weight:700}
 .tiercard{perspective:1200px;cursor:pointer;aspect-ratio:3/4.2;min-height:320px}
 .tierinner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .65s cubic-bezier(.25,.8,.3,1.15)}
 .tiercard.flipped .tierinner{transform:rotateY(180deg)}
@@ -2846,13 +2853,22 @@ function openGame(key, eventId, isRefresh){
       (s.leaders || []).forEach(function(tl){ (tl.leaders||[]).forEach(function(cat){ var L = (cat.leaders||[])[0]; if (L && L.athlete && perf.length<4) perf.push({name:L.athlete.displayName, stat:(L.displayValue||"") + " " + (cat.shortDisplayName||cat.displayName||"")}); }); });
       if (perf.length) html += '<div style="font-size:16px;margin-top:14px"><b>Top</b> <b style="color:var(--gold)">Performers</b></div>' + perf.map(function(p){ return '<div class="row" style="justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><b>' + esc(p.name) + '</b><span style="color:var(--cyan);font-weight:700;font-size:13px">' + esc(p.stat) + '</span></div>'; }).join("");
       var tstats = (s.boxscore && s.boxscore.statistics) || (s.boxscore && s.boxscore.teams) || [];
-      var stA = tstats.length===2 ? (tstats[0].stats || tstats[0].statistics || []) : [];
-      var stB = tstats.length===2 ? (tstats[1].stats || tstats[1].statistics || []) : [];
-      if (tstats.length===2 && stA.length && stB.length){
-        var byName = {}; stA.forEach(function(x){ byName[x.name] = {label:x.label||x.name, a:x.displayValue}; });
-        stB.forEach(function(x){ if (byName[x.name]) byName[x.name].b = x.displayValue; });
-        var skeys = Object.keys(byName).filter(function(k){ return byName[k].b != null; }).slice(0,10);
-        if (skeys.length) html += '<div style="font-size:16px;margin-top:14px"><b>Team Stats</b></div><table class="lb"><tr><th>' + esc((tstats[0].team && tstats[0].team.displayName) || "") + '</th><th>Stat</th><th>' + esc((tstats[1].team && tstats[1].team.displayName) || "") + '</th></tr>' + skeys.map(function(k){ return '<tr><td>' + esc(byName[k].a||"") + '</td><td class="note">' + esc(byName[k].label) + '</td><td>' + esc(byName[k].b||"") + '</td></tr>'; }).join("") + '</table>';
+      if (tstats.length===2){
+        /* Team stats as a tidy compact grid (Brandon 2026-11-18): away
+           value | stat label | home value, aligned rows, small type --
+           same stats as before, just compact and neat. */
+        var tsA = tstats[0], tsB = tstats[1];
+        var awC = cs.filter(function(c){ return c.homeAway==="away"; })[0], hmC = cs.filter(function(c){ return c.homeAway==="home"; })[0];
+        var idOf = function(t){ return t && t.team && t.team.id != null ? String(t.team.id) : ""; };
+        if (awC && hmC && awC.team && hmC.team && idOf(tsA) === String(hmC.team.id) && idOf(tsB) === String(awC.team.id)){ var tmpT = tsA; tsA = tsB; tsB = tmpT; }
+        var stA = tsA.stats || tsA.statistics || [], stB = tsB.stats || tsB.statistics || [];
+        if (stA.length && stB.length){
+          var byName = {}; stA.forEach(function(x){ byName[x.name] = {label:x.label||x.name, a:x.displayValue}; });
+          stB.forEach(function(x){ if (byName[x.name]) byName[x.name].b = x.displayValue; });
+          var skeys = Object.keys(byName).filter(function(k){ return byName[k].b != null; }).slice(0,10);
+          var nmOf = function(t){ var tm = (t && t.team) || {}; return tm.abbreviation || tm.shortDisplayName || tm.displayName || ""; };
+          if (skeys.length) html += '<div style="font-size:14px;margin-top:12px"><b>Team Stats</b></div><table class="tstats"><colgroup><col style="width:24%"><col style="width:52%"><col style="width:24%"></colgroup><tr><th class="tsA">' + esc(nmOf(tsA)) + '</th><th class="tsL">Stat</th><th class="tsB">' + esc(nmOf(tsB)) + '</th></tr>' + skeys.map(function(k){ return '<tr><td class="tsA">' + esc(byName[k].a||"") + '</td><td class="tsL">' + esc(byName[k].label) + '</td><td class="tsB">' + esc(byName[k].b||"") + '</td></tr>'; }).join("") + '</table>';
+        }
       }
     }
       var fmtPlay = function(pl){ var sc = (pl.awayScore != null && pl.homeScore != null) ? ' <span style="color:var(--cyan);font-weight:700;white-space:nowrap">' + esc(pl.awayScore) + '–' + esc(pl.homeScore) + '</span>' : ''; var per = (((pl.period && (pl.period.displayValue || (pl.period.number ? "Q" + pl.period.number : ""))) || "") + " " + ((pl.clock && pl.clock.displayValue) || "")).trim(); return '<div style="padding:3.5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;line-height:1.35;' + (pl.scoringPlay ? 'border-left:3px solid var(--gold);padding-left:7px' : '') + '"><span style="display:inline-block;background:rgba(124,58,237,.16);border:1px solid rgba(124,58,237,.35);border-radius:6px;padding:0 5px;font-size:10.5px;font-weight:700;white-space:nowrap;margin-right:5px">' + esc(per) + '</span>' + esc(pl.text || pl.shortText || "") + sc + '</div>'; };

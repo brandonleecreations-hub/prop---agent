@@ -88,6 +88,47 @@ function stampSeen(sport, props) {
   const keys = Object.keys(m);
   if (keys.length > 4000) { const cut = now - 24 * 60 * 60 * 1000; for (const k of keys) if (m[k] < cut) delete m[k]; }
 }
+// ---- Recently-started game retention (Brandon 2026-11-18) ----
+// Parlay's feed is a PRE-GAME board: once a game starts, its props leave
+// the feed entirely, so the next board write would erase them and the
+// live Game Center would have nothing to show. Retention carries a
+// started game's props forward from the previous board for up to 5
+// hours after its start (a full game + OT in every sport), flagged
+// retained:1. The client excludes started games from every pickable
+// surface by start time, so retained rows are display-only fuel for
+// the Game Center's live matching. Fresh rows win per prop (same
+// player+stat+starts), even when the line moved.
+const RETAIN_MS = 5 * 60 * 60 * 1000;
+function mergeRetained(prevProps, freshProps, now) {
+  const t = now == null ? Date.now() : now;
+  const out = [];
+  const seen = new Set();
+  const freshPS = new Set();
+  const psKey = (p) => p.player + "|" + p.stat + "|" + (p.starts || "");
+  const fresh = Array.isArray(freshProps) ? freshProps : [];
+  for (const p of fresh) { if (p && typeof p === "object") freshPS.add(psKey(p)); }
+  const push = (p, retained) => {
+    if (!p || typeof p !== "object") return;
+    const k = rowKey(p);
+    if (seen.has(k)) return;
+    seen.add(k);
+    out.push(retained ? Object.assign({}, p, { retained: 1 }) : p);
+  };
+  for (const p of fresh) {
+    const st = p && p.starts ? new Date(p.starts).getTime() : NaN;
+    if (isFinite(st) && st < t - RETAIN_MS) continue; // long finished: never carry
+    push(p, false);
+  }
+  for (const p of Array.isArray(prevProps) ? prevProps : []) {
+    const st = p && p.starts ? new Date(p.starts).getTime() : NaN;
+    if (!isFinite(st)) continue;         // no start time: cannot prove it just started
+    if (st > t) continue;                 // still upcoming: the fresh board owns it
+    if (st < t - RETAIN_MS) continue;     // older than a full game + OT: drop
+    if (freshPS.has(psKey(p))) continue; // fresh board has this prop (any line): fresh wins
+    push(p, true);
+  }
+  return out;
+}
 const prevFetch = {}; // sport -> {ts, keys:Set} — the previous fetch's full row keys.
                       // A past-start row only counts as a break prop when a fetch
                       // made AFTER its game started did not list it (proof it was
@@ -128,8 +169,8 @@ function noteFetch(sport) {
 // moves the board cache and the fetch accounting into ONE Supabase table
 // (props_cache) shared by every instance:
 //   - A fresh shared board is served to everyone; no Parlay fetch at all.
-//   - Paid fetches happen only in two windows per sport per day (06:00 and
-//     16:00 ET), claimed atomically so exactly ONE instance fetches.
+//   - Paid fetches happen only in three windows per sport per day (06:00,
+//     16:00 and 20:00 ET), claimed atomically so exactly ONE instance fetches.
 //   - Credits are reserved at claim time and the day total across ALL
 //     sports is hard-capped at DAILY_CREDIT_BUDGET, so the free tier
 //     (1,000/month) cannot be drained: worst case ~30 credits/day.
@@ -146,11 +187,13 @@ const DAILY_CREDIT_BUDGET = 30;
 // so the day's next pull can complete; never above 50 that day, and the
 // normal 30/day cap resumes by itself the next ET day.
 function dailyCap() { return 50; } // Brandon 2026-11-18: permanent daily cap 50 (was flat 30 with one-day lifts)
-const SLOT_HOURS_ET = [6, 16];
+// Three paid windows per ET day (Brandon 2026-11-18): the 20:00 ET
+// evening window catches late-posted slates (e.g. 21:00 ET tips) that the
+// 06:00 / 16:00 ET windows structurally miss.
+const SLOT_HOURS_ET = [6, 16, 20];
 function etSlot() {
   const h = etHour();
-  if (h >= SLOT_HOURS_ET[1]) return 2;
-  if (h >= SLOT_HOURS_ET[0]) return 1;
+  for (let i = SLOT_HOURS_ET.length - 1; i >= 0; i--) { if (h >= SLOT_HOURS_ET[i]) return i + 1; }
   return 0;
 }
 async function sbReq(path, opts) {
@@ -213,7 +256,13 @@ async function sbClaim(sport, row, slot) {
 }
 async function sbCachePut(sport, props, actualCredits, reserved) {
   const row = await sbCacheRow(sport);
-  const body = { props };
+  // Retention: a fresh write must not erase props for games that just
+  // started (see mergeRetained). When the fresh board is empty (feed
+  // hiccup / empty slate), merge against the stored board itself so a
+  // bad pull cannot wipe future games either -- it only prunes rows
+  // older than the retention window.
+  const base = (Array.isArray(props) && props.length) ? props : (row && Array.isArray(row.props) ? row.props : props);
+  const body = { props: mergeRetained(row && row.props, base) };
   if (row && row !== undefined) {
     const today = etToday();
     const cur = String(row.count_day || "") === today ? (row.credits_today | 0) : 0;
@@ -234,6 +283,24 @@ async function sbRefund(sport, reserved) {
 // in-memory board, else the free ESPN fallback, else an empty board.
 async function serveStaleOrFallback(res, sport, hit, sbRow) {
   if (sbRow && Array.isArray(sbRow.props) && sbRow.props.length) {
+    // A board whose rows are ALL retained (every game on it already
+    // started) must not shadow upcoming games: fall through to the
+    // in-memory board / ESPN fallback and append the retained rows so
+    // the live Game Center still finds its props.
+    if (!sbRow.props.some((p) => !p.retained)) {
+      let extra = (hit && hit.props.length) ? hit.props : null;
+      let fromFb = false;
+      if (!extra) {
+        const fbR = await espnFallback(sport, "pre").catch(() => []);
+        if (fbR.length) { extra = fbR; fromFb = true; }
+      }
+      if (extra) {
+        const merged = mergeRetained(sbRow.props, extra);
+        cache[sport] = { ts: Date.now(), props: merged, pregameRefreshed: false, espnFallback: fromFb };
+        res.status(200).json({ ok: true, configured: true, cached: true, shared: true, stale: true, props: merged });
+        return;
+      }
+    }
     cache[sport] = { ts: new Date(sbRow.fetched_at).getTime(), props: sbRow.props, pregameRefreshed: true };
     res.status(200).json({ ok: true, configured: true, cached: true, shared: true, stale: true, props: sbRow.props });
     return;
@@ -803,6 +870,11 @@ module.exports = async (req, res) => {
       if (fb.length) { props = fb; espnFb = true; }
     }
     prevFetch[sport] = { ts: Date.now(), keys: new Set(normalize(rows, true).map(rowKey)) };
+    // Retention: the feed has already dropped started games, so carry
+    // their props forward from the previous board (shared row when the
+    // shared store is in play, else this instance's last board).
+    const prevBoard = (sbRow && Array.isArray(sbRow.props) && sbRow.props) || (hit && hit.props) || [];
+    props = mergeRetained(prevBoard, props);
     stampSeen(sport, props);
     const wasPregame = !!(hit && Date.now() - hit.ts < DAY_TTL);
     cache[sport] = { ts: Date.now(), props, pregameRefreshed: wasPregame, espnFallback: espnFb };
