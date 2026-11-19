@@ -1405,11 +1405,11 @@ var manualFin = lsGet("pa_manualfin", {});        // ticketId -> {legId: true} �
 /* ---------- tiers ---------- */
 var TIERS = [
   {name:"Rookie",   emoji:"🌱", wins:0,  color:"#9aa7bd", rarity:"COMMON"},
-  {name:"Bronze",   emoji:"🥉", wins:8,  color:"#d08a4e", rarity:"RARE"},
+  {name:"Bronze",   emoji:"🥉", wins:0,  color:"#d08a4e", rarity:"RARE"},
   {name:"Silver",   emoji:"🥈", wins:15,  color:"#e5e9f2", rarity:"SUPER RARE"},
   {name:"Gold",     emoji:"🥇", wins:28, color:"#f5b942", rarity:"EPIC"},
   {name:"Diamond",  emoji:"💎", wins:70, color:"#7dd3fc", rarity:"MYTHIC"},
-  {name:"Legend",   emoji:"👑", wins:100, color:"#b26bff", rarity:"ULTIMATE"}
+  {name:"Legend",   emoji:"👑", wins:150, color:"#b26bff", rarity:"ULTIMATE"}
 ];
 function tierFor(wins){ var t = TIERS[0]; for (var i=0;i<TIERS.length;i++) if (wins>=TIERS[i].wins) t = TIERS[i]; return t; }
 function nextTier(wins){ for (var i=0;i<TIERS.length;i++) if (wins<TIERS[i].wins) return TIERS[i]; return null; }
@@ -3710,7 +3710,7 @@ async function downloadTradingCard(ti, ci, btn){
   var t = TIERS[ti]; if (!t) return;
   var W = 630, H = 900, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
   var ctx = cv.getContext("2d");
-  var wins = charWins(ci); var un = wins >= t.wins || packUnlockHas(ci, ti);
+  var wins = charWins(ci); var un = ti <= 1 || wins >= t.wins || packUnlockHas(ci, ti);
   if (!un) { if (btn) { var o0 = btn.textContent; btn.textContent = "Locked — unlock it first"; setTimeout(function(){ btn.textContent = o0; }, 1600); } return; }
   var accent = t.color; var cname = CHARNAMES[ci - 1] || "YOUR AGENT";
   var num = ("00" + ((ci - 1) * 6 + ti + 1)).slice(-3);
@@ -3847,7 +3847,7 @@ function cardBackHTML(title, sub){
 function tierCardHTML(t, wins, withBtns, ci){
   var ti = TIERS.indexOf(t);
   ci = ci || charIdxOf();
-  var un = wins >= t.wins || (ci >= 1 && packUnlockHas(ci, ti));
+  var un = ti <= 1 || wins >= t.wins || (ci >= 1 && packUnlockHas(ci, ti));
   var art = ci >= 1 ? "/api/battle?v=4&s=" + ci : charArt();
   var cname = ci >= 1 ? CHARNAMES[ci - 1] : "YOUR AGENT";
   var num = ci >= 1 ? ((ci - 1) * 6 + ti + 1) : 0;
@@ -3860,7 +3860,7 @@ function tierCardHTML(t, wins, withBtns, ci){
   var front = '<div class="flipfront" style="border:' + bw + 'px solid ' + t.color + ';--tc:' + t.color + ';box-shadow:0 12px 26px rgba(0,0,0,.38)' + glow + ', inset 0 1px 0 rgba(255,255,255,.05)">'
     + '<div class="tcplate"><span class="tcname">' + cname + gems + '</span><span class="tcno">' + numTxt + '</span></div>'
     + '<div class="tcwin">' + (art ? '<img class="cardart" src="' + esc(art) + '" alt="">' : '<div class="cardart ph" style="color:' + t.color + '">' + t.name.charAt(0) + '</div>') + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
-    + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:' + t.color + '">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:' + t.color + '">' + t.rarity + '</span>' + (un && wins < t.wins ? '<span class="rarpill" style="background:#f5c518;color:#1a1405">\uD83C\uDF81 PACK</span>' : '') + '</div>'
+    + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:' + t.color + '">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:' + t.color + '">' + t.rarity + '</span>' + (un && wins < t.wins && ti > 1 ? '<span class="rarpill" style="background:#f5c518;color:#1a1405">\uD83C\uDF81 PACK</span>' : '') + '</div>'
     + '<div style="margin-top:5px;font-weight:900;font-size:12.5px;color:#f5b942">\u26A1 ' + pw.name + ' <span style="color:#9aa7bd;font-weight:700;font-size:10px;letter-spacing:1px">' + pw.style + '</span></div>'
     + '<div class="tierto" style="margin-top:2px">' + pw.desc + '</div>'
     + '<div style="margin-top:5px"><span class="atkchip">\uD83D\uDCA5 DMG ' + (1 + Math.floor(ti / 2)) + ' · \u2764\uFE0F LIFE ' + (3 + ti) + '</span> <span class="atkchip alt">Hit cost \u00D7' + 2 + '</span></div>'
@@ -3871,7 +3871,7 @@ function tierCardHTML(t, wins, withBtns, ci){
     + (t.name === "Diamond" ? '<div class="glitterfx"></div>' : '')
     + (t.name === "Legend" ? '<div class="glitterfx pglit"></div>' : '')
     + '<div class="holo" style="--hc:' + t.color + '59"></div></div>';
-  return '<div class="tiercard' + (ti === TIERS.length - 1 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · ' + t.name + ' · ' + t.rarity, pw.name + ' \u2014 ' + pw.desc + '<br><br>Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits. Grid Clash: DMG ' + (1 + Math.floor(ti / 2)) + ' · LIFE ' + (3 + ti) + ' — landing a hit costs 2 energy cards. Its power fires once per game.') + '</div></div>';
+  return '<div class="tiercard' + (ti === TIERS.length - 1 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · ' + t.name + ' · ' + t.rarity, pw.name + ' \u2014 ' + pw.desc + '<br><br>' + (ti <= 1 ? 'Starter card \u2014 unlocked from the very beginning. Wins still earn points toward the higher tiers.' : 'Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits.') + ' Grid Clash: DMG ' + (1 + Math.floor(ti / 2)) + ' · LIFE ' + (3 + ti) + ' — landing a hit costs 2 energy cards. Its power fires once per game.') + '</div></div>';
 }
 
 function cardSec(id, title, count, inner, openDefault, gridCls){
@@ -3903,8 +3903,8 @@ function tierProgressHTML(wins, ci){
   ci = ci || charIdxOf() || 1;
   var strip = '<div class="tcstrip">' + CHARNAMES.map(function(nm, k){ var n1 = k + 1; return '<img class="tcface' + (n1 === ci ? ' on' : '') + '" data-tierchar="' + n1 + '" src="/api/battle?v=4&s=' + n1 + '" alt="' + nm + '" title="' + nm + '">'; }).join("") + '</div>';
   var cur = tierFor(wins), curIdx = TIERS.indexOf(cur), nxt = nextTier(wins);
-  var pct = Math.max(0, Math.min(100, wins));
-  var ticks = TIERS.slice(1).map(function(t){ return '<span class="tbtick" style="left:' + Math.min(t.wins, 98) + '%"><i></i><em>' + t.wins + '</em></span>'; }).join("");
+  var pct = Math.max(0, Math.min(100, wins * 100 / 150));
+  var ticks = TIERS.slice(1).filter(function(t){ return t.wins > 0; }).map(function(t){ return '<span class="tbtick" style="left:' + Math.min(t.wins * 100 / 150, 98) + '%"><i></i><em>' + t.wins + '</em></span>'; }).join("");
   var head = '<div class="tbhead"><span>\uD83C\uDFC6 <b style="color:' + cur.color + '">' + cur.name.toUpperCase() + '</b> \u00B7 ' + wins + ' pts</span><span>' + (nxt ? (nxt.wins - wins) + ' pts to <b style="color:' + nxt.color + '">' + nxt.name.toUpperCase() + '</b>' : '\uD83D\uDC51 TOP TIER') + '</span></div>';
   var bar = '<div class="tierbar"><div class="tbfill" style="width:' + pct + '%"></div>' + ticks + '</div>';
   var minis = '<div class="tierminis">' + TIERS.map(function(t, ti){
@@ -3943,7 +3943,7 @@ function renderBoard(){
   renderPacks();
   renderClash();
   var stampCardsOnly = CHARNAMES.map(function(nm, ix){ return stampCardHTML(ix + 1); }).join("");
-  var unlockedN = TIERS.filter(function(t, ti2){ return charWins(cci) >= t.wins || packUnlockHas(cci, ti2); }).length;
+  var unlockedN = TIERS.filter(function(t, ti2){ return ti2 <= 1 || charWins(cci) >= t.wins || packUnlockHas(cci, ti2); }).length;
   var specN = (specialUnlocked() ? 1 : 0) + (lsGet("pa_ring", 0) ? 1 : 0);
   $("myCards").innerHTML =
     cardSec("tier", "🃏 TIER CARDS — " + CHARNAMES[cci - 1], unlockedN + " of 6 unlocked \u00B7 Grid Clash cards", tierCards, true)
@@ -4047,8 +4047,9 @@ function migrateTierData(){
 function foilsGet(){ migrateTierData(); return lsGet("pa_foils", []); }
 function packUnlocksGet(){ migrateTierData(); return lsGet("pa_packunlock", []); }
 function packUnlockHas(ci, ti){ return packUnlocksGet().indexOf(ci + "-" + ti) >= 0; }
-function cardUnlocked(ci, ti){ return charTierIdx(ci) >= ti || packUnlockHas(ci, ti); }
-function pickTiers(ci){ var out = []; for (var ti = 0; ti <= charTierIdx(ci); ti++) out.push(ti); packUnlocksGet().forEach(function(k){ var pp = k.split("-"); if (parseInt(pp[0], 10) === ci) { var t2 = parseInt(pp[1], 10); if (out.indexOf(t2) < 0) out.push(t2); } }); return out.sort(function(a, b){ return a - b; }); }
+/* Starter floor (Brandon 2026-11-19): Rookie + Bronze cards are owned by everyone from the start. */
+function cardUnlocked(ci, ti){ return ti <= 1 || charTierIdx(ci) >= ti || packUnlockHas(ci, ti); }
+function pickTiers(ci){ var out = []; for (var ti = 0; ti <= Math.max(charTierIdx(ci), 1); ti++) out.push(ti); packUnlocksGet().forEach(function(k){ var pp = k.split("-"); if (parseInt(pp[0], 10) === ci) { var t2 = parseInt(pp[1], 10); if (out.indexOf(t2) < 0) out.push(t2); } }); return out.sort(function(a, b){ return a - b; }); }
 function bestPickTier(ci){ var pt = pickTiers(ci); return pt[pt.length - 1]; }
 var PACK_TIER_W = [34, 25, 17, 11, 4, 2.5];
 function drawPackTier(){ var tot = 0, i; for (i = 0; i < PACK_TIER_W.length; i++) tot += PACK_TIER_W[i]; var r = Math.random() * tot; for (i = 0; i < PACK_TIER_W.length; i++) { r -= PACK_TIER_W[i]; if (r <= 0) return i; } return 0; }
@@ -4269,7 +4270,7 @@ function pullPack(demo){
   }
   var fl = foilsGet(), pu2 = packUnlocksGet(), fseen = {};
   pulls.forEach(function(pu){ if (pu.ring || pu.stamp) return; var k = pu.ci + "-" + pu.ti;
-    if (charTierIdx(pu.ci) < pu.ti && pu2.indexOf(k) < 0) { pu2.push(k); pu.unlock = true; }
+    if (!cardUnlocked(pu.ci, pu.ti) && pu2.indexOf(k) < 0) { pu2.push(k); pu.unlock = true; }
     else { pu.dup = (fl.indexOf(k) >= 0) || !!fseen[k]; fseen[k] = 1; if (!pu.dup) { fl.push(k); pu.foil = true; } } });
   if (!demo) { lsSet("pa_foils", fl); lsSet("pa_packunlock", pu2); }
   return pulls;
@@ -4689,19 +4690,37 @@ function clashMenu(){
   clashPanel('<div class="clashbgspace"></div>'
     + '<div class="clashsub" style="text-align:center">Pick your fighters, flip the coin, land hits, own the grid.<br>New here? Open <b>How to play</b> at the bottom — rules plus a gameplay video of a round.</div>'
     + '<button class="clashbig" data-clashmode="quick">⚡ QUICK CLASH<span>Friendly fight — the CPU fields the same tier cards you bring</span></button>'
+    + '<button class="clashbig" data-clashmode="tierclash">🎖️ TIER CLASH<span>Battle in tier pairs — one of each: Rookie–Bronze · Silver–Gold · Diamond–Legend</span></button>'
     + '<button class="clashbig pvp" data-clashmode="pvp">\uD83D\uDC65 CHALLENGE A FRIEND<span>Head-to-head \u2014 enter the lobby, challenge a friend, battle live turn by turn</span></button>'
     + '<button class="clashbig gold" data-clashmode="ladder">🏆 LADDER' + (lad >= 7 ? ' — CHAMPION 🏆' : ' — BOSS ' + (lad + 1) + ' OF 7') + '<span>' + (lad >= 7 ? 'Every boss beaten. Replay Boss 7 for coins.' : 'Beat bosses in order. Boss ' + (lad + 1) + ' pays ' + (10 + (lad + 1) * 5) + ' 🪙') + '</span></button>'
     + '<div class="clashmeta">🪙 <b>' + coinsGet() + '</b> Clash Coins · Record <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b><br>Wins pay Clash Coins — spend them on packs (1 pack = ' + CLASH_PACK_COST + ' 🪙, in My Packs below)</div>'
     + '<div class="clashmeta">🏆 <b>Every agent climbs their own ladder:</b> ticket wins and battle wins add points to the agent set on your tier bar \u2014 right now that\u2019s <b>' + CHARNAMES[tierCharIdx() - 1] + '</b> (' + charWins(tierCharIdx()) + ' pts). Switch the bar on the Board tab to feed a different agent. Each agent\u2019s cards and battle tier unlock with their own points.</div>'
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>'
-    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars are just your card\'s tier level — they do NOT decide attacks. Turns alternate: only the player whose turn it is can swing, and an attack lands unless it\'s blocked. Tiers set a card\'s DAMAGE and LIFE.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Prop Agent logo. Both players start with EMPTY hands — no Energy, no items. After the coin flip everyone makes an opening pull (1 random card), and every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>ATTACK COSTS 2 ENERGY — PAID UP FRONT:</b> on your turn, pay 2 Energy cards and your attack LANDS for its damage — unless the enemy blocked on their turn. Same price for every card, Rookie to Legend. Can\'t pay? Attack locks — defend, tag, play an item, or end your turn while your pulls build Energy back up.<br>🎴 <b>ITEMS:</b> you can play ONE item per turn from your hand AND still attack or defend — the item is a bonus play, then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> you pay for your block on YOUR turn and it stays armed for the enemy\'s turn — nobody sees it coming, and it only reveals itself when it stops a hit.<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 4) and live longer (Rookie 3 life → Legend 9). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>🛡️ <b>DEFEND costs 2 🔮 Energy:</b> on your turn you can DEFEND instead of attacking — pay 2 Energy cards and your block stays armed: the enemy\'s next attack is fully blocked. If you don\'t block, their attack takes your health. The CPU plays by the same rules.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Two-in-a-row threatens the line — finish 3 in a row to win the ability.<br>🚫 <b>NO TIES, NO SIMULTANEOUS SWINGS:</b> fighters take turns — only the player whose turn it is attacks, so attacks never cancel out. Only landed hits earn grid squares.<br>⏭️ <b>END TURN</b> passes your move — the next player goes. Careful: if they attack and you didn\'t block, you can lose health.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>');
+    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars are just your card\'s tier level — they do NOT decide attacks. Turns alternate: only the player whose turn it is can swing, and an attack lands unless it\'s blocked. Tiers set a card\'s DAMAGE and LIFE.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Prop Agent logo. Both players start with EMPTY hands — no Energy, no items. After the coin flip everyone makes an opening pull (1 random card), and every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>ATTACK COSTS 2 ENERGY — PAID UP FRONT:</b> on your turn, pay 2 Energy cards and your attack LANDS for its damage — unless the enemy blocked on their turn. Same price for every card, Rookie to Legend. Can\'t pay? Attack locks — defend, tag, play an item, or end your turn while your pulls build Energy back up.<br>🎴 <b>ITEMS:</b> you can play ONE item per turn from your hand AND still attack or defend — the item is a bonus play, then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> you pay for your block on YOUR turn and it stays armed for the enemy\'s turn — nobody sees it coming, and it only reveals itself when it stops a hit.<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 4) and live longer (Rookie 3 life → Legend 9). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>🎖️ <b>TIER CLASH:</b> battle in tier pairs — your two fighters must be ONE of each tier in the pair (one Rookie + one Bronze, one Silver + one Gold, or one Diamond + one Legend), and the CPU fields one of each too. Rookie–Bronze is open to everyone; the higher pairs unlock as you own those cards.<br>🛡️ <b>DEFEND costs 2 🔮 Energy:</b> on your turn you can DEFEND instead of attacking — pay 2 Energy cards and your block stays armed: the enemy\'s next attack is fully blocked. If you don\'t block, their attack takes your health. The CPU plays by the same rules.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Two-in-a-row threatens the line — finish 3 in a row to win the ability.<br>🚫 <b>NO TIES, NO SIMULTANEOUS SWINGS:</b> fighters take turns — only the player whose turn it is attacks, so attacks never cancel out. Only landed hits earn grid squares.<br>⏭️ <b>END TURN</b> passes your move — the next player goes. Careful: if they attack and you didn\'t block, you can lose health.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>');
   var cp2 = $("clashPanel"); if (cp2) cp2.classList.add("startbg"); cp2.classList.add("menufit");
+}
+/* ---------- Tier Clash: battle in tier pairs, one of each tier (Brandon 2026-11-19) ---------- */
+var TIER_PAIRS = [[0, 1], [2, 3], [4, 5]];
+function ownsAnyTier(ti){ for (var ci = 1; ci <= 12; ci++) if (cardUnlocked(ci, ti)) return true; return false; }
+function clashTierMenu(){
+  CL = null;
+  var rows = TIER_PAIRS.map(function(pr, ix){
+    var lo = TIERS[pr[0]], hi = TIERS[pr[1]];
+    var chips = '<span class="tierchip on" style="--tc:' + lo.color + '">' + lo.name + ' \u2605' + (pr[0] + 1) + '</span> <span class="tierchip on" style="--tc:' + hi.color + '">' + hi.name + ' \u2605' + (pr[1] + 1) + '</span>';
+    if (ownsAnyTier(pr[0]) && ownsAnyTier(pr[1])) return '<button class="clashbig" data-clashmode="tier' + ix + '">\uD83C\uDF96\uFE0F ' + lo.name.toUpperCase() + '\u2013' + hi.name.toUpperCase() + '<span>' + chips + '<br>One ' + lo.name + ' fighter + one ' + hi.name + ' fighter \u2014 the CPU fields one of each too</span></button>';
+    return '<button class="clashbig" disabled>\uD83D\uDD12 ' + lo.name.toUpperCase() + '\u2013' + hi.name.toUpperCase() + '<span>' + chips + '<br>Own a ' + lo.name + ' and a ' + hi.name + ' card to unlock</span></button>';
+  }).join("");
+  clashPanel('<div class="clashttl">\uD83C\uDF96\uFE0F TIER CLASH</div>'
+    + '<div class="clashsub">Battle in tier pairs \u2014 one fighter from EACH tier of the pair. Wins pay like Quick Clash: <b>+5 tier points</b> and <b>10 \uD83E\uDE99</b>.</div>'
+    + rows
+    + '<button class="openbtn" data-clashmenu="1" style="width:100%;margin-top:8px">\u2190 Back</button>');
 }
 function clashSetup(mode){
   if (mode === "pvp") { pvpLobbyFlow(); return; }
+  if (mode === "tierclash") { clashTierMenu(); return; }
   var boss = mode === "ladder" ? Math.min(ladderGet() + 1, 7) : 0;
-  CL = { mode: mode, boss: boss, sel: 0, mine: [null, null], cpu: null, myActive: 0, cpuActive: 0, round: 1, busy: false, over: false, tagged: false, lastHit: null, lastWin: null, lastBlock: null, log: [], grid: ["", "", "", "", "", "", "", "", ""], myBonus: 0, cpuBonus: 0, myGuard: 0, cpuGuard: 0, myTemp: 0, cpuTemp: 0, placing: null, abilityPick: null, ttLine: null, ttResolve: null, abResolve: null, phase: null, flip: null, firstPlayer: null, myDeck: [], cpuDeck: [], myHand: [], cpuHand: [], myPile: [], cpuPile: [], drawPop: 0, statSurge: 0, justShuffled: false, itemUsedRound: 0, cpuItemRound: 0, myFreeHit: false, cpuFreeHit: false, planned: false, scoutText: null, turn: null, turnNo: 0, myDef: false, cpuDef: false, plan: null };
+  CL = { mode: mode, boss: boss, pair: (mode.indexOf("tier") === 0 ? (TIER_PAIRS[parseInt(mode.slice(4), 10)] || null) : null), sel: 0, mine: [null, null], cpu: null, myActive: 0, cpuActive: 0, round: 1, busy: false, over: false, tagged: false, lastHit: null, lastWin: null, lastBlock: null, log: [], grid: ["", "", "", "", "", "", "", "", ""], myBonus: 0, cpuBonus: 0, myGuard: 0, cpuGuard: 0, myTemp: 0, cpuTemp: 0, placing: null, abilityPick: null, ttLine: null, ttResolve: null, abResolve: null, phase: null, flip: null, firstPlayer: null, myDeck: [], cpuDeck: [], myHand: [], cpuHand: [], myPile: [], cpuPile: [], drawPop: 0, statSurge: 0, justShuffled: false, itemUsedRound: 0, cpuItemRound: 0, myFreeHit: false, cpuFreeHit: false, planned: false, scoutText: null, turn: null, turnNo: 0, myDef: false, cpuDef: false, plan: null };
   clashPickRender();
 }
 function clashPickRender(){
@@ -4710,7 +4729,7 @@ function clashPickRender(){
   for (var s = 0; s < 2; s++) {
     var f = CL.mine[s];
     slots += '<div class="pickslot' + (CL.sel === s ? ' on' : '') + '" data-pickslot="' + s + '">'
-      + '<div class="pickrole">' + (s === 0 ? '⭐ STARTER' : '🔁 TAG PARTNER') + '</div>'
+      + '<div class="pickrole">' + (s === 0 ? '⭐ STARTER' : '🔁 TAG PARTNER') + (CL.pair ? ' · ' + TIERS[CL.pair[s]].name.toUpperCase() : '') + '</div>'
       + (f ? '<img src="/api/battle?v=4&s=' + f.ci + '" alt=""><div class="picknm">' + fName(f) + '</div><div class="pickpw" style="color:' + TIERS[f.ti].color + '">' + TIERS[f.ti].name + ' ' + "★".repeat(f.ti + 1) + '</div><div class="pickpw2">⚡ ' + POWERS[f.ci - 1].name + '</div><div class="pickpw3">' + POWERS[f.ci - 1].desc + '</div><div class="pickpw2" style="color:#c4b5fd">\uD83D\uDCA5 DMG ' + dmgOf(f) + ' · \u2764\uFE0F LIFE ' + lifeOf(f) + ' · cost \u00D7' + hitCost(f) + '</div><span class="readbtn slotread" data-readcard="' + f.ci + '">🔍</span>'
            : '<div class="pickempty">Tap an agent below</div>')
       + '</div>';
@@ -4719,22 +4738,27 @@ function clashPickRender(){
   for (var ci = 1; ci <= 12; ci++) {
     var taken = (CL.mine[0] && CL.mine[0].ci === ci) || (CL.mine[1] && CL.mine[1].ci === ci);
     var isSel = CL.mine[CL.sel] && CL.mine[CL.sel].ci === ci;
-    grid += '<button class="agentpick' + (isSel ? ' on' : '') + '" data-pickagent="' + ci + '"' + (taken && !isSel ? ' disabled' : '') + '><img src="/api/battle?v=4&s=' + ci + '" alt=""><span>' + CHARNAMES[ci - 1].replace("THE ", "") + '</span><span class="readbtn" data-readcard="' + ci + '" title="Read the full card">🔍</span></button>';
+    grid += '<button class="agentpick' + (isSel ? ' on' : '') + '" data-pickagent="' + ci + '"' + (((taken || (CL.pair && !cardUnlocked(ci, CL.pair[CL.sel]))) && !isSel) ? ' disabled' : '') + '><img src="/api/battle?v=4&s=' + ci + '" alt=""><span>' + CHARNAMES[ci - 1].replace("THE ", "") + '</span><span class="readbtn" data-readcard="' + ci + '" title="Read the full card">🔍</span></button>';
   }
   grid += '</div>';
   var tiers = "";
   var cur = CL.mine[CL.sel];
   if (cur) {
-    tiers = '<div class="tierchips"><span>TIER:</span>';
-    pickTiers(cur.ci).forEach(function(ti){ tiers += '<button class="tierchip' + (cur.ti === ti ? ' on' : '') + '" data-picktier="' + ti + '" style="--tc:' + TIERS[ti].color + '">' + TIERS[ti].name + ' ★' + (ti + 1) + '</button>'; });
-    tiers += '</div>';
+    if (CL.pair) {
+      var slotTi = CL.pair[CL.sel];
+      tiers = '<div class="tierchips"><span>TIER:</span><span class="tierchip on" style="--tc:' + TIERS[slotTi].color + '">' + TIERS[slotTi].name + ' ★' + (slotTi + 1) + '</span><span style="color:#9aa7bd;font-size:11px">locked for this slot \u2014 one of each tier</span></div>';
+    } else {
+      tiers = '<div class="tierchips"><span>TIER:</span>';
+      pickTiers(cur.ci).forEach(function(ti){ tiers += '<button class="tierchip' + (cur.ti === ti ? ' on' : '') + '" data-picktier="' + ti + '" style="--tc:' + TIERS[ti].color + '">' + TIERS[ti].name + ' ★' + (ti + 1) + '</button>'; });
+      tiers += '</div>';
+    }
   }
-  var ready = CL.mine[0] && CL.mine[1];
+  var ready = CL.mine[0] && CL.mine[1] && (!CL.pair || (CL.mine[0].ti === CL.pair[0] && CL.mine[1].ti === CL.pair[1]));
   var stepHtml = !CL.mine[0] ? '<div class="stepbanner"><span class="stepn">STEP 1</span>⭐ PICK YOUR STARTER <span class="stepdown">▼</span></div>'
     : (!CL.mine[1] ? '<div class="stepbanner"><span class="stepn">STEP 2</span>🔁 PICK YOUR BENCH <span class="stepdim">— your tag partner</span> <span class="stepdown">▼</span></div>'
     : '<div class="stepbanner done"><span class="stepn">READY</span>✅ PAIR SET — TAP FIGHT! 🥊</div>');
-  clashPanel('<div class="clashttl' + (CL.mode === "pvp" ? ' pvpttl' : '') + '">' + (CL.mode === "pvp" ? '👥 HEAD-TO-HEAD' : CL.mode === "ladder" ? '🏆 LADDER — BOSS ' + CL.boss : '⚡ QUICK CLASH') + '</div>'
-    + '<div class="clashsub">' + (CL.mode === "pvp" ? '👥 vs <b>' + (CL.pvp.oppName || 'your friend') + '</b> — build your pair. They pick theirs too; a coin flip starts the battle.' + (CL.pvp.oppPicked ? ' <b style="color:#4fe3c1">✓ Your friend is ready!</b>' : '') : 'Build your pair. The CPU matches your tiers — a fair fight. Tap 🔍 on any agent to read their full card first.') + '</div>'
+  clashPanel('<div class="clashttl' + (CL.mode === "pvp" ? ' pvpttl' : '') + '">' + (CL.mode === "pvp" ? '👥 HEAD-TO-HEAD' : CL.mode === "ladder" ? '🏆 LADDER — BOSS ' + CL.boss : CL.pair ? '🎖️ TIER CLASH — ' + TIERS[CL.pair[0]].name.toUpperCase() + '–' + TIERS[CL.pair[1]].name.toUpperCase() : '⚡ QUICK CLASH') + '</div>'
+    + '<div class="clashsub">' + (CL.mode === "pvp" ? '👥 vs <b>' + (CL.pvp.oppName || 'your friend') + '</b> — build your pair. They pick theirs too; a coin flip starts the battle.' + (CL.pvp.oppPicked ? ' <b style="color:#4fe3c1">✓ Your friend is ready!</b>' : '') : CL.pair ? 'One of EACH tier — pick a ' + TIERS[CL.pair[0]].name + ' fighter for the first slot and a ' + TIERS[CL.pair[1]].name + ' fighter for the second slot. The CPU fields one of each too. Tap 🔍 on any agent to read their full card first.' : 'Build your pair. The CPU matches your tiers — a fair fight. Tap 🔍 on any agent to read their full card first.') + '</div>'
     + stepHtml
     + '<div class="pickslots">' + slots + '</div>' + grid + tiers
     + '<button class="clashbig gold' + (ready ? ' ready' : '') + '" data-clashfight="1"' + (ready ? '' : ' disabled') + '>🥊 FIGHT!<span>' + (ready ? 'Your pair is ready' : 'Pick both fighters first') + '</span></button>'
@@ -4749,6 +4773,7 @@ function clashCpuPair(){
     if (CL.boss === 7) return [mkFighter(10, lt[0]), mkFighter(1, lt[1])];
     return [mkFighter(pickAgent(), lt[0]), mkFighter(pickAgent(), lt[1])];
   }
+  if (CL.pair) return [mkFighter(pickAgent(), CL.pair[0]), mkFighter(pickAgent(), CL.pair[1])];
   /* Brandon 2026-11-18: the CPU fields the SAME tiers you bring. */
   var mt1 = CL.mine[0].ti, mt2 = CL.mine[1].ti;
   if (Math.random() < 0.5) { var msw = mt1; mt1 = mt2; mt2 = msw; }
@@ -5501,7 +5526,7 @@ document.addEventListener("click", function(e){
   if ((t = e.target.closest("[data-clashmenu]"))) { if (LOB) pvpLobbyCleanup(); clashMenu(); return; }
   if ((t = e.target.closest("[data-clashmode]"))) { clashSetup(t.getAttribute("data-clashmode")); return; }
   if ((t = e.target.closest("[data-pickslot]"))) { if (CL) { CL.sel = parseInt(t.getAttribute("data-pickslot"), 10); sfx("click"); clashPickRender(); } return; }
-  if ((t = e.target.closest("[data-pickagent]"))) { if (CL) { var ci = parseInt(t.getAttribute("data-pickagent"), 10); var wasSel = CL.sel; CL.mine[CL.sel] = mkFighter(ci, bestPickTier(ci)); if (!CL.mine[1 - CL.sel]) CL.sel = 1 - CL.sel; if (CL.mine[0] && CL.mine[1]) sfx("gridwin"); else sfx(wasSel === 1 ? "tag" : "click"); clashPickRender(); } return; }
+  if ((t = e.target.closest("[data-pickagent]"))) { if (CL) { var ci = parseInt(t.getAttribute("data-pickagent"), 10); var wasSel = CL.sel; var pickTi = bestPickTier(ci); if (CL.pair) { if (!cardUnlocked(ci, CL.pair[CL.sel])) return; pickTi = CL.pair[CL.sel]; } CL.mine[CL.sel] = mkFighter(ci, pickTi); if (!CL.mine[1 - CL.sel]) CL.sel = 1 - CL.sel; if (CL.mine[0] && CL.mine[1]) sfx("gridwin"); else sfx(wasSel === 1 ? "tag" : "click"); clashPickRender(); } return; }
   if ((t = e.target.closest("[data-picktier]"))) { if (CL && CL.mine[CL.sel]) { CL.mine[CL.sel].ti = parseInt(t.getAttribute("data-picktier"), 10); sfx("click"); clashPickRender(); } return; }
   if ((t = e.target.closest("[data-clashfight]"))) { if (CL && CL.mine[0] && CL.mine[1]) { if (CL.mode === "pvp") pvpSubmitPicks(); else clashStartFight(); } return; }
   if ((t = e.target.closest("[data-pvpshare]"))) { pvpShare(); return; }
