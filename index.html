@@ -6409,6 +6409,9 @@ function cloudSave(){
       battle_l: battlesGet().l || 0,
       ladder: ladderGet(),
       clash_last: parseInt(lsGet("pa_clash_last", 0), 10) || 0,
+      charwins: charWinsMap(),
+      packunlock: packUnlocksGet(),
+      foils: foilsGet(),
       tickets: tickets.map(function(t){ return {legs: t.legs, status: t.result || "pending", is_public: t.pub !== false}; })
     })}).then(function(r){ return r.json(); }).then(function(j){
       if (j && j.uid && j.uid !== cloudUid) { cloudUid = j.uid; lsSet("pa_uid", cloudUid); }
@@ -6421,6 +6424,32 @@ function fetchBoard(){
     if (j && j.ok && Array.isArray(j.board)) { cloudAgents = j.board; renderTopAgents(); renderBoard(); }
   }).catch(function(){});
 }
+/* Cloud extras restore (2026-11-19): per-character tier points, pack
+   unlocks and foils merge LOSS-FREE with the server copy — points take
+   the per-character max, unlocks/foils take the union — so a sync can
+   never erase progress made on either device. Fail-open throughout:
+   any malformed server value is skipped and local state is untouched. */
+function mergeCloudExtras(p){
+  var changed = false;
+  try {
+    if (p.charwins && typeof p.charwins === "object" && !Array.isArray(p.charwins)) {
+      var m = charWinsMap(), up = false;
+      Object.keys(p.charwins).forEach(function(k){
+        var ci = parseInt(k, 10), sv = parseInt(p.charwins[k], 10) || 0;
+        if (ci >= 1 && ci <= 12 && sv > (parseInt(m[ci], 10) || 0)) { m[ci] = sv; up = true; }
+      });
+      if (up) { lsSet("pa_charwins", m); changed = true; }
+    }
+    [["packunlock", packUnlocksGet, "pa_packunlock"], ["foils", foilsGet, "pa_foils"]].forEach(function(cfg){
+      var sv = p[cfg[0]];
+      if (!Array.isArray(sv)) return;
+      var merged = cfg[1]().slice(), added = false;
+      sv.forEach(function(k){ if (typeof k === "string" && /^[0-9]{1,2}-[0-9]$/.test(k) && merged.indexOf(k) === -1) { merged.push(k); added = true; } });
+      if (added) { lsSet(cfg[2], merged); changed = true; }
+    });
+  } catch (e) {}
+  return changed;
+}
 function cloudInit(){
   fetchBoard();
   loadSocialState();
@@ -6430,6 +6459,7 @@ function cloudInit(){
     if (j.profile && j.profile.display_name && !profile.name) { profile.name = j.profile.display_name; lsSet("pa_profile", profile); refreshAgentBtn(); restored = true; }
     if (j.profile && j.profile.avatar_url && !profile.avatar) { profile.avatar = j.profile.avatar_url; profile.featured = String(j.profile.featured_card || "").replace(/^[^A-Za-z0-9]+/, ""); lsSet("pa_profile", profile); refreshAgentBtn(); restored = true; }
     if (j.profile && typeof j.profile.coins === "number") { coinsSet(j.profile.coins); lsSet("pa_battles", { w: j.profile.battle_w || 0, l: j.profile.battle_l || 0 }); if ((j.profile.ladder || 0) > ladderGet()) lsSet("pa_ladder", j.profile.ladder || 0); restored = true; }
+    if (j.profile && mergeCloudExtras(j.profile)) restored = true;
     if ((!tickets || !tickets.length) && j.tickets && j.tickets.length) {
       tickets = j.tickets.map(function(ct, i){
         var legs = Array.isArray(ct.legs) ? ct.legs : [];

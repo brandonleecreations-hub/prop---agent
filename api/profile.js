@@ -28,6 +28,33 @@ const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0
 function fpOf(legs) {
   return (Array.isArray(legs) ? legs : []).map((l) => [l.player || "", l.stat || "", l.dir || "", l.line].join("|")).join(";;");
 }
+// Cloud extras (2026-11-19): per-character tier points (charwins),
+// pack-unlocked tiers (packunlock) and foil copies (foils) ride the
+// profile so they survive a new phone. They live in jsonb columns added
+// by a one-time SQL migration; until those columns exist the extras
+// PATCH below returns an error and is ignored (fail-open, mirroring the
+// clash_last PATCH) and the GET falls back to a select without them.
+function cleanCharwins(v) {
+  const out = {};
+  if (v && typeof v === "object" && !Array.isArray(v)) {
+    Object.keys(v).forEach((k) => {
+      const ci = parseInt(k, 10);
+      const n = parseInt(v[k], 10);
+      if (ci >= 1 && ci <= 12 && n > 0) out[ci] = Math.min(1000000, n);
+    });
+  }
+  return out;
+}
+function cleanKeyList(v) {
+  const out = [];
+  if (Array.isArray(v)) {
+    v.forEach((k) => {
+      const m = /^([1-9]|1[0-2])-([0-5])$/.exec(String(k || ""));
+      if (m) { const s = m[1] + "-" + m[2]; if (out.indexOf(s) === -1) out.push(s); }
+    });
+  }
+  return out.slice(0, 500);
+}
 
 // profiles.id has a foreign key to auth.users (the original build used
 // Supabase Auth). A device's self-made UUID is not an auth user, so the
@@ -63,7 +90,8 @@ module.exports = async (req, res) => {
     if (req.method === "GET" && req.query && req.query.uid) {
       const uid = String(req.query.uid);
       if (!UUID_RE.test(uid)) { res.status(200).json({ ok: false, error: "bad uid" }); return; }
-      let p = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card,coins,battle_w,battle_l,ladder&id=eq." + uid, { headers: sbHeaders() });
+      let p = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card,coins,battle_w,battle_l,ladder,charwins,packunlock,foils&id=eq." + uid, { headers: sbHeaders() });
+      if (p.status >= 300) p = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card,coins,battle_w,battle_l,ladder&id=eq." + uid, { headers: sbHeaders() });
       if (p.status >= 300) p = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card&id=eq." + uid, { headers: sbHeaders() });
       const t = await rest("tickets?select=legs,status,created_at&user_id=eq." + uid + "&order=created_at.desc&limit=200", { headers: sbHeaders() });
       res.status(200).json({ ok: true, profile: (p.json && p.json[0]) || null, tickets: Array.isArray(t.json) ? t.json : [] });
@@ -115,6 +143,11 @@ module.exports = async (req, res) => {
       if (up.status >= 300) { res.status(200).json({ ok: false, step: "profile", status: up.status, detail: (up.text || "").slice(0, 200) }); return; }
       const clashLast = Math.max(0, parseInt(body.clash_last, 10) || 0);
       if (clashLast) { try { await rest("profiles?id=eq." + uid, { method: "PATCH", headers: sbHeaders({ Prefer: "return=minimal" }), body: JSON.stringify({ clash_last: clashLast }) }); } catch (e) {} }
+      const extras = {};
+      if (body.charwins !== undefined) extras.charwins = cleanCharwins(body.charwins);
+      if (body.packunlock !== undefined) extras.packunlock = cleanKeyList(body.packunlock);
+      if (body.foils !== undefined) extras.foils = cleanKeyList(body.foils);
+      if (Object.keys(extras).length) { try { await rest("profiles?id=eq." + uid, { method: "PATCH", headers: sbHeaders({ Prefer: "return=minimal" }), body: JSON.stringify(extras) }); } catch (e) {} }
       const prev = await rest("tickets?select=legs&user_id=eq." + uid + "&limit=500", { headers: sbHeaders() });
       const likeMap = {};
       if (Array.isArray(prev.json)) prev.json.forEach((r) => {
