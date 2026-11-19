@@ -596,7 +596,13 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #clashPop.open{display:flex}
 .clashpanel{width:min(100vw,430px);height:100dvh;max-height:100dvh;display:flex;flex-direction:column;overflow-y:auto;margin:0 auto;background:radial-gradient(130% 100% at 50% 0%, #2a1650 0%, #0d0b16 55%);border:2px solid #f5b942;border-radius:0;padding:10px;box-shadow:0 24px 60px rgba(0,0,0,.65),0 0 34px rgba(124,58,237,.35);animation:cardpopA .45s cubic-bezier(.2,.9,.3,1.2) both}
 .clashpanel.startbg{background:#0a0618 url("/api/banners?s=clashbg&v=1") top center/contain no-repeat}
+.clashpanel>*{flex-shrink:0}
 .clashbgspace{height:calc(min(100vw,430px)*.8386 - 2px)}
+.pickposter{position:relative;overflow:hidden;border-radius:14px;border:2px solid #f5b942;margin-top:12px;box-shadow:0 0 22px rgba(124,58,237,.5);animation:pickglow 3.2s ease-in-out infinite}
+.pickposter img{display:block;width:100%;height:auto}
+.pickposter::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%);background-size:250% 250%;background-position:110% 0;animation:coinshine 3.4s ease-in-out infinite;pointer-events:none}
+@keyframes pickglow{0%,100%{box-shadow:0 0 16px rgba(124,58,237,.45);transform:scale(1)}50%{box-shadow:0 0 30px rgba(245,185,66,.55);transform:scale(1.012)}}
+@media (prefers-reduced-motion: reduce){.pickposter,.pickposter::after{animation:none}}
 .clashttl{font-size:24px;font-weight:900;letter-spacing:.5px;text-align:center;color:#fff}
 .clashsub{color:#cdbcf5;font-size:13.5px;line-height:1.45;text-align:center;margin:8px 0 12px}
 .clashbig{display:block;width:100%;text-align:left;background:linear-gradient(145deg,#7C3AED,#5b21b6);color:#fff;border:2px solid #a78bfa;border-radius:14px;padding:13px 15px;font-weight:900;font-size:17px;margin-top:10px;cursor:pointer}
@@ -3224,7 +3230,7 @@ async function downloadTradingCard(ti, ci, btn){
   ctx.fillText(cname, 62, 86);
   ctx.textAlign = "right"; ctx.fillStyle = accent; ctx.font = "800 24px system-ui, sans-serif";
   ctx.fillText("№ " + num + " / 084", W - 62, 86);
-  var ph = await loadImgC("/api/battle?v=2&s=" + ci, false);
+  var ph = await loadImgC("/api/battle?v=3&s=" + ci, false);
   ctx.save(); rrC(ctx, 42, 126, W - 84, 448, 14); ctx.clip();
   if (ph){ try { if (!un) ctx.filter = "grayscale(85%) brightness(.55)"; } catch(e){}
     var sc = Math.max((W - 84) / ph.width, 448 / ph.height); var dw = ph.width * sc, dh = ph.height * sc;
@@ -3349,7 +3355,7 @@ function tierCardHTML(t, wins, withBtns, ci){
   var ti = TIERS.indexOf(t);
   ci = ci || charIdxOf();
   var un = wins >= t.wins || (ci >= 1 && packUnlockHas(ci, ti));
-  var art = ci >= 1 ? "/api/battle?v=2&s=" + ci : charArt();
+  var art = ci >= 1 ? "/api/battle?v=3&s=" + ci : charArt();
   var cname = ci >= 1 ? CHARNAMES[ci - 1] : "YOUR AGENT";
   var num = ci >= 1 ? ((ci - 1) * 7 + ti + 1) : 0;
   var numTxt = num ? ("№ " + ("00" + num).slice(-3) + " / 084") : "№ —";
@@ -3400,7 +3406,7 @@ function renderTiers(){ var el = $("tiers"); if (!el) return; el.innerHTML = tie
 function bindTierStrip(){ var els = document.querySelectorAll("#tiers .tcface"); for (var i = 0; i < els.length; i++) els[i].addEventListener("click", function(){ var n = parseInt(this.getAttribute("data-tierchar"), 10); if (n) { lsSet("pa_tierchar", n); sfx("click"); renderTiers(); } }); }
 function tierProgressHTML(wins, ci){
   ci = ci || charIdxOf() || 1;
-  var strip = '<div class="tcstrip">' + CHARNAMES.map(function(nm, k){ var n1 = k + 1; return '<img class="tcface' + (n1 === ci ? ' on' : '') + '" data-tierchar="' + n1 + '" src="/api/battle?v=2&s=' + n1 + '" alt="' + nm + '" title="' + nm + '">'; }).join("") + '</div>';
+  var strip = '<div class="tcstrip">' + CHARNAMES.map(function(nm, k){ var n1 = k + 1; return '<img class="tcface' + (n1 === ci ? ' on' : '') + '" data-tierchar="' + n1 + '" src="/api/battle?v=3&s=' + n1 + '" alt="' + nm + '" title="' + nm + '">'; }).join("") + '</div>';
   var cur = tierFor(wins), curIdx = TIERS.indexOf(cur), nxt = nextTier(wins);
   var pct = Math.max(0, Math.min(100, wins));
   var ticks = TIERS.slice(1).map(function(t){ return '<span class="tbtick" style="left:' + Math.min(t.wins, 98) + '%"><i></i><em>' + t.wins + '</em></span>'; }).join("");
@@ -3408,7 +3414,7 @@ function tierProgressHTML(wins, ci){
   var bar = '<div class="tierbar"><div class="tbfill" style="width:' + pct + '%"></div>' + ticks + '</div>';
   var minis = '<div class="tierminis">' + TIERS.map(function(t, ti){
     var un = wins >= t.wins || packUnlockHas(ci, ti);
-    return '<div class="tiermini' + (un ? ' un' : ' lk') + (ti === curIdx ? ' cur' : '') + '" style="--tc:' + t.color + '"><img src="/api/battle?v=2&s=' + ci + '" alt=""><span class="tmn">' + t.name + '</span><span class="tms">' + (un ? "\u2605".repeat(ti + 1) : '\uD83D\uDD12 ' + t.wins) + '</span></div>';
+    return '<div class="tiermini' + (un ? ' un' : ' lk') + (ti === curIdx ? ' cur' : '') + '" style="--tc:' + t.color + '"><img src="/api/battle?v=3&s=' + ci + '" alt=""><span class="tmn">' + t.name + '</span><span class="tms">' + (un ? "\u2605".repeat(ti + 1) : '\uD83D\uDD12 ' + t.wins) + '</span></div>';
   }).join("") + '</div>';
   return '<div class="tierprog">' + strip + head + bar + minis + '</div>';
 }
@@ -3424,7 +3430,7 @@ function renderBoard(){
   var cards = allPlayerCardLegs();
   var cci = cardCharIdx();
   var stripEl = $("cardStrip");
-  if (stripEl) stripEl.innerHTML = CHARNAMES.map(function(n, k){ var n1 = k + 1; return '<img src="/api/battle?v=2&s=' + n1 + '" data-ci="' + n1 + '" class="' + (n1 === cci ? 'on' : '') + '" title="' + n + '" alt="' + n + '">'; }).join("");
+  if (stripEl) stripEl.innerHTML = CHARNAMES.map(function(n, k){ var n1 = k + 1; return '<img src="/api/battle?v=3&s=' + n1 + '" data-ci="' + n1 + '" class="' + (n1 === cci ? 'on' : '') + '" title="' + n + '" alt="' + n + '">'; }).join("");
   var tierCards = TIERS.map(function(t){ return tierCardHTML(t, charWins(cci), true, cci); }).join("");
   var playerCards = cards.map(function(l, li){
     var photo = photoCache[(l.player || "").toLowerCase()] || "";
@@ -3570,10 +3576,10 @@ function stampCardHTML(ci){
   var un = stampsGet().indexOf(ci) >= 0, cname = CHARNAMES[ci - 1];
   var front = '<div class="flipfront" style="border:3px solid #f5c518;--tc:#f5c518;box-shadow:0 12px 26px rgba(0,0,0,.38),0 0 22px #f5c51859, inset 0 1px 0 rgba(255,255,255,.05)">'
     + '<div class="tcplate"><span class="tcname">' + cname + '</span><span class="tcno">🌟 STAMP</span></div>'
-    + '<div class="tcwin"><img class="cardart" src="/api/battle?v=2&s=' + ci + '" alt="">' + (un ? '<span class="stampbadge">FOIL</span>' : '<div class="lockveil">LOCKED</div>') + '</div>'
+    + '<div class="tcwin"><img class="cardart" src="/api/battle?v=3&s=' + ci + '" alt="">' + (un ? '<span class="stampbadge">FOIL</span>' : '<div class="lockveil">LOCKED</div>') + '</div>'
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">GOLD FOIL STAMP</span><span class="rarpill" style="background:#f5c518;color:#1a1405">STAMP EDITION</span></div>'
     + '<div class="tierto" style="margin-top:6px">' + (un ? 'You pulled the gold foil stamp edition of ' + cname + '.' : 'The gold foil stamp edition of ' + cname + ' — hiding in about 1 pack in 7.') + '</div>'
-    + (un ? '<div style="display:flex;gap:6px;margin-top:8px"><button class="mini setprofs" data-avatar="/api/battle?v=2&s=' + ci + '" data-featured="' + cname + ' · Gold Foil Stamp">Set as profile card</button><button class="mini dlstamp" data-ci="' + ci + '">Download PNG</button></div>' : '')
+    + (un ? '<div style="display:flex;gap:6px;margin-top:8px"><button class="mini setprofs" data-avatar="/api/battle?v=3&s=' + ci + '" data-featured="' + cname + ' · Gold Foil Stamp">Set as profile card</button><button class="mini dlstamp" data-ci="' + ci + '">Download PNG</button></div>' : '')
     + '</div><div class="foilshine"></div></div>';
   return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"' + (un ? '' : ' data-noflip="1"') + '><div class="tierinner">' + front + stampBackHTML(ci) + '</div></div>';
 }
@@ -3600,7 +3606,7 @@ function downloadStampCard(ci, btn){
     var a = document.createElement("a"); a.download = "gold-stamp-" + ci + ".png"; a.href = cv.toDataURL("image/png"); a.click();
     if (btn) { var o = btn.textContent; btn.textContent = "Saved ✓"; setTimeout(function(){ btn.textContent = o; }, 1600); }
   };
-  img.src = "/api/battle?v=2&s=" + ci;
+  img.src = "/api/battle?v=3&s=" + ci;
 }
 function ringCardHTML(){
   var un = !!lsGet("pa_ring", 0);
@@ -3619,7 +3625,7 @@ function foilCardHTML(t, ci){
   var stars = ""; for (var s = 0; s < ti + 1; s++) stars += "★";
   var front = '<div class="flipfront" style="border:2px solid ' + t.color + ';--tc:' + t.color + ';box-shadow:0 12px 26px rgba(0,0,0,.38),0 0 16px ' + t.color + '47, inset 0 1px 0 rgba(255,255,255,.05)">'
     + '<div class="tcplate"><span class="tcname">' + cname + '</span><span class="tcno">✨ FOIL</span></div>'
-    + '<div class="tcwin"><img class="cardart" src="/api/battle?v=2&s=' + ci + '" alt=""></div>'
+    + '<div class="tcwin"><img class="cardart" src="/api/battle?v=3&s=' + ci + '" alt=""></div>'
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:#f5c518;color:#1a1405">FOIL</span></div>'
     + '<div class="tierto" style="margin-top:6px">Gold foil edition — pulled from a pack</div>'
     + '</div><div class="foilshine"></div></div>';
@@ -3758,7 +3764,7 @@ function stampCelebration(ci){
   var old = document.getElementById("stampCel"); if (old) old.remove();
   var el = document.createElement("div");
   el.id = "stampCel";
-  el.innerHTML = '<div class="celrays"></div><div class="celcard" style="position:relative"><img src="/api/battle?v=2&s=' + ci + '" alt=""><span class="stampbadge" style="font-size:14px;padding:6px 11px">FOIL</span></div><div class="celtitle">🌟 GOLD FOIL STAMP!</div><div class="celsub">' + CHARNAMES[ci - 1].toUpperCase() + ' · Stamp Edition · One of 12</div><div class="celtap">Tap anywhere to collect</div>';
+  el.innerHTML = '<div class="celrays"></div><div class="celcard" style="position:relative"><img src="/api/battle?v=3&s=' + ci + '" alt=""><span class="stampbadge" style="font-size:14px;padding:6px 11px">FOIL</span></div><div class="celtitle">🌟 GOLD FOIL STAMP!</div><div class="celsub">' + CHARNAMES[ci - 1].toUpperCase() + ' · Stamp Edition · One of 12</div><div class="celtap">Tap anywhere to collect</div>';
   document.body.appendChild(el);
   requestAnimationFrame(function(){ el.classList.add("open"); });
   el.addEventListener("click", function(){ el.classList.remove("open"); setTimeout(function(){ el.remove(); }, 250); });
@@ -3797,7 +3803,7 @@ function viewPulledCard(i){
   if (pu.stamp) {
     front.style.borderColor = "#f5c518";
     var sname = CHARNAMES[pu.ci - 1];
-    front.innerHTML = '<img src="/api/battle?v=2&s=' + pu.ci + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><span class="stampbadge" style="font-size:14px;padding:6px 11px">FOIL</span><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + sname + '</b><span class="rarpill" style="background:#f5c518;color:#1a1405">🌟 GOLD STAMP</span></div>';
+    front.innerHTML = '<img src="/api/battle?v=3&s=' + pu.ci + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><span class="stampbadge" style="font-size:14px;padding:6px 11px">FOIL</span><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + sname + '</b><span class="rarpill" style="background:#f5c518;color:#1a1405">🌟 GOLD STAMP</span></div>';
     back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">PROP AGENT</b><div style="color:#f5c518;letter-spacing:1.5px;font-weight:800;font-size:12px">' + sname.toUpperCase() + ' · GOLD FOIL STAMP</div><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">Gold foil stamp edition<br>One stamp card for every agent</div>';
   } else if (pu.ring) {
     front.style.borderColor = "#f5c518";
@@ -3806,7 +3812,7 @@ function viewPulledCard(i){
   } else {
     var t = TIERS[pu.ti], cname = CHARNAMES[pu.ci - 1];
     front.style.borderColor = t.color;
-    front.innerHTML = '<img src="/api/battle?v=2&s=' + pu.ci + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + cname + '</b>' + (pu.unlock ? '<span class="rarpill" style="background:' + t.color + '">' + t.name.toUpperCase() + ' · UNLOCKED</span>' : '<span class="rarpill" style="background:#f5c518;color:#1a1405">✨ ' + t.name.toUpperCase() + ' FOIL</span>') + '<span style="display:none"></span></div>';
+    front.innerHTML = '<img src="/api/battle?v=3&s=' + pu.ci + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + cname + '</b>' + (pu.unlock ? '<span class="rarpill" style="background:' + t.color + '">' + t.name.toUpperCase() + ' · UNLOCKED</span>' : '<span class="rarpill" style="background:#f5c518;color:#1a1405">✨ ' + t.name.toUpperCase() + ' FOIL</span>') + '<span style="display:none"></span></div>';
     back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">PROP AGENT</b><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">' + (pu.unlock ? cname + ' · ' + t.name.toUpperCase() + ' BATTLE CARD<br>Unlocked from a pack — it is on your tier list now.<br>Battle with it in Grid Clash!' : cname + ' · FOIL<br>' + t.name + ' tier gold foil edition<br>Pulled from a Prop Agent pack.') + '</div>';
   }
   document.getElementById("pullView").classList.add("open");
@@ -4166,13 +4172,13 @@ function clashMenu(){
   CL = null;
   var b = battlesGet(), lad = ladderGet();
   clashPanel('<div class="clashbgspace"></div>'
-    + '<div class="clashsub">Pick 2 battle cards — a Starter and a Tag Partner. A shiny 🔴🔵 coin flip decides who goes first — winner goes first, but the first player can\'t strike on Turn 1. Every turn you may play ONE 🎴 item from your hand (a free bonus) AND make one move: ATTACK ⚔️, DEFEND 🛡️, TAG 🔁, or END TURN ⏭️ (🔁 TAG is a move too — the fresh fighter steps in right away, but can\'t strike that turn). Landing a hit costs 🔮 Energy cards from your hand — your 44-card deck (20 Energy + 24 items, shuffled at the start) starts you with EMPTY hands — no Energy, no items — and every turn starts with a random pull from the deck; spent cards go to the discard pile. Land a hit, place your ✖ on the Clash Grid — 3 in a row wins an ability. A card is out when its life (❤️ on the card) is gone.</div>'
+    + '<div class="clashsub" style="text-align:center">Pick your fighters, flip the coin, land hits, own the grid.<br>New here? Open <b>How to play</b> at the bottom — rules plus a gameplay video of a round.</div>'
     + '<button class="clashbig" data-clashmode="quick">⚡ QUICK CLASH<span>Friendly fight — the CPU fields the same tier cards you bring</span></button>'
     + '<button class="clashbig pvp" data-clashmode="pvp">\uD83D\uDC65 CHALLENGE A FRIEND<span>Head-to-head \u2014 enter the lobby, challenge a friend, battle live turn by turn</span></button>'
     + '<button class="clashbig gold" data-clashmode="ladder">🏆 LADDER' + (lad >= 7 ? ' — CHAMPION 🏆' : ' — BOSS ' + (lad + 1) + ' OF 7') + '<span>' + (lad >= 7 ? 'Every boss beaten. Replay Boss 7 for coins.' : 'Beat bosses in order. Boss ' + (lad + 1) + ' pays ' + (10 + (lad + 1) * 5) + ' 🪙') + '</span></button>'
     + '<div class="clashmeta">🪙 <b>' + coinsGet() + '</b> Clash Coins · Record <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b><br>Wins pay Clash Coins — spend them on packs (1 pack = ' + CLASH_PACK_COST + ' 🪙, in My Packs below)</div>'
     + '<div class="clashmeta">🏆 <b>Every agent climbs their own ladder:</b> ticket wins and battle wins add points to the agent set on your tier bar \u2014 right now that\u2019s <b>' + CHARNAMES[tierCharIdx() - 1] + '</b> (' + charWins(tierCharIdx()) + ' pts). Switch the bar on the Board tab to feed a different agent. Each agent\u2019s cards and battle tier unlock with their own points.</div>'
-    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars are just your card\'s tier level — they do NOT decide attacks. Turns alternate: only the player whose turn it is can swing, and an attack lands unless it\'s blocked. Tiers set a card\'s DAMAGE and LIFE.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Prop Agent logo. Both players start with EMPTY hands — no Energy, no items. After the coin flip everyone makes an opening pull (1 random card), and every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>ATTACK COSTS 2 ENERGY — PAID UP FRONT:</b> on your turn, pay 2 Energy cards and your attack LANDS for its damage — unless the enemy blocked on their turn. Same price for every card, Rookie to Legend. Can\'t pay? Attack locks — defend, tag, play an item, or end your turn while your pulls build Energy back up.<br>🎴 <b>ITEMS:</b> you can play ONE item per turn from your hand AND still attack or defend — the item is a bonus play, then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> you pay for your block on YOUR turn and it stays armed for the enemy\'s turn — nobody sees it coming, and it only reveals itself when it stops a hit.<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 4) and live longer (Rookie 3 life → Legend 9). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>🛡️ <b>DEFEND costs 2 🔮 Energy:</b> on your turn you can DEFEND instead of attacking — pay 2 Energy cards and your block stays armed: the enemy\'s next attack is fully blocked. If you don\'t block, their attack takes your health. The CPU plays by the same rules.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Two-in-a-row threatens the line — finish 3 in a row to win the ability.<br>🚫 <b>NO TIES, NO SIMULTANEOUS SWINGS:</b> fighters take turns — only the player whose turn it is attacks, so attacks never cancel out. Only landed hits earn grid squares.<br>⏭️ <b>END TURN</b> passes your move — the next player goes. Careful: if they attack and you didn\'t block, you can lose health.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>'
+    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div><video controls playsinline preload="none" poster="/api/banners?s=clashbg&v=1" src="/api/banners?s=clashdemo&v=1" style="width:100%;border-radius:12px;background:#000;margin-bottom:8px"></video>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars are just your card\'s tier level — they do NOT decide attacks. Turns alternate: only the player whose turn it is can swing, and an attack lands unless it\'s blocked. Tiers set a card\'s DAMAGE and LIFE.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Prop Agent logo. Both players start with EMPTY hands — no Energy, no items. After the coin flip everyone makes an opening pull (1 random card), and every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>ATTACK COSTS 2 ENERGY — PAID UP FRONT:</b> on your turn, pay 2 Energy cards and your attack LANDS for its damage — unless the enemy blocked on their turn. Same price for every card, Rookie to Legend. Can\'t pay? Attack locks — defend, tag, play an item, or end your turn while your pulls build Energy back up.<br>🎴 <b>ITEMS:</b> you can play ONE item per turn from your hand AND still attack or defend — the item is a bonus play, then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> you pay for your block on YOUR turn and it stays armed for the enemy\'s turn — nobody sees it coming, and it only reveals itself when it stops a hit.<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 4) and live longer (Rookie 3 life → Legend 9). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>🛡️ <b>DEFEND costs 2 🔮 Energy:</b> on your turn you can DEFEND instead of attacking — pay 2 Energy cards and your block stays armed: the enemy\'s next attack is fully blocked. If you don\'t block, their attack takes your health. The CPU plays by the same rules.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Two-in-a-row threatens the line — finish 3 in a row to win the ability.<br>🚫 <b>NO TIES, NO SIMULTANEOUS SWINGS:</b> fighters take turns — only the player whose turn it is attacks, so attacks never cancel out. Only landed hits earn grid squares.<br>⏭️ <b>END TURN</b> passes your move — the next player goes. Careful: if they attack and you didn\'t block, you can lose health.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>'
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>');
   var cp2 = $("clashPanel"); if (cp2) cp2.classList.add("startbg");
@@ -4190,7 +4196,7 @@ function clashPickRender(){
     var f = CL.mine[s];
     slots += '<div class="pickslot' + (CL.sel === s ? ' on' : '') + '" data-pickslot="' + s + '">'
       + '<div class="pickrole">' + (s === 0 ? '⭐ STARTER' : '🔁 TAG PARTNER') + '</div>'
-      + (f ? '<img src="/api/battle?v=2&s=' + f.ci + '" alt=""><div class="picknm">' + fName(f) + '</div><div class="pickpw" style="color:' + TIERS[f.ti].color + '">' + TIERS[f.ti].name + ' ' + "★".repeat(f.ti + 1) + '</div><div class="pickpw2">⚡ ' + POWERS[f.ci - 1].name + '</div><div class="pickpw3">' + POWERS[f.ci - 1].desc + '</div><div class="pickpw2" style="color:#c4b5fd">\uD83D\uDCA5 DMG ' + dmgOf(f) + ' · \u2764\uFE0F LIFE ' + lifeOf(f) + ' · cost \u00D7' + hitCost(f) + '</div><span class="readbtn slotread" data-readcard="' + f.ci + '">🔍</span>'
+      + (f ? '<img src="/api/battle?v=3&s=' + f.ci + '" alt=""><div class="picknm">' + fName(f) + '</div><div class="pickpw" style="color:' + TIERS[f.ti].color + '">' + TIERS[f.ti].name + ' ' + "★".repeat(f.ti + 1) + '</div><div class="pickpw2">⚡ ' + POWERS[f.ci - 1].name + '</div><div class="pickpw3">' + POWERS[f.ci - 1].desc + '</div><div class="pickpw2" style="color:#c4b5fd">\uD83D\uDCA5 DMG ' + dmgOf(f) + ' · \u2764\uFE0F LIFE ' + lifeOf(f) + ' · cost \u00D7' + hitCost(f) + '</div><span class="readbtn slotread" data-readcard="' + f.ci + '">🔍</span>'
            : '<div class="pickempty">Tap an agent below</div>')
       + '</div>';
   }
@@ -4198,7 +4204,7 @@ function clashPickRender(){
   for (var ci = 1; ci <= 12; ci++) {
     var taken = (CL.mine[0] && CL.mine[0].ci === ci) || (CL.mine[1] && CL.mine[1].ci === ci);
     var isSel = CL.mine[CL.sel] && CL.mine[CL.sel].ci === ci;
-    grid += '<button class="agentpick' + (isSel ? ' on' : '') + '" data-pickagent="' + ci + '"' + (taken && !isSel ? ' disabled' : '') + '><img src="/api/battle?v=2&s=' + ci + '" alt=""><span>' + CHARNAMES[ci - 1].replace("THE ", "") + '</span><span class="readbtn" data-readcard="' + ci + '" title="Read the full card">🔍</span></button>';
+    grid += '<button class="agentpick' + (isSel ? ' on' : '') + '" data-pickagent="' + ci + '"' + (taken && !isSel ? ' disabled' : '') + '><img src="/api/battle?v=3&s=' + ci + '" alt=""><span>' + CHARNAMES[ci - 1].replace("THE ", "") + '</span><span class="readbtn" data-readcard="' + ci + '" title="Read the full card">🔍</span></button>';
   }
   grid += '</div>';
   var tiers = "";
@@ -4217,7 +4223,7 @@ function clashPickRender(){
     + stepHtml
     + '<div class="pickslots">' + slots + '</div>' + grid + tiers
     + '<button class="clashbig gold' + (ready ? ' ready' : '') + '" data-clashfight="1"' + (ready ? '' : ' disabled') + '>🥊 FIGHT!<span>' + (ready ? 'Your pair is ready' : 'Pick both fighters first') + '</span></button>'
-    + '<button class="openbtn" data-clashmenu="1" style="width:100%;margin-top:8px">← Back</button>');
+    + '<button class="openbtn" data-clashmenu="1" style="width:100%;margin-top:8px">← Back</button>' + '<div class="pickposter"><img src="/api/banners?s=clashbg&v=1" alt="Agent Clash"></div>');
 }
 var LADDER_TIERS = [[0, 0], [0, 1], [1, 1], [1, 2], [2, 3], [3, 4], [5, 6]];
 function clashCpuPair(){
@@ -4379,7 +4385,7 @@ function fxFor(side, f){ if (!CL || !f) return ""; if (CL.lastKO === f) return "
 function fighterHTML(f, active, extra, fx){
   var t = TIERS[f.ti];
   return '<div class="fcard' + (active ? ' active' : ' bench') + (fAlive(f) ? '' : ' ko') + (extra || '') + (fx === "tag" ? ' tagin' : '') + '" data-zci="' + f.ci + '" data-zti="' + f.ti + '" style="border-color:' + t.color + '">'
-    + '<img src="/api/battle?v=2&s=' + f.ci + '" alt=""' + (fx === "pain" ? ' class="imgflinch"' : fx === "rage" ? ' class="imgpunch"' : '') + '>'
+    + '<img src="/api/battle?v=3&s=' + f.ci + '" alt=""' + (fx === "pain" ? ' class="imgflinch"' : fx === "rage" ? ' class="imgpunch"' : '') + '>'
     + '<div class="fcnm">' + fName(f) + '</div>'
     + '<div class="fcst" style="color:' + t.color + '">' + t.name + ' ' + "★".repeat(f.ti + 1) + '</div>'
     + '<div class="fcpw' + ((f.used.pwr || f.used.hail || f.used.island) ? ' spent' : '') + '">⚡ ' + POWERS[f.ci - 1].name + ((f.used.pwr || f.used.hail || f.used.island) ? ' · USED' : '') + '</div><div class="fcatk">\uD83D\uDCA5 DMG ' + dmgOf(f) + ' · \u2764\uFE0F ' + (lifeOf(f) - f.hits) + '/' + lifeOf(f) + ' · cost \u00D7' + hitCost(f) + '</div>' + pipsHTML(f)
@@ -5027,9 +5033,9 @@ function ensurePackPop(){
       cards.style.display = "flex";
       cards.innerHTML = pulls.map(function(pu, i){
         if (pu.ring) return '<div class="revealcard ringcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's,1.05s;width:118px;cursor:pointer"><img src="/api/avatars?s=14" alt="" style="height:118px"><div class="rvinfo"><b style="color:#f5c518">🏆 THE RING</b><br>SIGNED · ONE OF A KIND</div></div>';
-        if (pu.stamp) return '<div class="revealcard stampcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer;width:112px"><div style="position:relative"><img src="/api/battle?v=2&s=' + pu.ci + '" alt="" style="height:112px;width:100%;object-fit:cover;display:block"><span class="stampbadge">FOIL</span></div><div class="rvinfo"><b style="color:#f5c518">🌟 ' + CHARNAMES[pu.ci - 1] + '</b><br>GOLD FOIL STAMP' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
+        if (pu.stamp) return '<div class="revealcard stampcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer;width:112px"><div style="position:relative"><img src="/api/battle?v=3&s=' + pu.ci + '" alt="" style="height:112px;width:100%;object-fit:cover;display:block"><span class="stampbadge">FOIL</span></div><div class="rvinfo"><b style="color:#f5c518">🌟 ' + CHARNAMES[pu.ci - 1] + '</b><br>GOLD FOIL STAMP' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
         var t = TIERS[pu.ti];
-        return '<div class="revealcard' + (i === 2 || pu.ti >= 3 ? ' bestcard' : '') + '" data-view="' + i + '" style="border-color:' + t.color + ';--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer"><img src="/api/battle?v=2&s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">' + (pu.unlock ? '🔓 ' + t.name + ' UNLOCKED</span><br><span style="color:#4fe3c1;font-weight:800">On your tier list — battle with it!' : '✨ ' + t.name + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '<br><span style="color:#9aa7bd;font-weight:700">Foil copy — saved to Pack Pulls</span>')) + '</div></div>';
+        return '<div class="revealcard' + (i === 2 || pu.ti >= 3 ? ' bestcard' : '') + '" data-view="' + i + '" style="border-color:' + t.color + ';--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer"><img src="/api/battle?v=3&s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">' + (pu.unlock ? '🔓 ' + t.name + ' UNLOCKED</span><br><span style="color:#4fe3c1;font-weight:800">On your tier list — battle with it!' : '✨ ' + t.name + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '<br><span style="color:#9aa7bd;font-weight:700">Foil copy — saved to Pack Pulls</span>')) + '</div></div>';
       }).join("");
       var unN = pulls.filter(function(pu){ return pu.unlock; }).length;
       var foilN = pulls.filter(function(pu){ return pu.foil; }).length;
@@ -5385,7 +5391,7 @@ function renderAvatarGrid(){
   var cur = (profile && profile.char) || "";
   g.innerHTML = "";
   for (var i = 1; i <= 12; i++) { (function(n){
-    var u = "/api/battle?v=2&s=" + n;
+    var u = "/api/battle?v=3&s=" + n;
     var im = document.createElement("img");
     im.src = u; im.alt = "Character " + n; im.loading = "lazy";
     im.style.cssText = "width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;cursor:pointer;border:3px solid " + (cur === u ? "#7C3AED" : "rgba(255,255,255,.08)");
