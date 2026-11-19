@@ -1603,7 +1603,7 @@ function togglePick(prop, dir){
 function removeLeg(id){ slip = slip.filter(function(l){ return l.id!==id; }); lsSet("pa_slip", slip); renderAllSlips(); renderBoards(); renderTicker(); refreshPlayerDlg(); updateSlipChip(); }
 var PAYOUTS = {2:3, 3:5, 4:10, 5:20, 6:37.5};
 var slipPublic = lsGet("pa_slipub", true) !== false;
-var DAILY_TICKET_LIMIT = 8;
+var DAILY_TICKET_LIMIT = 5;
 var MAX_SLIP_LEGS = 6;
 function locksToday(){
   var rec = lsGet("pa_lockday", null);
@@ -4058,7 +4058,7 @@ function maxTierIdx(){ var w = maxWins(), idx = 0; TIERS.forEach(function(t, i){
 function awardTicketReward(t){
   if (ticketHasCustom(t)) return; /* fair-play: custom-leg tickets earn no coins or packs */
   var n = (t.legs || []).length;
-  if (n === 4) { clashGrant(15); return; } /* 4-leg win pays 15 Clash Coins (daily-cap + cloud sync ride clashGrant) */
+  if (n === 4) { clashGrant(15); return; } /* 4-leg win pays 15 Clash Coins (cloud sync rides clashGrant) */
   if (n >= 5) { var p = packsGet(); p.n = (p.n || 0) + (n >= 6 ? 2 : 1); packsSet(p); } /* 5 legs: 1 pack - 6+ legs: 2 packs */
 }
 function renderPacks(){
@@ -4082,7 +4082,7 @@ function renderPacks(){
     + '</div>';
 }
 function ringBackHTML(){
-  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512" alt=""></div><div class="bkname" style="color:#f5c518">PROP AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">THE RING · CHAMPIONSHIP EDITION</div><div class="bksub">Signed · One of a Kind<br>The rarest pull in the game — about 1 pack in 50</div><div class="holo" style="--hc:#f5c51859"></div></div>';
+  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512" alt=""></div><div class="bkname" style="color:#f5c518">PROP AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">THE RING · CHAMPIONSHIP EDITION</div><div class="bksub">Signed · One of a Kind<br>The rarest pull in the game — about 1 pack in 200</div><div class="holo" style="--hc:#f5c51859"></div></div>';
 }
 function stampsGet(){ return lsGet("pa_stamps", []); }
 function stampBackHTML(ci){
@@ -4130,7 +4130,7 @@ function ringCardHTML(){
     + '<div class="tcplate"><span class="tcname">THE RING</span><span class="tcno">🏆 CHASE</span></div>'
     + '<div class="tcwin"><img class="cardart" src="/api/avatars?s=14" alt="">' + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">THE RING</span><span class="rarpill" style="background:#f5c518;color:#1a1405">ONE OF A KIND</span></div>'
-    + '<div class="tierto" style="margin-top:6px">' + (un ? 'You pulled it — the signed chase card. The rarest card in Prop Agent.' : 'The signed championship ring card. Hiding in about 1 pack in 50 — open packs to hunt it.') + '</div>'
+    + '<div class="tierto" style="margin-top:6px">' + (un ? 'You pulled it — the signed chase card. The rarest card in Prop Agent.' : 'The signed championship ring card. Hiding in about 1 pack in 200 — open packs to hunt it.') + '</div>'
     + (un ? '<div style="display:flex;gap:6px;margin-top:8px"><button class="mini setprofs" data-avatar="/api/avatars?s=14" data-featured="The Ring · Chase Card">Set as profile card</button><button class="mini dlring">Download PNG</button></div>' : '')
     + '</div><div class="holo" style="--hc:#f5c51859"></div></div>';
   return '<div class="tiercard' + (un ? ' unlocked ringglow' : ' locked') + '"' + (un ? '' : ' data-noflip="1"') + '><div class="tierinner">' + front + ringBackHTML() + '</div></div>';
@@ -4255,7 +4255,7 @@ document.addEventListener("click", function(e){
 function drawPremiumTier(){ var r = Math.random(); if (r < 0.55) return 3; if (r < 0.93) return 4; return 5; }
 function pullPack(demo){
   var isRing = false;
-  if (demo) isRing = true; else if (!lsGet("pa_ring", 0) && Math.random() < 0.02) isRing = true;
+  if (demo) isRing = true; else if (!lsGet("pa_ring", 0) && Math.random() < 0.005) isRing = true;
   var pulls = [];
   for (var i = 0; i < 3; i++){
     var ci = 1 + Math.floor(Math.random() * 12);
@@ -4270,7 +4270,9 @@ function pullPack(demo){
   }
   var fl = foilsGet(), pu2 = packUnlocksGet(), fseen = {};
   pulls.forEach(function(pu){ if (pu.ring || pu.stamp) return; var k = pu.ci + "-" + pu.ti;
-    if (!cardUnlocked(pu.ci, pu.ti) && pu2.indexOf(k) < 0) { pu2.push(k); pu.unlock = true; }
+    if (!cardUnlocked(pu.ci, pu.ti) && pu2.indexOf(k) < 0) { pu2.push(k); pu.unlock = true;
+      var need = TIERS[pu.ti].wins, cw = charWins(pu.ci);
+      if (cw < need) { pu.bumped = true; if (!demo) { var cm = charWinsMap(); cm[pu.ci] = need; lsSet("pa_charwins", cm); } } }
     else { pu.dup = (fl.indexOf(k) >= 0) || !!fseen[k]; fseen[k] = 1; if (!pu.dup) { fl.push(k); pu.foil = true; } } });
   if (!demo) { lsSet("pa_foils", fl); lsSet("pa_packunlock", pu2); }
   return pulls;
@@ -4329,7 +4331,7 @@ function viewPulledCard(i){
     var t = TIERS[pu.ti], cname = CHARNAMES[pu.ci - 1];
     front.style.borderColor = t.color;
     front.innerHTML = '<img src="/api/battle?v=4&s=' + pu.ci + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + cname + '</b>' + (pu.unlock ? '<span class="rarpill" style="background:' + t.color + '">' + t.name.toUpperCase() + ' · UNLOCKED</span>' : '<span class="rarpill" style="background:#f5c518;color:#1a1405">✨ ' + t.name.toUpperCase() + ' FOIL</span>') + '<span style="display:none"></span></div>';
-    back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">PROP AGENT</b><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">' + (pu.unlock ? cname + ' · ' + t.name.toUpperCase() + ' BATTLE CARD<br>Unlocked from a pack — it is on your tier list now.<br>Battle with it in Grid Clash!' : cname + ' · FOIL<br>' + t.name + ' tier gold foil edition<br>Pulled from a Prop Agent pack.') + '</div>';
+    back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">PROP AGENT</b><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">' + (pu.unlock ? cname + ' · ' + t.name.toUpperCase() + ' BATTLE CARD<br>' + (pu.bumped ? 'Unlocked from a pack — ' + cname + ' jumped to ' + t.name.toUpperCase() + ' tier!' : 'Unlocked from a pack — it is on your tier list now.') + '<br>Battle with it in Grid Clash!' : cname + ' · FOIL<br>' + t.name + ' tier gold foil edition<br>Pulled from a Prop Agent pack.') + '</div>';
   }
   document.getElementById("pullView").classList.add("open");
 }
@@ -4360,16 +4362,13 @@ function sfx(kind){ try {
 
 /* ---------- AGENT CLASH — card battle game (Brandon, 2026-11-17) ---------- */
 var CLASH_PACK_COST = 50;
-var CLASH_DAILY_CAP = 100;
 function coinsGet(){ var n = parseInt(lsGet("pa_coins", 0), 10); return isNaN(n) ? 0 : n; }
 function coinsSet(n){ lsSet("pa_coins", Math.max(0, Math.floor(n))); }
 function battlesGet(){ return lsGet("pa_battles", { w: 0, l: 0 }); }
 function ladderGet(){ return lsGet("pa_ladder", 0) || 0; }
-function clashEarnToday(){ var d = lsGet("pa_coinday", { day: "", n: 0 }); return (d && d.day === dayStr()) ? (d.n || 0) : 0; }
 function clashGrant(n){
-  var left = CLASH_DAILY_CAP - clashEarnToday();
-  var g = Math.max(0, Math.min(n, left));
-  if (g > 0) { lsSet("pa_coinday", { day: dayStr(), n: clashEarnToday() + g }); coinsSet(coinsGet() + g); cloudSave(); }
+  var g = Math.max(0, Math.floor(n) || 0);
+  if (g > 0) { coinsSet(coinsGet() + g); cloudSave(); }
   return g;
 }
 function clashLbHtml(){
@@ -5193,10 +5192,10 @@ function clashFinish(won){
   var b = battlesGet();
   if (won) b.w = (b.w || 0) + 1; else b.l = (b.l || 0) + 1;
   lsSet("pa_battles", b);
-  var earned = 0, capped = false;
+  var earned = 0;
   if (won) {
     var pay = CL.mode === "ladder" ? 10 + CL.boss * 5 : 10;
-    earned = clashGrant(pay); capped = earned < pay; if (earned > 0) setTimeout(function(){ sfx("coin"); }, 550);
+    earned = clashGrant(pay); if (earned > 0) setTimeout(function(){ sfx("coin"); }, 550);
     CL.bwPoint = true;
     lsSet("pa_battlewins", (parseInt(lsGet("pa_battlewins", 0), 10) || 0) + 5);
     attributePoints();
@@ -5205,7 +5204,7 @@ function clashFinish(won){
   } else cloudSave();
   renderClash(); renderPacks();
   clashPanel('<div class="clashresult">' + (won ? '<div class="reswin">🏆 VICTORY!</div>' : '<div class="reslose">DEFEAT</div>')
-    + '<div class="clashsub">' + (won ? 'Your pair takes the night! ' + (earned > 0 ? '<b style="color:#f5c518">+' + earned + ' 🪙 Clash Coins</b>' + (capped ? ' (daily coin cap hit — more tomorrow)' : '') : '<b>Daily coin cap reached — wins pay again tomorrow.</b>') : CL.mode === "pvp" ? (CL.pvp.oppName || 'Your friend') + ' takes this one. Run it back!' : 'The CPU pair takes this one. Watch their powers, time your tags, and run it back.') + '</div>'
+    + '<div class="clashsub">' + (won ? 'Your pair takes the night! ' + (earned > 0 ? '<b style="color:#f5c518">+' + earned + ' 🪙 Clash Coins</b>' : '') : CL.mode === "pvp" ? (CL.pvp.oppName || 'Your friend') + ' takes this one. Run it back!' : 'The CPU pair takes this one. Watch their powers, time your tags, and run it back.') + '</div>'
     + '<div class="clashmeta">Battle Record: <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b> · 🪙 <b>' + coinsGet() + '</b>' + (won ? (CL.bwPoint ? ' \u00B7 \uD83C\uDFC6 <b>+5 Tier Points</b> \u2014 ' + CHARNAMES[tierCharIdx() - 1] + ' now has ' + charWins(tierCharIdx()) + ' pts' : ' \u00B7 Every battle win earns 5 tier points') : '') + (CL.mode === "ladder" && won && CL.boss < 7 ? ' · Next up: Boss ' + (CL.boss + 1) : '') + (CL.mode === "ladder" && won && CL.boss === 7 ? ' · 🏆 LADDER CHAMPION!' : '') + '</div>'
     + (CL.mode === "pvp" ? '<button class="clashbig gold" data-pvprem="1">🔁 REMATCH<span>Same room — both pick new pairs</span></button>' : '<button class="clashbig gold" data-clashrematch="1">🔁 REMATCH<span>' + (CL.mode === "ladder" ? 'Boss ' + CL.boss + ' again' : 'New CPU pair, same tiers') + '</span></button>'
     + '<button class="clashbig" data-clashmode="' + CL.mode + '">🔄 NEW PAIR<span>Pick different fighters</span></button>')
@@ -5579,7 +5578,7 @@ function ensurePackPop(){
         if (pu.ring) return '<div class="revealcard ringcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's,1.05s;width:118px;cursor:pointer"><img src="/api/avatars?s=14" alt="" style="height:118px"><div class="rvinfo"><b style="color:#f5c518">🏆 THE RING</b><br>SIGNED · ONE OF A KIND</div></div>';
         if (pu.stamp) return '<div class="revealcard stampcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer;width:112px"><div style="position:relative"><img src="/api/battle?v=4&s=' + pu.ci + '" alt="" style="height:112px;width:100%;object-fit:cover;display:block"><span class="stampbadge">FOIL</span></div><div class="rvinfo"><b style="color:#f5c518">🌟 ' + CHARNAMES[pu.ci - 1] + '</b><br>GOLD FOIL STAMP' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
         var t = TIERS[pu.ti];
-        return '<div class="revealcard' + (i === 2 || pu.ti >= 3 ? ' bestcard' : '') + '" data-view="' + i + '" style="border-color:' + t.color + ';--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer"><img src="/api/battle?v=4&s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">' + (pu.unlock ? '🔓 ' + t.name + ' UNLOCKED</span><br><span style="color:#4fe3c1;font-weight:800">On your tier list — battle with it!' : '✨ ' + t.name + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '<br><span style="color:#9aa7bd;font-weight:700">Foil copy — saved to Pack Pulls</span>')) + '</div></div>';
+        return '<div class="revealcard' + (i === 2 || pu.ti >= 3 ? ' bestcard' : '') + '" data-view="' + i + '" style="border-color:' + t.color + ';--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's;cursor:pointer"><img src="/api/battle?v=4&s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + CHARNAMES[pu.ci - 1] + '</b><br><span style="color:#f5c518;font-weight:800">' + (pu.unlock ? '🔓 ' + t.name + ' UNLOCKED</span><br><span style="color:#4fe3c1;font-weight:800">' + (pu.bumped ? CHARNAMES[pu.ci - 1] + ' ⬆ now ' + t.name.toUpperCase() + ' tier!' : 'On your tier list — battle with it!') : '✨ ' + t.name + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '<br><span style="color:#9aa7bd;font-weight:700">Foil copy — saved to Pack Pulls</span>')) + '</div></div>';
       }).join("");
       var unN = pulls.filter(function(pu){ return pu.unlock; }).length;
       var foilN = pulls.filter(function(pu){ return pu.foil; }).length;
