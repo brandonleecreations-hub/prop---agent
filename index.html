@@ -543,6 +543,9 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #searchResults .bslider .ptile:nth-child(2){animation-delay:.03s}#searchResults .bslider .ptile:nth-child(3){animation-delay:.06s}#searchResults .bslider .ptile:nth-child(4){animation-delay:.09s}#searchResults .bslider .ptile:nth-child(5){animation-delay:.12s}#searchResults .bslider .ptile:nth-child(6){animation-delay:.15s}#searchResults .bslider .ptile:nth-child(7){animation-delay:.18s}#searchResults .bslider .ptile:nth-child(8){animation-delay:.21s}#searchResults .bslider .ptile:nth-child(9){animation-delay:.24s}#searchResults .bslider .ptile:nth-child(10){animation-delay:.27s}
 @keyframes tilein{from{opacity:0;transform:translateY(9px) scale(.96)}to{opacity:1;transform:none}}
 #searchResults .bslider{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#searchResults .bteampills{display:flex;gap:6px;overflow-x:auto;padding:0 2px 9px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#searchResults .bteampills::-webkit-scrollbar{display:none}
+#searchResults .bteampill{padding:4px 10px;font-size:11.5px;font-weight:800}
 #searchResults .bslider::-webkit-scrollbar{display:none}
 #searchResults .bslider .ptile{flex:0 0 118px;scroll-snap-align:start}
 #searchResults .sporthead{display:flex;align-items:center;gap:8px;font-size:17px;color:#ffd970;background:linear-gradient(90deg,rgba(124,58,237,.30),rgba(245,185,66,.10) 55%,rgba(245,185,66,0));border:1px solid rgba(245,185,66,.35);border-radius:12px;padding:8px 12px;margin-top:20px;letter-spacing:.4px}
@@ -578,16 +581,20 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #playerDlg .sub{font-size:11.5px;line-height:1.35}
 #playerDlgBody .pdlgsl{flex:1 1 auto;min-height:0;display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-top:6px;padding:2px 2px 8px}
 #playerDlgBody .pdlgsl::-webkit-scrollbar{display:none}
-.pdslide{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;min-width:0}
-.pdslide .dprop{height:100%;border-radius:14px;padding:14px}
-.pdslide .dp-stat{font-size:13px}
-.pdslide .dp-line{font-size:36px}
-.pdslide .dp-now{font-size:11px}
-.pdslide .dp-row2{flex-direction:column;gap:10px;margin-top:14px;flex:1}
-.pdslide .l5row{order:-1;padding:8px 10px}
-.pdslide .dp-btns{gap:8px;margin-top:auto}
-.pdslide .dp-btns button{flex:1;min-height:46px;font-size:16px;border-radius:10px}
-.pdslide .gplive{font-size:13.5px;padding:9px 10px}
+.pdslide{flex:0 0 47.5%;scroll-snap-align:start;scroll-snap-stop:always;min-width:0}
+.pdslide .dprop{height:100%;border-radius:12px;padding:10px}
+.pdslide .dp-stat{font-size:11.5px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pdslide .dp-line{font-size:26px}
+.pdslide .dp-now{font-size:10.5px}
+.pdslide .dp-row2{flex-direction:column;gap:8px;margin-top:10px;flex:1}
+.pdslide .l5row{order:-1;padding:6px 7px;flex-wrap:wrap;gap:5px}
+.pdslide .l5lab{font-size:9px;letter-spacing:1px}
+.pdslide .l5chips{flex:1 1 100%;order:2}
+.pdslide .l5chip{min-width:23px;font-size:10px;padding:2px 3px}
+.pdslide .l5cnt{font-size:10px}
+.pdslide .dp-btns{gap:6px;margin-top:auto}
+.pdslide .dp-btns button{flex:1;min-height:40px;font-size:14px;border-radius:9px}
+.pdslide .gplive{font-size:12px;padding:7px 8px}
 .pdlgpos{text-align:center;font-weight:800;color:var(--mut);font-size:12.5px;letter-spacing:1.5px;padding:7px 0 1px}
 #playerDlg .l5row{max-width:none;margin:0}
 #playerDlg .dp-row2 .gplive{text-align:center}
@@ -1703,6 +1710,7 @@ function propCard(p, vo){
 }
 var boardQuery = "", boardSort = "popular", boardTeam = "all";
 var buildSort = "pct", buildTeam = "all";
+var buildTeamByLeague = {};
 var teamCache = lsGet("pa_teams", {});
 var aidCache = lsGet("pa_aids", {});
 var liveTeamsByLeague = {};
@@ -1751,6 +1759,7 @@ function propCardsGrouped(list, vo){
 }
 var dlgSlideIdx = 0;
 function dlgSetPos(i, n){ dlgSlideIdx = i; var pos = $("pdlgPos"); if (pos) pos.textContent = (i + 1) + " / " + n; }
+function dlgPitch(sl){ var s0 = sl.querySelector(".pdslide"); var w = s0 ? s0.offsetWidth : 0; if (!w) w = Math.round((sl.clientWidth || 0) * 0.475); return (w || sl.clientWidth || 1) + 10; }
 function dlgSliderWire(sl){
   if (!sl) return;
   var n = sl.querySelectorAll(".pdslide").length; if (!n) return;
@@ -1759,12 +1768,11 @@ function dlgSliderWire(sl){
     sl._dlgWired = 1;
     sl.addEventListener("scroll", function(){
       var m = sl.querySelectorAll(".pdslide").length; if (!m) return;
-      var w = sl.clientWidth || 1;
-      var i = Math.round(sl.scrollLeft / w); if (i < 0) i = 0; if (i > m - 1) i = m - 1;
+      var i = Math.round(sl.scrollLeft / dlgPitch(sl)); if (i < 0) i = 0; if (i > m - 1) i = m - 1;
       dlgSetPos(i, m);
     }, { passive: true });
   }
-  if (dlgSlideIdx > 0 && sl.clientWidth) sl.scrollLeft = dlgSlideIdx * sl.clientWidth;
+  if (dlgSlideIdx > 0) sl.scrollLeft = dlgSlideIdx * dlgPitch(sl);
   dlgSetPos(dlgSlideIdx, n);
 }
 function dlgPropCard(p, vo){
@@ -3280,8 +3288,9 @@ function renderBuild(){
     var EMO = {nfl:"\uD83C\uDFC8",nba:"\uD83C\uDFC0",nhl:"\uD83C\uDFD2",cfb:"\uD83C\uDFC8",cbb:"\uD83C\uDFC0",wbb:"\uD83C\uDFC0",mlb:"\u26BE",tennis:"\uD83C\uDFBE"};
     var PRIO = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
     lorder.sort(function(a,b){ var ai = PRIO.indexOf(String(a).toLowerCase()), bi = PRIO.indexOf(String(b).toLowerCase()); ai = ai<0?99:ai; bi = bi<0?99:bi; return ai-bi; });
-    box.innerHTML = lorder.map(function(L){ var label = (byLeague[L][0] && byLeague[L][0].leagueLabel) || String(L).toUpperCase(); return '<div class="teamhead sporthead">'+(EMO[String(L).toLowerCase()]||"\uD83C\uDFC5")+' '+esc(label)+' \u00b7 '+byLeague[L].length+' players<span style="margin-left:auto;font-size:11px;color:#cdbcf5;font-weight:800;letter-spacing:.6px">SWIPE \u203a</span></div><div class="bslider">'+byLeague[L].map(tileHtml).join("")+'</div>'; }).join("");
+    box.innerHTML = lorder.map(function(L){ var label = (byLeague[L][0] && byLeague[L][0].leagueLabel) || String(L).toUpperCase(); var all = byLeague[L]; var tset = {}; all.forEach(function(g){ if (g.team) tset[g.team] = 1; }); var tlist = Object.keys(tset).sort(); var sel = buildTeamByLeague[L] || "all"; if (sel !== "all" && !tset[sel]){ sel = "all"; delete buildTeamByLeague[L]; } var shown = (sel === "all") ? all : all.filter(function(g){ return g.team === sel; }); var pills = (tlist.length >= 2) ? '<div class="bteampills"><button type="button" class="tab bteampill'+(sel==="all"?" on":"")+'" data-btpill="'+esc(L)+'" data-btteam="all">All</button>' + tlist.map(function(t){ return '<button type="button" class="tab bteampill'+(sel===t?" on":"")+'" data-btpill="'+esc(L)+'" data-btteam="'+esc(t)+'">'+esc(t)+'</button>'; }).join("") + '</div>' : ""; return '<div class="teamhead sporthead">'+(EMO[String(L).toLowerCase()]||"\uD83C\uDFC5")+' '+esc(label)+' \u00b7 '+shown.length+' players<span style="margin-left:auto;font-size:11px;color:#cdbcf5;font-weight:800;letter-spacing:.6px">SWIPE \u203a</span></div>' + pills + '<div class="bslider">'+shown.map(tileHtml).join("")+'</div>'; }).join("");
     bindTiles(box);
+    box.querySelectorAll("[data-btpill]").forEach(function(b){ b.addEventListener("click", function(){ var L2 = b.getAttribute("data-btpill"), t2 = b.getAttribute("data-btteam"); if (t2 === "all" || buildTeamByLeague[L2] === t2) delete buildTeamByLeague[L2]; else buildTeamByLeague[L2] = t2; renderBuild(); }); });
   }).catch(function(){ box.innerHTML = '<p class="empty">Players could not load — check your connection and tap Refresh.</p>'; });
 }
 
