@@ -610,14 +610,15 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #clashPop{position:fixed;inset:0;z-index:320;display:none;align-items:stretch;justify-content:center;overflow:hidden;padding:0}
 #clashPop.open{display:flex}
 .clashpanel{width:min(100vw,430px);height:100dvh;max-height:100dvh;display:flex;flex-direction:column;overflow-y:auto;margin:0 auto;background:radial-gradient(130% 100% at 50% 0%, #2a1650 0%, #0d0b16 55%);border:2px solid #f5b942;border-radius:0;padding:10px;box-shadow:0 24px 60px rgba(0,0,0,.65),0 0 34px rgba(124,58,237,.35);animation:cardpopA .45s cubic-bezier(.2,.9,.3,1.2) both}
-.clashpanel.startbg{background:#0a0618 url("/api/banners?s=clashbg&v=1") top center/contain no-repeat}
+.clashpanel.startbg{background:#0a0618 url("/api/banners?s=clashposter&v=2") top center/contain no-repeat}
 .clashpanel>*{flex-shrink:0}
-.clashbgspace{height:calc(min(100vw,430px)*.8386 - 2px)}
+.clashbgspace{position:relative;overflow:hidden;height:calc(min(100vw,430px)*.4221 - 2px)}
+.clashbgspace::after{content:"";position:absolute;top:-25%;bottom:-25%;left:0;width:38%;pointer-events:none;background:linear-gradient(100deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.16) 35%,rgba(255,255,255,.42) 50%,rgba(255,255,255,.16) 65%,rgba(255,255,255,0) 100%);transform:translateX(-320%) rotate(4deg);animation:postershine 4.6s ease-in-out infinite}
 .pickposter{position:relative;overflow:hidden;border-radius:14px;border:2px solid #f5b942;margin-top:12px;box-shadow:0 0 22px rgba(124,58,237,.5);animation:pickglow 3.2s ease-in-out infinite}
 .pickposter img{display:block;width:100%;height:auto}
 .pickposter::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%);background-size:250% 250%;background-position:110% 0;animation:coinshine 3.4s ease-in-out infinite;pointer-events:none}
 @keyframes pickglow{0%,100%{box-shadow:0 0 16px rgba(124,58,237,.45);transform:scale(1)}50%{box-shadow:0 0 30px rgba(245,185,66,.55);transform:scale(1.012)}}
-@media (prefers-reduced-motion: reduce){.pickposter,.pickposter::after{animation:none}}
+@media (prefers-reduced-motion: reduce){.pickposter,.pickposter::after,.clashbgspace::after{animation:none}}
 .clashttl{font-size:24px;font-weight:900;letter-spacing:.5px;text-align:center;color:#fff}
 .clashsub{color:#cdbcf5;font-size:13.5px;line-height:1.45;text-align:center;margin:8px 0 12px}
 .clashbig{display:block;width:100%;text-align:left;background:linear-gradient(145deg,#7C3AED,#5b21b6);color:#fff;border:2px solid #a78bfa;border-radius:14px;padding:13px 15px;font-weight:900;font-size:17px;margin-top:10px;cursor:pointer}
@@ -641,8 +642,8 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .clashbig:disabled{opacity:.45;cursor:default}
 .clashmeta{text-align:center;color:#9aa7bd;font-size:13px;margin-top:12px}
 .clashmeta b{color:#f5c518}
-.clashhelp{margin-top:12px;color:#cdbcf5;font-size:13px;line-height:1.55;text-align:left}
-.clashhelp summary{cursor:pointer;font-weight:800;color:#fff}
+.clashhelp{margin-top:10px;color:#cdbcf5;font-size:12px;line-height:1.5;text-align:left;border:1.5px solid #f5b942;border-radius:10px;padding:0 9px 4px;background:rgba(24,16,2,.55);box-shadow:0 0 12px rgba(245,185,66,.45)}
+.clashhelp summary{cursor:pointer;font-weight:800;color:#f5b942;font-size:12.5px;padding:7px 2px;letter-spacing:.3px}
 .pickslots{display:flex;gap:10px}
 .pickslot{flex:1;border:2px dashed #4c4266;border-radius:14px;padding:10px;text-align:center;cursor:pointer;background:#12101d}
 .pickslot.on{border:2px solid #f5b942;background:#1b1430}
@@ -1629,9 +1630,9 @@ function propCard(p, vo){
     + '<div class="pline-big">'+p.line+'</div>' + (p.pct!=null ? '<div><span class="pctchip">'+p.pct+'% IMPLIED</span></div>' : '')
     + (startsTxt ? '<div><span class="starts-pill">'+esc(startsTxt)+'</span></div>' : '')
     + (p.liveActual!=null && !vo ? '<div class="plive-line">LIVE · '+p.liveActual+' '+esc(p.stat)+' so far · line '+p.line+'</div>' : '')
-    + (p.half || p.brk ? '' : '<div class="l5row" data-l5="1" data-aid="'+esc(p.athleteId||"")+'" data-player="'+esc(p.player)+'" data-lg="'+esc(p.league)+'" data-stat="'+esc(p.stat)+'" data-line="'+p.line+'"></div>')
+    + (p.half || (p.brk && !vo) ? '' : '<div class="l5row" data-l5="1" data-aid="'+esc(p.athleteId||"")+'" data-player="'+esc(p.player)+'" data-lg="'+esc(p.league)+'" data-stat="'+esc(p.stat)+'" data-line="'+p.line+'"></div>')
     + '<div class="psrc">PrizePicks · '+esc(p.leagueLabel)+' · via Parlay API'+(srcDate ? ' · '+esc(srcDate) : '')+'</div>'
-    + (vo ? '<div class="ml"><span class="gplive">' + (p.liveActual!=null ? '🔴 LIVE · now ' + p.liveActual + ' ' + esc(p.stat) : '🔴 LIVE · view only') + '</span></div>' : '<div class="ml"><button class="more'+(slipHas(p.id,"MORE")?" sel":"")+'" data-pick="'+esc(p.id)+'|MORE">MORE<span>'+esc(sub)+'</span></button><button class="less'+(slipHas(p.id,"LESS")?" sel":"")+'" data-pick="'+esc(p.id)+'|LESS">LESS<span>'+esc(sub)+'</span></button></div>')
+    + (vo ? '<div class="ml"><span class="gplive">' + (vo === "final" ? (p.liveActual!=null ? '🏁 FINAL · final ' + p.liveActual + ' ' + esc(p.stat) : '🏁 FINAL · view only') : (p.liveActual!=null ? '🔴 LIVE · now ' + p.liveActual + ' ' + esc(p.stat) : '🔴 LIVE · view only')) + '</span></div>' : '<div class="ml"><button class="more'+(slipHas(p.id,"MORE")?" sel":"")+'" data-pick="'+esc(p.id)+'|MORE">MORE<span>'+esc(sub)+'</span></button><button class="less'+(slipHas(p.id,"LESS")?" sel":"")+'" data-pick="'+esc(p.id)+'|LESS">LESS<span>'+esc(sub)+'</span></button></div>')
     + '</div></div>';
 }
 var boardQuery = "", boardSort = "popular", boardTeam = "all";
@@ -1667,10 +1668,10 @@ function tileHtml(g){
     + '<span class="pc">'+g.props.length+' prop'+(g.props.length===1?"":"s")+(g.starts ? ' · '+esc(fmtClock(g.starts)) : '')+'</span>'
     + (g.brk ? '<br><span class="plive" style="background:rgba(245,197,24,.16);color:var(--gold)">⏸ '+esc(g.brkDetail || "AT THE BREAK")+'</span>' : (lt ? '<br><span class="plive">LIVE · '+esc(lt.detail)+'</span>' : '')) + '</div>';
 }
-function bindTiles(scope){ if (!scope) return; scope.querySelectorAll("[data-player]").forEach(function(t){ t.addEventListener("click", function(){ openPlayer(t.getAttribute("data-player"), t.getAttribute("data-league"), t.getAttribute("data-viewonly")==="1"); }); }); }
+function bindTiles(scope){ if (!scope) return; scope.querySelectorAll("[data-player]").forEach(function(t){ t.addEventListener("click", function(){ openPlayer(t.getAttribute("data-player"), t.getAttribute("data-league"), t.getAttribute("data-viewonly")==="1", t.getAttribute("data-final")==="1"); }); }); }
 var dlgPlayer = null;
-function openPlayer(name, leagueKey, viewOnly){
-  dlgPlayer = {name:name, league:leagueKey, viewOnly:!!viewOnly};
+function openPlayer(name, leagueKey, viewOnly, finalView){
+  dlgPlayer = {name:name, league:leagueKey, viewOnly:!!viewOnly, finalView:!!finalView};
   fillPlayerDlg();
   var d = $("playerDlg"); if (d && !d.open) d.showModal();
 }
@@ -1804,15 +1805,15 @@ function fillPlayerDlg(){
   var live = liveTeamsByLeague[g.league] && liveTeamsByLeague[g.league][(g.team || "").toLowerCase()];
   var bmD = (breakMap[g.league] && g.team) ? breakMap[g.league][g.team.toLowerCase()] : null;
   var brkList = list.filter(function(p){ return p.brk; });
-  var useBrk = !!(bmD && brkList.length);
+  var useBrk = !dlgPlayer.finalView && !!(bmD && brkList.length);
   var showList = useBrk ? brkList : list;
   var voDlg = !!(dlgPlayer && dlgPlayer.viewOnly);
   var closed = (!!live || voDlg) && !useBrk;
   body.innerHTML = '<div class="row" style="gap:12px;align-items:center"><img src="' + esc(g.img || "") + '" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:19px;font-weight:900">' + esc(g.player) + '</div><div class="note">' + esc([g.team, g.leagueLabel].filter(function(x){ return x; }).join(" · ")) + ' · ' + showList.length + ' props · PrizePicks</div></div><button class="ghostbtn" id="pdlgClose">Close</button></div>'
     + '<div id="pdlgLive"></div>'
-    + (useBrk ? '<p class="sub" style="margin-top:8px;color:var(--gold)">⏸ ' + esc(bmD.detail || "At the break") + ' — fresh props for the next part of the game. Pick before play resumes; they come off the board when it starts.</p>' : ((live || voDlg) ? '<p class="sub" style="margin-top:8px">This game is live — props are closed. Props on your locked-in tickets keep tracking in My Tickets.</p>' : ''))
+    + (useBrk ? '<p class="sub" style="margin-top:8px;color:var(--gold)">⏸ ' + esc(bmD.detail || "At the break") + ' — fresh props for the next part of the game. Pick before play resumes; they come off the board when it starts.</p>' : (dlgPlayer.finalView ? '<p class="sub" style="margin-top:8px">This game is final — props are view only, with the final stats on each prop.</p>' : ((live || voDlg) ? '<p class="sub" style="margin-top:8px">This game is live — props are closed. Props on your locked-in tickets keep tracking in My Tickets.</p>' : '')))
     + (bmD && !brkList.length && live ? '<p class="sub" style="margin-top:8px">At the break — second-half props only show if the regular board refresh brings them.</p>' : '')
-    + '<div class="pdlgbody' + (closed ? ' closed' : '') + '">' + propCardsGrouped(showList, closed) + '</div>';
+    + '<div class="pdlgbody' + (closed ? ' closed' : '') + '">' + propCardsGrouped(showList, (dlgPlayer.finalView && closed) ? "final" : closed) + '</div>';
   if (!closed) bindPicks(body);
   hydrateL5();
   var cb = $("pdlgClose"); if (cb) cb.addEventListener("click", function(){ $("playerDlg").close(); });
@@ -1883,15 +1884,21 @@ function loadLiveForPlayer(g, list){
   getScoreboard(lg, 1).then(function(evs){
     var ev = null;
     (evs||[]).forEach(function(e){ if (ev) return; var st = e.status && e.status.type && e.status.type.state; if (st!=="in") return; var ts = eventTeams(e); if (ts.some(function(t){ return (t.name||"").toLowerCase()===g.team.toLowerCase(); })) ev = e; });
+    var isPost = false;
+    if (!ev && dlgPlayer && dlgPlayer.finalView){
+      (evs||[]).forEach(function(e){ if (ev) return; var st2 = e.status && e.status.type && e.status.type.state; if (st2!=="post") return; var ts2 = eventTeams(e); if (ts2.some(function(t){ return (t.name||"").toLowerCase()===g.team.toLowerCase(); })) ev = e; });
+      if (ev) isPost = true;
+    }
     if (!ev) return;
     var ts = eventTeams(ev);
     var detail = (ev.status && ev.status.type && (ev.status.type.shortDetail || ev.status.type.detail)) || "LIVE";
     var scoreLine = ts.map(function(t){ return t.name + " " + (t.score!=null ? t.score : ""); }).join(" · ");
-    var lv = $("pdlgLive"); if (lv) lv.innerHTML = '<div class="plive-line">LIVE · '+esc(detail)+' · '+esc(scoreLine)+'</div>';
+    var lv = $("pdlgLive"); if (lv) lv.innerHTML = '<div class="plive-line">' + (isPost ? '🏁 FINAL · ' : 'LIVE · ') + esc(detail)+' · '+esc(scoreLine)+'</div>';
     var aid = aidCache[g.player.toLowerCase()] || (list[0] && list[0].athleteId) || "";
     fetchJson(ESPN+lg.sport+"/"+lg.league+"/summary?event="+encodeURIComponent(ev.id)).then(function(sm){
-      list.forEach(function(p){ var v = findLiveStat(sm, aid, g.player, p.stat); if (v!=null) p.liveActual = v; });
-      if (dlgPlayer && dlgPlayer.name===g.player){ var body = $("playerDlgBody"); var grid = body && body.querySelector(".pdlgbody"); if (grid){ var cl0 = grid.classList.contains("closed"); grid.innerHTML = list.map(function(p){ return propCard(p, cl0); }).join(""); if (!grid.classList.contains("closed")) bindPicks(body); hydrateL5(); } }
+      if (isPost) list.forEach(function(p){ var v = liveStatFor(sm, p); if (v!=null) p.liveActual = v; });
+      else list.forEach(function(p){ var v = findLiveStat(sm, aid, g.player, p.stat); if (v!=null) p.liveActual = v; });
+      if (dlgPlayer && dlgPlayer.name===g.player){ var body = $("playerDlgBody"); var grid = body && body.querySelector(".pdlgbody"); if (grid){ var cl0 = grid.classList.contains("closed"); grid.innerHTML = list.map(function(p){ return propCard(p, isPost ? "final" : cl0); }).join(""); if (!grid.classList.contains("closed")) bindPicks(body); hydrateL5(); } }
     }).catch(function(){});
   }).catch(function(){});
 }
@@ -2000,7 +2007,7 @@ function renderBoardTiles(lg, ps){
     tf.querySelectorAll("[data-team]").forEach(function(b){ b.addEventListener("click", function(){ boardTeam = b.getAttribute("data-team"); renderBoards(); }); }); }
   var liveMap = liveTeamsByLeague[lg.key] || {};
   var bm = breakMap[lg.key] || {};
-  var fresh = ps.filter(function(p){ if (p.brk || !p.starts) return true; return new Date(p.starts).getTime() > Date.now() - 10 * 60 * 1000; });
+  var fresh = ps.filter(function(p){ if (!p.starts) return true; if (p.brk && p.team && bm[p.team.toLowerCase()]) return true; return new Date(p.starts).getTime() > Date.now() - 10 * 60 * 1000; });
   var allGroups = playerGroups(fresh);
   var brkGroups = [];
   allGroups.forEach(function(g){
@@ -2271,7 +2278,7 @@ var hlSportCache = {}, hlSportFetching = {}, hlSportSig = "";
 var HL_QUERIES = { nba: "NBA highlights", nfl: "NFL highlights", nhl: "NHL highlights", cfb: "College Football highlights", cbb: "College Basketball highlights", wbb: "Women's College Basketball highlights", mlb: "MLB highlights", tennis: "Tennis highlights" };
 function renderLiveSportHl(){
   var box = $("liveSportHl"); if (!box) return;
-  var lgs = liveFilter === "all" ? ["nba", "nfl", "nhl"] : [liveFilter];
+  var lgs = liveFilter === "all" ? ["nfl", "nba", "nhl"] : [liveFilter];
   var sig = lgs.join(",");
   if (sig !== hlSportSig) {
     hlSportSig = sig;
@@ -2414,6 +2421,8 @@ function futureCard(lg, ev){
 function futSliders(fut){
   var order = [], groups = {};
   fut.forEach(function(g){ var k = g.lg.key; if (!groups[k]){ groups[k] = {lg: g.lg, items: []}; order.push(k); } groups[k].items.push(g); });
+  var PRIO_FUT = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
+  order.sort(function(a, b){ var ai = PRIO_FUT.indexOf(a), bi = PRIO_FUT.indexOf(b); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; });
   return order.map(function(k){ var gr = groups[k];
     return '<div class="fsport"><span>'+esc(gr.lg.key==="tennis" ? "Tennis" : gr.lg.label)+'</span><span class="fcount">'+gr.items.length+' game'+(gr.items.length===1?"":"s")+'</span></div><div class="fslider">'+gr.items.map(function(g){ return futureCard(g.lg, g.ev); }).join("")+'</div>';
   }).join("");
@@ -2491,6 +2500,8 @@ function renderLive(){
     var ls = $("liveStatus"); if (ls) ls.textContent = "Updated " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}) + " · fresh from ESPN · auto-refreshes every 30s and whenever you come back to this tab";
     var lorder = [], lgroups = {};
     live.forEach(function(g){ var k2 = g.lg.key; if (!lgroups[k2]){ lgroups[k2] = { lg: g.lg, items: [] }; lorder.push(k2); } lgroups[k2].items.push(g); });
+    var PRIO_LIVE = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
+    lorder.sort(function(a, b){ var ai = PRIO_LIVE.indexOf(a), bi = PRIO_LIVE.indexOf(b); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; });
     var liveHtml = lorder.map(function(k2){ var gr = lgroups[k2]; return '<div class="fsport"><span>' + esc(gr.lg.key === "tennis" ? "Tennis" : gr.lg.label) + '</span><span class="fcount">' + gr.items.length + ' live</span></div>' + gr.items.map(function(g){ return gameCard(g.lg, g.ev); }).join(""); }).join("");
     var html =
       '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Live Games</h2><span style="color:var(--purp-lt);font-weight:700">' + live.length + ' game' + (live.length===1?"":"s") + '</span></div>'
@@ -2531,16 +2542,17 @@ function renderGameProps(lg, s){
   var comp = (s.header && s.header.competitions || [])[0] || {};
   var cs = comp.competitors || [];
   var st = comp.status && comp.status.type || {};
-  if (st.state === "post"){ box.innerHTML = '<div style="font-size:16px;margin-top:14px"><b>Player Props — This Game</b></div><p class="empty">Props closed — this game is over.</p>'; return; }
   var liveView = st.state === "in";
+  var finalView = st.state === "post";
   var inBrk = isBreakStatus({status: {type: st}});
   if (st.state === "in"){
     var lt = liveTeamsByLeague[lg.key] = liveTeamsByLeague[lg.key] || {};
     cs.forEach(function(c){ var det = st.shortDetail || st.detail || "LIVE"; if (c.team){ if (c.team.displayName) lt[c.team.displayName.toLowerCase()] = {detail: det}; if (c.team.shortDisplayName) lt[c.team.shortDisplayName.toLowerCase()] = {detail: det}; } });
   }
   (inBrk ? refreshPropsBrk(lg).then(function(){ return buildProps(lg); }) : buildProps(lg)).then(function(ps){
-    var head = '<div style="font-size:16px;margin-top:14px"><b>Player Props — This Game</b> <span class="note">best on top · tap a player for all their props</span></div>' + (inBrk ? '<p class="sub" style="color:var(--gold);margin-top:6px">⏸ At the break — fresh props just posted for the next part of the game. Pick before play resumes.</p>' : '') + (liveView ? '<p class="sub" style="margin-top:6px"><span class="gplive">🔴 LIVE</span> View only — picks closed when the game started. <span class="nowval">now</span> = current stat for that prop.</p>' : '');
-    if (!ps.length){ box.innerHTML = head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'; return; }
+    var head = '<div style="font-size:16px;margin-top:14px"><b>Player Props — This Game</b> <span class="note">best on top · tap a player for all their props</span></div>' + (inBrk ? '<p class="sub" style="color:var(--gold);margin-top:6px">⏸ At the break — fresh props just posted for the next part of the game. Pick before play resumes.</p>' : '') + (liveView ? '<p class="sub" style="margin-top:6px"><span class="gplive">🔴 LIVE</span> View only — picks closed when the game started. <span class="nowval">now</span> = current stat for that prop.</p>' : '') + (finalView ? '<p class="sub" style="margin-top:6px"><span class="gplive">🏁 FINAL</span> View only — this game is over. <span class="nowval">final</span> = final stat for that prop.</p>' : '');
+    var closedHtml = '<div style="font-size:16px;margin-top:14px"><b>Player Props — This Game</b></div><p class="empty">Props closed — this game is over.</p>';
+    if (!ps.length){ box.innerHTML = finalView ? closedHtml : head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'; return; }
     var names = {}, teamNames = {};
     try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ (tp.athletes||[]).forEach(function(a){ if (a.athlete && a.athlete.displayName) names[lastNameOf(a.athlete.displayName)] = 1; }); }); } catch(e){}
     try { (s.rosters || []).forEach(function(rt){ (rt.athletes || []).forEach(function(a){ var an = a.athlete && a.athlete.displayName; if (an) names[lastNameOf(an)] = 1; }); }); } catch(e){}
@@ -2564,8 +2576,8 @@ function renderGameProps(lg, s){
       if (names[lastNameOf(p.player)]) return true;
       return false;
     });
-    if (!hits.length){ box.innerHTML = head + (gcRosterFetching[gcKey] ? '<p class="empty">Loading player props\u2026</p>' : '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'); return; }
-    if (liveView) hits.forEach(function(p){ var v = liveStatFor(s, p); if (v != null) p.liveActual = v; });
+    if (!hits.length){ box.innerHTML = gcRosterFetching[gcKey] ? head + '<p class="empty">Loading player props\u2026</p>' : (finalView ? closedHtml : head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'); return; }
+    if (liveView || finalView) hits.forEach(function(p){ var v = liveStatFor(s, p); if (v != null) p.liveActual = v; });
     var gs = sortGroups(playerGroups(hits), "pct");
     /* Compact rows organized by team (Brandon 2026-11-17): small player
        rows under a team header; tap a player for all their props. */
@@ -2593,11 +2605,11 @@ function renderGameProps(lg, s){
         + '<span class="gpl">' + tops + more + '</span></span>'
         + '<span class="gpa">\u203A</span></div>';
     };
-    if (liveView){
+    if (liveView || finalView){
       var slideHtml = function(g){
-        var tops = g.props.slice().sort(function(a, b){ return (b.pct || 0) - (a.pct || 0); }).slice(0, 3).map(function(p){ return esc(p.stat) + " " + esc(String(p.line)) + (p.liveActual != null ? ' <span class="nowval">now ' + p.liveActual + '</span>' : ''); }).join("<br>");
+        var tops = g.props.slice().sort(function(a, b){ return (b.pct || 0) - (a.pct || 0); }).slice(0, 3).map(function(p){ return esc(p.stat) + " " + esc(String(p.line)) + (p.liveActual != null ? ' <span class="nowval">' + (finalView ? "final " : "now ") + p.liveActual + '</span>' : ''); }).join("<br>");
         var more = g.props.length > 3 ? '<br><span style="color:var(--purp-lt)">+' + (g.props.length - 3) + " more</span>" : "";
-        return '<div class="gpslide" data-player="' + esc(g.player) + '" data-league="' + esc(g.league) + '" data-viewonly="1">'
+        return '<div class="gpslide" data-player="' + esc(g.player) + '" data-league="' + esc(g.league) + '" data-viewonly="1"' + (finalView ? ' data-final="1"' : '') + '>'
           + '<span class="pwrap"><span class="pinit">' + esc(initials(g.player)) + '</span>' + (g.img ? '<img src="' + esc(g.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>'
           + '<div class="gpn">' + esc(g.player) + '</div>'
           + '<div class="gpc">' + g.props.length + ' prop' + (g.props.length === 1 ? "" : "s") + '</div>'
@@ -2867,7 +2879,7 @@ function openGame(key, eventId, isRefresh){
           stB.forEach(function(x){ if (byName[x.name]) byName[x.name].b = x.displayValue; });
           var skeys = Object.keys(byName).filter(function(k){ return byName[k].b != null; }).slice(0,10);
           var nmOf = function(t){ var tm = (t && t.team) || {}; return tm.abbreviation || tm.shortDisplayName || tm.displayName || ""; };
-          if (skeys.length) html += '<div style="font-size:14px;margin-top:12px"><b>Team Stats</b></div><table class="tstats"><colgroup><col style="width:24%"><col style="width:52%"><col style="width:24%"></colgroup><tr><th class="tsA">' + esc(nmOf(tsA)) + '</th><th class="tsL">Stat</th><th class="tsB">' + esc(nmOf(tsB)) + '</th></tr>' + skeys.map(function(k){ return '<tr><td class="tsA">' + esc(byName[k].a||"") + '</td><td class="tsL">' + esc(byName[k].label) + '</td><td class="tsB">' + esc(byName[k].b||"") + '</td></tr>'; }).join("") + '</table>';
+          if (skeys.length) html += '<div id="gameTstats"><div style="font-size:14px;margin-top:12px"><b>Team Stats</b></div><table class="tstats"><colgroup><col style="width:24%"><col style="width:52%"><col style="width:24%"></colgroup><tr><th class="tsA">' + esc(nmOf(tsA)) + '</th><th class="tsL">Stat</th><th class="tsB">' + esc(nmOf(tsB)) + '</th></tr>' + skeys.map(function(k){ return '<tr><td class="tsA">' + esc(byName[k].a||"") + '</td><td class="tsL">' + esc(byName[k].label) + '</td><td class="tsB">' + esc(byName[k].b||"") + '</td></tr>'; }).join("") + '</table></div>';
         }
       }
     }
@@ -2880,8 +2892,17 @@ function openGame(key, eventId, isRefresh){
     if (isRefresh && keepY) window.scrollTo(0, keepY);
     var pbpBtn = $("pbpBtn");
     if (pbpBtn) pbpBtn.addEventListener("click", function(){ var all = $("pbpAll"); if (!all) return; var open = all.style.display !== "none"; if (!open && !all.innerHTML) all.innerHTML = plays.slice(15).map(fmtPlay).join(""); all.style.display = open ? "none" : ""; window._pbpOpen = !open; pbpBtn.textContent = open ? "Show all plays" : "Show fewer plays"; });
-    if (st.state !== "pre") { var gtEl = $("gameTracker"), gpEl = $("gameProps");
-    if (gtEl && gpEl && gtEl.parentNode) gtEl.parentNode.insertBefore(gpEl, gtEl.nextSibling); }
+    /* Brandon 2026-11-18: under the score header the order is Team Stats,
+       then props, in every game state (score -> Team Stats -> props). */
+    var gtEl = $("gameTracker"), gpEl = $("gameProps"), tsEl = $("gameTstats");
+    if (gpEl && tsEl && tsEl.parentNode && tsEl.parentNode === gpEl.parentNode){
+      if (gtEl && gtEl.parentNode === gpEl.parentNode){ gpEl.parentNode.insertBefore(gpEl, gtEl); gpEl.parentNode.insertBefore(tsEl, gpEl); }
+      else {
+        var gdEl2 = $("gameDetail"), lsTbl = gdEl2 ? gdEl2.querySelector("table.lb") : null;
+        if (lsTbl && lsTbl.parentNode === gpEl.parentNode){ lsTbl.parentNode.insertBefore(tsEl, lsTbl.nextSibling); lsTbl.parentNode.insertBefore(gpEl, tsEl.nextSibling); }
+        else gpEl.parentNode.insertBefore(tsEl, gpEl);
+      }
+    } else if (st.state !== "pre" && gtEl && gpEl && gtEl.parentNode) gtEl.parentNode.insertBefore(gpEl, gtEl.nextSibling);
     renderGameProps(lg, s);
     /* Game Center opens instantly at the top — no scrolling. */
   }).catch(function(){ $("gameDetail").innerHTML = '<button class="gcBack" type="button">← All games</button><div class="card"><p class="err">Couldn\'t load that game\'s details from ESPN.</p></div>'; });
@@ -4255,9 +4276,9 @@ function clashMenu(){
     + '<button class="clashbig gold" data-clashmode="ladder">🏆 LADDER' + (lad >= 7 ? ' — CHAMPION 🏆' : ' — BOSS ' + (lad + 1) + ' OF 7') + '<span>' + (lad >= 7 ? 'Every boss beaten. Replay Boss 7 for coins.' : 'Beat bosses in order. Boss ' + (lad + 1) + ' pays ' + (10 + (lad + 1) * 5) + ' 🪙') + '</span></button>'
     + '<div class="clashmeta">🪙 <b>' + coinsGet() + '</b> Clash Coins · Record <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b><br>Wins pay Clash Coins — spend them on packs (1 pack = ' + CLASH_PACK_COST + ' 🪙, in My Packs below)</div>'
     + '<div class="clashmeta">🏆 <b>Every agent climbs their own ladder:</b> ticket wins and battle wins add points to the agent set on your tier bar \u2014 right now that\u2019s <b>' + CHARNAMES[tierCharIdx() - 1] + '</b> (' + charWins(tierCharIdx()) + ' pts). Switch the bar on the Board tab to feed a different agent. Each agent\u2019s cards and battle tier unlock with their own points.</div>'
-    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div><video controls playsinline preload="none" poster="/api/banners?s=clashbg&v=1" src="/api/banners?s=clashdemo&v=1" style="width:100%;border-radius:12px;background:#000;margin-bottom:8px"></video>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars are just your card\'s tier level — they do NOT decide attacks. Turns alternate: only the player whose turn it is can swing, and an attack lands unless it\'s blocked. Tiers set a card\'s DAMAGE and LIFE.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Prop Agent logo. Both players start with EMPTY hands — no Energy, no items. After the coin flip everyone makes an opening pull (1 random card), and every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>ATTACK COSTS 2 ENERGY — PAID UP FRONT:</b> on your turn, pay 2 Energy cards and your attack LANDS for its damage — unless the enemy blocked on their turn. Same price for every card, Rookie to Legend. Can\'t pay? Attack locks — defend, tag, play an item, or end your turn while your pulls build Energy back up.<br>🎴 <b>ITEMS:</b> you can play ONE item per turn from your hand AND still attack or defend — the item is a bonus play, then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> you pay for your block on YOUR turn and it stays armed for the enemy\'s turn — nobody sees it coming, and it only reveals itself when it stops a hit.<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 4) and live longer (Rookie 3 life → Legend 9). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>🛡️ <b>DEFEND costs 2 🔮 Energy:</b> on your turn you can DEFEND instead of attacking — pay 2 Energy cards and your block stays armed: the enemy\'s next attack is fully blocked. If you don\'t block, their attack takes your health. The CPU plays by the same rules.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Two-in-a-row threatens the line — finish 3 in a row to win the ability.<br>🚫 <b>NO TIES, NO SIMULTANEOUS SWINGS:</b> fighters take turns — only the player whose turn it is attacks, so attacks never cancel out. Only landed hits earn grid squares.<br>⏭️ <b>END TURN</b> passes your move — the next player goes. Careful: if they attack and you didn\'t block, you can lose health.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>'
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
-    + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>');
+    + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>'
+    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div><video controls playsinline preload="none" poster="/api/banners?s=clashbg&v=1" src="/api/banners?s=clashdemo&v=1" style="width:100%;border-radius:12px;background:#000;margin-bottom:8px"></video>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars are just your card\'s tier level — they do NOT decide attacks. Turns alternate: only the player whose turn it is can swing, and an attack lands unless it\'s blocked. Tiers set a card\'s DAMAGE and LIFE.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Prop Agent logo. Both players start with EMPTY hands — no Energy, no items. After the coin flip everyone makes an opening pull (1 random card), and every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>ATTACK COSTS 2 ENERGY — PAID UP FRONT:</b> on your turn, pay 2 Energy cards and your attack LANDS for its damage — unless the enemy blocked on their turn. Same price for every card, Rookie to Legend. Can\'t pay? Attack locks — defend, tag, play an item, or end your turn while your pulls build Energy back up.<br>🎴 <b>ITEMS:</b> you can play ONE item per turn from your hand AND still attack or defend — the item is a bonus play, then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> you pay for your block on YOUR turn and it stays armed for the enemy\'s turn — nobody sees it coming, and it only reveals itself when it stops a hit.<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 4) and live longer (Rookie 3 life → Legend 9). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>🛡️ <b>DEFEND costs 2 🔮 Energy:</b> on your turn you can DEFEND instead of attacking — pay 2 Energy cards and your block stays armed: the enemy\'s next attack is fully blocked. If you don\'t block, their attack takes your health. The CPU plays by the same rules.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Two-in-a-row threatens the line — finish 3 in a row to win the ability.<br>🚫 <b>NO TIES, NO SIMULTANEOUS SWINGS:</b> fighters take turns — only the player whose turn it is attacks, so attacks never cancel out. Only landed hits earn grid squares.<br>⏭️ <b>END TURN</b> passes your move — the next player goes. Careful: if they attack and you didn\'t block, you can lose health.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>');
   var cp2 = $("clashPanel"); if (cp2) cp2.classList.add("startbg");
 }
 function clashSetup(mode){
@@ -5804,7 +5825,7 @@ function setSport(key){
 })();
 (function buildLiveTabs(){
   var wrap = $("liveTabs"); if (!wrap) return;
-  [{key:"all", label:"All Sports"}].concat(LEAGUES.slice(1)).forEach(function(l){
+  [{key:"all", label:"All Sports"}].concat(LEAGUES.slice(1).slice().sort(function(a, b){ var P = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"]; var ai = P.indexOf(a.key), bi = P.indexOf(b.key); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; })).forEach(function(l){
     var b = document.createElement("button");
     b.className = "tab" + (l.key==="all" ? " on" : ""); b.textContent = l.label; b.setAttribute("data-lsport", l.key);
     b.addEventListener("click", function(){ liveFilter = l.key; wrap.querySelectorAll(".tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-lsport")===liveFilter); }); renderLive(); });
