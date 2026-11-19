@@ -549,8 +549,74 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .vidplay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;text-shadow:0 2px 8px rgba(0,0,0,.85)}
 #slipChip{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:60;background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none;font-weight:800;padding:11px 18px;border-radius:999px;box-shadow:0 10px 24px rgba(124,58,237,.5);display:none;cursor:pointer}
 .teamhead{font-size:15px;font-weight:900;margin:18px 0 8px;color:var(--purp-lt);letter-spacing:.4px}
-#playerDlg{max-width:520px;width:94vw}
-#playerDlg .pdlgbody{max-height:62vh;overflow-y:auto}
+#playerDlg{max-width:520px;width:96vw;height:100dvh;max-height:100dvh;padding:12px 12px 10px;overflow:hidden}
+#playerDlgBody{display:flex;flex-direction:column;height:100%;min-height:0}
+#playerDlg .sub{font-size:11.5px;line-height:1.35}
+#playerDlgBody .pdlgbody{flex:1 1 auto;min-height:0;overflow:hidden;display:grid;gap:5px;grid-auto-rows:1fr;grid-template-columns:1fr;margin-top:6px}
+#playerDlgBody.fitd2 .pdlgbody{grid-template-columns:repeat(2,1fr)}
+#playerDlgBody.fitd3 .pdlgbody{grid-template-columns:repeat(3,1fr)}
+#playerDlgBody.fitd4 .pdlgbody{grid-template-columns:repeat(3,1fr)}
+#playerDlgBody.fitd5 .pdlgbody{grid-template-columns:repeat(4,1fr);gap:4px}
+#playerDlg .l5row{max-width:none;margin:0}
+#playerDlg .dp-row2 .gplive{text-align:center}
+.dprop{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 7px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.dp-hd{display:flex;align-items:baseline;gap:6px;min-width:0}
+.dp-stat{flex:1 1 auto;min-width:0;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dp-line{font-weight:900;line-height:1.05}
+.dp-now{font-size:9px;font-weight:800;color:#fca5a5;white-space:nowrap}
+.dp-row2{display:flex;min-height:0}
+.dp-btns{display:flex}
+.dp-btns button{border-radius:8px;font-weight:900;border:1px solid var(--line);background:var(--panel);color:var(--txt);cursor:pointer;padding:0 4px;line-height:1}
+.dp-btns button.more{background:linear-gradient(135deg,var(--purp),var(--purp2));border-color:var(--purp);color:#fff}
+.dp-btns button.more.sel{box-shadow:0 0 0 2px #fff inset}
+.dp-btns button.less.sel{background:var(--red);border-color:var(--red);color:#1c0505}
+.dp-half{grid-column:1/-1;align-self:center;justify-self:center;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:900;letter-spacing:1.2px;font-size:10px;padding:3px 9px;text-align:center}
+#playerDlgBody.fitd1 .dp-stat{font-size:10.5px}
+#playerDlgBody.fitd1 .dp-line{font-size:19px}
+#playerDlgBody.fitd1 .dp-row2{flex-direction:column;gap:5px;margin-top:5px;flex:1}
+#playerDlgBody.fitd1 .dp-btns{gap:6px;margin-top:auto}
+#playerDlgBody.fitd1 .dp-btns button{flex:1;min-height:30px;font-size:13.5px}
+#playerDlgBody.fitd1 .l5row{order:-1}
+#playerDlgBody.fitd2 .dp-stat{font-size:10px}
+#playerDlgBody.fitd2 .dp-line{font-size:17px}
+#playerDlgBody.fitd2 .dp-row2{flex-direction:column;gap:4px;margin-top:4px;flex:1}
+#playerDlgBody.fitd2 .dp-btns{gap:5px}
+#playerDlgBody.fitd2 .dp-btns button{flex:1;min-height:24px;font-size:12px}
+#playerDlgBody.fitd2 .l5row{margin-top:auto;padding:3px 6px}
+#playerDlgBody.fitd2 .l5chip{min-width:22px;padding:2px 3px;font-size:10px}
+#playerDlgBody.fitd3 .dprop{padding:5px 6px}
+#playerDlgBody.fitd3 .dp-stat{font-size:9px}
+#playerDlgBody.fitd3 .dp-line{font-size:14.5px}
+#playerDlgBody.fitd3 .dp-row2{flex-direction:row;align-items:center;gap:5px;margin-top:auto}
+#playerDlgBody.fitd3 .dp-btns{gap:3px}
+#playerDlgBody.fitd3 .dp-btns button{height:20px;font-size:10.5px;min-width:29px}
+#playerDlgBody.fitd3 .l5row{flex:1;background:none;border:none;padding:0;justify-content:flex-end}
+#playerDlgBody.fitd3 .l5lab{display:none}
+#playerDlgBody.fitd3 .l5chip{min-width:15px;padding:1px 2px;font-size:9px;border-radius:4px}
+#playerDlgBody.fitd3 .l5cnt{font-size:9px}
+#playerDlgBody.fitd3 .gplive{font-size:9.5px}
+#playerDlgBody.fitd4 .dprop{padding:4px 5px}
+#playerDlgBody.fitd4 .dp-stat{font-size:8.5px}
+#playerDlgBody.fitd4 .dp-line{font-size:13.5px}
+#playerDlgBody.fitd4 .dp-row2{flex-direction:row;align-items:center;gap:4px;margin-top:auto}
+#playerDlgBody.fitd4 .dp-btns{gap:3px}
+#playerDlgBody.fitd4 .dp-btns button{height:17px;font-size:9.5px;min-width:26px}
+#playerDlgBody.fitd4 .l5row{flex:1;background:none;border:none;padding:0;justify-content:flex-end}
+#playerDlgBody.fitd4 .l5lab{display:none}
+#playerDlgBody.fitd4 .l5chip{min-width:13px;padding:1px 1px;font-size:8.5px;border-radius:4px}
+#playerDlgBody.fitd4 .l5cnt{font-size:8.5px}
+#playerDlgBody.fitd4 .gplive{font-size:9px;padding:1px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+#playerDlgBody.fitd5 .dprop{padding:3px 5px}
+#playerDlgBody.fitd5 .dp-stat{font-size:7.5px}
+#playerDlgBody.fitd5 .dp-line{font-size:12px}
+#playerDlgBody.fitd5 .dp-row2{flex-direction:row;align-items:center;gap:3px;margin-top:auto}
+#playerDlgBody.fitd5 .dp-btns{gap:2px}
+#playerDlgBody.fitd5 .dp-btns button{height:14px;font-size:8px;min-width:22px}
+#playerDlgBody.fitd5 .l5row{flex:1;background:none;border:none;padding:0;justify-content:flex-end}
+#playerDlgBody.fitd5 .l5lab{display:none}
+#playerDlgBody.fitd5 .l5cnt{display:none}
+#playerDlgBody.fitd5 .l5chip{min-width:10px;padding:0 1px;font-size:7.5px;border-radius:3px}
+#playerDlgBody.fitd5 .gplive{font-size:8px;padding:1px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 
 
 .pickem{border:2px solid #f5c518;border-radius:12px;padding:8px 10px;background:radial-gradient(120% 140% at 20% 0%,#3b2f0b 0%,#17130a 55%,#101018 100%);box-shadow:0 0 24px #f5c51833;margin:8px 0}
@@ -610,10 +676,19 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #clashPop{position:fixed;inset:0;z-index:320;display:none;align-items:stretch;justify-content:center;overflow:hidden;padding:0}
 #clashPop.open{display:flex}
 .clashpanel{width:min(100vw,430px);height:100dvh;max-height:100dvh;display:flex;flex-direction:column;overflow-y:auto;margin:0 auto;background:radial-gradient(130% 100% at 50% 0%, #2a1650 0%, #0d0b16 55%);border:2px solid #f5b942;border-radius:0;padding:10px;box-shadow:0 24px 60px rgba(0,0,0,.65),0 0 34px rgba(124,58,237,.35);animation:cardpopA .45s cubic-bezier(.2,.9,.3,1.2) both}
-.clashpanel.startbg{background:#0a0618 url("/api/banners?s=clashposter&v=2") top center/contain no-repeat}
+.clashpanel.startbg{background:#0a0618 url("/api/banners?s=clashbg&v=1") top center/contain no-repeat}
 .clashpanel>*{flex-shrink:0}
-.clashbgspace{position:relative;overflow:hidden;height:calc(min(100vw,430px)*.4221 - 2px)}
+.clashbgspace{position:relative;overflow:hidden;height:calc(min(100vw,430px)*.8386 - 2px)}
 .clashbgspace::after{content:"";position:absolute;top:-25%;bottom:-25%;left:0;width:38%;pointer-events:none;background:linear-gradient(100deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.16) 35%,rgba(255,255,255,.42) 50%,rgba(255,255,255,.16) 65%,rgba(255,255,255,0) 100%);transform:translateX(-320%) rotate(4deg);animation:postershine 4.6s ease-in-out infinite}
+.clashpanel.menufit{overflow:hidden}
+.clashpanel.startbg.menufit{background:#0a0618}
+.clashpanel.menufit .clashbgspace{flex:1 1 auto;height:auto;min-height:60px;max-height:calc(min(100vw,430px)*.8386 - 2px);background:url("/api/banners?s=clashbg&v=1") center/contain no-repeat}
+.clashpanel.menufit .clashsub{font-size:12.5px;line-height:1.4;margin:6px 0 8px}
+.clashpanel.menufit .clashbig{padding:10px 13px;font-size:16px;margin-top:8px}
+.clashpanel.menufit .clashbig span{font-size:11.5px}
+.clashpanel.menufit .clashmeta{font-size:12px;line-height:1.38;margin-top:8px}
+.clashpanel.menufit .openbtn{padding:9px 12px;font-size:13px}
+.clashpanel.menufit .clashhelp{margin-top:auto}
 .pickposter{position:relative;overflow:hidden;border-radius:14px;border:2px solid #f5b942;margin-top:12px;box-shadow:0 0 22px rgba(124,58,237,.5);animation:pickglow 3.2s ease-in-out infinite}
 .pickposter img{display:block;width:100%;height:auto}
 .pickposter::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%);background-size:250% 250%;background-position:110% 0;animation:coinshine 3.4s ease-in-out infinite;pointer-events:none}
@@ -1682,6 +1757,34 @@ function propCardsGrouped(list, vo){
   if (half.length) h += '<div style="grid-column:1/-1;margin-top:10px;padding:6px 10px;border:1px solid var(--gold);border-radius:9px;color:var(--gold);font-weight:900;letter-spacing:1.2px;font-size:12px">⏱ 1ST HALF PROPS</div>' + half.map(function(p){ return propCard(p, vo); }).join("");
   return h;
 }
+var dlgTier = 1;
+function dlgTierFor(n){ return n<=6?1 : n<=16?2 : n<=30?3 : n<=48?4 : 5; }
+function applyDlgTier(n){ dlgTier = dlgTierFor(n); var b = $("playerDlgBody"); if (b) b.className = "fitd" + dlgTier; }
+function dlgPropCard(p, vo){
+  /* Compact fit-to-screen cell for the player dialog (board keeps the full
+     propCard). Same pick wiring (data-pick), same L5 strip element, same
+     live/final chip wording; density comes from the fitd tier classes. */
+  var strip = (p.half || (p.brk && !vo)) ? "" : '<div class="l5row" data-l5="1" data-aid="'+esc(p.athleteId||"")+'" data-player="'+esc(p.player)+'" data-lg="'+esc(p.league)+'" data-stat="'+esc(p.stat)+'" data-line="'+p.line+'"></div>';
+  var act;
+  if (vo){
+    var chipTxt;
+    if (dlgTier >= 5) chipTxt = (vo === "final") ? (p.liveActual!=null ? "🏁 final " + p.liveActual : "🏁 FINAL · view only") : (p.liveActual!=null ? "🔴 now " + p.liveActual : "🔴 LIVE · view only");
+    else chipTxt = (vo === "final") ? (p.liveActual!=null ? "🏁 FINAL · final " + p.liveActual + " " + esc(p.stat) : "🏁 FINAL · view only") : (p.liveActual!=null ? "🔴 LIVE · now " + p.liveActual + " " + esc(p.stat) : "🔴 LIVE · view only");
+    act = '<span class="gplive">' + chipTxt + '</span>';
+  } else {
+    act = '<span class="dp-btns"><button class="more'+(slipHas(p.id,"MORE")?" sel":"")+'" data-pick="'+esc(p.id)+'|MORE">MORE</button><button class="less'+(slipHas(p.id,"LESS")?" sel":"")+'" data-pick="'+esc(p.id)+'|LESS">LESS</button></span>';
+  }
+  return '<div class="dprop"><div class="dp-hd"><span class="dp-stat" title="'+esc(p.stat)+'">'+esc(p.stat)+'</span><span class="dp-line">'+p.line+'</span>'
+    + (p.liveActual!=null && !vo ? '<span class="dp-now">now '+p.liveActual+'</span>' : '')
+    + '</div><div class="dp-row2">' + act + strip + '</div></div>';
+}
+function dlgPropCardsGrouped(list, vo){
+  var full = list.filter(function(p){ return !p.half; });
+  var half = list.filter(function(p){ return p.half; });
+  var h = full.map(function(p){ return dlgPropCard(p, vo); }).join("");
+  if (half.length) h += '<div class="dp-half">⏱ 1ST HALF PROPS</div>' + half.map(function(p){ return dlgPropCard(p, vo); }).join("");
+  return h;
+}
 /* ---------- Last-5 hit rates (ESPN game logs -- free, no Parlay credits; cached 6h) ---------- */
 var L5_MAP = {
   "points":["points"], "rebounds":["totalRebounds"], "assists":["assists"], "steals":["steals"], "blocks":["blocks"], "turnovers":["turnovers"],
@@ -1800,7 +1903,7 @@ function fillPlayerDlg(){
   if (!dlgPlayer) return;
   var list = (propsCache[dlgPlayer.league]||[]).filter(function(p){ return p.player===dlgPlayer.name; });
   var body = $("playerDlgBody"); if (!body) return;
-  if (!list.length){ body.innerHTML = '<p class="empty">No props found for '+esc(dlgPlayer.name)+'.</p>'; return; }
+  if (!list.length){ body.className = ""; dlgTier = 1; body.innerHTML = '<p class="empty">No props found for '+esc(dlgPlayer.name)+'.</p>'; return; }
   var g = playerGroups(list)[0];
   var live = liveTeamsByLeague[g.league] && liveTeamsByLeague[g.league][(g.team || "").toLowerCase()];
   var bmD = (breakMap[g.league] && g.team) ? breakMap[g.league][g.team.toLowerCase()] : null;
@@ -1809,11 +1912,12 @@ function fillPlayerDlg(){
   var showList = useBrk ? brkList : list;
   var voDlg = !!(dlgPlayer && dlgPlayer.viewOnly);
   var closed = (!!live || voDlg) && !useBrk;
-  body.innerHTML = '<div class="row" style="gap:12px;align-items:center"><img src="' + esc(g.img || "") + '" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:19px;font-weight:900">' + esc(g.player) + '</div><div class="note">' + esc([g.team, g.leagueLabel].filter(function(x){ return x; }).join(" · ")) + ' · ' + showList.length + ' props · PrizePicks</div></div><button class="ghostbtn" id="pdlgClose">Close</button></div>'
+  applyDlgTier(showList.length);
+  body.innerHTML = '<div class="row" style="gap:12px;align-items:center"><img src="' + esc(g.img || "") + '" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:17px;font-weight:900">' + esc(g.player) + '</div><div class="note">' + esc([g.team, g.leagueLabel].filter(function(x){ return x; }).join(" · ")) + ' · ' + showList.length + ' props · PrizePicks</div></div><button class="ghostbtn" id="pdlgClose">Close</button></div>'
     + '<div id="pdlgLive"></div>'
     + (useBrk ? '<p class="sub" style="margin-top:8px;color:var(--gold)">⏸ ' + esc(bmD.detail || "At the break") + ' — fresh props for the next part of the game. Pick before play resumes; they come off the board when it starts.</p>' : (dlgPlayer.finalView ? '<p class="sub" style="margin-top:8px">This game is final — props are view only, with the final stats on each prop.</p>' : ((live || voDlg) ? '<p class="sub" style="margin-top:8px">This game is live — props are closed. Props on your locked-in tickets keep tracking in My Tickets.</p>' : '')))
     + (bmD && !brkList.length && live ? '<p class="sub" style="margin-top:8px">At the break — second-half props only show if the regular board refresh brings them.</p>' : '')
-    + '<div class="pdlgbody' + (closed ? ' closed' : '') + '">' + propCardsGrouped(showList, (dlgPlayer.finalView && closed) ? "final" : closed) + '</div>';
+    + '<div class="pdlgbody' + (closed ? ' closed' : '') + '">' + dlgPropCardsGrouped(showList, (dlgPlayer.finalView && closed) ? "final" : closed) + '</div>';
   if (!closed) bindPicks(body);
   hydrateL5();
   var cb = $("pdlgClose"); if (cb) cb.addEventListener("click", function(){ $("playerDlg").close(); });
@@ -1898,7 +2002,7 @@ function loadLiveForPlayer(g, list){
     fetchJson(ESPN+lg.sport+"/"+lg.league+"/summary?event="+encodeURIComponent(ev.id)).then(function(sm){
       if (isPost) list.forEach(function(p){ var v = liveStatFor(sm, p); if (v!=null) p.liveActual = v; });
       else list.forEach(function(p){ var v = findLiveStat(sm, aid, g.player, p.stat); if (v!=null) p.liveActual = v; });
-      if (dlgPlayer && dlgPlayer.name===g.player){ var body = $("playerDlgBody"); var grid = body && body.querySelector(".pdlgbody"); if (grid){ var cl0 = grid.classList.contains("closed"); grid.innerHTML = list.map(function(p){ return propCard(p, isPost ? "final" : cl0); }).join(""); if (!grid.classList.contains("closed")) bindPicks(body); hydrateL5(); } }
+      if (dlgPlayer && dlgPlayer.name===g.player){ var body = $("playerDlgBody"); var grid = body && body.querySelector(".pdlgbody"); if (grid){ var cl0 = grid.classList.contains("closed"); applyDlgTier(list.length); grid.innerHTML = list.map(function(p){ return dlgPropCard(p, isPost ? "final" : cl0); }).join(""); if (!grid.classList.contains("closed")) bindPicks(body); hydrateL5(); } }
     }).catch(function(){});
   }).catch(function(){});
 }
@@ -4265,7 +4369,7 @@ function ensureClashPop(){
 }
 function openClash(){ ensureClashPop(); $("clashPop").classList.add("open"); musicStart(); clashMenu(); }
 function closeClash(){ if (LOB) pvpLobbyCleanup(); if (CL && CL.mode === "pvp") { pvpPollStop(); if (CL.pvp.stage === "battle" && !CL.over) { CL.pvp.finSent = true; pvpSendFinal(false); var bb = battlesGet(); bb.l = (bb.l || 0) + 1; lsSet("pa_battles", bb); lsSet("pa_clash_last", Date.now()); cloudSave(); } } var p = $("clashPop"); if (p) p.classList.remove("open"); if (CL && CL.ttResolve) CL.ttResolve(-1); if (CL && CL.abResolve) CL.abResolve(""); musicStop(); closeZoom(); closeItemView(); CL = null; renderClash(); renderPacks(); }
-function clashPanel(html){ var p = $("clashPanel"); if (p) { p.classList.remove("startbg"); p.innerHTML = html; p.scrollTop = 0; } }
+function clashPanel(html){ var p = $("clashPanel"); if (p) { p.classList.remove("startbg"); p.classList.remove("menufit"); p.innerHTML = html; p.scrollTop = 0; } }
 function clashMenu(){
   CL = null;
   var b = battlesGet(), lad = ladderGet();
@@ -4279,7 +4383,7 @@ function clashMenu(){
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>'
     + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div><video controls playsinline preload="none" poster="/api/banners?s=clashbg&v=1" src="/api/banners?s=clashdemo&v=1" style="width:100%;border-radius:12px;background:#000;margin-bottom:8px"></video>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars are just your card\'s tier level — they do NOT decide attacks. Turns alternate: only the player whose turn it is can swing, and an attack lands unless it\'s blocked. Tiers set a card\'s DAMAGE and LIFE.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Prop Agent logo. Both players start with EMPTY hands — no Energy, no items. After the coin flip everyone makes an opening pull (1 random card), and every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>ATTACK COSTS 2 ENERGY — PAID UP FRONT:</b> on your turn, pay 2 Energy cards and your attack LANDS for its damage — unless the enemy blocked on their turn. Same price for every card, Rookie to Legend. Can\'t pay? Attack locks — defend, tag, play an item, or end your turn while your pulls build Energy back up.<br>🎴 <b>ITEMS:</b> you can play ONE item per turn from your hand AND still attack or defend — the item is a bonus play, then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> you pay for your block on YOUR turn and it stays armed for the enemy\'s turn — nobody sees it coming, and it only reveals itself when it stops a hit.<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 4) and live longer (Rookie 3 life → Legend 9). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>🛡️ <b>DEFEND costs 2 🔮 Energy:</b> on your turn you can DEFEND instead of attacking — pay 2 Energy cards and your block stays armed: the enemy\'s next attack is fully blocked. If you don\'t block, their attack takes your health. The CPU plays by the same rules.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Two-in-a-row threatens the line — finish 3 in a row to win the ability.<br>🚫 <b>NO TIES, NO SIMULTANEOUS SWINGS:</b> fighters take turns — only the player whose turn it is attacks, so attacks never cancel out. Only landed hits earn grid squares.<br>⏭️ <b>END TURN</b> passes your move — the next player goes. Careful: if they attack and you didn\'t block, you can lose health.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>');
-  var cp2 = $("clashPanel"); if (cp2) cp2.classList.add("startbg");
+  var cp2 = $("clashPanel"); if (cp2) cp2.classList.add("startbg"); cp2.classList.add("menufit");
 }
 function clashSetup(mode){
   if (mode === "pvp") { pvpLobbyFlow(); return; }
