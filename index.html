@@ -3934,7 +3934,7 @@ function cardBackHTML(title, sub){
   return '<div class="flipback"><img src="/api/icons?s=512" alt=""><div class="bkname">PROP AGENT</div><div class="bksub"><b style="color:#fff">' + title + '</b><br>' + sub + '</div></div>';
 }
 /* Brandon 2026-11-19: LEGEND cards carrying his ultimate-form art (battle s=<ci>L), shown whole. */
-var LEGEND_ART = { "1": "1L", "9": "9L" };
+var LEGEND_ART = { "1": "1L", "8": "8L", "9": "9L" };
 function legendArtKey(ci, ti){ return ti === 5 ? (LEGEND_ART[ci] || null) : null; }
 function legendArt(ci, ti){ return !!legendArtKey(ci, ti); }
 function cardArtUrl(ci, ti){ var k = legendArtKey(ci, ti); return k ? "/api/battle?v=4&s=" + k : "/api/battle?v=4&s=" + ci; }
