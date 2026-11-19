@@ -648,6 +648,10 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .openbtn{background:linear-gradient(135deg,#7C3AED,#5b21b6);color:#fff;font-weight:900;border:none;border-radius:11px;padding:11px 14px;font-size:14px;cursor:pointer}
 .openbtn.gold{background:linear-gradient(135deg,#f5c518,#d97706);color:#1a1405}
 .openbtn:disabled{opacity:.38;cursor:default}
+.freestrip{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding:5px 8px;border:1px solid rgba(245,197,24,.35);border-radius:9px;background:rgba(245,197,24,.06);font-size:12px;line-height:1.3}
+.freestrip .freelab{color:#cbd5e1}
+.freeopen{background:linear-gradient(135deg,#f5c518,#d97706);color:#1a1405;font-weight:900;border:none;border-radius:7px;padding:4px 10px;font-size:12px;cursor:pointer;white-space:nowrap}
+.freedone{color:#9aa7bd;font-weight:700;white-space:nowrap}
 .foilshine{position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(245,197,24,.32) 48%,rgba(255,255,255,.20) 52%,transparent 70%);transform:translateX(-130%);animation:pkshine 3.6s ease-in-out infinite;pointer-events:none}
 #packPop{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center}
 #packPop.open{display:flex}
@@ -4095,14 +4099,13 @@ function renderPacks(){
     + '<div><div style="font-weight:900;font-size:17px">🎁 1 FREE PACK <span style="color:#f5c518">EVERY DAY</span></div>'
     + '</div></div>'
     + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'
-    + (freeWaiting ? '<button class="openbtn gold" data-openfreepack="1">🎁 Free pack — OPEN</button>' : '<button class="openbtn" disabled>✓ Free pack opened — next one tomorrow</button>')
     + '<button class="openbtn" data-openpack="n"' + ((p.n || 0) > 0 ? '' : ' disabled') + '>Open Pack · ' + (p.n || 0) + '</button>'
     + (shared ? '<button class="openbtn" disabled>✓ Shared today</button>' : '<button class="openbtn" data-sharepack="1">🔗 Share &amp; Earn a Pack</button>')
     
     + '<button class="openbtn" data-buypack="1"' + (coinsGet() >= CLASH_PACK_COST ? '' : ' disabled') + '>🪙 Buy a Pack · ' + CLASH_PACK_COST + ' Coins</button>'
     + '</div>'
     + '<div class="note" style="margin-top:10px">🏆 Win a 4-leg ticket → <b>15 Clash Coins</b> · 5 legs → <b>1 pack</b> · 6 legs → <b>2 packs</b></div>'
-    + '<div class="note" style="margin-top:6px">🎁 Free pack rule: only <b>1</b> free pack waits at a time — open it and the next one lands tomorrow. Leave it unopened and it stays at 1; free packs never stack.</div>'
+    + (freeWaiting ? '<div class="freestrip"><span class="freelab">1 waits max \u2014 open it daily, they don\'t stack.</span><button class="freeopen" data-openfreepack="1">\uD83C\uDF81 Free pack \u2014 OPEN</button></div>' : '<div class="freestrip"><span class="freelab">1 waits max \u2014 open it daily, they don\'t stack.</span><span class="freedone">\u2713 Opened \u2014 next one tomorrow</span></div>')
     + '</div>';
 }
 function ringBackHTML(){
