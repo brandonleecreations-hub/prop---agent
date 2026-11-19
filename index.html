@@ -4070,7 +4070,7 @@ function ensureClashPop(){
   el.querySelector("#itemPop").addEventListener("click", function(e){ if (e.target === el.querySelector("#itemPop")) closeItemView(); });
 }
 function openClash(){ ensureClashPop(); $("clashPop").classList.add("open"); musicStart(); clashMenu(); }
-function closeClash(){ var p = $("clashPop"); if (p) p.classList.remove("open"); if (CL && CL.ttResolve) CL.ttResolve(-1); if (CL && CL.abResolve) CL.abResolve(""); musicStop(); closeZoom(); closeItemView(); CL = null; renderClash(); renderPacks(); }
+function closeClash(){ if (CL && CL.mode === "pvp") { pvpPollStop(); if (CL.pvp.stage === "battle" && !CL.over) { CL.pvp.finSent = true; pvpSendFinal(false); var bb = battlesGet(); bb.l = (bb.l || 0) + 1; lsSet("pa_battles", bb); lsSet("pa_clash_last", Date.now()); cloudSave(); } } var p = $("clashPop"); if (p) p.classList.remove("open"); if (CL && CL.ttResolve) CL.ttResolve(-1); if (CL && CL.abResolve) CL.abResolve(""); musicStop(); closeZoom(); closeItemView(); CL = null; renderClash(); renderPacks(); }
 function clashPanel(html){ var p = $("clashPanel"); if (p) { p.innerHTML = html; p.scrollTop = 0; } }
 function clashMenu(){
   CL = null;
@@ -4078,6 +4078,7 @@ function clashMenu(){
   clashPanel('<div class="clashttl">⚔️ AGENT CLASH</div>'
     + '<div class="clashsub">Pick 2 battle cards — a Starter and a Tag Partner. A shiny 🔴🔵 coin flip decides who goes first — winner goes first, but the first player can\'t strike on Turn 1. Every turn you may play ONE 🎴 item from your hand (a free bonus) AND make one move: ATTACK ⚔️, DEFEND 🛡️, TAG 🔁, or END TURN ⏭️ (🔁 TAG is a move too — the fresh fighter steps in right away, but can\'t strike that turn). Landing a hit costs 🔮 Energy cards from your hand — your 44-card deck (20 Energy + 24 items, shuffled at the start) starts you with EMPTY hands — no Energy, no items — and every turn starts with a random pull from the deck; spent cards go to the discard pile. Land a hit, place your ✖ on the Clash Grid — 3 in a row wins an ability. A card is out when its life (❤️ on the card) is gone.</div>'
     + '<button class="clashbig" data-clashmode="quick">⚡ QUICK CLASH<span>Friendly fight — the CPU fields the same tier cards you bring</span></button>'
+    + '<button class="clashbig" data-clashmode="pvp" style="border-color:#4fe3c1">\uD83D\uDC65 CHALLENGE A FRIEND<span>Head-to-head \u2014 send an invite link, battle a real friend live, turn by turn</span></button>'
     + '<button class="clashbig gold" data-clashmode="ladder">🏆 LADDER' + (lad >= 7 ? ' — CHAMPION 🏆' : ' — BOSS ' + (lad + 1) + ' OF 7') + '<span>' + (lad >= 7 ? 'Every boss beaten. Replay Boss 7 for coins.' : 'Beat bosses in order. Boss ' + (lad + 1) + ' pays ' + (10 + (lad + 1) * 5) + ' 🪙') + '</span></button>'
     + '<div class="clashmeta">🪙 <b>' + coinsGet() + '</b> Clash Coins · Record <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b><br>Wins pay Clash Coins — spend them on packs (1 pack = ' + CLASH_PACK_COST + ' 🪙, in My Packs below)</div>'
     + '<div class="clashmeta">🏆 <b>Every agent climbs their own ladder:</b> ticket wins and battle wins add points to the agent set on your tier bar \u2014 right now that\u2019s <b>' + CHARNAMES[tierCharIdx() - 1] + '</b> (' + charWins(tierCharIdx()) + ' pts). Switch the bar on the Board tab to feed a different agent. Each agent\u2019s cards and battle tier unlock with their own points.</div>'
@@ -4086,6 +4087,7 @@ function clashMenu(){
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>');
 }
 function clashSetup(mode){
+  if (mode === "pvp") { pvpCreateFlow(); return; }
   var boss = mode === "ladder" ? Math.min(ladderGet() + 1, 7) : 0;
   CL = { mode: mode, boss: boss, sel: 0, mine: [null, null], cpu: null, myActive: 0, cpuActive: 0, round: 1, busy: false, over: false, tagged: false, lastHit: null, lastWin: null, lastBlock: null, log: [], grid: ["", "", "", "", "", "", "", "", ""], myBonus: 0, cpuBonus: 0, myGuard: 0, cpuGuard: 0, myTemp: 0, cpuTemp: 0, placing: null, abilityPick: null, ttLine: null, ttResolve: null, abResolve: null, phase: null, flip: null, firstPlayer: null, myDeck: [], cpuDeck: [], myHand: [], cpuHand: [], myPile: [], cpuPile: [], drawPop: 0, statSurge: 0, justShuffled: false, itemUsedRound: 0, cpuItemRound: 0, myFreeHit: false, cpuFreeHit: false, planned: false, scoutText: null, turn: null, turnNo: 0, myDef: false, cpuDef: false, plan: null };
   clashPickRender();
@@ -4119,8 +4121,8 @@ function clashPickRender(){
   var stepHtml = !CL.mine[0] ? '<div class="stepbanner"><span class="stepn">STEP 1</span>⭐ PICK YOUR STARTER <span class="stepdown">▼</span></div>'
     : (!CL.mine[1] ? '<div class="stepbanner"><span class="stepn">STEP 2</span>🔁 PICK YOUR BENCH <span class="stepdim">— your tag partner</span> <span class="stepdown">▼</span></div>'
     : '<div class="stepbanner done"><span class="stepn">READY</span>✅ PAIR SET — TAP FIGHT! 🥊</div>');
-  clashPanel('<div class="clashttl">' + (CL.mode === "ladder" ? '🏆 LADDER — BOSS ' + CL.boss : '⚡ QUICK CLASH') + '</div>'
-    + '<div class="clashsub">Build your pair. The CPU matches your tiers — a fair fight. Tap 🔍 on any agent to read their full card first.</div>'
+  clashPanel('<div class="clashttl">' + (CL.mode === "pvp" ? '👥 HEAD-TO-HEAD' : CL.mode === "ladder" ? '🏆 LADDER — BOSS ' + CL.boss : '⚡ QUICK CLASH') + '</div>'
+    + '<div class="clashsub">' + (CL.mode === "pvp" ? '👥 vs <b>' + (CL.pvp.oppName || 'your friend') + '</b> — build your pair. They pick theirs too; a coin flip starts the battle.' + (CL.pvp.oppPicked ? ' <b style="color:#4fe3c1">✓ Your friend is ready!</b>' : '') : 'Build your pair. The CPU matches your tiers — a fair fight. Tap 🔍 on any agent to read their full card first.') + '</div>'
     + stepHtml
     + '<div class="pickslots">' + slots + '</div>' + grid + tiers
     + '<button class="clashbig gold' + (ready ? ' ready' : '') + '" data-clashfight="1"' + (ready ? '' : ' disabled') + '>🥊 FIGHT!<span>' + (ready ? 'Your pair is ready' : 'Pick both fighters first') + '</span></button>'
@@ -4141,7 +4143,7 @@ function clashCpuPair(){
   return [mkFighter(pickAgent(), mt1), mkFighter(pickAgent(), mt2)];
 }
 function clashStartFight(){
-  CL.cpu = clashCpuPair();
+  CL.cpu = CL.mode === "pvp" ? (CL.cpu || clashCpuPair()) : clashCpuPair();
   CL.myActive = 0; CL.cpuActive = 0; CL.round = 1; CL.busy = false; CL.over = false; CL.tagged = false; CL.lastHit = null; CL.lastWin = null; CL.lastBlock = null; CL.lastTag = null; CL.grid = ["", "", "", "", "", "", "", "", ""]; CL.myBonus = 0; CL.cpuBonus = 0; CL.myGuard = 0; CL.cpuGuard = 0; CL.myTemp = 0; CL.cpuTemp = 0; CL.placing = null; CL.abilityPick = null; CL.ttLine = null; CL.ttResolve = null; CL.abResolve = null;
   CL.phase = "flip"; CL.flip = null; CL.firstPlayer = null; CL.myDeck = buildDeck(); CL.cpuDeck = buildDeck(); CL.myHand = []; CL.cpuHand = []; CL.myPile = []; CL.cpuPile = []; CL.pulledMe = []; CL.pulledCpu = []; CL.drawPop = 0; CL.statSurge = 0; CL.justShuffled = true; CL.itemUsedRound = 0; CL.cpuItemRound = 0; CL.myFreeHit = false; CL.cpuFreeHit = false; CL.planned = false; CL.scoutText = null; CL.lastDrawn = []; CL.turn = null; CL.turnNo = 0; CL.myDef = false; CL.cpuDef = false; CL.plan = null; CL._turnKey = null; CL._sdSplash = 0;
   CL.log = ["🥊 " + fName(CL.mine[0]) + " & " + fName(CL.mine[1]) + " vs " + fName(CL.cpu[0]) + " & " + fName(CL.cpu[1]) + " — FIGHT!"];
@@ -4180,6 +4182,7 @@ function itemPlayable(side, id){
   if (id === "supply" && !(mine ? CL.myDeck : CL.cpuDeck).length) return "Item deck is empty";
   if (id === "tag" && !fAlive(myPair[1 - myAct])) return "Partner is out";
   if (id === "token" && (mine ? CL.myFreeHit : CL.cpuFreeHit)) return "Free Hit already saved";
+  if (id === "scout" && CL.mode === "pvp") return "No CPU plan to scout in a friend match";
   if (id === "scout" && mine && CL.planned) return "Already scouted this round";
   if (id === "sneak" && !fAlive(foePair[foeAct])) return "No target";
   return "";
@@ -4263,6 +4266,7 @@ function openItemView(id){
 function closeItemView(){ var pop = document.getElementById("itemPop"); if (pop) { pop.style.display = "none"; pop.innerHTML = ""; } }
 async function flipResolve(call){
   if (!CL || CL.phase !== "flip" || CL.flip) return;
+  if (CL.mode === "pvp" && CL.pvp.role !== "host") return;
   var B = CL;
   var result = Math.random() < 0.5 ? "red" : "blue";
   CL.flip = { call: call, result: result, winner: call === result ? "me" : "cpu" };
@@ -4277,6 +4281,7 @@ async function flipResolve(call){
   CL.phase = "arena";
   sfx("charge"); sfx("shuffle");
   beginTurn(CL.firstPlayer, B);
+  if (CL.mode === "pvp" && CL.firstPlayer === "me") pvpUploadFor(CL.pvp.role);
 }
 function pipsHTML(f){ var s = '<span class="pips">'; for (var i = 0; i < lifeOf(f); i++) s += '<i class="' + (i < f.hits ? 'hit' : '') + '"></i>'; return s + '</span>'; }
 function fxFor(side, f){ if (!CL || !f) return ""; if (CL.lastKO === f) return "ko"; if (CL.lastHit === side) return "pain"; if (CL.lastBlock === side) return "smug"; if (CL.lastHit && CL.lastWin === side) return "rage"; if (CL.lastTag === side) return "tag"; return ""; }
@@ -4477,6 +4482,7 @@ async function endTurn(B){
 }
 function beginTurn(side, B){
   if (!CL || CL.over) return;
+  if (CL.mode === "pvp" && side === "cpu") { pvpHandoff(B); return; }
   CL.turn = side; CL.turnNo = (CL.turnNo || 0) + 1;
   if (side === "me") { CL.myDef = false; CL.scoutText = null; } else CL.cpuDef = false;
   CL.itemUsedRound = 0; CL.cpuItemRound = 0; CL.tagged = false;
@@ -4560,13 +4566,214 @@ function clashFinish(won){
   } else cloudSave();
   renderClash(); renderPacks();
   clashPanel('<div class="clashresult">' + (won ? '<div class="reswin">🏆 VICTORY!</div>' : '<div class="reslose">DEFEAT</div>')
-    + '<div class="clashsub">' + (won ? 'Your pair takes the night! ' + (earned > 0 ? '<b style="color:#f5c518">+' + earned + ' 🪙 Clash Coins</b>' + (capped ? ' (daily coin cap hit — more tomorrow)' : '') : '<b>Daily coin cap reached — wins pay again tomorrow.</b>') : 'The CPU pair takes this one. Watch their powers, time your tags, and run it back.') + '</div>'
+    + '<div class="clashsub">' + (won ? 'Your pair takes the night! ' + (earned > 0 ? '<b style="color:#f5c518">+' + earned + ' 🪙 Clash Coins</b>' + (capped ? ' (daily coin cap hit — more tomorrow)' : '') : '<b>Daily coin cap reached — wins pay again tomorrow.</b>') : CL.mode === "pvp" ? (CL.pvp.oppName || 'Your friend') + ' takes this one. Run it back!' : 'The CPU pair takes this one. Watch their powers, time your tags, and run it back.') + '</div>'
     + '<div class="clashmeta">Battle Record: <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b> · 🪙 <b>' + coinsGet() + '</b>' + (won ? (CL.bwPoint ? ' \u00B7 \uD83C\uDFC6 <b>+5 Tier Points</b> \u2014 ' + CHARNAMES[tierCharIdx() - 1] + ' now has ' + charWins(tierCharIdx()) + ' pts' : ' \u00B7 Every battle win earns 5 tier points') : '') + (CL.mode === "ladder" && won && CL.boss < 7 ? ' · Next up: Boss ' + (CL.boss + 1) : '') + (CL.mode === "ladder" && won && CL.boss === 7 ? ' · 🏆 LADDER CHAMPION!' : '') + '</div>'
-    + '<button class="clashbig gold" data-clashrematch="1">🔁 REMATCH<span>' + (CL.mode === "ladder" ? 'Boss ' + CL.boss + ' again' : 'New CPU pair, same tiers') + '</span></button>'
-    + '<button class="clashbig" data-clashmode="' + CL.mode + '">🔄 NEW PAIR<span>Pick different fighters</span></button>'
+    + (CL.mode === "pvp" ? '<button class="clashbig gold" data-pvprem="1">🔁 REMATCH<span>Same room — both pick new pairs</span></button>' : '<button class="clashbig gold" data-clashrematch="1">🔁 REMATCH<span>' + (CL.mode === "ladder" ? 'Boss ' + CL.boss + ' again' : 'New CPU pair, same tiers') + '</span></button>'
+    + '<button class="clashbig" data-clashmode="' + CL.mode + '">🔄 NEW PAIR<span>Pick different fighters</span></button>')
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:8px">Done</button></div>');
+  if (CL.mode === "pvp" && CL.pvp && !CL.pvp.finSent) { CL.pvp.finSent = true; pvpSendFinal(won); }
   if (won && typeof confetti === "function") confetti();
 }
+/* ============ HEAD-TO-HEAD PvP (Brandon 2026-11-18) ============
+   Rooms live in Supabase (clash_rooms) via api/social.js. The battle state
+   is stored oriented for the player who moves NEXT; the other phone mirrors
+   it (my*<->cpu*, grid X<->O) for display. beginTurn("me") runs exactly once
+   per turn, on the mover's own phone, so draws/rounds/sudden-death apply
+   exactly once. Rewards ride the normal clashFinish path on both phones. */
+var _pvpTimer = null;
+function pvpActive(){ return !!(CL && CL.mode === "pvp" && CL.pvp); }
+function pvpMyName(){ try { return (typeof profile !== "undefined" && profile && profile.name) || "Guest Agent"; } catch (e) { return "Guest Agent"; } }
+function pvpNewCL(role, code, oppName){
+  CL = { mode: "pvp", boss: 0, sel: 0, mine: [null, null], cpu: null, myActive: 0, cpuActive: 0, round: 1, busy: false, over: false, tagged: false, lastHit: null, lastWin: null, lastBlock: null, lastTag: null, log: [], grid: ["", "", "", "", "", "", "", "", ""], myBonus: 0, cpuBonus: 0, myGuard: 0, cpuGuard: 0, myTemp: 0, cpuTemp: 0, placing: null, abilityPick: null, ttLine: null, ttResolve: null, abResolve: null, phase: null, flip: null, firstPlayer: null, myDeck: [], cpuDeck: [], myHand: [], cpuHand: [], myPile: [], cpuPile: [], drawPop: 0, statSurge: 0, justShuffled: false, itemUsedRound: 0, cpuItemRound: 0, myFreeHit: false, cpuFreeHit: false, planned: false, scoutText: null, turn: null, turnNo: 0, myDef: false, cpuDef: false, plan: null,
+    pvp: { code: code, role: role, oppName: oppName || null, seq: 0, stage: "picking", myPicksIn: false, oppPicked: false, battleMade: false, finSent: false } };
+}
+function pvpCreateFlow(){
+  if (!cloudUid) { clashPanel('<div class="clashttl">👥 HEAD-TO-HEAD</div><div class="clashsub">Your agent profile is still loading — give it a second and try again.</div><button class="openbtn" data-clashmenu="1" style="width:100%;margin-top:8px">← Back</button>'); return; }
+  clashPanel('<div class="clashttl">👥 HEAD-TO-HEAD</div><div class="clashsub">Creating your match room…</div>');
+  socialPost({ uid: cloudUid, action: "room_create", name: pvpMyName() }).then(function(j){
+    if (!j || !j.ok) { clashPanel('<div class="clashttl">👥 HEAD-TO-HEAD</div><div class="clashsub">⚠️ Could not create the room — the match table may still be setting up. Try again in a minute.</div><button class="openbtn" data-clashmenu="1" style="width:100%;margin-top:8px">← Back</button>'); return; }
+    pvpNewCL("host", j.code, null);
+    CL.pvp.stage = "waiting";
+    pvpShowInvite();
+    pvpPollStart();
+  });
+}
+function pvpShowInvite(){
+  var link = location.origin + "/?clash=" + CL.pvp.code;
+  clashPanel('<div class="clashttl">👥 HEAD-TO-HEAD</div>'
+    + '<div class="clashsub">Send your friend this invite link — when they open it, they land right in your match room.</div>'
+    + '<div style="text-align:center;font-size:34px;font-weight:900;letter-spacing:6px;color:#f5b942;margin:10px 0">' + CL.pvp.code + '</div>'
+    + '<button class="clashbig gold" data-pvpshare="1">🔗 SHARE INVITE LINK<span>' + link + '</span></button>'
+    + '<div class="clashmeta">⏳ Waiting for your friend to join…</div>'
+    + '<button class="openbtn" data-pvpcancel="1" style="width:100%;margin-top:8px">← Cancel</button>');
+}
+function pvpShare(){
+  if (!pvpActive()) return;
+  var link = location.origin + "/?clash=" + CL.pvp.code;
+  if (navigator.share) { navigator.share({ title: "Prop Agent — Agent Clash", text: "⚔️ I challenge you to a head-to-head Agent Clash! Open this link to join my match:", url: link }).catch(function(){}); }
+  else if (navigator.clipboard) { navigator.clipboard.writeText(link).then(function(){ var s = document.querySelector("[data-pvpshare] span"); if (s) s.textContent = "✓ Link copied — send it to your friend!"; }).catch(function(){}); }
+}
+function pvpJoinFlow(code){
+  openClash();
+  clashPanel('<div class="clashttl">👥 HEAD-TO-HEAD</div><div class="clashsub">Joining match room <b>' + code + '</b>…</div>');
+  socialPost({ uid: cloudUid, action: "room_join", code: code, name: pvpMyName() }).then(function(j){
+    if (!j || !j.ok) { clashPanel('<div class="clashttl">👥 HEAD-TO-HEAD</div><div class="clashsub">⚠️ ' + ((j && j.error) || "Could not join that room.") + ' — the link may have expired (rooms last 45 minutes) or the room is full.</div><button class="openbtn" data-clashmenu="1" style="width:100%;margin-top:8px">← Clash menu</button>'); return; }
+    pvpNewCL("guest", code, (j.state && j.state.host && j.state.host.name) || "Your friend");
+    CL.pvp.stage = "picking";
+    if (j.state && j.state.host && j.state.host.picks) CL.pvp.oppPicked = true;
+    clashPickRender();
+    pvpPollStart();
+  });
+}
+function pvpPollStart(){ pvpPollStop(); _pvpTimer = setInterval(pvpPollTick, 1800); }
+function pvpPollStop(){ if (_pvpTimer) { clearInterval(_pvpTimer); _pvpTimer = null; } }
+function pvpPollTick(){
+  if (!pvpActive()) { pvpPollStop(); return; }
+  var B = CL;
+  socialGet("room=" + encodeURIComponent(CL.pvp.code) + "&uid=" + encodeURIComponent(cloudUid)).then(function(j){
+    if (CL !== B || !j || !j.ok) return;
+    pvpOnRoom(j.state);
+  });
+}
+function pvpOnRoom(state){
+  if (!pvpActive() || !state) return;
+  var P = CL.pvp;
+  if (state.phase === "picking" && !state.battle) {
+    if (CL.over) { pvpToPicker(); return; }
+    if (P.stage === "waiting" && state.guest) { P.oppName = state.guest.name; P.stage = "picking"; clashPickRender(); return; }
+    if (P.stage === "picking") {
+      var opp = P.role === "host" ? state.guest : state.host;
+      var oppIn = !!(opp && opp.picks);
+      if (oppIn !== P.oppPicked) { P.oppPicked = oppIn; if (P.myPicksIn) pvpPicksWaitPanel(); else if (!CL.mine[0] || !CL.mine[1] || true) clashPickRender(); }
+      if (P.role === "host" && state.host && state.host.picks && state.guest && state.guest.picks && !P.battleMade) pvpStartBattle(state);
+    }
+    return;
+  }
+  if ((state.phase === "battle" || state.phase === "done") && state.battle) {
+    var b = state.battle;
+    if (!b || b.seq <= P.seq) return;
+    P.seq = b.seq;
+    P.stage = "battle";
+    var o = b.nextRole === P.role ? b.cl : pvpMirror(b.cl);
+    pvpInstall(o);
+    if (state.phase === "done" || (b.cl && b.cl.over)) {
+      P.finSent = true;
+      if (!CL.over) clashFinish(state.winnerRole === P.role);
+      return;
+    }
+    if (b.nextRole === P.role) { CL.log.push("▶ " + (P.oppName || "Your friend") + " made their move — your turn!"); beginTurn("me", CL); }
+    else clashArena();
+  }
+}
+function pvpSubmitPicks(){
+  if (!pvpActive() || CL.pvp.myPicksIn) return;
+  CL.pvp.myPicksIn = true;
+  var picks = CL.mine.map(function(f){ return { ci: f.ci, ti: f.ti }; });
+  socialPost({ uid: cloudUid, action: "room_picks", code: CL.pvp.code, picks: picks }).then(function(j){
+    if (!j || !j.ok) { CL.pvp.myPicksIn = false; clashPickRender(); return; }
+    pvpPicksWaitPanel();
+    pvpOnRoom(j.state);
+  });
+  pvpPicksWaitPanel();
+}
+function pvpPicksWaitPanel(){
+  if (!pvpActive()) return;
+  clashPanel('<div class="clashttl">👥 HEAD-TO-HEAD</div>'
+    + '<div class="clashsub">✅ <b>Your pair is locked in!</b></div>'
+    + '<div class="clashmeta">' + (CL.pvp.oppPicked ? '✓ ' + (CL.pvp.oppName || 'Your friend') + ' is ready too — starting the battle…' : '⏳ Waiting for ' + (CL.pvp.oppName || 'your friend') + ' to pick their pair…') + '</div>'
+    + '<button class="openbtn" data-pvpcancel="1" style="width:100%;margin-top:8px">← Leave room</button>');
+}
+function pvpStartBattle(state){
+  var P = CL.pvp;
+  P.battleMade = true; P.stage = "battle";
+  CL.cpu = state.guest.picks.map(function(p){ return mkFighter(p.ci, p.ti); });
+  clashStartFight();
+  P.seq = 1;
+  socialPost({ uid: cloudUid, action: "room_battle", code: P.code, battle: { seq: 1, nextRole: "host", cl: pvpSerialize() }, phase: "battle" });
+}
+function pvpSerialize(){
+  var c = CL;
+  return { mine: c.mine, cpu: c.cpu, myActive: c.myActive, cpuActive: c.cpuActive, round: c.round, over: c.over, grid: c.grid,
+    myBonus: c.myBonus, cpuBonus: c.cpuBonus, myGuard: c.myGuard, cpuGuard: c.cpuGuard, myTemp: c.myTemp, cpuTemp: c.cpuTemp,
+    firstPlayer: c.firstPlayer, phase: c.phase, flip: c.flip, myDeck: c.myDeck, cpuDeck: c.cpuDeck, myHand: c.myHand, cpuHand: c.cpuHand,
+    myPile: c.myPile, cpuPile: c.cpuPile, turnNo: c.turnNo, myDef: c.myDef, cpuDef: c.cpuDef, myFreeHit: c.myFreeHit, cpuFreeHit: c.cpuFreeHit,
+    itemUsedRound: c.itemUsedRound, cpuItemRound: c.cpuItemRound, statSurge: c.statSurge, lastHit: c.lastHit, lastWin: c.lastWin, lastBlock: c.lastBlock, lastTag: c.lastTag, turn: c.turn };
+}
+function pvpMirror(o){
+  function sw(v){ return v === "me" ? "cpu" : v === "cpu" ? "me" : v; }
+  return { mine: o.cpu, cpu: o.mine, myActive: o.cpuActive, cpuActive: o.myActive, round: o.round, over: o.over,
+    grid: (o.grid || []).map(function(g){ return g === "X" ? "O" : g === "O" ? "X" : ""; }),
+    myBonus: o.cpuBonus, cpuBonus: o.myBonus, myGuard: o.cpuGuard, cpuGuard: o.myGuard, myTemp: o.cpuTemp, cpuTemp: o.myTemp,
+    firstPlayer: sw(o.firstPlayer), phase: o.phase, flip: o.flip ? { call: o.flip.call, result: o.flip.result, winner: sw(o.flip.winner) } : null,
+    myDeck: o.cpuDeck, cpuDeck: o.myDeck, myHand: o.cpuHand, cpuHand: o.myHand, myPile: o.cpuPile, cpuPile: o.myPile,
+    turnNo: o.turnNo, myDef: o.cpuDef, cpuDef: o.myDef, myFreeHit: o.cpuFreeHit, cpuFreeHit: o.myFreeHit,
+    itemUsedRound: o.cpuItemRound, cpuItemRound: o.itemUsedRound, statSurge: o.statSurge,
+    lastHit: sw(o.lastHit), lastWin: sw(o.lastWin), lastBlock: sw(o.lastBlock), lastTag: sw(o.lastTag), turn: sw(o.turn) };
+}
+function pvpInstall(o){
+  var P = CL.pvp, keepLog = (CL.log || []).slice();
+  if (!keepLog.length && o.mine && o.cpu) keepLog = ["🥊 Head-to-head vs " + (P.oppName || "your friend") + " — FIGHT!"];
+  CL = { mode: "pvp", boss: 0, sel: 0, mine: o.mine, cpu: o.cpu, myActive: o.myActive, cpuActive: o.cpuActive, round: o.round, busy: false, over: !!o.over, tagged: false,
+    lastHit: o.lastHit, lastWin: o.lastWin, lastBlock: o.lastBlock, lastTag: o.lastTag, lastKO: null, log: keepLog, grid: o.grid,
+    myBonus: o.myBonus, cpuBonus: o.cpuBonus, myGuard: o.myGuard, cpuGuard: o.cpuGuard, myTemp: o.myTemp, cpuTemp: o.cpuTemp,
+    placing: null, abilityPick: null, ttLine: null, ttResolve: null, abResolve: null, phase: o.phase, flip: o.flip, firstPlayer: o.firstPlayer,
+    myDeck: o.myDeck, cpuDeck: o.cpuDeck, myHand: o.myHand, cpuHand: o.cpuHand, myPile: o.myPile, cpuPile: o.cpuPile,
+    drawPop: 0, statSurge: o.statSurge, justShuffled: false, itemUsedRound: o.itemUsedRound, cpuItemRound: o.cpuItemRound,
+    myFreeHit: o.myFreeHit, cpuFreeHit: o.cpuFreeHit, planned: false, scoutText: null, turn: o.turn, turnNo: o.turnNo, myDef: o.myDef, cpuDef: o.cpuDef, plan: null,
+    pulledMe: [], pulledCpu: [], cpuDrawn: [], lastDrawn: [], _turnKey: null, _sdSplash: 0, pvp: P };
+}
+function pvpUploadFor(nextRole){
+  if (!pvpActive()) return;
+  var o = pvpSerialize();
+  if (nextRole !== CL.pvp.role) o = pvpMirror(o);
+  CL.pvp.seq = (CL.pvp.seq || 0) + 1;
+  socialPost({ uid: cloudUid, action: "room_battle", code: CL.pvp.code, battle: { seq: CL.pvp.seq, nextRole: nextRole, cl: o }, phase: "battle" });
+}
+function pvpHandoff(B){
+  if (CL !== B || !pvpActive()) return;
+  CL.turn = "cpu"; CL.busy = false;
+  pvpUploadFor(CL.pvp.role === "host" ? "guest" : "host");
+  clashArena();
+}
+function pvpSendFinal(won){
+  if (!pvpActive()) return;
+  var opp = CL.pvp.role === "host" ? "guest" : "host";
+  var o = pvpSerialize();
+  if (opp !== CL.pvp.role) o = pvpMirror(o);
+  o.over = true;
+  CL.pvp.seq = (CL.pvp.seq || 0) + 1;
+  socialPost({ uid: cloudUid, action: "room_battle", code: CL.pvp.code, battle: { seq: CL.pvp.seq, nextRole: opp, cl: o }, phase: "done", winnerRole: won ? CL.pvp.role : opp });
+}
+function pvpRematch(){
+  if (!pvpActive()) return;
+  socialPost({ uid: cloudUid, action: "room_reset", code: CL.pvp.code }).then(function(j){
+    if (j && j.ok) pvpToPicker();
+  });
+  pvpToPicker();
+}
+function pvpToPicker(){
+  if (!pvpActive()) return;
+  var P = CL.pvp;
+  pvpNewCL(P.role, P.code, P.oppName);
+  CL.pvp.stage = "picking";
+  pvpPollStart();
+  clashPickRender();
+}
+(function pvpBootLink(){
+  try {
+    var m = /[?&]clash=([A-Za-z0-9]{4,8})/.exec(location.search || "");
+    if (!m) return;
+    var code = m[1].toUpperCase();
+    history.replaceState(null, "", location.pathname);
+    var tries = 0;
+    var iv = setInterval(function(){
+      tries++;
+      if (cloudUid) { clearInterval(iv); pvpJoinFlow(code); }
+      else if (tries > 24) clearInterval(iv);
+    }, 300);
+  } catch (e) {}
+})();
+
 function clashBuyPack(){
   if (coinsGet() < CLASH_PACK_COST) return;
   coinsSet(coinsGet() - CLASH_PACK_COST); sfx("coin");
@@ -4593,7 +4800,10 @@ document.addEventListener("click", function(e){
   if ((t = e.target.closest("[data-pickslot]"))) { if (CL) { CL.sel = parseInt(t.getAttribute("data-pickslot"), 10); sfx("click"); clashPickRender(); } return; }
   if ((t = e.target.closest("[data-pickagent]"))) { if (CL) { var ci = parseInt(t.getAttribute("data-pickagent"), 10); var wasSel = CL.sel; CL.mine[CL.sel] = mkFighter(ci, bestPickTier(ci)); if (!CL.mine[1 - CL.sel]) CL.sel = 1 - CL.sel; if (CL.mine[0] && CL.mine[1]) sfx("gridwin"); else sfx(wasSel === 1 ? "tag" : "click"); clashPickRender(); } return; }
   if ((t = e.target.closest("[data-picktier]"))) { if (CL && CL.mine[CL.sel]) { CL.mine[CL.sel].ti = parseInt(t.getAttribute("data-picktier"), 10); sfx("click"); clashPickRender(); } return; }
-  if ((t = e.target.closest("[data-clashfight]"))) { if (CL && CL.mine[0] && CL.mine[1]) clashStartFight(); return; }
+  if ((t = e.target.closest("[data-clashfight]"))) { if (CL && CL.mine[0] && CL.mine[1]) { if (CL.mode === "pvp") pvpSubmitPicks(); else clashStartFight(); } return; }
+  if ((t = e.target.closest("[data-pvpshare]"))) { pvpShare(); return; }
+  if ((t = e.target.closest("[data-pvpcancel]"))) { pvpPollStop(); CL = null; clashMenu(); return; }
+  if ((t = e.target.closest("[data-pvprem]"))) { pvpRematch(); return; }
   if ((t = e.target.closest("[data-clashrematch]"))) { if (CL) { CL.mine = CL.mine.map(function(f){ return mkFighter(f.ci, f.ti); }); clashStartFight(); } return; }
   if ((t = e.target.closest("[data-clashquit]"))) { clashMenu(); return; }
   if ((t = e.target.closest("[data-clashact]"))) { clashRound(t.getAttribute("data-clashact")); return; }
