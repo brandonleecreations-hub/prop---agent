@@ -195,7 +195,7 @@ img[src*="stamp=1"]{padding:2px;box-sizing:border-box;background-color:rgba(122,
 @keyframes lgndGlow{0%,100%{box-shadow:0 12px 26px rgba(0,0,0,.38),0 0 12px rgba(178,107,255,.45)}50%{box-shadow:0 12px 26px rgba(0,0,0,.38),0 0 30px rgba(178,107,255,.85)}}
 .tiercard.lgnd .flipfront{animation:lgndGlow 2.2s ease-in-out infinite}
 #myCards .tiercard.lgnd .flipfront{animation:lgndGlow 2.2s ease-in-out infinite}
-@media (prefers-reduced-motion: reduce){.glitterfx,.stampspark,img[src*="stamp=1"],.tiercard.lgnd .flipfront{animation:none}}
+@media (prefers-reduced-motion: reduce){.glitterfx,.stampspark,img[src*="stamp=1"],#vaTkPop,.tiercard.lgnd .flipfront{animation:none}}
 @keyframes sparkdrift{from{transform:translateY(0)}to{transform:translateY(-7px)}}
 #myCards{display:block}
 .cardsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
@@ -211,6 +211,18 @@ img[src*="stamp=1"]{padding:2px;box-sizing:border-box;background-color:rgba(122,
 .cardrail{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .cardrail::-webkit-scrollbar{display:none}
 .cardrail .tiercard{flex:0 0 104px;scroll-snap-align:start}
+.tkrail{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tkrail::-webkit-scrollbar{display:none}
+.tkmini{flex:0 0 118px;scroll-snap-align:start;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.35)}
+.tkstamp{display:inline-block;font-size:11.5px;font-weight:900;letter-spacing:1px;border:2.5px solid;padding:2px 7px;border-radius:6px;transform:rotate(-4deg)}
+.tkstamp.win{color:var(--gold);border-color:var(--gold)}
+.tkstamp.loss{color:var(--red);border-color:var(--red)}
+.tkstamp.pend{color:var(--blu);border-color:var(--blu)}
+.tkmeta{margin-top:9px;font-size:12px;color:var(--mut);line-height:1.5}
+.tkmeta b{color:var(--txt);font-size:12.5px}
+#vaTkPop{position:fixed;left:10px;right:10px;top:50%;transform:translateY(-50%);max-height:84vh;overflow-y:auto;z-index:80;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:0 18px 50px rgba(0,0,0,.6);animation:vatkpopin .25s ease-out}
+#vaTkPop .card{margin:0}
+@keyframes vatkpopin{from{transform:translateY(-46%) scale(.97);opacity:0}to{transform:translateY(-50%) scale(1);opacity:1}}
 .cardsec{margin-bottom:14px}
 .cardsec-h{width:100%;display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,rgba(124,58,237,.25),rgba(245,185,66,.12));border:1px solid rgba(167,139,250,.45);border-radius:11px;padding:9px 12px;color:#fff;font-weight:900;font-size:13px;letter-spacing:.4px;cursor:pointer;text-align:left}
 .cscount{margin-left:auto;font-size:11px;color:#f5c518;font-weight:800;white-space:nowrap}
@@ -1232,6 +1244,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 </dialog>
 <dialog id="viewAgentDlg">
   <div id="viewAgentBody"></div>
+  <div id="vaTkPop" style="display:none"><div id="vaTkPopBody"></div><button type="button" class="ghostbtn" id="vaTkPopClose" style="margin-top:10px;width:100%">Close ticket</button></div>
 </dialog>
 <dialog id="agentDlg">
   <h3>Agent profile</h3>
@@ -5724,10 +5737,38 @@ function foreignTicketHtml(t, ownerName){
   return '<div class="card" style="margin-top:10px"><div class="row" style="justify-content:space-between;padding-right:108px"><b>' + (ownerName ? esc(fmtUser(ownerName)) + ' · ' : '') + 'Ticket · ' + new Date(t.created_at).toLocaleString() + '</b><span>' + statusChip(t.status) + '</span></div><span class="stampmini">LOCKED IN</span>' + legs
     + '<div style="margin-top:8px">' + (mine ? '<span class="note"><span style="color:#ff5d7a">♥</span> ' + (t.likes || 0) + ' likes</span>' : '<button type="button" class="likebtn' + (t.likedByMe ? ' on' : '') + '" data-like="' + t.id + '"><span class="hrt">♥</span> ' + (t.likes || 0) + '</button>') + '</div></div>';
 }
+function vaTicketMini(t, idx){
+  var st = t.status === "win" ? '<span class="tkstamp win">\u2605 WON</span>' : t.status === "loss" ? '<span class="tkstamp loss">\u2717 LOST</span>' : '<span class="tkstamp pend">\u23F3 ACTIVE</span>';
+  var n = (t.legs || []).length;
+  return '<div class="tkmini" data-vatk="' + idx + '" role="button">' + st + '<div class="tkmeta"><b>' + n + (n === 1 ? ' leg' : ' legs') + '</b><br>' + esc(new Date(t.created_at).toLocaleDateString()) + '<br><span style="color:var(--blu)">Tap to open \u203A</span></div></div>';
+}
+function vaTicketsHtml(tickets){
+  var groups = [
+    { label: "\u23F3 ACTIVE", color: "var(--blu)", items: [] },
+    { label: "\uD83C\uDFC6 WON", color: "var(--gold)", items: [] },
+    { label: "\u2717 LOST", color: "var(--red)", items: [] }
+  ];
+  (tickets || []).forEach(function(t, i){
+    var g = t.status === "win" ? groups[1] : t.status === "loss" ? groups[2] : groups[0];
+    g.items.push(vaTicketMini(t, i));
+  });
+  return groups.filter(function(g){ return g.items.length; }).map(function(g){
+    return '<div class="tkgrp"><div class="foilghdr" style="margin-top:14px"><span style="color:' + g.color + '">' + g.label + '</span><span class="foilgcount">' + g.items.length + (g.items.length === 1 ? ' ticket' : ' tickets') + '</span></div><div class="tkrail">' + g.items.join("") + '</div></div>';
+  }).join("");
+}
+function openVaTicket(idx){
+  var t = (window._vaTickets || [])[idx]; if (!t) return;
+  var pop = $("vaTkPop"), pb = $("vaTkPopBody"); if (!pop || !pb) return;
+  pb.innerHTML = foreignTicketHtml(t, window._vaOwnerName || null);
+  pop.style.display = "";
+  pop.scrollTop = 0;
+}
+function closeVaTicket(){ var pop = $("vaTkPop"); if (pop) pop.style.display = "none"; }
 function openAgent(id, refresh){
   window._viewAgentId = id;
   var dlg = $("viewAgentDlg"); if (!dlg) return;
   var body = $("viewAgentBody");
+  closeVaTicket();
   if (!refresh) { body.innerHTML = '<p class="empty">Loading agent…</p>'; if (!dlg.open) dlg.showModal(); }
   socialGet("picks=" + encodeURIComponent(id) + "&me=" + encodeURIComponent(cloudUid)).then(function(j){
     if (!j || !j.ok || !j.profile) { body.innerHTML = '<p class="empty">Could not load this agent.</p>'; return; }
@@ -5741,12 +5782,15 @@ function openAgent(id, refresh){
       + '<span class="badge">Record ' + (st.recordW || 0) + 'W–' + (st.recordL || 0) + 'L</span>'
       + (st.winPct != null ? '<span class="badge">' + st.winPct + '% win rate</span>' : '')
       + '<span class="badge">' + (st.streak >= 3 ? '🔥 ' : '') + 'Streak ' + (st.streak || 0) + ' · best ' + (st.best || 0) + '</span></div>';
-    var tk = (j.tickets || []).map(function(t2){ return foreignTicketHtml(t2, null); }).join("");
+    window._vaTickets = j.tickets || []; window._vaOwnerName = p.display_name || "";
+    var tk = vaTicketsHtml(j.tickets);
     body.innerHTML = head + statsRow + '<h3 style="margin:16px 0 4px">Their tickets</h3>' + (tk || '<p class="empty">No shared tickets yet.</p>');
     var cb = $("vaClose"); if (cb) cb.addEventListener("click", function(){ dlg.close(); });
     var fb = $("vaFollow"); if (fb) fb.addEventListener("click", function(){ toggleFollow(id); });
+    body.querySelectorAll(".tkmini").forEach(function(m){ m.addEventListener("click", function(){ openVaTicket(parseInt(m.getAttribute("data-vatk"), 10)); }); });
   });
 }
+var _vtc = $("vaTkPopClose"); if (_vtc) _vtc.addEventListener("click", closeVaTicket);
 function feedAgentsRow(items){
   var seen = {}, owners = [];
   (items || []).forEach(function(it){ var o = it.owner || {}; if (o.id && !seen[o.id]) { seen[o.id] = 1; owners.push(o); } });
