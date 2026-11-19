@@ -3801,7 +3801,7 @@ async function downloadTradingCard(ti, ci, btn){
   var t = TIERS[ti]; if (!t) return;
   var W = 630, H = 900, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
   var ctx = cv.getContext("2d");
-  var wins = charWins(ci); var un = ti <= 0 || wins >= t.wins || packUnlockHas(ci, ti);
+  var wins = charWins(ci); var un = ti <= 0 || wins >= t.wins || packUnlockHas(ci, ti) || starterUnlockHas(ci, ti);
   if (!un) { if (btn) { var o0 = btn.textContent; btn.textContent = "Locked — unlock it first"; setTimeout(function(){ btn.textContent = o0; }, 1600); } return; }
   var accent = t.color; var cname = CHARNAMES[ci - 1] || "YOUR AGENT";
   var num = ("00" + ((ci - 1) * 4 + ti + 1)).slice(-3);
@@ -3945,7 +3945,7 @@ function cardArtUrl(ci, ti){ var k = legendArtKey(ci, ti); return k ? "/api/batt
 function tierCardHTML(t, wins, withBtns, ci){
   var ti = TIERS.indexOf(t);
   ci = ci || charIdxOf();
-  var un = ti <= 0 || wins >= t.wins || (ci >= 1 && packUnlockHas(ci, ti));
+  var un = ti <= 0 || wins >= t.wins || (ci >= 1 && (packUnlockHas(ci, ti) || starterUnlockHas(ci, ti)));
   var art = ci >= 1 ? cardArtUrl(ci, ti) : charArt();
   var cname = ci >= 1 ? CHARNAMES[ci - 1] : "YOUR AGENT";
   var num = ci >= 1 ? ((ci - 1) * 4 + ti + 1) : 0;
@@ -3958,7 +3958,7 @@ function tierCardHTML(t, wins, withBtns, ci){
   var front = '<div class="flipfront" style="border:' + bw + 'px solid ' + t.color + ';--tc:' + t.color + ';box-shadow:0 12px 26px rgba(0,0,0,.38)' + glow + ', inset 0 1px 0 rgba(255,255,255,.05)">'
     + '<div class="tcplate"><span class="tcname">' + cname + gems + '</span><span class="tcno">' + numTxt + '</span></div>'
     + '<div class="tcwin' + (legendArt(ci, ti) ? ' winL' : '') + '">' + (art ? '<img class="cardart' + (legendArt(ci, ti) ? ' fitwhole' : '') + '" src="' + esc(art) + '" alt="">' : '<div class="cardart ph" style="color:' + t.color + '">' + t.name.charAt(0) + '</div>') + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
-    + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:' + t.color + '">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:' + t.color + '">' + t.rarity + '</span>' + (un && wins < t.wins && ti > 0 ? '<span class="rarpill" style="background:#f5c518;color:#1a1405">\uD83C\uDF81 PACK</span>' : '') + '</div>'
+    + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:' + t.color + '">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:' + t.color + '">' + t.rarity + '</span>' + (un && wins < t.wins && ti > 0 && ci >= 1 && packUnlockHas(ci, ti) ? '<span class="rarpill" style="background:#f5c518;color:#1a1405">\uD83C\uDF81 PACK</span>' : '') + '</div>'
     + '<div style="margin-top:5px;font-weight:900;font-size:12.5px;color:#f5b942">\u26A1 ' + pw.name + ' <span style="color:#9aa7bd;font-weight:700;font-size:10px;letter-spacing:1px">' + pw.style + '</span></div>'
     + '<div class="tierto" style="margin-top:2px">' + pw.desc + '</div>'
     + '<div style="margin-top:5px"><span class="atkchip">\uD83D\uDCA5 DMG ' + (1 + Math.floor(ti / 2)) + ' · \u2764\uFE0F LIFE ' + (3 + ti) + '</span> <span class="atkchip alt">Hit cost \u00D7' + 2 + '</span></div>'
@@ -3969,7 +3969,7 @@ function tierCardHTML(t, wins, withBtns, ci){
     + (t.name === "Diamond" ? '<div class="glitterfx"></div>' : '')
     + (t.name === "Legend" ? '<div class="glitterfx pglit"></div>' : '')
     + '<div class="holo" style="--hc:' + t.color + '59"></div></div>';
-  return '<div class="tiercard' + (ti === TIERS.length - 1 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · ' + t.name + ' · ' + t.rarity, pw.name + ' \u2014 ' + pw.desc + '<br><br>' + (ti <= 0 ? 'Starter card \u2014 unlocked from the very beginning. Wins still earn points toward the higher tiers.' : 'Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits.') + ' Grid Clash: DMG ' + (1 + Math.floor(ti / 2)) + ' · LIFE ' + (3 + ti) + ' — landing a hit costs 2 energy cards. Its power fires once per game.') + '</div></div>';
+  return '<div class="tiercard' + (ti === TIERS.length - 1 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · ' + t.name + ' · ' + t.rarity, pw.name + ' \u2014 ' + pw.desc + '<br><br>' + ((ti <= 0 || starterUnlockHas(ci, ti)) ? 'Starter card \u2014 unlocked from the very beginning. Wins still earn points toward the higher tiers.' : 'Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits.') + ' Grid Clash: DMG ' + (1 + Math.floor(ti / 2)) + ' · LIFE ' + (3 + ti) + ' — landing a hit costs 2 energy cards. Its power fires once per game.') + '</div></div>';
 }
 
 function cardSec(id, title, count, inner, openDefault, gridCls){
@@ -4008,7 +4008,7 @@ function tierProgressHTML(wins, ci){
   var head = '<div class="tbhead"><span>\uD83C\uDFC6 <b style="color:' + cur.color + '">' + cur.name.toUpperCase() + '</b> \u00B7 ' + wins + ' pts</span><span>' + (nxt ? (nxt.wins - wins) + ' pts to <b style="color:' + nxt.color + '">' + nxt.name.toUpperCase() + '</b>' : '\uD83D\uDC51 TOP TIER') + '</span></div>';
   var bar = '<div class="tierbar"><div class="tbfill" style="width:' + pct + '%;background:linear-gradient(90deg,#7C3AED,' + cur.color + ')"></div>' + ticks + '</div>';
   var minis = '<div class="tierminis">' + TIERS.map(function(t, ti){
-    var un = wins >= t.wins || packUnlockHas(ci, ti);
+    var un = wins >= t.wins || packUnlockHas(ci, ti) || starterUnlockHas(ci, ti);
     return '<div class="tiermini' + (un ? ' un' : ' lk') + (ti === curIdx ? ' cur' : '') + '" style="--tc:' + t.color + '"><img src="' + esc(cardArtUrl(ci, ti)) + '" alt=""><span class="tmn">' + t.name + '</span><span class="tms">' + (un ? "\u2605".repeat(ti + 1) : '\uD83D\uDD12 ' + t.wins) + '</span></div>';
   }).join("") + '</div>';
   return '<div class="tierprog">' + strip + head + bar + minis + '</div>';
@@ -4043,7 +4043,7 @@ function renderBoard(){
   renderPacks();
   renderClash();
   var stampCardsOnly = CHARNAMES.map(function(nm, ix){ return stampCardHTML(ix + 1); }).join("");
-  var unlockedN = TIERS.filter(function(t, ti2){ return ti2 <= 1 || charWins(cci) >= t.wins || packUnlockHas(cci, ti2); }).length;
+  var unlockedN = TIERS.filter(function(t, ti2){ return cardUnlocked(cci, ti2); }).length;
   var specN = (specialUnlocked() ? 1 : 0) + (lsGet("pa_ring", 0) ? 1 : 0);
   $("myCards").innerHTML =
     cardSec("tier", "🃏 TIER CARDS — " + CHARNAMES[cci - 1], unlockedN + " of 4 unlocked \u00B7 Grid Clash cards", tierCards, true, "cardrail")
@@ -4192,9 +4192,13 @@ function migrateTierData2(){
 function foilsGet(){ migrateTierData(); migrateTierData2(); return lsGet("pa_foils", []); }
 function packUnlocksGet(){ migrateTierData(); migrateTierData2(); return lsGet("pa_packunlock", []); }
 function packUnlockHas(ci, ti){ return packUnlocksGet().indexOf(ci + "-" + ti) >= 0; }
+/* Starter unlocks (Brandon 2026-11-19): granted to EVERY user from the start — The Closer's Gold card.
+   A client-side constant: never stored in pa_packunlock (no 🎁 PACK badge), nothing to sync or migrate. */
+var STARTER_UNLOCKS = { "1-1": 1 };
+function starterUnlockHas(ci, ti){ return !!STARTER_UNLOCKS[ci + "-" + ti]; }
 /* Starter floor: Rookie cards are owned by everyone from the start (ladder cut to 4 tiers, 2026-11-19). */
-function cardUnlocked(ci, ti){ return ti <= 0 || charTierIdx(ci) >= ti || packUnlockHas(ci, ti); }
-function pickTiers(ci){ var out = []; for (var ti = 0; ti <= charTierIdx(ci); ti++) out.push(ti); packUnlocksGet().forEach(function(k){ var pp = k.split("-"); if (parseInt(pp[0], 10) === ci) { var t2 = parseInt(pp[1], 10); if (out.indexOf(t2) < 0) out.push(t2); } }); return out.sort(function(a, b){ return a - b; }); }
+function cardUnlocked(ci, ti){ return ti <= 0 || charTierIdx(ci) >= ti || packUnlockHas(ci, ti) || starterUnlockHas(ci, ti); }
+function pickTiers(ci){ var out = []; for (var ti = 0; ti <= charTierIdx(ci); ti++) out.push(ti); packUnlocksGet().forEach(function(k){ var pp = k.split("-"); if (parseInt(pp[0], 10) === ci) { var t2 = parseInt(pp[1], 10); if (out.indexOf(t2) < 0) out.push(t2); } }); for (var sk in STARTER_UNLOCKS) { var sp = sk.split("-"); if (parseInt(sp[0], 10) === ci) { var t3 = parseInt(sp[1], 10); if (out.indexOf(t3) < 0) out.push(t3); } } return out.sort(function(a, b){ return a - b; }); }
 function bestPickTier(ci){ var pt = pickTiers(ci); return pt[pt.length - 1]; }
 var PACK_TIER_W = [70, 23, 5, 2];
 function drawPackTier(){ var tot = 0, i; for (i = 0; i < PACK_TIER_W.length; i++) tot += PACK_TIER_W[i]; var r = Math.random() * tot; for (i = 0; i < PACK_TIER_W.length; i++) { r -= PACK_TIER_W[i]; if (r <= 0) return i; } return 0; }
