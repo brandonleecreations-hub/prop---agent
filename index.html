@@ -1130,9 +1130,9 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <p class="note" id="liveStatus"></p>
     <div id="liveCenter"><p class="empty">Fetching fresh scores from ESPN…</p></div>
     <div id="gameDetail"></div>
+    <div id="liveFinished"></div>
     <div id="hlLiveWrap" style="display:none"><h2 style="font-size:17px">🔴 Your Players — Live Highlights</h2><p class="sub">In-game clips of the players on your running tickets — this section goes away when their games end.</p><div class="hlrail" id="hlLiveRail"></div></div>
     <div id="liveSportHl"></div>
-    <div id="liveFinished"></div>
   </section>
 
   <!-- BUILD / ADD TICKET -->
@@ -1968,48 +1968,98 @@ function findLiveStat(summary, athleteId, playerName, stat){
     var groups = [];
     (summary.boxscore && summary.boxscore.players || []).forEach(function(tp){ (tp.statistics||[]).forEach(function(g){ groups.push(g); }); });
     var dicts = [];
-    groups.forEach(function(g){ (g.athletes||[]).forEach(function(a){
+    groups.forEach(function(g){ var cols = g.labels || g.names || []; (g.athletes||[]).forEach(function(a){
       var nm = (a.athlete && a.athlete.displayName) || "";
       if (!((athleteId && String(a.athlete && a.athlete.id)===String(athleteId)) || nm.toLowerCase()===String(playerName).toLowerCase() || lastNameOf(nm)===lastNameOf(playerName))) return;
-      var d = {__names:(g.names||[]).join(",")};
-      (g.names||[]).forEach(function(n, i){ d[n] = (a.stats||[])[i]; });
+      var d = {__names:cols.join(",")};
+      cols.forEach(function(n, i){ d[n] = (a.stats||[])[i]; });
       dicts.push(d);
     }); });
     function num(x){ var v = parseFloat(x); return isFinite(v) ? v : null; }
-    function made(x){ if (x==null) return null; var parts = String(x).split("/"); return parts.length===2 ? num(parts[0]) : num(x); }
+    function made(x){ if (x==null) return null; var parts = String(x).split(/[\/-]/); return num(parts[0]); }
+    function att(x){ if (x==null) return null; var parts = String(x).split(/[\/-]/); return parts.length===2 ? num(parts[1]) : null; }
+    function toi(x){ if (x==null) return null; var m = String(x).match(/^(\d+):([0-5]\d)$/); if (m) return Math.round((parseInt(m[1],10) + parseInt(m[2],10)/60) * 10) / 10; return num(x); }
     for (var i=0;i<dicts.length;i++){ var d = dicts[i], v = null;
-      if (stat==="Points") v = num(d.PTS!=null ? d.PTS : d.P);
+      var pass = d.__names.indexOf("C/ATT")>-1, rush = d.__names.indexOf("CAR")>-1, recv = d.__names.indexOf("TGTS")>-1, def = d.__names.indexOf("TOT")>-1, kick = d.__names.indexOf("XP")>-1;
+      if (stat==="Points"){ v = num(d.PTS!=null ? d.PTS : d.P); if (v==null && d.G!=null && d.A!=null){ var pg=num(d.G), pa2=num(d.A); if (pg!=null && pa2!=null) v = pg+pa2; } }
       else if (stat==="Rebounds") v = num(d.REB);
-      else if (stat==="Assists") v = num(d.AST!=null ? d.AST : d.A);
+      else if (stat==="Offensive Rebounds") v = num(d.OREB);
+      else if (stat==="Defensive Rebounds") v = num(d.DREB);
+      else if (stat==="Assists"){ v = num(d.AST!=null ? d.AST : d.A); if (v==null && def){ var tt=num(d.TOT), so=num(d.SOLO); if (tt!=null && so!=null) v = tt-so; } }
       else if (stat==="Steals") v = num(d.STL);
-      else if (stat==="Blocks") v = num(d.BLK);
+      else if (stat==="Blocks") v = num(d.BLK!=null ? d.BLK : d.BS);
       else if (stat==="Turnovers") v = num(d.TO);
+      else if (stat==="Personal Fouls") v = num(d.PF);
+      else if (stat==="Minutes") v = num(d.MIN);
+      else if (stat==="Plus/Minus") v = num(d["+/-"]);
       else if (stat==="3-Pointers Made" || stat==="3-PT Made") v = made(d["3PT"]);
+      else if (stat==="3-PT Attempted" || stat==="3-Pointers Attempted") v = att(d["3PT"]);
+      else if (stat==="FG Made") v = made(d.FG);
+      else if (stat==="FG Attempted") v = att(d.FG);
+      else if (stat==="Free Throws Made") v = made(d.FT);
+      else if (stat==="Free Throws Attempted") v = att(d.FT);
+      else if (stat==="Two Pointers Made"){ var fm=made(d.FG), tm=made(d["3PT"]); if (fm!=null && tm!=null) v = fm-tm; }
+      else if (stat==="Two Pointers Attempted"){ var fa=att(d.FG), ta=att(d["3PT"]); if (fa!=null && ta!=null) v = fa-ta; }
+      else if (stat==="Double-Double"){ if (num(d.PTS)!=null){ var cats=[d.PTS,d.REB,d.AST,d.STL,d.BLK], c2=0; cats.forEach(function(x){ var n2=num(x); if (n2!=null && n2>=10) c2++; }); v = c2>=2 ? 1 : 0; } }
       else if (stat==="Goals") v = num(d.G);
       else if (stat==="Shots on Goal") v = num(d.SOG);
       else if (stat==="Saves") v = num(d.SV);
-      else if (stat==="Passing Yards" && d.__names.indexOf("C/ATT")>-1) v = num(d.YDS);
-      else if (stat==="Passing TDs" && d.__names.indexOf("C/ATT")>-1) v = num(d.TD);
-      else if (stat==="Rushing Yards" && d.__names.indexOf("CAR")>-1) v = num(d.YDS);
-      else if (stat==="Rushing TDs" && d.__names.indexOf("CAR")>-1) v = num(d.TD);
-      else if (stat==="Receiving Yards" && d.__names.indexOf("REC")>-1) v = num(d.YDS);
-      else if (stat==="Receiving TDs" && d.__names.indexOf("REC")>-1) v = num(d.TD);
-      else if (stat==="Receptions" && d.__names.indexOf("REC")>-1) v = num(d.REC);
+      else if (stat==="Hits") v = num(d.HT);
+      else if (stat==="Faceoffs Won") v = num(d.FW);
+      else if (stat==="Time On Ice") v = toi(d.TOI);
+      else if (stat==="Passing Yards" && pass) v = num(d.YDS);
+      else if (stat==="Passing TDs" && pass) v = num(d.TD);
+      else if (stat==="Completions" && pass) v = made(d["C/ATT"]);
+      else if (stat==="Pass Attempts" && pass) v = att(d["C/ATT"]);
+      else if (stat==="Passing Interceptions" && pass) v = num(d.INT);
+      else if (stat==="Longest Passing Completion" && pass) v = num(d.LONG);
+      else if (stat==="Rushing Yards" && rush) v = num(d.YDS);
+      else if (stat==="Rushing TDs" && rush) v = num(d.TD);
+      else if (stat==="Carries" && rush) v = num(d.CAR);
+      else if (stat==="Longest Rush" && rush) v = num(d.LONG);
+      else if (stat==="Receiving Yards" && recv) v = num(d.YDS);
+      else if (stat==="Receiving TDs" && recv) v = num(d.TD);
+      else if (stat==="Receptions" && recv) v = num(d.REC);
+      else if (stat==="Longest Reception" && recv) v = num(d.LONG);
+      else if (stat==="Targets" && recv) v = num(d.TGTS);
+      else if (stat==="Tackles" && def) v = num(d.SOLO);
+      else if (stat==="Tackles+Assists" && def) v = num(d.TOT);
+      else if (stat==="Sacks" && def) v = num(d.SACKS);
+      else if (stat==="Extra Points Made" && kick) v = made(d.XP);
+      else if (stat==="Kicking Points" && kick) v = num(d.PTS);
       if (v!=null) return v;
     }
   } catch(e){}
   return null;
 }
 var GC_STAT_ALIAS = { "Blocked Shots": "Blocks", "3-PT Made": "3-Pointers Made" };
-var GC_COMBO_PARTS = { pts: "Points", point: "Points", points: "Points", reb: "Rebounds", rebs: "Rebounds", rebounds: "Rebounds", ast: "Assists", asts: "Assists", assists: "Assists", stl: "Steals", stls: "Steals", steals: "Steals", blk: "Blocks", blks: "Blocks", blocks: "Blocks" };
+var GC_STAT_CANON = {
+  "passing touchdowns": "Passing TDs", "rushing touchdowns": "Rushing TDs", "receiving touchdowns": "Receiving TDs",
+  "pass completions": "Completions", "passing attempts": "Pass Attempts", "pass attempts": "Pass Attempts",
+  "field goals made": "FG Made", "fg made": "FG Made", "field goals attempted": "FG Attempted", "fg attempted": "FG Attempted",
+  "3-pointers made": "3-Pointers Made", "3-pointers attempted": "3-PT Attempted",
+  "blocked shots": "Blocks", "tackles plus assists": "Tackles+Assists", "tackles+assists": "Tackles+Assists",
+  "shots on goal": "Shots on Goal"
+};
+function gcCanonStat(stat){
+  var s = String(stat || "").replace(/\s*\([^)]*\)/g, "").replace(/\s+/g, " ").trim();
+  var hit = GC_STAT_CANON[s.toLowerCase()];
+  if (hit) return hit;
+  return s.replace(/\s+plus\s+/gi, "+").replace(/\s*\+\s*/g, "+");
+}
+var GC_COMBO_PARTS = { pts: "Points", point: "Points", points: "Points", reb: "Rebounds", rebs: "Rebounds", rebounds: "Rebounds", ast: "Assists", asts: "Assists", assists: "Assists", stl: "Steals", stls: "Steals", steals: "Steals", blk: "Blocks", blks: "Blocks", blocks: "Blocks",
+  "passing yards": "Passing Yards", "rushing yards": "Rushing Yards", "receiving yards": "Receiving Yards",
+  passing: "Passing Yards", rushing: "Rushing Yards", receiving: "Receiving Yards",
+  pass: "Passing Yards", rush: "Rushing Yards", rec: "Receiving Yards",
+  "pass yards": "Passing Yards", "rush yards": "Rushing Yards", "rec yards": "Receiving Yards" };
 function liveStatFor(summary, p){
   if (!summary || !p || !p.player || String(p.player).indexOf("+") > -1) return null;
   var aid = p.athleteId || aidCache[(p.player || "").toLowerCase()] || "";
-  var stat = GC_STAT_ALIAS[p.stat] || p.stat;
+  var stat = gcCanonStat(GC_STAT_ALIAS[p.stat] || p.stat);
   var v = findLiveStat(summary, aid, p.player, stat);
   if (v == null && aid) v = findPlayerStat(summary, aid, stat);
-  if (v == null && String(p.stat || "").indexOf("+") > -1){
-    var parts = String(p.stat).split("+"), sum = 0, ok = parts.length > 1;
+  if (v == null && stat.indexOf("+") > -1){
+    var parts = stat.split("+"), sum = 0, ok = parts.length > 1;
     for (var i = 0; i < parts.length && ok; i++){
       var canon = GC_COMBO_PARTS[parts[i].trim().toLowerCase()];
       if (!canon) { ok = false; break; }
@@ -2040,7 +2090,7 @@ function loadLiveForPlayer(g, list){
     var aid = aidCache[g.player.toLowerCase()] || (list[0] && list[0].athleteId) || "";
     fetchJson(ESPN+lg.sport+"/"+lg.league+"/summary?event="+encodeURIComponent(ev.id)).then(function(sm){
       if (isPost) list.forEach(function(p){ var v = liveStatFor(sm, p); if (v!=null) p.liveActual = v; });
-      else list.forEach(function(p){ var v = findLiveStat(sm, aid, g.player, p.stat); if (v!=null) p.liveActual = v; });
+      else list.forEach(function(p){ var v = liveStatFor(sm, p); if (v!=null) p.liveActual = v; });
       if (dlgPlayer && dlgPlayer.name===g.player){ var body = $("playerDlgBody"); var grid = body && body.querySelector(".pdlgsl"); if (grid){ var cl0 = grid.classList.contains("closed"); grid.innerHTML = dlgSlidesHtml(list, isPost ? "final" : cl0); if (!cl0) bindPicks(body); hydrateL5(); dlgSliderWire(grid); } }
     }).catch(function(){});
   }).catch(function(){});
@@ -3262,8 +3312,9 @@ function findPlayerStat(summary, athleteId, stat){
     groups.forEach(function(g){
       (g.athletes||[]).forEach(function(a){
         if (String(a.athlete && a.athlete.id) !== String(athleteId)) return;
-        var d = {__names:(g.names||[]).join(",")};
-        (g.names||[]).forEach(function(n, i){ d[n] = parseFloat((a.stats||[])[i]); });
+        var cols2 = g.labels || g.names || [];
+        var d = {__names:cols2.join(",")};
+        cols2.forEach(function(n, i){ d[n] = parseFloat((a.stats||[])[i]); });
         dicts.push(d);
       });
     });
