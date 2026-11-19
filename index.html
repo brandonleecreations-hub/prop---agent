@@ -4025,6 +4025,29 @@ function renderPickem(){
 /* ---------- packs: daily / share / ticket wins -> foil cards + THE RING ---------- */
 function packsGet(){ var p = lsGet("pa_packs", { n: 0, g: 0 }); if (p.g) { p.n = (p.n || 0) + p.g; p.g = 0; lsSet("pa_packs", p); } return p; }
 function packsSet(p){ lsSet("pa_packs", p); }
+/* Daily FREE pack (Brandon 2026-11-19): never stacks. It waits in its own one-slot
+   entitlement (pa_freepack) - at most 1 waiting, it never expires, and opening it empties
+   the slot so the next day's pack can land. It does NOT pass through the stackable
+   pa_packs balance (that is what made stacking possible). */
+function freePackState(){
+  var today = dayStr();
+  var s = lsGet("pa_freepack", null);
+  if (!s || typeof s !== "object" || typeof s.waiting === "undefined") {
+    /* first run under the no-stack rule: if today's free pack was already claimed into the
+       balance under the old system, the slot starts empty; otherwise it is waiting */
+    s = { day: today, waiting: lsGet("pa_daily_day", "") === today ? 0 : 1 };
+    lsSet("pa_freepack", s);
+    return s;
+  }
+  if (s.day !== today) { if (!s.waiting) s.waiting = 1; s.day = today; lsSet("pa_freepack", s); }
+  return s;
+}
+function freePackTake(){
+  var s = freePackState();
+  if (!s.waiting) return false;
+  s.waiting = 0; lsSet("pa_freepack", s);
+  return true;
+}
 function migrateTierData(){
   if (lsGet("pa_tiermig", 0)) return;
   var remap = function(arr){
@@ -4051,7 +4074,7 @@ function packUnlockHas(ci, ti){ return packUnlocksGet().indexOf(ci + "-" + ti) >
 function cardUnlocked(ci, ti){ return ti <= 1 || charTierIdx(ci) >= ti || packUnlockHas(ci, ti); }
 function pickTiers(ci){ var out = []; for (var ti = 0; ti <= Math.max(charTierIdx(ci), 1); ti++) out.push(ti); packUnlocksGet().forEach(function(k){ var pp = k.split("-"); if (parseInt(pp[0], 10) === ci) { var t2 = parseInt(pp[1], 10); if (out.indexOf(t2) < 0) out.push(t2); } }); return out.sort(function(a, b){ return a - b; }); }
 function bestPickTier(ci){ var pt = pickTiers(ci); return pt[pt.length - 1]; }
-var PACK_TIER_W = [34, 25, 17, 11, 4, 2.5];
+var PACK_TIER_W = [34, 25, 17, 11, 3, 1.5];
 function drawPackTier(){ var tot = 0, i; for (i = 0; i < PACK_TIER_W.length; i++) tot += PACK_TIER_W[i]; var r = Math.random() * tot; for (i = 0; i < PACK_TIER_W.length; i++) { r -= PACK_TIER_W[i]; if (r <= 0) return i; } return 0; }
 function dayStr(){ var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
 function maxTierIdx(){ var w = maxWins(), idx = 0; TIERS.forEach(function(t, i){ if (w >= t.wins) idx = i; }); return idx; }
@@ -4064,7 +4087,7 @@ function awardTicketReward(t){
 function renderPacks(){
   var box = $("packsBox"); if (!box) return;
   var p = packsGet(), today = dayStr();
-  var claimed = lsGet("pa_daily_day", "") === today;
+  var freeWaiting = freePackState().waiting;
   var shared = lsGet("pa_share_day", "") === today;
   var foils = foilsGet();
   box.innerHTML = '<div class="packpromo">'
@@ -4072,13 +4095,14 @@ function renderPacks(){
     + '<div><div style="font-weight:900;font-size:17px">🎁 1 FREE PACK <span style="color:#f5c518">EVERY DAY</span></div>'
     + '</div></div>'
     + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'
-    + (claimed ? '<button class="openbtn" disabled>✓ Free pack claimed — back tomorrow</button>' : '<button class="openbtn gold" data-claimpack="1">🎁 CLAIM FREE PACK</button>')
+    + (freeWaiting ? '<button class="openbtn gold" data-openfreepack="1">🎁 Free pack — OPEN</button>' : '<button class="openbtn" disabled>✓ Free pack opened — next one tomorrow</button>')
     + '<button class="openbtn" data-openpack="n"' + ((p.n || 0) > 0 ? '' : ' disabled') + '>Open Pack · ' + (p.n || 0) + '</button>'
     + (shared ? '<button class="openbtn" disabled>✓ Shared today</button>' : '<button class="openbtn" data-sharepack="1">🔗 Share &amp; Earn a Pack</button>')
     
     + '<button class="openbtn" data-buypack="1"' + (coinsGet() >= CLASH_PACK_COST ? '' : ' disabled') + '>🪙 Buy a Pack · ' + CLASH_PACK_COST + ' Coins</button>'
     + '</div>'
     + '<div class="note" style="margin-top:10px">🏆 Win a 4-leg ticket → <b>15 Clash Coins</b> · 5 legs → <b>1 pack</b> · 6 legs → <b>2 packs</b></div>'
+    + '<div class="note" style="margin-top:6px">🎁 Free pack rule: only <b>1</b> free pack waits at a time — open it and the next one lands tomorrow. Leave it unopened and it stays at 1; free packs never stack.</div>'
     + '</div>';
 }
 function ringBackHTML(){
@@ -5590,11 +5614,16 @@ function ensurePackPop(){
   });
 }
 function neonBurst(){ var pp = document.getElementById("packPop"); if (!pp) return; pp.classList.remove("burst"); void pp.offsetWidth; pp.classList.add("burst"); }
-function openPackPop(demo){
+function openPackPop(demo, free){
   if (!demo) {
-    var p = packsGet();
-    if (!(p.n > 0)) return; p.n--;
-    packsSet(p); renderPacks();
+    if (free) {
+      if (!freePackTake()) return;
+      renderPacks();
+    } else {
+      var p = packsGet();
+      if (!(p.n > 0)) return; p.n--;
+      packsSet(p); renderPacks();
+    }
   }
   window._packPulls = pullPack(demo); window._packOpened = false; window._packDemo = !!demo;
   ensurePackPop();
@@ -5608,11 +5637,10 @@ function openPackPop(demo){
   $("packPop").classList.add("open");
 }
 document.addEventListener("click", function(e){
-  var c = e.target && e.target.closest ? e.target.closest("[data-claimpack],[data-openpack],[data-sharepack],[data-demopack]") : null;
+  var c = e.target && e.target.closest ? e.target.closest("[data-openfreepack],[data-openpack],[data-sharepack],[data-demopack]") : null;
   if (!c) return;
-  if (c.hasAttribute("data-claimpack")) {
-    if (lsGet("pa_daily_day", "") !== dayStr()) { lsSet("pa_daily_day", dayStr()); var p = packsGet(); p.n = (p.n || 0) + 1; packsSet(p); }
-    renderPacks();
+  if (c.hasAttribute("data-openfreepack")) {
+    openPackPop(false, true);
   } else if (c.hasAttribute("data-openpack")) {
     openPackPop(false);
   } else if (c.hasAttribute("data-demopack")) {

@@ -194,7 +194,7 @@ function pickBase() {
   if (r < 0.45) return 0; if (r < 0.78) return 1; return 2;
 }
 function pickPackTier() {
-  var W = [34, 25, 17, 11, 4, 2.5], tot = 0, i;
+  var W = [34, 25, 17, 11, 3, 1.5], tot = 0, i;
   for (i = 0; i < W.length; i++) tot += W[i];
   var r = Math.random() * tot;
   for (i = 0; i < W.length; i++) { r -= W[i]; if (r <= 0) return i; }
