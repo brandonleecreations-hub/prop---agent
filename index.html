@@ -576,11 +576,19 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #playerDlg{max-width:520px;width:96vw;height:100dvh;max-height:100dvh;padding:12px 12px 10px;overflow:hidden}
 #playerDlgBody{display:flex;flex-direction:column;height:100%;min-height:0}
 #playerDlg .sub{font-size:11.5px;line-height:1.35}
-#playerDlgBody .pdlgbody{flex:1 1 auto;min-height:0;overflow:hidden;display:grid;gap:5px;grid-auto-rows:1fr;grid-template-columns:1fr;margin-top:6px}
-#playerDlgBody.fitd2 .pdlgbody{grid-template-columns:repeat(2,1fr)}
-#playerDlgBody.fitd3 .pdlgbody{grid-template-columns:repeat(3,1fr)}
-#playerDlgBody.fitd4 .pdlgbody{grid-template-columns:repeat(3,1fr)}
-#playerDlgBody.fitd5 .pdlgbody{grid-template-columns:repeat(4,1fr);gap:4px}
+#playerDlgBody .pdlgsl{flex:1 1 auto;min-height:0;display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-top:6px;padding:2px 2px 8px}
+#playerDlgBody .pdlgsl::-webkit-scrollbar{display:none}
+.pdslide{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;min-width:0}
+.pdslide .dprop{height:100%;border-radius:14px;padding:14px}
+.pdslide .dp-stat{font-size:13px}
+.pdslide .dp-line{font-size:36px}
+.pdslide .dp-now{font-size:11px}
+.pdslide .dp-row2{flex-direction:column;gap:10px;margin-top:14px;flex:1}
+.pdslide .l5row{order:-1;padding:8px 10px}
+.pdslide .dp-btns{gap:8px;margin-top:auto}
+.pdslide .dp-btns button{flex:1;min-height:46px;font-size:16px;border-radius:10px}
+.pdslide .gplive{font-size:13.5px;padding:9px 10px}
+.pdlgpos{text-align:center;font-weight:800;color:var(--mut);font-size:12.5px;letter-spacing:1.5px;padding:7px 0 1px}
 #playerDlg .l5row{max-width:none;margin:0}
 #playerDlg .dp-row2 .gplive{text-align:center}
 .dprop{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 7px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
@@ -594,53 +602,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .dp-btns button.more{background:linear-gradient(135deg,var(--purp),var(--purp2));border-color:var(--purp);color:#fff}
 .dp-btns button.more.sel{box-shadow:0 0 0 2px #fff inset}
 .dp-btns button.less.sel{background:var(--red);border-color:var(--red);color:#1c0505}
-.dp-half{grid-column:1/-1;align-self:center;justify-self:center;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-weight:900;letter-spacing:1.2px;font-size:10px;padding:3px 9px;text-align:center}
-#playerDlgBody.fitd1 .dp-stat{font-size:10.5px}
-#playerDlgBody.fitd1 .dp-line{font-size:19px}
-#playerDlgBody.fitd1 .dp-row2{flex-direction:column;gap:5px;margin-top:5px;flex:1}
-#playerDlgBody.fitd1 .dp-btns{gap:6px;margin-top:auto}
-#playerDlgBody.fitd1 .dp-btns button{flex:1;min-height:30px;font-size:13.5px}
-#playerDlgBody.fitd1 .l5row{order:-1}
-#playerDlgBody.fitd2 .dp-stat{font-size:10px}
-#playerDlgBody.fitd2 .dp-line{font-size:17px}
-#playerDlgBody.fitd2 .dp-row2{flex-direction:column;gap:4px;margin-top:4px;flex:1}
-#playerDlgBody.fitd2 .dp-btns{gap:5px}
-#playerDlgBody.fitd2 .dp-btns button{flex:1;min-height:24px;font-size:12px}
-#playerDlgBody.fitd2 .l5row{margin-top:auto;padding:3px 6px}
-#playerDlgBody.fitd2 .l5chip{min-width:22px;padding:2px 3px;font-size:10px}
-#playerDlgBody.fitd3 .dprop{padding:5px 6px}
-#playerDlgBody.fitd3 .dp-stat{font-size:9px}
-#playerDlgBody.fitd3 .dp-line{font-size:14.5px}
-#playerDlgBody.fitd3 .dp-row2{flex-direction:row;align-items:center;gap:5px;margin-top:auto}
-#playerDlgBody.fitd3 .dp-btns{gap:3px}
-#playerDlgBody.fitd3 .dp-btns button{height:20px;font-size:10.5px;min-width:29px}
-#playerDlgBody.fitd3 .l5row{flex:1;background:none;border:none;padding:0;justify-content:flex-end}
-#playerDlgBody.fitd3 .l5lab{display:none}
-#playerDlgBody.fitd3 .l5chip{min-width:15px;padding:1px 2px;font-size:9px;border-radius:4px}
-#playerDlgBody.fitd3 .l5cnt{font-size:9px}
-#playerDlgBody.fitd3 .gplive{font-size:9.5px}
-#playerDlgBody.fitd4 .dprop{padding:4px 5px}
-#playerDlgBody.fitd4 .dp-stat{font-size:8.5px}
-#playerDlgBody.fitd4 .dp-line{font-size:13.5px}
-#playerDlgBody.fitd4 .dp-row2{flex-direction:row;align-items:center;gap:4px;margin-top:auto}
-#playerDlgBody.fitd4 .dp-btns{gap:3px}
-#playerDlgBody.fitd4 .dp-btns button{height:17px;font-size:9.5px;min-width:26px}
-#playerDlgBody.fitd4 .l5row{flex:1;background:none;border:none;padding:0;justify-content:flex-end}
-#playerDlgBody.fitd4 .l5lab{display:none}
-#playerDlgBody.fitd4 .l5chip{min-width:13px;padding:1px 1px;font-size:8.5px;border-radius:4px}
-#playerDlgBody.fitd4 .l5cnt{font-size:8.5px}
-#playerDlgBody.fitd4 .gplive{font-size:9px;padding:1px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-#playerDlgBody.fitd5 .dprop{padding:3px 5px}
-#playerDlgBody.fitd5 .dp-stat{font-size:7.5px}
-#playerDlgBody.fitd5 .dp-line{font-size:12px}
-#playerDlgBody.fitd5 .dp-row2{flex-direction:row;align-items:center;gap:3px;margin-top:auto}
-#playerDlgBody.fitd5 .dp-btns{gap:2px}
-#playerDlgBody.fitd5 .dp-btns button{height:14px;font-size:8px;min-width:22px}
-#playerDlgBody.fitd5 .l5row{flex:1;background:none;border:none;padding:0;justify-content:flex-end}
-#playerDlgBody.fitd5 .l5lab{display:none}
-#playerDlgBody.fitd5 .l5cnt{display:none}
-#playerDlgBody.fitd5 .l5chip{min-width:10px;padding:0 1px;font-size:7.5px;border-radius:3px}
-#playerDlgBody.fitd5 .gplive{font-size:8px;padding:1px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.dp-halfb{flex:0 0 auto;border:1px solid var(--gold);border-radius:6px;color:var(--gold);font-weight:900;letter-spacing:.8px;font-size:9px;padding:2px 6px;white-space:nowrap}
 
 
 .pickem{border:2px solid #f5c518;border-radius:12px;padding:8px 10px;background:radial-gradient(120% 140% at 20% 0%,#3b2f0b 0%,#17130a 55%,#101018 100%);box-shadow:0 0 24px #f5c51833;margin:8px 0}
@@ -1776,6 +1738,7 @@ function bindTiles(scope){ if (!scope) return; scope.querySelectorAll("[data-pla
 var dlgPlayer = null;
 function openPlayer(name, leagueKey, viewOnly, finalView){
   dlgPlayer = {name:name, league:leagueKey, viewOnly:!!viewOnly, finalView:!!finalView};
+  dlgSlideIdx = 0;
   fillPlayerDlg();
   var d = $("playerDlg"); if (d && !d.open) d.showModal();
 }
@@ -1786,33 +1749,48 @@ function propCardsGrouped(list, vo){
   if (half.length) h += '<div style="grid-column:1/-1;margin-top:10px;padding:6px 10px;border:1px solid var(--gold);border-radius:9px;color:var(--gold);font-weight:900;letter-spacing:1.2px;font-size:12px">⏱ 1ST HALF PROPS</div>' + half.map(function(p){ return propCard(p, vo); }).join("");
   return h;
 }
-var dlgTier = 1;
-function dlgTierFor(n){ return n<=6?1 : n<=16?2 : n<=30?3 : n<=48?4 : 5; }
-function applyDlgTier(n){ dlgTier = dlgTierFor(n); var b = $("playerDlgBody"); if (b) b.className = "fitd" + dlgTier; }
+var dlgSlideIdx = 0;
+function dlgSetPos(i, n){ dlgSlideIdx = i; var pos = $("pdlgPos"); if (pos) pos.textContent = (i + 1) + " / " + n; }
+function dlgSliderWire(sl){
+  if (!sl) return;
+  var n = sl.querySelectorAll(".pdslide").length; if (!n) return;
+  if (dlgSlideIdx > n - 1) dlgSlideIdx = n - 1; if (dlgSlideIdx < 0) dlgSlideIdx = 0;
+  if (!sl._dlgWired){
+    sl._dlgWired = 1;
+    sl.addEventListener("scroll", function(){
+      var m = sl.querySelectorAll(".pdslide").length; if (!m) return;
+      var w = sl.clientWidth || 1;
+      var i = Math.round(sl.scrollLeft / w); if (i < 0) i = 0; if (i > m - 1) i = m - 1;
+      dlgSetPos(i, m);
+    }, { passive: true });
+  }
+  if (dlgSlideIdx > 0 && sl.clientWidth) sl.scrollLeft = dlgSlideIdx * sl.clientWidth;
+  dlgSetPos(dlgSlideIdx, n);
+}
 function dlgPropCard(p, vo){
-  /* Compact fit-to-screen cell for the player dialog (board keeps the full
+  /* Full-size prop card for the player dialog's swipe slider (board keeps
      propCard). Same pick wiring (data-pick), same L5 strip element, same
-     live/final chip wording; density comes from the fitd tier classes. */
+     live/final chip wording. */
   var strip = (p.half || (p.brk && !vo)) ? "" : '<div class="l5row" data-l5="1" data-aid="'+esc(p.athleteId||"")+'" data-player="'+esc(p.player)+'" data-lg="'+esc(p.league)+'" data-stat="'+esc(p.stat)+'" data-line="'+p.line+'"></div>';
   var act;
   if (vo){
-    var chipTxt;
-    if (dlgTier >= 5) chipTxt = (vo === "final") ? (p.liveActual!=null ? "🏁 final " + p.liveActual : "🏁 FINAL · view only") : (p.liveActual!=null ? "🔴 now " + p.liveActual : "🔴 LIVE · view only");
-    else chipTxt = (vo === "final") ? (p.liveActual!=null ? "🏁 FINAL · final " + p.liveActual + " " + esc(p.stat) : "🏁 FINAL · view only") : (p.liveActual!=null ? "🔴 LIVE · now " + p.liveActual + " " + esc(p.stat) : "🔴 LIVE · view only");
+    var chipTxt = (vo === "final") ? (p.liveActual!=null ? "🏁 FINAL · final " + p.liveActual + " " + esc(p.stat) : "🏁 FINAL · view only") : (p.liveActual!=null ? "🔴 LIVE · now " + p.liveActual + " " + esc(p.stat) : "🔴 LIVE · view only");
     act = '<span class="gplive">' + chipTxt + '</span>';
   } else {
     act = '<span class="dp-btns"><button class="more'+(slipHas(p.id,"MORE")?" sel":"")+'" data-pick="'+esc(p.id)+'|MORE">MORE</button><button class="less'+(slipHas(p.id,"LESS")?" sel":"")+'" data-pick="'+esc(p.id)+'|LESS">LESS</button></span>';
   }
   return '<div class="dprop"><div class="dp-hd"><span class="dp-stat" title="'+esc(p.stat)+'">'+esc(p.stat)+'</span><span class="dp-line">'+p.line+'</span>'
+    + (p.half ? '<span class="dp-halfb">⏱ 1ST HALF</span>' : '')
     + (p.liveActual!=null && !vo ? '<span class="dp-now">now '+p.liveActual+'</span>' : '')
     + '</div><div class="dp-row2">' + act + strip + '</div></div>';
 }
-function dlgPropCardsGrouped(list, vo){
+function dlgOrdered(list){
   var full = list.filter(function(p){ return !p.half; });
   var half = list.filter(function(p){ return p.half; });
-  var h = full.map(function(p){ return dlgPropCard(p, vo); }).join("");
-  if (half.length) h += '<div class="dp-half">⏱ 1ST HALF PROPS</div>' + half.map(function(p){ return dlgPropCard(p, vo); }).join("");
-  return h;
+  return full.concat(half);
+}
+function dlgSlidesHtml(list, vo){
+  return dlgOrdered(list).map(function(p){ return '<div class="pdslide">' + dlgPropCard(p, vo) + '</div>'; }).join("");
 }
 /* ---------- Last-5 hit rates (ESPN game logs -- free, no Parlay credits; cached 6h) ---------- */
 var L5_MAP = {
@@ -1963,7 +1941,7 @@ function fillPlayerDlg(){
   if (!dlgPlayer) return;
   var list = (propsCache[dlgPlayer.league]||[]).filter(function(p){ return p.player===dlgPlayer.name; });
   var body = $("playerDlgBody"); if (!body) return;
-  if (!list.length){ body.className = ""; dlgTier = 1; body.innerHTML = '<p class="empty">No props found for '+esc(dlgPlayer.name)+'.</p>'; return; }
+  if (!list.length){ body.className = ""; body.innerHTML = '<p class="empty">No props found for '+esc(dlgPlayer.name)+'.</p>'; return; }
   var g = playerGroups(list)[0];
   var live = liveTeamsByLeague[g.league] && liveTeamsByLeague[g.league][(g.team || "").toLowerCase()];
   var bmD = (breakMap[g.league] && g.team) ? breakMap[g.league][g.team.toLowerCase()] : null;
@@ -1972,14 +1950,15 @@ function fillPlayerDlg(){
   var showList = useBrk ? brkList : list;
   var voDlg = !!(dlgPlayer && dlgPlayer.viewOnly);
   var closed = (!!live || voDlg) && !useBrk;
-  applyDlgTier(showList.length);
   body.innerHTML = '<div class="row" style="gap:12px;align-items:center"><img src="' + esc(g.img || "") + '" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:17px;font-weight:900">' + esc(g.player) + '</div><div class="note">' + esc([g.team, g.leagueLabel].filter(function(x){ return x; }).join(" · ")) + ' · ' + showList.length + ' props · PrizePicks</div></div><button class="ghostbtn" id="pdlgClose">Close</button></div>'
     + '<div id="pdlgLive"></div>'
     + (useBrk ? '<p class="sub" style="margin-top:8px;color:var(--gold)">⏸ ' + esc(bmD.detail || "At the break") + ' — fresh props for the next part of the game. Pick before play resumes; they come off the board when it starts.</p>' : (dlgPlayer.finalView ? '<p class="sub" style="margin-top:8px">This game is final — props are view only, with the final stats on each prop.</p>' : ((live || voDlg) ? '<p class="sub" style="margin-top:8px">This game is live — props are closed. Props on your locked-in tickets keep tracking in My Tickets.</p>' : '')))
     + (bmD && !brkList.length && live ? '<p class="sub" style="margin-top:8px">At the break — second-half props only show if the regular board refresh brings them.</p>' : '')
-    + '<div class="pdlgbody' + (closed ? ' closed' : '') + '">' + dlgPropCardsGrouped(showList, (dlgPlayer.finalView && closed) ? "final" : closed) + '</div>';
+    + '<div class="pdlgsl' + (closed ? ' closed' : '') + '">' + dlgSlidesHtml(showList, (dlgPlayer.finalView && closed) ? "final" : closed) + '</div>'
+    + (showList.length > 1 ? '<div class="pdlgpos" id="pdlgPos">1 / ' + showList.length + '</div>' : '');
   if (!closed) bindPicks(body);
   hydrateL5();
+  dlgSliderWire(body.querySelector(".pdlgsl"));
   var cb = $("pdlgClose"); if (cb) cb.addEventListener("click", function(){ $("playerDlg").close(); });
   loadLiveForPlayer(g, list);
 }
@@ -2062,7 +2041,7 @@ function loadLiveForPlayer(g, list){
     fetchJson(ESPN+lg.sport+"/"+lg.league+"/summary?event="+encodeURIComponent(ev.id)).then(function(sm){
       if (isPost) list.forEach(function(p){ var v = liveStatFor(sm, p); if (v!=null) p.liveActual = v; });
       else list.forEach(function(p){ var v = findLiveStat(sm, aid, g.player, p.stat); if (v!=null) p.liveActual = v; });
-      if (dlgPlayer && dlgPlayer.name===g.player){ var body = $("playerDlgBody"); var grid = body && body.querySelector(".pdlgbody"); if (grid){ var cl0 = grid.classList.contains("closed"); applyDlgTier(list.length); grid.innerHTML = list.map(function(p){ return dlgPropCard(p, isPost ? "final" : cl0); }).join(""); if (!grid.classList.contains("closed")) bindPicks(body); hydrateL5(); } }
+      if (dlgPlayer && dlgPlayer.name===g.player){ var body = $("playerDlgBody"); var grid = body && body.querySelector(".pdlgsl"); if (grid){ var cl0 = grid.classList.contains("closed"); grid.innerHTML = dlgSlidesHtml(list, isPost ? "final" : cl0); if (!cl0) bindPicks(body); hydrateL5(); dlgSliderWire(grid); } }
     }).catch(function(){});
   }).catch(function(){});
 }
