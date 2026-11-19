@@ -37,7 +37,148 @@ function etYmd(iso) {
   } catch (e) { return null; }
 }
 function surname(name) { const p = String(name || "").trim().split(/\s+/); return (p[p.length - 1] || "").toLowerCase(); }
+// Stat-name parity with the app (index.html findLiveStat / liveStatFor /
+// gcCanonStat): Parlay stat names are words ("Points", "Passing Yards")
+// while ESPN box-score labels are terse ("PTS", "C/ATT"), so the generic
+// substring match below misses core stats — most notably basketball
+// "Points", which matched nothing and left legs final-with-no-verdict.
+// The dictionary resolves first; the generic match stays as a fallback so
+// nothing that resolved before stops resolving.
+const STAT_ALIAS = { "Blocked Shots": "Blocks", "3-PT Made": "3-Pointers Made" };
+const STAT_CANON = {
+  "passing touchdowns": "Passing TDs", "rushing touchdowns": "Rushing TDs", "receiving touchdowns": "Receiving TDs",
+  "pass completions": "Completions", "passing attempts": "Pass Attempts", "pass attempts": "Pass Attempts",
+  "field goals made": "FG Made", "fg made": "FG Made", "field goals attempted": "FG Attempted", "fg attempted": "FG Attempted",
+  "3-pointers made": "3-Pointers Made", "3-pointers attempted": "3-PT Attempted",
+  "blocked shots": "Blocks", "tackles plus assists": "Tackles+Assists", "tackles+assists": "Tackles+Assists",
+  "shots on goal": "Shots on Goal",
+};
+function canonStat(stat) {
+  const s = String(stat || "").replace(/\s*\([^)]*\)/g, "").replace(/\s+/g, " ").trim();
+  const hit = STAT_CANON[s.toLowerCase()];
+  if (hit) return hit;
+  return s.replace(/\s+plus\s+/gi, "+").replace(/\s*\+\s*/g, "+");
+}
+const COMBO_PARTS = { pts: "Points", point: "Points", points: "Points", reb: "Rebounds", rebs: "Rebounds", rebounds: "Rebounds", ast: "Assists", asts: "Assists", assists: "Assists", stl: "Steals", stls: "Steals", steals: "Steals", blk: "Blocks", blks: "Blocks", blocks: "Blocks",
+  "passing yards": "Passing Yards", "rushing yards": "Rushing Yards", "receiving yards": "Receiving Yards",
+  passing: "Passing Yards", rushing: "Rushing Yards", receiving: "Receiving Yards",
+  pass: "Passing Yards", rush: "Rushing Yards", rec: "Receiving Yards",
+  "pass yards": "Passing Yards", "rush yards": "Rushing Yards", "rec yards": "Receiving Yards" };
+function surOf(name) { const p = String(name || "").trim().split(/\s+/); return (p[p.length - 1] || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+function athleteDicts(summary, leg) {
+  // Per-stat-group stat dicts for the leg's player, mirroring the app's
+  // findLiveStat collection: exact athlete (id or full name) first, and a
+  // surname match only when exactly one athlete in the box score has it.
+  const groups = [];
+  ((summary && summary.boxscore && summary.boxscore.players) || []).forEach((tp) => { (tp.statistics || []).forEach((g) => { groups.push(g); }); });
+  const rawD = [];
+  groups.forEach((g) => {
+    const cols = g.labels || g.names || [];
+    (g.athletes || []).forEach((a) => {
+      const nm = (a.athlete && a.athlete.displayName) || "";
+      const d = { __names: cols.join(","), __nm: nm, __id: (a.athlete && a.athlete.id) || "" };
+      cols.forEach((n, i) => { d[n] = (a.stats || [])[i]; });
+      rawD.push(d);
+    });
+  });
+  let dicts = rawD.filter((d) => (leg.athleteId && String(d.__id) === String(leg.athleteId)) || d.__nm.toLowerCase() === String(leg.player || "").toLowerCase());
+  if (!dicts.length) {
+    const sur = {};
+    rawD.forEach((d) => { if (surOf(d.__nm) === surOf(leg.player)) sur[d.__nm.toLowerCase()] = 1; });
+    if (Object.keys(sur).length === 1) dicts = rawD.filter((d) => surOf(d.__nm) === surOf(leg.player));
+  }
+  return dicts;
+}
+function statFromDicts(dicts, stat) {
+  // Verbatim branch chain from the app's findLiveStat.
+  const num = (x) => { const v = parseFloat(x); return isFinite(v) ? v : null; };
+  const made = (x) => { if (x == null) return null; const parts = String(x).split(/[\/-]/); return num(parts[0]); };
+  const att = (x) => { if (x == null) return null; const parts = String(x).split(/[\/-]/); return parts.length === 2 ? num(parts[1]) : null; };
+  const toi = (x) => { if (x == null) return null; const m = String(x).match(/^(\d+):([0-5]\d)$/); if (m) return Math.round((parseInt(m[1], 10) + parseInt(m[2], 10) / 60) * 10) / 10; return num(x); };
+  for (const d of dicts) {
+    let v = null;
+    const pass = d.__names.indexOf("C/ATT") > -1, rush = d.__names.indexOf("CAR") > -1, recv = d.__names.indexOf("TGTS") > -1, def = d.__names.indexOf("TOT") > -1, kick = d.__names.indexOf("XP") > -1;
+    if (stat === "Points") { v = num(d.PTS != null ? d.PTS : d.P); if (v == null && d.G != null && d.A != null) { const pg = num(d.G), pa2 = num(d.A); if (pg != null && pa2 != null) v = pg + pa2; } }
+    else if (stat === "Rebounds") v = num(d.REB);
+    else if (stat === "Offensive Rebounds") v = num(d.OREB);
+    else if (stat === "Defensive Rebounds") v = num(d.DREB);
+    else if (stat === "Assists") { v = num(d.AST != null ? d.AST : d.A); if (v == null && def) { const tt = num(d.TOT), so = num(d.SOLO); if (tt != null && so != null) v = tt - so; } }
+    else if (stat === "Steals") v = num(d.STL);
+    else if (stat === "Blocks") v = num(d.BLK != null ? d.BLK : d.BS);
+    else if (stat === "Turnovers") v = num(d.TO);
+    else if (stat === "Personal Fouls") v = num(d.PF);
+    else if (stat === "Minutes") v = num(d.MIN);
+    else if (stat === "Plus/Minus") v = num(d["+/-"]);
+    else if (stat === "3-Pointers Made" || stat === "3-PT Made") v = made(d["3PT"]);
+    else if (stat === "3-PT Attempted" || stat === "3-Pointers Attempted") v = att(d["3PT"]);
+    else if (stat === "FG Made") v = made(d.FG);
+    else if (stat === "FG Attempted") v = att(d.FG);
+    else if (stat === "Free Throws Made") v = made(d.FT);
+    else if (stat === "Free Throws Attempted") v = att(d.FT);
+    else if (stat === "Two Pointers Made") { const fm = made(d.FG), tm = made(d["3PT"]); if (fm != null && tm != null) v = fm - tm; }
+    else if (stat === "Two Pointers Attempted") { const fa = att(d.FG), ta = att(d["3PT"]); if (fa != null && ta != null) v = fa - ta; }
+    else if (stat === "Double-Double") { if (num(d.PTS) != null) { const cats = [d.PTS, d.REB, d.AST, d.STL, d.BLK]; let c2 = 0; cats.forEach((x) => { const n2 = num(x); if (n2 != null && n2 >= 10) c2++; }); v = c2 >= 2 ? 1 : 0; } }
+    else if (stat === "Goals") v = num(d.G);
+    else if (stat === "Shots on Goal") v = num(d.SOG);
+    else if (stat === "Saves") v = num(d.SV);
+    else if (stat === "Hits") v = num(d.HT);
+    else if (stat === "Faceoffs Won") v = num(d.FW);
+    else if (stat === "Time On Ice") v = toi(d.TOI);
+    else if (stat === "Passing Yards" && pass) v = num(d.YDS);
+    else if (stat === "Passing TDs" && pass) v = num(d.TD);
+    else if (stat === "Completions" && pass) v = made(d["C/ATT"]);
+    else if (stat === "Pass Attempts" && pass) v = att(d["C/ATT"]);
+    else if (stat === "Passing Interceptions" && pass) v = num(d.INT);
+    else if (stat === "Longest Passing Completion" && pass) v = num(d.LONG);
+    else if (stat === "Rushing Yards" && rush) v = num(d.YDS);
+    else if (stat === "Rushing TDs" && rush) v = num(d.TD);
+    else if (stat === "Carries" && rush) v = num(d.CAR);
+    else if (stat === "Longest Rush" && rush) v = num(d.LONG);
+    else if (stat === "Receiving Yards" && recv) v = num(d.YDS);
+    else if (stat === "Receiving TDs" && recv) v = num(d.TD);
+    else if (stat === "Receptions" && recv) v = num(d.REC);
+    else if (stat === "Longest Reception" && recv) v = num(d.LONG);
+    else if (stat === "Targets" && recv) v = num(d.TGTS);
+    else if (stat === "Tackles" && def) v = num(d.SOLO);
+    else if (stat === "Tackles+Assists" && def) v = num(d.TOT);
+    else if (stat === "Sacks" && def) v = num(d.SACKS);
+    else if (stat === "Extra Points Made" && kick) v = made(d.XP);
+    else if (stat === "Kicking Points" && kick) v = num(d.PTS);
+    if (v != null) return v;
+  }
+  return null;
+}
 function statFor(summary, leg) {
+  if (!summary || !leg) return null;
+  if (String(leg.player || "").indexOf("+") > -1) return null; // combo-player legs name no real athlete (app parity)
+  const dicts = athleteDicts(summary, leg);
+  if (dicts.length) {
+    const stat = canonStat(STAT_ALIAS[leg.stat] || leg.stat);
+    let v = statFromDicts(dicts, stat);
+    if (v == null && /anytime tds/i.test(stat)) {
+      // "Anytime Tds": sum the TD entries across the player's own stat
+      // groups — the same derivation the app uses for display.
+      let sum = 0, any = false;
+      dicts.forEach((d) => { const n = parseFloat(d.TD); if (isFinite(n)) { sum += n; any = true; } });
+      if (any) v = sum;
+    }
+    if (v == null && stat.indexOf("+") > -1) {
+      const parts = stat.split("+");
+      let sum = 0, okCombo = parts.length > 1;
+      for (const part of parts) {
+        const canon = COMBO_PARTS[part.trim().toLowerCase()];
+        if (!canon) { okCombo = false; break; }
+        const pv = statFromDicts(dicts, canon);
+        if (pv == null) { okCombo = false; break; }
+        sum += pv;
+      }
+      if (okCombo) v = sum;
+    }
+    if (v != null) return v;
+  }
+  return statForGeneric(summary, leg);
+}
+function statForGeneric(summary, leg) {
   // Mirrors the app's findLiveStat: locate the player in the box score and
   // pull the numeric stat whose label matches the prop's stat name.
   const boxes = (summary && summary.boxscore && summary.boxscore.players) || [];
@@ -143,7 +284,7 @@ module.exports = async (req, res) => {
       return sumCache[k];
     }
     async function gradeLeg(leg) {
-      // -> { final:bool, hit:bool|null, actual:number|null }
+      // -> { final:bool, hit:bool|null, actual:number|null, unresolved:bool }
       if (!leg || leg.custom || !leg.starts || !LEAGUES[leg.league]) return { final: false };
       if (leg.league === "tennis") return { final: false }; // tennis stats aren't in the box-score map
       const ymd = etYmd(leg.starts); if (!ymd) return { final: false };
@@ -162,7 +303,7 @@ module.exports = async (req, res) => {
         if (!sum) continue;
         const state = sum.header && sum.header.competitions && sum.header.competitions[0] && sum.header.competitions[0].status && sum.header.competitions[0].status.type && sum.header.competitions[0].status.type.state;
         const actual = statFor(sum, leg);
-        if (actual == null) { if (ev) return { final: state === "post" }; continue; }
+        if (actual == null) { if (ev) return { final: false, unresolved: state === "post" }; continue; }
         if (state !== "post") return { final: false, actual };
         const hit = leg.dir === "LESS" ? actual < leg.line : actual > leg.line;
         const push = actual === leg.line;

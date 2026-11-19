@@ -3465,6 +3465,46 @@ function backfillFinalStats(t, l, box){
     });
   }).catch(function(){ fsBusy[key] = 0; });
 }
+var manZeroWarn = {}; // tid|lid -> true once the owner has been warned that an untouched stepper settles as 0
+var manPreBusy = {};
+function prefillManualFinal(t, l){
+  // A manual (tap-to-track) leg whose game is FINAL: pre-fill the stepper
+  // with the ESPN-resolved final value for the picked stat — the same
+  // resolution the ticket display uses (findEventForLeg -> summaryForEvent
+  // -> liveStatFor, plus the Anytime-TDs TD sum from the player's final
+  // line). The pre-fill is only a suggestion: it never marks the leg
+  // final and never settles the ticket — settling still takes the owner's
+  // "\u2713 Mark final" tap, and the owner can edit the number first.
+  // Only fills a stepper the owner has never touched.
+  if (!l || l.custom || l.league === "tennis" || t.result) return;
+  if ((manualFin[t.id] || {})[l.id]) return;
+  if ((manualTr[t.id] || {})[l.id] != null) return;
+  var key = t.id + "|" + l.id;
+  if (manPreBusy[key]) return; manPreBusy[key] = 1;
+  findEventForLeg(t, l).then(function(eid){
+    if (!eid) { manPreBusy[key] = 0; return; }
+    var lg = leagueByKey(l.league); if (!lg) { manPreBusy[key] = 0; return; }
+    return summaryForEvent(lg, eid).then(function(s){
+      manPreBusy[key] = 0;
+      var fin = false;
+      try { var c = (s.header.competitions || [])[0]; fin = c && c.status && c.status.type && c.status.type.state === "post"; } catch(e){}
+      if (!fin || t.result) return;
+      if ((manualTr[t.id] || {})[l.id] != null) return;
+      var v = liveStatFor(s, l);
+      if (v == null && /anytime tds/i.test(l.stat || "")) {
+        var line = l.athleteId ? findPlayerLine(s, l.athleteId) : [];
+        if (!line.length) line = findPlayerLineByName(s, l.player);
+        var sum = 0, any = false;
+        line.forEach(function(e){ if (String(e[0]).toUpperCase() === "TD") { var n2 = parseFloat(e[1]); if (isFinite(n2)) { sum += n2; any = true; } } });
+        if (any) v = sum;
+      }
+      if (v == null) return;
+      manualTr[t.id] = manualTr[t.id] || {}; manualTr[t.id][l.id] = v;
+      lsSet("pa_manual", manualTr);
+      renderTickets();
+    });
+  }).catch(function(){ manPreBusy[key] = 0; });
+}
 function legGrade(leg, val){
   if (val==null) return "pend";
   if (val===leg.line) return "push";
@@ -3706,18 +3746,30 @@ function renderTickets(){
                 : t.result ? '<span class="note">Tracked: <b>'+cur+'</b></span>'
                 : '<span class="stepper"><button data-step="'+t.id+'|'+l.id+'|-1">−</button><b>'+cur+'</b><button data-step="'+t.id+'|'+l.id+'|1">+</button></span><button class="likebtn" data-manfin="'+t.id+'|'+l.id+'" style="margin-left:8px">✓ Mark final</button>')
               + '</div>'
-              + (!fin2 && !t.result ? '<div class="note" style="padding-bottom:6px">Enter the live number as the game goes — the ticket only settles when you tap ✓ Mark final.</div>' : '');
+              + (!fin2 && !t.result ? (manZeroWarn[t.id + "|" + l.id] && (manualTr[t.id] || {})[l.id] == null
+                  ? '<div class="note" style="padding-bottom:6px;color:#ff5d7a;font-weight:700">\u26a0 No number entered — marking final counts this leg as 0 and it will MISS. Enter the real total above, or tap \u2713 Mark final again to confirm 0.</div>'
+                  : '<div class="note" style="padding-bottom:6px">Enter the live number as the game goes — the ticket only settles when you tap \u2713 Mark final.</div>') : '');
             st.querySelectorAll("[data-step]").forEach(function(b){ b.addEventListener("click", function(){
               var p = b.getAttribute("data-step").split("|"); var tid=p[0], lid=p[1], d=parseInt(p[2],10);
               manualTr[tid] = manualTr[tid]||{}; manualTr[tid][lid] = Math.max(0, (manualTr[tid][lid]||0)+d);
+              delete manZeroWarn[tid + "|" + lid];
               lsSet("pa_manual", manualTr); renderTickets();
             }); });
             st.querySelectorAll("[data-manfin]").forEach(function(b){ b.addEventListener("click", function(){
               var p = b.getAttribute("data-manfin").split("|"); var tid=p[0], lid=p[1];
-              manualTr[tid] = manualTr[tid]||{}; if (manualTr[tid][lid] == null) manualTr[tid][lid] = 0; lsSet("pa_manual", manualTr);
+              manualTr[tid] = manualTr[tid]||{};
+              if (manualTr[tid][lid] == null) {
+                // Untouched stepper: never settle a silent 0 — the first
+                // tap only warns; a second tap confirms the 0 on purpose.
+                var wk = tid + "|" + lid;
+                if (!manZeroWarn[wk]) { manZeroWarn[wk] = 1; renderTickets(); return; }
+                manualTr[tid][lid] = 0; lsSet("pa_manual", manualTr);
+              }
+              delete manZeroWarn[tid + "|" + lid];
               manualFin[tid] = manualFin[tid]||{}; manualFin[tid][lid] = true;
               lsSet("pa_manualfin", manualFin); renderTickets();
             }); });
+            if (!fin2 && !t.result && g.manual) prefillManualFinal(t, l);
           }
         }
       });
