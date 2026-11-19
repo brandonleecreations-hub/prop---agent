@@ -4585,7 +4585,7 @@ function clashFinish(won){
   if (CL.mode === "pvp" && CL.pvp && !CL.pvp.finSent) { CL.pvp.finSent = true; pvpSendFinal(won); }
   if (won && typeof confetti === "function") confetti();
 }
-/* ============ HEAD-TO-HEAD PvP (Brandon 2026-11-18) ============
+/* ============ HEAD-TO-HEAD PvP ============
    Rooms live in Supabase (clash_rooms) via api/social.js. The battle state
    is stored oriented for the player who moves NEXT; the other phone mirrors
    it (my*<->cpu*, grid X<->O) for display. beginTurn("me") runs exactly once
