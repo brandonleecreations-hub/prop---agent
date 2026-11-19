@@ -5760,15 +5760,34 @@ function feedTicketCard(it){
     + '<div style="margin-top:6px">' + (mine ? '<span class="note"><span style="color:#ff5d7a">\u2665</span> ' + (t.likes || 0) + '</span>' : '<button type="button" class="likebtn' + (t.likedByMe ? ' on' : '') + '" data-like="' + t.id + '"><span class="hrt">\u2665</span> ' + (t.likes || 0) + '</button>') + '</div></div>';
 }
 var BOARD_ACCORDION_KEYS = ["following", "tiers", "tier", "player", "stamps", "foils", "special"];
+function boardSectionTitleEl(key){
+  if (key === "following") { var fb = $("followToggle"); if (!fb) return null; return fb.closest ? (fb.closest("h2") || fb) : fb; }
+  if (key === "tiers") { var tg = $("tiersToggle"); if (!tg) return null; var pv = tg.previousElementSibling; return (pv && pv.tagName === "H2") ? pv : tg; }
+  return document.querySelector('.cardsec-h[data-cardsec="' + key + '"]');
+}
+function boardScrollToSection(key){
+  var bv = $("view-board"); if (!bv || !bv.classList.contains("on")) return;
+  var run = function(){
+    var bv2 = $("view-board"); if (!bv2 || !bv2.classList.contains("on")) return;
+    var el = boardSectionTitleEl(key); if (!el) return;
+    var hdr = document.querySelector("header");
+    var off = hdr && hdr.offsetHeight ? hdr.offsetHeight : 0;
+    try { el.style.scrollMarginTop = (off + 8) + "px"; } catch(e){}
+    if (typeof el.scrollIntoView === "function") { try { el.scrollIntoView(); } catch(e){} }
+  };
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(run); else setTimeout(run, 0);
+}
 function boardAccordion(openKey){
   var st = lsGet("pa_cardsecs", {});
   var changed = false;
-  BOARD_ACCORDION_KEYS.forEach(function(k){ if (k !== openKey && st[k]) { st[k] = false; changed = true; } });
-  if (!changed) return;
-  lsSet("pa_cardsecs", st);
-  applyFollowToggle();
-  if (typeof window.applyTiersToggle === "function") window.applyTiersToggle();
-  renderBoard();
+  BOARD_ACCORDION_KEYS.forEach(function(k){ if (k === openKey) return; var cur = (k in st) ? !!st[k] : (k === "following" || k === "tiers" || k === "tier"); if (cur) { st[k] = false; changed = true; } });
+  if (changed) {
+    lsSet("pa_cardsecs", st);
+    applyFollowToggle();
+    if (typeof window.applyTiersToggle === "function") window.applyTiersToggle();
+    renderBoard();
+  }
+  boardScrollToSection(openKey);
 }
 function applyFollowToggle(){
   var st = lsGet("pa_cardsecs", {});
