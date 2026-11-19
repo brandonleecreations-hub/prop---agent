@@ -1178,7 +1178,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <details class="card" style="margin-top:14px">
       <summary>Optional: add a fully custom leg</summary>
       <p class="note" style="margin-top:10px">Copy each line exactly as your betting site shows it — your player, your line, your More / Less pick, and which site it came from (PrizePicks, Underdog, DraftKings, FanDuel, Sleeper…). Prop Agent tracks live stats against <b>your</b> line where ESPN reports the stat. Tennis stats like Aces, Double Faults and First Serve % aren't in the ESPN feed, so those legs get a tap-to-track stepper on your ticket.</p>
-      <p class="note" style="margin-top:6px;color:#f5c518;font-weight:700">🧩 Fair-play rule: a ticket with any custom leg earns no tier points and no packs — custom picks are graded by you, not the box score. The ticket still tracks, saves, and can be liked like any other.</p>
+      <p class="note" style="margin-top:6px;color:#f5c518;font-weight:700">🧩 Fair-play rule: a ticket with any custom leg earns no tier points, coins or packs — custom picks are graded by you, not the box score. The ticket still tracks, saves, and can be liked like any other.</p>
       <div class="fld"><label>Player</label><input type="text" id="cPlayer" placeholder="Player name"></div>
       <div class="row">
         <div class="fld" style="flex:1"><label>Stat</label><input type="text" id="cStat" placeholder="e.g. Points, Aces, Passing Yards"></div>
@@ -1616,7 +1616,7 @@ function togglePick(prop, dir){
 function removeLeg(id){ slip = slip.filter(function(l){ return l.id!==id; }); lsSet("pa_slip", slip); renderAllSlips(); renderBoards(); renderTicker(); refreshPlayerDlg(); updateSlipChip(); }
 var PAYOUTS = {2:3, 3:5, 4:10, 5:20, 6:37.5};
 var slipPublic = lsGet("pa_slipub", true) !== false;
-var DAILY_TICKET_LIMIT = 5;
+var DAILY_TICKET_LIMIT = 8;
 function locksToday(){
   var rec = lsGet("pa_lockday", null);
   if (!rec || rec.day !== dayStr()) return 0;
@@ -1672,7 +1672,7 @@ function slipHtml(){
     + '<div class="note" style="margin-top:6px">🎟️ Tickets today: '+locks+' of '+DAILY_TICKET_LIMIT+(limitHit ? ' — daily limit reached, back tomorrow' : '')+'</div>'
     + (hedge ? '<div class="note" style="margin-top:4px;color:#f87171;font-weight:700">🚫 Anti-hedge: '+esc(hedge)+'</div>' : '')
     + (startedMsg ? '<div class="note" style="margin-top:4px;color:#f87171;font-weight:700">🚫 Game started: '+esc(startedMsg)+'</div>' : '')
-    + (slip.some(function(l){ return !!l.custom; }) ? '<div class="note" style="margin-top:4px;color:#f5c518;font-weight:700">🧩 Custom pick on this slip — tickets with custom picks earn no tier points or packs. Custom picks are graded by you, not the box score.</div>' : '')
+    + (slip.some(function(l){ return !!l.custom; }) ? '<div class="note" style="margin-top:4px;color:#f5c518;font-weight:700">🧩 Custom pick on this slip — tickets with custom picks earn no tier points, coins or packs. Custom picks are graded by you, not the box score.</div>' : '')
     + '<div class="row" style="margin-top:10px;gap:8px"><span class="note">Who can see this slip?</span><button type="button" class="likebtn'+(slipPublic?' on':'')+'" data-slipub="1">🌐 Public</button><button type="button" class="likebtn'+(!slipPublic?' on':'')+'" data-slipub="0">🔒 Private</button></div>'
     + (slipPublic ? '<div class="note" style="margin-top:4px">Public slips show on your profile — other agents can see and like them.</div>' : '<div class="note" style="margin-top:4px">Private slips stay on your account only — nobody else can see or like them.</div>')
     + '<div style="margin-top:12px"><button class="bigbtn" id="lockBtn" '+(canLock?"":"disabled")+'>'+(can ? (limitHit ? "Daily Limit Reached" : (hedge ? "Blocked — Opposite Pick" : (startedMsg ? "Blocked — Game Started" : "Lock In Ticket"))) : "Lock In (pick 2+ to enable)")+'</button></div>';
@@ -3525,7 +3525,7 @@ function renderTickets(){
         + '<div class="fstats" data-fstats="'+esc(t.id)+'|'+esc(l.id)+'"></div>'
         + (l.player ? '<div style="padding:2px 0 8px"><button type="button" class="ghostbtn" data-pplay="'+esc(t.id)+'|'+esc(l.id)+'" style="font-size:12px;padding:5px 11px">Play by play - '+esc(l.player)+'</button><div data-pplays="'+esc(t.id)+'|'+esc(l.id)+'"></div></div>' : '');
     }).join("");
-    return '<div class="card" data-ticket="'+t.id+'"'+(t.result?' style="padding-bottom:38px"':'')+'><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span>' + res + (t.pub === false ? ' · 🔒 Private' : '') + (ticketHasCustom(t) ? ' · 🧩 Custom' : '') + '</span></div>' + likeChip(t) + (ticketHasCustom(t) ? '<div class="note">🧩 Custom ticket — earns no tier points or packs.</div>' : '') + '<span class="stampmini">LOCKED IN</span>'+(t.result?'<span class="stampmini resstamp '+(t.result==="win"?"won":"lost")+'">'+(t.result==="win"?"★ WON":"✗ LOST")+'</span>':'')+legs+'</div>';
+    return '<div class="card" data-ticket="'+t.id+'"'+(t.result?' style="padding-bottom:38px"':'')+'><div class="row" style="justify-content:space-between;padding-right:108px"><b>Ticket · '+new Date(t.ts).toLocaleString()+'</b><span>' + res + (t.pub === false ? ' · 🔒 Private' : '') + (ticketHasCustom(t) ? ' · 🧩 Custom' : '') + '</span></div>' + likeChip(t) + (ticketHasCustom(t) ? '<div class="note">🧩 Custom ticket — earns no tier points, coins or packs.</div>' : '') + '<span class="stampmini">LOCKED IN</span>'+(t.result?'<span class="stampmini resstamp '+(t.result==="win"?"won":"lost")+'">'+(t.result==="win"?"★ WON":"✗ LOST")+'</span>':'')+legs+'</div>';
   }).join("");
   box.querySelectorAll("[data-pplay]").forEach(function(b){ b.addEventListener("click", function(){ togglePlayerPlays(b); }); });
   fillGameStrips(box);
@@ -3915,11 +3915,11 @@ var PACK_TIER_W = [34, 25, 17, 11, 6.5, 4, 2.5];
 function drawPackTier(){ var tot = 0, i; for (i = 0; i < 7; i++) tot += PACK_TIER_W[i]; var r = Math.random() * tot; for (i = 0; i < 7; i++) { r -= PACK_TIER_W[i]; if (r <= 0) return i; } return 0; }
 function dayStr(){ var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
 function maxTierIdx(){ var w = maxWins(), idx = 0; TIERS.forEach(function(t, i){ if (w >= t.wins) idx = i; }); return idx; }
-function awardTicketPack(t){
-  if (ticketHasCustom(t)) return;
-  var p = packsGet();
-  if (t.legs && t.legs.length >= 4) p.n = (p.n || 0) + 2; else p.n = (p.n || 0) + 1;
-  packsSet(p);
+function awardTicketReward(t){
+  if (ticketHasCustom(t)) return; /* fair-play: custom-leg tickets earn no coins or packs */
+  var n = (t.legs || []).length;
+  if (n === 4) { clashGrant(15); return; } /* 4-leg win pays 15 Clash Coins (daily-cap + cloud sync ride clashGrant) */
+  if (n >= 5) { var p = packsGet(); p.n = (p.n || 0) + (n >= 6 ? 2 : 1); packsSet(p); } /* 5 legs: 1 pack - 6+ legs: 2 packs */
 }
 function renderPacks(){
   var box = $("packsBox"); if (!box) return;
@@ -3938,6 +3938,7 @@ function renderPacks(){
     
     + '<button class="openbtn" data-buypack="1"' + (coinsGet() >= CLASH_PACK_COST ? '' : ' disabled') + '>🪙 Buy a Pack · ' + CLASH_PACK_COST + ' Coins</button>'
     + '</div>'
+    + '<div class="note" style="margin-top:10px">🏆 Win a 4-leg ticket → <b>15 Clash Coins</b> · 5 legs → <b>1 pack</b> · 6 legs → <b>2 packs</b></div>'
     + '</div>';
 }
 function ringBackHTML(){
@@ -5861,7 +5862,7 @@ function confetti(){
 }
 function celebrateCheck(t){
   if (!t.result) return;
-  if (!packSeen[t.id]) { packSeen[t.id] = 1; lsSet("pa_pack_seen", packSeen); if (t.result === "win") awardTicketPack(t); }
+  if (!packSeen[t.id]) { packSeen[t.id] = 1; lsSet("pa_pack_seen", packSeen); if (t.result === "win") awardTicketReward(t); }
   if (animSeen[t.id]) return;
   if (window._view !== "tickets") return; /* the moment waits until he opens the ticket */
   animSeen[t.id] = 1; lsSet("pa_anim_seen", animSeen);
