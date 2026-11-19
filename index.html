@@ -184,6 +184,7 @@ table.tstats td.tsA,table.tstats td.tsB{font-weight:700}
 #myCards .tiercard.lgnd .tcwin::after{animation-duration:2.1s}
 #myCards .tcspark{animation:sparkdrift 4.5s ease-in-out infinite alternate}
 .glitterfx{position:absolute;inset:0;pointer-events:none;border-radius:var(--r);background-image:radial-gradient(circle,rgba(255,255,255,.95) 0 1.2px,transparent 1.9px),radial-gradient(circle,rgba(125,211,252,.9) 0 1px,transparent 1.7px),radial-gradient(circle,rgba(255,255,255,.65) 0 .8px,transparent 1.4px);background-size:92px 92px,64px 64px,46px 46px;background-position:0 0,18px 26px,40px 8px;animation:glitShift 3.4s ease-in-out infinite alternate,glitTwinkle 1.7s ease-in-out infinite alternate}
+.glitterfx.pglit{background-image:radial-gradient(circle,rgba(216,180,254,.95) 0 1.2px,transparent 1.9px),radial-gradient(circle,rgba(178,107,255,.9) 0 1px,transparent 1.7px),radial-gradient(circle,rgba(255,255,255,.7) 0 .8px,transparent 1.4px);background-size:88px 88px,60px 60px,44px 44px}
 @keyframes glitShift{from{background-position:0 0,18px 26px,40px 8px}to{background-position:26px 18px,44px 4px,8px 30px}}
 @keyframes glitTwinkle{from{opacity:.35}to{opacity:.95}}
 .stampspark{position:absolute;inset:0;pointer-events:none;border-radius:var(--r);background-image:radial-gradient(circle,rgba(255,240,196,.95) 0 1.2px,transparent 1.9px),radial-gradient(circle,rgba(245,185,66,.9) 0 1px,transparent 1.7px),radial-gradient(circle,rgba(255,255,255,.7) 0 .8px,transparent 1.4px);background-size:86px 86px,58px 58px,42px 42px;background-position:6px 4px,26px 18px,2px 34px;animation:glitShift2 3.1s ease-in-out infinite alternate,glitTwinkle 1.9s ease-in-out infinite alternate}
@@ -1823,28 +1824,39 @@ var L5_MAP = {
   "pts+asts":["points","assists"], "points+assists":["points","assists"],
   "rebs+asts":["totalRebounds","assists"], "rebounds+assists":["totalRebounds","assists"],
   "blocks+steals":["blocks","steals"], "blks+stls":["blocks","steals"], "minutes":["minutes"],
+  "blocked shots":["blocks"], "fg made":["made:fieldGoalsMade-fieldGoalsAttempted"], "fg attempted":["att:fieldGoalsMade-fieldGoalsAttempted"],
+  "field goals attempted":["att:fieldGoalsMade-fieldGoalsAttempted"], "free throws attempted":["att:freeThrowsMade-freeThrowsAttempted"], "personal fouls":["fouls"],
   "passing yards":["passingYards"], "passing tds":["passingTouchdowns"], "passing touchdowns":["passingTouchdowns"],
   "completions":["completions"], "pass attempts":["passingAttempts"], "passing attempts":["passingAttempts"], "interceptions":["interceptions"],
+  "pass yards":["passingYards"], "pass completions":["completions"], "pass tds":["passingTouchdowns"],
+  "passing interceptions":["interceptions"], "int":["interceptions"],
+  "tackles":["soloTackles"], "tackles+assists":["totalTackles"], "sacks":["sacks"],
+  "extra points made":["made:extraPointsMade-extraPointAttempts"], "kicking points":["totalKickingPoints"],
+  "longest passing completion":["longPassing"], "longest completion":["longPassing"], "longest reception":["longReception"], "longest rush":["longRushing"],
   "rushing yards":["rushingYards"], "rushing tds":["rushingTouchdowns"], "rushing touchdowns":["rushingTouchdowns"],
-  "rush attempts":["rushingAttempts"], "rushing attempts":["rushingAttempts"], "carries":["rushingAttempts"],
-  "receiving yards":["receivingYards"], "receiving tds":["receivingTouchdowns"], "receiving touchdowns":["receivingTouchdowns"],
+  "rush attempts":["rushingAttempts"], "rushing attempts":["rushingAttempts"], "carries":["rushingAttempts"], "rush yards":["rushingYards"], "rush tds":["rushingTouchdowns"],
+  "receiving yards":["receivingYards"], "receiving tds":["receivingTouchdowns"], "receiving touchdowns":["receivingTouchdowns"], "rec tds":["receivingTouchdowns"],
   "receptions":["receptions"], "targets":["receivingTargets"],
   "rush+rec yards":["rushingYards","receivingYards"], "rushing+receiving yards":["rushingYards","receivingYards"],
+  "pass+rush yds":["passingYards","rushingYards"], "pass+rush yards":["passingYards","rushingYards"], "rush+rec yds":["rushingYards","receivingYards"], "rush+rec yards":["rushingYards","receivingYards"],
   "passing+rushing yards":["passingYards","rushingYards"],
   "goals":["goals"], "shots on goal":["shotsTotal"], "shots":["shotsTotal"], "saves":["saves"],
-  "power play points":["powerPlayGoals","powerPlayAssists"],
-  "hits":["hits"], "total bases":["totalBases"], "home runs":["homeRuns"], "runs batted in":["runsBattedIn"], "rbis":["runsBattedIn"],
+  "power play points":["powerPlayGoals","powerPlayAssists"], "plus/minus":["plusMinus"], "time on ice":["toi:timeOnIcePerGame"],
+  "hits":["hits"], "total bases":["hits","doubles","triples","triples","homeRuns","homeRuns","homeRuns"], "home runs":["homeRuns"], "runs batted in":["RBIs"], "rbis":["RBIs"], "earned runs":["earnedRuns"], "doubles":["doubles"], "walks":["walks"],
   "stolen bases":["stolenBases"], "runs":["runs"], "strikeouts":["strikeouts"]
 };
 function l5NormStat(s){
   var x = String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+  x = x.replace(/\s*\([^)]*\)/g, ""); /* feed suffixes: "(incl. overtime)", "(combo)" */
+  x = x.replace(/\s+plus\s+/g, "+"); /* "Passing Plus Rushing Yards" -> "passing+rushing yards" (spaced "plus" only, so "Plus/Minus" survives) */
   x = x.replace(/three pointers?/g, "3-pt").replace(/3pt/g, "3-pt");
   x = x.replace(/\s*\+\s*/g, "+");
-  return x;
+  return x.replace(/\s+/g, " ").trim();
 }
 function l5ColVal(raw, spec){
   if (raw == null) return null;
   var s = String(raw).trim(); if (!s || s === "--" || s === "-") return null;
+  if (spec.indexOf("toi:") === 0) { var tp = s.split(":"); if (tp.length !== 2) return null; var tv = parseFloat(tp[0]) + parseFloat(tp[1]) / 60; return isFinite(tv) ? tv : null; }
   if (spec.indexOf("made:") === 0) s = s.split("-")[0];
   else if (spec.indexOf("att:") === 0) { var parts = s.split("-"); s = parts.length > 1 ? parts[1] : s; }
   var v = parseFloat(s); return isFinite(v) ? v : null;
@@ -1859,9 +1871,22 @@ function l5Reduce(g){
   rows.sort(function(a, b){ return a[0] < b[0] ? 1 : -1; });
   return { names: g.names, rows: rows.slice(0, 10) };
 }
+function l5ColIdx(names, sp){
+  var col = sp.replace(/^(made|att|toi):/, "");
+  var i = names.indexOf(col); if (i >= 0) return i;
+  var seg = col.split("-");
+  if (seg.length === 2) { /* made-att column spelling varies by sport (…GoalsAttempted vs …GoalAttempts) */
+    var alts = [seg[1].replace(/Attempted/g, "Attempts"), seg[1].replace(/Attempts/g, "Attempted")];
+    var more = [];
+    alts.forEach(function(a){ more.push(a); more.push(a.replace(/Goals/g, "Goal")); });
+    for (var k = 0; k < more.length; k++) { i = names.indexOf(seg[0] + "-" + more[k]); if (i >= 0) return i; }
+  }
+  i = names.indexOf(col.replace(/Attempted/g, "Attempts")); if (i >= 0) return i;
+  return names.indexOf(col.replace(/Attempts/g, "Attempted"));
+}
 function l5Series(g, stat){
   var specs = L5_MAP[l5NormStat(stat)]; if (!specs || !g) return null;
-  var idx = specs.map(function(sp){ return g.names.indexOf(sp.replace(/^(made|att):/, "")); });
+  var idx = specs.map(function(sp){ return l5ColIdx(g.names, sp); });
   if (idx.some(function(i){ return i < 0; })) return null;
   var minIdx = g.names.indexOf("minutes");
   var vals = [];
@@ -1924,10 +1949,11 @@ function hydrateL5(){
       if (!g) return;
       var vals = l5Series(g, stat);
       if (!vals || !vals.length) return;
-      var over = 0, chips = "";
-      vals.forEach(function(v){ var on = v > line; if (on) over++; chips += '<span class="l5chip' + (on ? " on" : "") + '">' + (Math.round(v * 10) / 10) + '</span>'; });
+      var over = 0, chips = "", sum5 = 0;
+      vals.forEach(function(v){ var on = v > line; if (on) over++; sum5 += v; chips += '<span class="l5chip' + (on ? " on" : "") + '">' + (Math.round(v * 10) / 10) + '</span>'; });
       var mini5 = el.getAttribute("data-mini");
-      el.innerHTML = '<span class="l5lab">' + (mini5 ? esc(l5Short(stat)) : 'LAST ' + vals.length) + '</span><span class="l5chips">' + chips + '</span><span class="l5cnt">' + (mini5 ? over + '/' + vals.length : over + ' of ' + vals.length + ' over') + '</span>';
+      var cnt5 = mini5 ? over + '/' + vals.length : over + ' of ' + vals.length + ' over · AVG ' + (Math.round((sum5 / vals.length) * 10) / 10) + ' · ' + Math.round(over / vals.length * 100) + '% hit';
+      el.innerHTML = '<span class="l5lab">' + (mini5 ? esc(l5Short(stat)) : 'LAST ' + vals.length) + '</span><span class="l5chips">' + chips + '</span><span class="l5cnt">' + cnt5 + '</span>';
       el.classList.add("show");
     });
   });
@@ -3768,6 +3794,7 @@ function tierCardHTML(t, wins, withBtns, ci){
     + '</div>'
     + (ti >= 5 ? '<div class="tcspark"></div>' : '')
     + (t.name === "Diamond" ? '<div class="glitterfx"></div>' : '')
+    + (t.name === "Legend" ? '<div class="glitterfx pglit"></div>' : '')
     + '<div class="holo" style="--hc:' + t.color + '59"></div></div>';
   return '<div class="tiercard' + (ti === TIERS.length - 1 ? ' lgnd' : '') + (un ? ' unlocked' : ' locked') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · ' + t.name + ' · ' + t.rarity, pw.name + ' \u2014 ' + pw.desc + '<br><br>Unlocks at ' + t.wins + ' winning tickets. You have ' + wins + '. A win counts only when every leg on the ticket hits. Grid Clash: DMG ' + (1 + Math.floor(ti / 2)) + ' · LIFE ' + (3 + ti) + ' — landing a hit costs 2 energy cards. Its power fires once per game.') + '</div></div>';
 }
