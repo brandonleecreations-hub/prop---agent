@@ -603,6 +603,13 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .pvpcode{text-align:center;font-size:38px;font-weight:900;letter-spacing:8px;margin:12px 0;background:linear-gradient(90deg,#f5b942,#4fe3c1);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(245,185,66,.35))}
 .pvpttl{background:linear-gradient(90deg,#c4b5fd,#4fe3c1);-webkit-background-clip:text;background-clip:text;color:transparent}
 .pvpwait{display:inline-block;animation:pvppulse 1.6s ease-in-out infinite}
+.lobprow{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-top:8px}
+.lobav{width:34px;height:34px;border-radius:50%;object-fit:cover;flex:0 0 auto;background:#1b1030}
+.lobavx{display:flex;align-items:center;justify-content:center;font-size:17px}
+.lobnm{font-weight:800;font-size:14.5px;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lobbtn{flex:0 0 auto;width:auto;padding:8px 12px;font-size:13px;margin:0}
+.lobchal{border:1.5px solid var(--gold);background:rgba(245,185,66,.08);border-radius:14px;padding:10px 12px;margin-top:10px;font-size:14px}
+.lobchal .clashbig{margin-top:8px}
 @keyframes pvppulse{0%,100%{opacity:1}50%{opacity:.3}}
 @media (prefers-reduced-motion: reduce){.clashbig.pvp::after,.pvpwait{animation:none}}
 .clashbig.gold{background:linear-gradient(145deg,#f5b942,#d97706);border-color:#fde68a;color:#1a1405}
@@ -4124,7 +4131,7 @@ function ensureClashPop(){
   el.querySelector("#itemPop").addEventListener("click", function(e){ if (e.target === el.querySelector("#itemPop")) closeItemView(); });
 }
 function openClash(){ ensureClashPop(); $("clashPop").classList.add("open"); musicStart(); clashMenu(); }
-function closeClash(){ if (CL && CL.mode === "pvp") { pvpPollStop(); if (CL.pvp.stage === "battle" && !CL.over) { CL.pvp.finSent = true; pvpSendFinal(false); var bb = battlesGet(); bb.l = (bb.l || 0) + 1; lsSet("pa_battles", bb); lsSet("pa_clash_last", Date.now()); cloudSave(); } } var p = $("clashPop"); if (p) p.classList.remove("open"); if (CL && CL.ttResolve) CL.ttResolve(-1); if (CL && CL.abResolve) CL.abResolve(""); musicStop(); closeZoom(); closeItemView(); CL = null; renderClash(); renderPacks(); }
+function closeClash(){ if (LOB) pvpLobbyCleanup(); if (CL && CL.mode === "pvp") { pvpPollStop(); if (CL.pvp.stage === "battle" && !CL.over) { CL.pvp.finSent = true; pvpSendFinal(false); var bb = battlesGet(); bb.l = (bb.l || 0) + 1; lsSet("pa_battles", bb); lsSet("pa_clash_last", Date.now()); cloudSave(); } } var p = $("clashPop"); if (p) p.classList.remove("open"); if (CL && CL.ttResolve) CL.ttResolve(-1); if (CL && CL.abResolve) CL.abResolve(""); musicStop(); closeZoom(); closeItemView(); CL = null; renderClash(); renderPacks(); }
 function clashPanel(html){ var p = $("clashPanel"); if (p) { p.innerHTML = html; p.scrollTop = 0; } }
 function clashMenu(){
   CL = null;
@@ -4141,7 +4148,7 @@ function clashMenu(){
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>');
 }
 function clashSetup(mode){
-  if (mode === "pvp") { pvpCreateFlow(); return; }
+  if (mode === "pvp") { pvpLobbyFlow(); return; }
   var boss = mode === "ladder" ? Math.min(ladderGet() + 1, 7) : 0;
   CL = { mode: mode, boss: boss, sel: 0, mine: [null, null], cpu: null, myActive: 0, cpuActive: 0, round: 1, busy: false, over: false, tagged: false, lastHit: null, lastWin: null, lastBlock: null, log: [], grid: ["", "", "", "", "", "", "", "", ""], myBonus: 0, cpuBonus: 0, myGuard: 0, cpuGuard: 0, myTemp: 0, cpuTemp: 0, placing: null, abilityPick: null, ttLine: null, ttResolve: null, abResolve: null, phase: null, flip: null, firstPlayer: null, myDeck: [], cpuDeck: [], myHand: [], cpuHand: [], myPile: [], cpuPile: [], drawPop: 0, statSurge: 0, justShuffled: false, itemUsedRound: 0, cpuItemRound: 0, myFreeHit: false, cpuFreeHit: false, planned: false, scoutText: null, turn: null, turnNo: 0, myDef: false, cpuDef: false, plan: null };
   clashPickRender();
@@ -4641,6 +4648,93 @@ function pvpNewCL(role, code, oppName){
   CL = { mode: "pvp", boss: 0, sel: 0, mine: [null, null], cpu: null, myActive: 0, cpuActive: 0, round: 1, busy: false, over: false, tagged: false, lastHit: null, lastWin: null, lastBlock: null, lastTag: null, log: [], grid: ["", "", "", "", "", "", "", "", ""], myBonus: 0, cpuBonus: 0, myGuard: 0, cpuGuard: 0, myTemp: 0, cpuTemp: 0, placing: null, abilityPick: null, ttLine: null, ttResolve: null, abResolve: null, phase: null, flip: null, firstPlayer: null, myDeck: [], cpuDeck: [], myHand: [], cpuHand: [], myPile: [], cpuPile: [], drawPop: 0, statSurge: 0, justShuffled: false, itemUsedRound: 0, cpuItemRound: 0, myFreeHit: false, cpuFreeHit: false, planned: false, scoutText: null, turn: null, turnNo: 0, myDef: false, cpuDef: false, plan: null,
     pvp: { code: code, role: role, oppName: oppName || null, seq: 0, stage: "picking", myPicksIn: false, oppPicked: false, battleMade: false, finSent: false } };
 }
+/* ---- Clash lobby: challenge players who are in the lobby right now ---- */
+var LOB = null, _lobTimer = null, _lobBeat = null, _lobSig = "";
+function pvpMyAvatar(){ try { return (typeof profile !== "undefined" && profile && profile.avatar) || ""; } catch (e) { return ""; } }
+function pvpLobbyFlow(){
+  if (!cloudUid) { clashPanel('<div class="clashttl">👥 HEAD-TO-HEAD</div><div class="clashsub">Your agent profile is still loading — give it a second and try again.</div><button class="openbtn" data-clashmenu="1" style="width:100%;margin-top:8px">← Back</button>'); return; }
+  LOB = { players: [], incoming: [], outgoing: [], declinedNote: "" };
+  _lobSig = "";
+  clashPanel('<div class="clashttl pvpttl">👥 CLASH LOBBY</div><div class="clashsub">Entering the lobby\u2026</div>');
+  var beat = function(){ socialPost({ uid: cloudUid, action: "lobby_join", name: pvpMyName(), avatar: pvpMyAvatar() }); };
+  beat();
+  _lobBeat = setInterval(function(){ if (LOB) beat(); }, 20000);
+  _lobTimer = setInterval(pvpLobbyTick, 3000);
+  pvpLobbyTick();
+}
+function pvpLobbyCleanup(){
+  if (_lobTimer) { clearInterval(_lobTimer); _lobTimer = null; }
+  if (_lobBeat) { clearInterval(_lobBeat); _lobBeat = null; }
+  if (LOB && cloudUid) socialPost({ uid: cloudUid, action: "lobby_leave" });
+  LOB = null;
+}
+function pvpLobbyTick(){
+  if (!LOB) { pvpLobbyCleanup(); return; }
+  socialGet("lobby=1&uid=" + encodeURIComponent(cloudUid)).then(function(j){
+    if (!LOB || !j || !j.ok) return;
+    var out = j.outgoing || [];
+    var acc = out.filter(function(r){ return r.phase === "picking"; })[0];
+    if (acc) {
+      var code = acc.code, nm = (acc.guest && acc.guest.name) || "Your friend";
+      pvpLobbyCleanup();
+      pvpNewCL("host", code, nm);
+      CL.pvp.stage = "picking";
+      clashPickRender();
+      pvpPollStart();
+      return;
+    }
+    var dec = out.filter(function(r){ return r.phase === "declined"; })[0];
+    if (dec) {
+      LOB.declinedNote = ((dec.guest && dec.guest.name) || "Your friend") + " declined your challenge.";
+      socialPost({ uid: cloudUid, action: "room_cancel", code: dec.code });
+    }
+    LOB.players = j.players || [];
+    LOB.incoming = j.incoming || [];
+    LOB.outgoing = out.filter(function(r){ return r.phase === "challenge"; });
+    pvpLobbyRender();
+  });
+}
+function pvpLobbyRender(){
+  if (!LOB) return;
+  var sig = JSON.stringify([LOB.players.map(function(x){ return x.uid; }), LOB.incoming.map(function(x){ return x.code; }), LOB.outgoing.map(function(x){ return x.code; }), LOB.declinedNote]);
+  if (sig === _lobSig) return;
+  _lobSig = sig;
+  var h = '<div class="clashttl pvpttl">👥 CLASH LOBBY</div>'
+    + '<div class="clashsub">Everyone in the lobby right now. Tap ⚔️ CHALLENGE — if they accept, you both pick your fighters.</div>';
+  LOB.incoming.forEach(function(r){
+    h += '<div class="lobchal"><div>⚔️ <b>' + esc((r.host && r.host.name) || "A player") + '</b> challenges you to a battle!</div><button class="clashbig gold" data-lobacc="' + r.code + '">✅ ACCEPT<span>Pick your fighters</span></button><button class="openbtn" data-lobdec="' + r.code + '" style="width:100%;margin-top:6px">Decline</button></div>';
+  });
+  if (LOB.declinedNote) h += '<div class="clashmeta">' + esc(LOB.declinedNote) + '</div>';
+  LOB.outgoing.forEach(function(r){
+    h += '<div class="clashmeta"><span class="pvpwait">⏳</span> Challenge sent to <b>' + esc((r.guest && r.guest.name) || "player") + '</b> — waiting for them to accept <button class="openbtn" data-lobcan="' + r.code + '" style="padding:2px 10px;font-size:11px;margin-left:6px">Cancel</button></div>';
+  });
+  if (LOB.players.length) {
+    h += LOB.players.map(function(pl){
+      var sent = LOB.outgoing.some(function(r){ return r.guest && r.guest.uid === pl.uid; });
+      return '<div class="lobprow">' + (pl.avatar ? '<img class="lobav" src="' + esc(pl.avatar) + '" alt="">' : '<span class="lobav lobavx">🎭</span>') + '<span class="lobnm">' + esc(pl.name) + '</span>' + (sent ? '<span class="note">⏳ challenge sent</span>' : '<button class="clashbig pvp lobbtn" data-lobchal="' + pl.uid + '" data-lobname="' + esc(pl.name) + '">⚔️ CHALLENGE</button>') + '</div>';
+    }).join("");
+  } else {
+    h += '<div class="clashmeta">Nobody else is in the lobby yet. Stay here — friends pop in the moment they open the lobby too.</div>';
+  }
+  h += '<button class="openbtn" data-loblink="1" style="width:100%;margin-top:10px">🔗 Friend not here? Use an invite link instead</button>'
+     + '<button class="openbtn" data-lobleave="1" style="width:100%;margin-top:8px">← Leave lobby</button>';
+  clashPanel(h);
+}
+function pvpLobbyChallenge(uid2, name2){
+  socialPost({ uid: cloudUid, action: "room_challenge", guest: uid2, guestName: name2, name: pvpMyName() }).then(function(){ pvpLobbyTick(); });
+}
+function pvpLobbyAccept(code){
+  socialPost({ uid: cloudUid, action: "room_accept", code: code }).then(function(j){
+    if (!j || !j.ok) { pvpLobbyTick(); return; }
+    var nm = (j.state && j.state.host && j.state.host.name) || "Your friend";
+    pvpLobbyCleanup();
+    pvpNewCL("guest", code, nm);
+    CL.pvp.stage = "picking";
+    if (j.state && j.state.host && j.state.host.picks) CL.pvp.oppPicked = true;
+    clashPickRender();
+    pvpPollStart();
+  });
+}
 function pvpCreateFlow(){
   if (!cloudUid) { clashPanel('<div class="clashttl">👥 HEAD-TO-HEAD</div><div class="clashsub">Your agent profile is still loading — give it a second and try again.</div><button class="openbtn" data-clashmenu="1" style="width:100%;margin-top:8px">← Back</button>'); return; }
   clashPanel('<div class="clashttl">👥 HEAD-TO-HEAD</div><div class="clashsub">Creating your match room…</div>');
@@ -4849,7 +4943,7 @@ document.addEventListener("click", function(e){
   if (e.target.closest("[data-guideoff]")) { lsSet("pa_guide", 0); if (CL && CL.cpu) clashArena(); else if (CL) clashPickRender(); else clashMenu(); return; }
   if (e.target.closest("[data-guideon]")) { lsSet("pa_guide", 1); if (CL && CL.cpu) clashArena(); else if (CL) clashPickRender(); else clashMenu(); return; }
   if ((t = e.target.closest("[data-clashclose]"))) { closeClash(); return; }
-  if ((t = e.target.closest("[data-clashmenu]"))) { clashMenu(); return; }
+  if ((t = e.target.closest("[data-clashmenu]"))) { if (LOB) pvpLobbyCleanup(); clashMenu(); return; }
   if ((t = e.target.closest("[data-clashmode]"))) { clashSetup(t.getAttribute("data-clashmode")); return; }
   if ((t = e.target.closest("[data-pickslot]"))) { if (CL) { CL.sel = parseInt(t.getAttribute("data-pickslot"), 10); sfx("click"); clashPickRender(); } return; }
   if ((t = e.target.closest("[data-pickagent]"))) { if (CL) { var ci = parseInt(t.getAttribute("data-pickagent"), 10); var wasSel = CL.sel; CL.mine[CL.sel] = mkFighter(ci, bestPickTier(ci)); if (!CL.mine[1 - CL.sel]) CL.sel = 1 - CL.sel; if (CL.mine[0] && CL.mine[1]) sfx("gridwin"); else sfx(wasSel === 1 ? "tag" : "click"); clashPickRender(); } return; }
@@ -4857,6 +4951,12 @@ document.addEventListener("click", function(e){
   if ((t = e.target.closest("[data-clashfight]"))) { if (CL && CL.mine[0] && CL.mine[1]) { if (CL.mode === "pvp") pvpSubmitPicks(); else clashStartFight(); } return; }
   if ((t = e.target.closest("[data-pvpshare]"))) { pvpShare(); return; }
   if ((t = e.target.closest("[data-pvpcancel]"))) { pvpPollStop(); CL = null; clashMenu(); return; }
+  if ((t = e.target.closest("[data-lobchal]"))) { pvpLobbyChallenge(t.getAttribute("data-lobchal"), t.getAttribute("data-lobname") || "Agent"); return; }
+  if ((t = e.target.closest("[data-lobacc]"))) { pvpLobbyAccept(t.getAttribute("data-lobacc")); return; }
+  if ((t = e.target.closest("[data-lobdec]"))) { socialPost({ uid: cloudUid, action: "room_decline", code: t.getAttribute("data-lobdec") }).then(function(){ pvpLobbyTick(); }); return; }
+  if ((t = e.target.closest("[data-lobcan]"))) { socialPost({ uid: cloudUid, action: "room_cancel", code: t.getAttribute("data-lobcan") }).then(function(){ pvpLobbyTick(); }); return; }
+  if ((t = e.target.closest("[data-loblink]"))) { pvpLobbyCleanup(); pvpCreateFlow(); return; }
+  if ((t = e.target.closest("[data-lobleave]"))) { pvpLobbyCleanup(); clashMenu(); return; }
   if ((t = e.target.closest("[data-pvprem]"))) { pvpRematch(); return; }
   if ((t = e.target.closest("[data-clashrematch]"))) { if (CL) { CL.mine = CL.mine.map(function(f){ return mkFighter(f.ci, f.ti); }); clashStartFight(); } return; }
   if ((t = e.target.closest("[data-clashquit]"))) { clashMenu(); return; }

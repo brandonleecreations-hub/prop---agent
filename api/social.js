@@ -185,6 +185,20 @@ module.exports = async (req, res) => {
       res.status(200).json({ ok: true, ticket: shapeTicket(best, me), owner: (p.json && p.json[0]) || null, streak: ostreak });
       return;
     }
+    if (req.method === "GET" && req.query && req.query.lobby !== undefined) {
+      const me = String(req.query.uid || "");
+      if (!UUID_RE.test(me)) { res.status(200).json({ ok: false, error: "bad uid" }); return; }
+      const nowL = Date.now();
+      const pr = await rest("clash_lobby?select=uid,name,avatar,updated_at&updated_at=gt." + (nowL - 60000) + "&order=updated_at.desc&limit=50", { headers: sbHeaders() });
+      const players = (Array.isArray(pr.json) ? pr.json : []).filter((p) => p.uid !== me).map((p) => ({ uid: p.uid, name: p.name || "Agent", avatar: p.avatar || "" }));
+      const gr = await rest("clash_rooms?select=code,host_id,guest_id,state,created_at&guest_id=eq." + me + "&order=created_at.desc&limit=10", { headers: sbHeaders() });
+      const hr = await rest("clash_rooms?select=code,host_id,guest_id,state,created_at&host_id=eq." + me + "&order=created_at.desc&limit=10", { headers: sbHeaders() });
+      const freshR = (r) => nowL - new Date(r.created_at).getTime() < 45 * 60 * 1000;
+      const incoming = (Array.isArray(gr.json) ? gr.json : []).filter((r) => freshR(r) && r.state && r.state.phase === "challenge").map((r) => ({ code: r.code, host: { name: (r.state.host && r.state.host.name) || "Agent" } }));
+      const outgoing = (Array.isArray(hr.json) ? hr.json : []).filter((r) => freshR(r) && r.state && (r.state.phase === "challenge" || r.state.phase === "picking" || r.state.phase === "declined")).map((r) => ({ code: r.code, phase: r.state.phase, guest: { uid: r.guest_id, name: (r.state.guest && r.state.guest.name) || "Agent" } }));
+      res.status(200).json({ ok: true, players, incoming, outgoing });
+      return;
+    }
     if (req.method === "GET" && req.query && req.query.room !== undefined) {
       const code = String(req.query.room || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
       const rr = await rest("clash_rooms?select=code,host_id,guest_id,state,created_at&code=eq." + encodeURIComponent(code), { headers: sbHeaders() });
@@ -200,7 +214,19 @@ module.exports = async (req, res) => {
       body = body || {};
       const uid = String(body.uid || "");
       if (!UUID_RE.test(uid)) { res.status(200).json({ ok: false, error: "bad uid" }); return; }
-      if (body.action === "room_create" || body.action === "room_join" || body.action === "room_picks" || body.action === "room_battle" || body.action === "room_reset") {
+      if (body.action === "lobby_join" || body.action === "lobby_leave") {
+        const lname = String(body.name || "Agent").replace(/[<>&"]/g, "").slice(0, 24) || "Agent";
+        const lavatar = String(body.avatar || "").slice(0, 300);
+        if (body.action === "lobby_leave") {
+          await rest("clash_lobby?uid=eq." + uid, { method: "DELETE", headers: sbHeaders({ Prefer: "return=minimal" }) });
+          res.status(200).json({ ok: true });
+          return;
+        }
+        const up = await rest("clash_lobby", { method: "POST", headers: sbHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }), body: JSON.stringify({ uid, name: lname, avatar: lavatar, updated_at: Date.now() }) });
+        res.status(200).json({ ok: up.status < 300, status: up.status });
+        return;
+      }
+      if (body.action === "room_create" || body.action === "room_join" || body.action === "room_picks" || body.action === "room_battle" || body.action === "room_reset" || body.action === "room_challenge" || body.action === "room_accept" || body.action === "room_decline" || body.action === "room_cancel") {
         const name = String(body.name || "Agent").replace(/[<>&"]/g, "").slice(0, 24) || "Agent";
         const code = String(body.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
         async function loadRoom() {
@@ -229,6 +255,23 @@ module.exports = async (req, res) => {
           res.status(200).json({ ok: true, code: made.code, state: made.state });
           return;
         }
+        if (body.action === "room_challenge") {
+          const gUid = String(body.guest || "");
+          if (!UUID_RE.test(gUid) || gUid === uid) { res.status(200).json({ ok: false, error: "bad guest" }); return; }
+          const gName = String(body.guestName || "Agent").replace(/[<>&"]/g, "").slice(0, 24) || "Agent";
+          const alpha2 = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+          let made2 = null;
+          for (let tries = 0; tries < 5 && !made2; tries++) {
+            let c2 = ""; for (let i = 0; i < 6; i++) c2 += alpha2[Math.floor(Math.random() * alpha2.length)];
+            const st2 = { phase: "challenge", host: { uid, name, picks: null }, guest: { uid: gUid, name: gName, picks: null }, battle: null, winnerRole: null };
+            const ins2 = await rest("clash_rooms", { method: "POST", headers: sbHeaders({ Prefer: "return=minimal" }), body: JSON.stringify({ code: c2, host_id: uid, guest_id: gUid, state: st2 }) });
+            if (ins2.status < 300) made2 = { code: c2, state: st2 };
+            else if (ins2.status !== 409) { res.status(200).json({ ok: false, step: "room_challenge", status: ins2.status, detail: (ins2.text || "").slice(0, 200) }); return; }
+          }
+          if (!made2) { res.status(200).json({ ok: false, error: "could not create room" }); return; }
+          res.status(200).json({ ok: true, code: made2.code, state: made2.state });
+          return;
+        }
         if (!code) { res.status(200).json({ ok: false, error: "bad code" }); return; }
         const row = await loadRoom();
         if (!row) { res.status(200).json({ ok: false, error: "room not found" }); return; }
@@ -243,6 +286,26 @@ module.exports = async (req, res) => {
           return;
         }
         if (!role) { res.status(200).json({ ok: false, error: "not in room" }); return; }
+        if (body.action === "room_accept") {
+          if (role !== "guest" || !row.state || row.state.phase !== "challenge") { res.status(200).json({ ok: false, error: "no open challenge" }); return; }
+          const st = Object.assign({}, row.state, { phase: "picking" });
+          if (!(await saveRoom(row, { state: st }))) { res.status(200).json({ ok: false, error: "accept failed" }); return; }
+          res.status(200).json({ ok: true, state: st });
+          return;
+        }
+        if (body.action === "room_decline") {
+          if (role !== "guest" || !row.state || row.state.phase !== "challenge") { res.status(200).json({ ok: false, error: "no open challenge" }); return; }
+          const st = Object.assign({}, row.state, { phase: "declined" });
+          if (!(await saveRoom(row, { state: st }))) { res.status(200).json({ ok: false, error: "decline failed" }); return; }
+          res.status(200).json({ ok: true, state: st });
+          return;
+        }
+        if (body.action === "room_cancel") {
+          if (role !== "host" || !row.state || (row.state.phase !== "challenge" && row.state.phase !== "declined")) { res.status(200).json({ ok: false, error: "cannot cancel" }); return; }
+          await rest("clash_rooms?code=eq." + encodeURIComponent(row.code), { method: "DELETE", headers: sbHeaders({ Prefer: "return=minimal" }) });
+          res.status(200).json({ ok: true });
+          return;
+        }
         if (body.action === "room_picks") {
           const pk = Array.isArray(body.picks) ? body.picks.slice(0, 2).map((p) => ({ ci: Math.max(1, Math.min(12, parseInt(p && p.ci, 10) || 1)), ti: Math.max(0, Math.min(6, parseInt(p && p.ti, 10) || 0)) })) : null;
           if (!pk || pk.length !== 2) { res.status(200).json({ ok: false, error: "bad picks" }); return; }
