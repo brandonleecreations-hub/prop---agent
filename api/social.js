@@ -185,12 +185,94 @@ module.exports = async (req, res) => {
       res.status(200).json({ ok: true, ticket: shapeTicket(best, me), owner: (p.json && p.json[0]) || null, streak: ostreak });
       return;
     }
+    if (req.method === "GET" && req.query && req.query.room !== undefined) {
+      const code = String(req.query.room || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+      const rr = await rest("clash_rooms?select=code,host_id,guest_id,state,created_at&code=eq." + encodeURIComponent(code), { headers: sbHeaders() });
+      const row = rr.json && rr.json[0];
+      if (!row) { res.status(200).json({ ok: false, error: "room not found" }); return; }
+      if (Date.now() - new Date(row.created_at).getTime() > 45 * 60 * 1000) { res.status(200).json({ ok: false, error: "room expired" }); return; }
+      res.status(200).json({ ok: true, state: row.state || {} });
+      return;
+    }
     if (req.method === "POST") {
       let body = req.body;
       if (typeof body === "string") { try { body = JSON.parse(body || "{}"); } catch (e) { body = {}; } }
       body = body || {};
       const uid = String(body.uid || "");
       if (!UUID_RE.test(uid)) { res.status(200).json({ ok: false, error: "bad uid" }); return; }
+      if (body.action === "room_create" || body.action === "room_join" || body.action === "room_picks" || body.action === "room_battle" || body.action === "room_reset") {
+        const name = String(body.name || "Agent").replace(/[<>&"]/g, "").slice(0, 24) || "Agent";
+        const code = String(body.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+        async function loadRoom() {
+          const rr = await rest("clash_rooms?select=code,host_id,guest_id,state,created_at&code=eq." + encodeURIComponent(code), { headers: sbHeaders() });
+          return rr.json && rr.json[0];
+        }
+        function expired(row) { return Date.now() - new Date(row.created_at).getTime() > 45 * 60 * 1000; }
+        async function saveRoom(row, patch) {
+          const up = await rest("clash_rooms?code=eq." + encodeURIComponent(row.code), {
+            method: "PATCH", headers: sbHeaders({ Prefer: "return=minimal" }),
+            body: JSON.stringify(Object.assign({ updated_at: new Date().toISOString() }, patch)),
+          });
+          return up.status < 300;
+        }
+        if (body.action === "room_create") {
+          const alpha = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+          let made = null;
+          for (let tries = 0; tries < 5 && !made; tries++) {
+            let c = ""; for (let i = 0; i < 6; i++) c += alpha[Math.floor(Math.random() * alpha.length)];
+            const st = { phase: "waiting", host: { uid, name, picks: null }, guest: null, battle: null, winnerRole: null };
+            const ins = await rest("clash_rooms", { method: "POST", headers: sbHeaders({ Prefer: "return=minimal" }), body: JSON.stringify({ code: c, host_id: uid, state: st }) });
+            if (ins.status < 300) made = { code: c, state: st };
+            else if (ins.status !== 409) { res.status(200).json({ ok: false, step: "room_create", status: ins.status, detail: (ins.text || "").slice(0, 200) }); return; }
+          }
+          if (!made) { res.status(200).json({ ok: false, error: "could not create room" }); return; }
+          res.status(200).json({ ok: true, code: made.code, state: made.state });
+          return;
+        }
+        if (!code) { res.status(200).json({ ok: false, error: "bad code" }); return; }
+        const row = await loadRoom();
+        if (!row) { res.status(200).json({ ok: false, error: "room not found" }); return; }
+        if (expired(row)) { res.status(200).json({ ok: false, error: "room expired" }); return; }
+        const role = row.host_id === uid ? "host" : (row.guest_id === uid ? "guest" : null);
+        if (body.action === "room_join") {
+          if (row.host_id === uid) { res.status(200).json({ ok: true, state: row.state, role: "host" }); return; }
+          if (row.guest_id && row.guest_id !== uid) { res.status(200).json({ ok: false, error: "room full" }); return; }
+          const st = Object.assign({}, row.state, { phase: "picking", guest: { uid, name, picks: null } });
+          if (!(await saveRoom(row, { guest_id: uid, state: st }))) { res.status(200).json({ ok: false, error: "join failed" }); return; }
+          res.status(200).json({ ok: true, state: st, role: "guest" });
+          return;
+        }
+        if (!role) { res.status(200).json({ ok: false, error: "not in room" }); return; }
+        if (body.action === "room_picks") {
+          const pk = Array.isArray(body.picks) ? body.picks.slice(0, 2).map((p) => ({ ci: Math.max(1, Math.min(12, parseInt(p && p.ci, 10) || 1)), ti: Math.max(0, Math.min(6, parseInt(p && p.ti, 10) || 0)) })) : null;
+          if (!pk || pk.length !== 2) { res.status(200).json({ ok: false, error: "bad picks" }); return; }
+          const st = Object.assign({}, row.state); st[role] = Object.assign({}, st[role], { picks: pk });
+          if (!(await saveRoom(row, { state: st }))) { res.status(200).json({ ok: false, error: "picks failed" }); return; }
+          res.status(200).json({ ok: true, state: st });
+          return;
+        }
+        if (body.action === "room_battle") {
+          const st = Object.assign({}, row.state);
+          if (body.battle !== undefined) {
+            if (body.battle && JSON.stringify(body.battle).length > 60000) { res.status(200).json({ ok: false, error: "battle too big" }); return; }
+            st.battle = body.battle;
+          }
+          if (body.phase) st.phase = String(body.phase).slice(0, 12);
+          if ("winnerRole" in body) st.winnerRole = body.winnerRole === "host" || body.winnerRole === "guest" ? body.winnerRole : null;
+          if (!(await saveRoom(row, { state: st }))) { res.status(200).json({ ok: false, error: "battle save failed" }); return; }
+          res.status(200).json({ ok: true });
+          return;
+        }
+        if (body.action === "room_reset") {
+          const st = Object.assign({}, row.state, { phase: "picking", battle: null, winnerRole: null });
+          if (st.host) st.host = Object.assign({}, st.host, { picks: null });
+          if (st.guest) st.guest = Object.assign({}, st.guest, { picks: null });
+          if (!(await saveRoom(row, { state: st }))) { res.status(200).json({ ok: false, error: "reset failed" }); return; }
+          res.status(200).json({ ok: true, state: st });
+          return;
+        }
+      }
+
       if (body.action === "follow" || body.action === "unfollow") {
         const target = String(body.target || "");
         if (!UUID_RE.test(target) || target === uid) { res.status(200).json({ ok: false, error: "bad target" }); return; }
