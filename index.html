@@ -1424,6 +1424,10 @@ var SEED_AGENTS = [
 function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 function lastNameOf(nm){ var p = String(nm || "").trim().split(/\s+/); return (p[p.length - 1] || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+/* Full-name identity key for Game Center prop matching (Brandon 2026-11-19):
+   surnames alone collide across games ("Green", and "Jr." is a suffix, not a
+   surname), so game membership is checked on the whole normalized name. */
+function nameKeyOf(nm){ return String(nm || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""); }
 function initials(name){ return name.split(/\s+/).map(function(w){return w.charAt(0);}).join("").slice(0,2).toUpperCase(); }
 function fetchJson(url){ return fetch(url).then(function(r){ if(!r.ok) throw new Error("http "+r.status); return r.json(); }); }
 function fmtTime(iso){ try { var d = new Date(iso); return d.toLocaleString([], {weekday:"short", hour:"numeric", minute:"2-digit"}); } catch(e){ return ""; } }
@@ -1982,14 +1986,24 @@ function findLiveStat(summary, athleteId, playerName, stat){
   try {
     var groups = [];
     (summary.boxscore && summary.boxscore.players || []).forEach(function(tp){ (tp.statistics||[]).forEach(function(g){ groups.push(g); }); });
-    var dicts = [];
+    var rawD = [];
     groups.forEach(function(g){ var cols = g.labels || g.names || []; (g.athletes||[]).forEach(function(a){
       var nm = (a.athlete && a.athlete.displayName) || "";
-      if (!((athleteId && String(a.athlete && a.athlete.id)===String(athleteId)) || nm.toLowerCase()===String(playerName).toLowerCase() || lastNameOf(nm)===lastNameOf(playerName))) return;
-      var d = {__names:cols.join(",")};
+      var d = {__names:cols.join(","), __nm:nm, __id:(a.athlete && a.athlete.id) || ""};
       cols.forEach(function(n, i){ d[n] = (a.stats||[])[i]; });
-      dicts.push(d);
+      rawD.push(d);
     }); });
+    /* Exact athlete (id or full name) first. Surname-only matching is a
+       last resort and only when ONE athlete in the whole box score has
+       that surname — otherwise a same-surname opponent's stats land on
+       this player's props (Brandon 2026-11-19: Draymond Green was shown
+       Josh Green's finals). */
+    var dicts = rawD.filter(function(d){ return (athleteId && String(d.__id)===String(athleteId)) || d.__nm.toLowerCase()===String(playerName).toLowerCase(); });
+    if (!dicts.length){
+      var surNames = {};
+      rawD.forEach(function(d){ if (lastNameOf(d.__nm)===lastNameOf(playerName)) surNames[d.__nm.toLowerCase()] = 1; });
+      if (Object.keys(surNames).length === 1) dicts = rawD.filter(function(d){ return lastNameOf(d.__nm)===lastNameOf(playerName); });
+    }
     function num(x){ var v = parseFloat(x); return isFinite(v) ? v : null; }
     function made(x){ if (x==null) return null; var parts = String(x).split(/[\/-]/); return num(parts[0]); }
     function att(x){ if (x==null) return null; var parts = String(x).split(/[\/-]/); return parts.length===2 ? num(parts[1]) : null; }
@@ -2852,7 +2866,7 @@ function gcFetchRosters(lg, cs, key, s){
       var out = [];
       ((r && r.athletes) || []).forEach(function(e){
         var list = e && e.items ? e.items : [e];
-        list.forEach(function(a){ var nm = a && (a.displayName || (a.athlete && a.athlete.displayName)); if (nm) out.push({ln: lastNameOf(nm), team: tname}); });
+        list.forEach(function(a){ var nm = a && (a.displayName || (a.athlete && a.athlete.displayName)); if (nm) out.push({ln: lastNameOf(nm), team: tname, nm: nm}); });
       });
       return out;
     }).catch(function(){ return null; });
@@ -2881,14 +2895,20 @@ function renderGameProps(lg, s){
     var head = '<div style="font-size:16px;margin-top:14px"><b>Player Props — This Game</b> <span class="note">best on top · tap a player for all their props</span></div>' + (inBrk ? '<p class="sub" style="color:var(--gold);margin-top:6px">⏸ At the break — fresh props just posted for the next part of the game. Pick before play resumes.</p>' : '') + (liveView ? '<p class="sub" style="margin-top:6px"><span class="gplive">🔴 LIVE</span> View only — picks closed when the game started. <span class="nowval">now</span> = current stat for that prop.</p>' : '') + (finalView ? '<p class="sub" style="margin-top:6px"><span class="gplive">🏁 FINAL</span> View only — this game is over. <span class="nowval">final</span> = final stat for that prop.</p>' : '');
     var closedHtml = '<div style="font-size:16px;margin-top:14px"><b>Player Props — This Game</b></div><p class="empty">Props closed — this game is over.</p>';
     if (!ps.length){ box.innerHTML = finalView ? closedHtml : head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'; return; }
-    var names = {}, teamNames = {};
-    try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ (tp.athletes||[]).forEach(function(a){ if (a.athlete && a.athlete.displayName) names[lastNameOf(a.athlete.displayName)] = 1; }); }); } catch(e){}
-    try { (s.rosters || []).forEach(function(rt){ (rt.athletes || []).forEach(function(a){ var an = a.athlete && a.athlete.displayName; if (an) names[lastNameOf(an)] = 1; }); }); } catch(e){}
+    /* Game membership is decided on FULL names, never surnames (Brandon
+       2026-11-19): the old surname set admitted other games' players — any
+       "Green" matched Josh Green, and the suffix "Jr." (from Jaren Jackson
+       Jr. on a fetched roster) matched Morez Johnson Jr. Box-score athletes
+       live under statistics[].athletes in ESPN summaries (tp.athletes is
+       empty), so read them from there. */
+    var boxNames = {}, rosterNames = {}, teamNames = {};
+    try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ (tp.statistics || []).forEach(function(g){ (g.athletes || []).forEach(function(a){ if (a.athlete && a.athlete.displayName) boxNames[nameKeyOf(a.athlete.displayName)] = 1; }); }); (tp.athletes || []).forEach(function(a){ if (a.athlete && a.athlete.displayName) boxNames[nameKeyOf(a.athlete.displayName)] = 1; }); }); } catch(e){}
+    try { (s.rosters || []).forEach(function(rt){ (rt.athletes || []).forEach(function(a){ var an = a.athlete && a.athlete.displayName; if (an) boxNames[nameKeyOf(an)] = 1; }); }); } catch(e){}
     var gcKey = String(comp.id || "");
     var gcCached = gcRosterCache[gcKey];
-    if (gcCached) gcCached.forEach(function(en){ names[en.ln] = 1; });
-    if (lg.key === "tennis") cs.forEach(function(c){ if (c.team && c.team.displayName) names[lastNameOf(c.team.displayName)] = 1; });
-    if (!Object.keys(names).length && cs.length === 2 && cs[0].team && cs[0].team.id && cs[1].team && cs[1].team.id && !gcCached && !gcRosterFetching[gcKey] && lg.key !== "tennis") gcFetchRosters(lg, cs, gcKey, s);
+    if (gcCached) gcCached.forEach(function(en){ if (en.nm) rosterNames[nameKeyOf(en.nm)] = 1; });
+    if (lg.key === "tennis") cs.forEach(function(c){ if (c.team && c.team.displayName) boxNames[nameKeyOf(c.team.displayName)] = 1; });
+    if (!Object.keys(boxNames).length && !Object.keys(rosterNames).length && cs.length === 2 && cs[0].team && cs[0].team.id && cs[1].team && cs[1].team.id && !gcCached && !gcRosterFetching[gcKey] && lg.key !== "tennis") gcFetchRosters(lg, cs, gcKey, s);
     cs.forEach(function(c){ if (c.team){ if (c.team.displayName) teamNames[c.team.displayName.toLowerCase()] = 1; if (c.team.shortDisplayName) teamNames[c.team.shortDisplayName.toLowerCase()] = 1; } });
     var gstart = Date.parse(comp.date || "");
     var mset = {};
@@ -2897,11 +2917,20 @@ function renderGameProps(lg, s){
       [cs[0], cs[1]].forEach(function(c, ix){ var t = c.team || {}; [t.displayName, t.shortDisplayName].forEach(function(nm){ if (nm) (ix ? vB : vA).push(nm.toLowerCase()); }); });
       vA.forEach(function(a){ vB.forEach(function(b){ mset[a + " @ " + b] = 1; mset[b + " @ " + a] = 1; }); });
     }
+    var hasBox = Object.keys(boxNames).length > 0;
     var hits = ps.filter(function(p){
+      if (p.league && p.league !== lg.key) return false;
       if (gstart && p.starts) { var pt = Date.parse(p.starts); if (pt && Math.abs(pt - gstart) > 9 * 3600 * 1000) return false; }
       if (p.matchup && mset[p.matchup.toLowerCase()]) return true;
       if (p.team && teamNames[p.team.toLowerCase()]) return true;
-      if (names[lastNameOf(p.player)]) return true;
+      var nk = nameKeyOf(p.player);
+      if (nk && boxNames[nk]) return true;
+      if (!hasBox && nk && rosterNames[nk]) return true;
+      if (String(p.player).indexOf("+") > -1){
+        var parts = String(p.player).split("+").map(function(x){ return nameKeyOf(x); }).filter(Boolean);
+        var src = hasBox ? boxNames : rosterNames;
+        if (parts.length > 1 && parts.every(function(k){ return !!src[k]; })) return true;
+      }
       return false;
     });
     if (!hits.length){ box.innerHTML = gcRosterFetching[gcKey] ? head + '<p class="empty">Loading player props\u2026</p>' : (finalView ? closedHtml : head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'); return; }
@@ -2910,7 +2939,7 @@ function renderGameProps(lg, s){
     /* Compact rows organized by team (Brandon 2026-11-17): small player
        rows under a team header; tap a player for all their props. */
     var teamOf = {};
-    try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ var tn = (tp.team && (tp.team.displayName || tp.team.shortDisplayName)) || ""; (tp.athletes || []).forEach(function(a){ if (a.athlete && a.athlete.displayName) teamOf[lastNameOf(a.athlete.displayName)] = tn; }); }); } catch(e){}
+    try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ var tn = (tp.team && (tp.team.displayName || tp.team.shortDisplayName)) || ""; (tp.statistics || []).forEach(function(g){ (g.athletes || []).forEach(function(a){ if (a.athlete && a.athlete.displayName) teamOf[lastNameOf(a.athlete.displayName)] = tn; }); }); (tp.athletes || []).forEach(function(a){ if (a.athlete && a.athlete.displayName) teamOf[lastNameOf(a.athlete.displayName)] = tn; }); }); } catch(e){}
     if (gcCached) gcCached.forEach(function(en){ if (!teamOf[en.ln]) teamOf[en.ln] = en.team; });
     if (lg.key === "tennis") cs.forEach(function(c){ if (c.team && c.team.displayName) teamOf[lastNameOf(c.team.displayName)] = c.team.displayName; });
     var compTeams = cs.map(function(c){ return c.team ? {name: c.team.displayName || c.team.shortDisplayName || "", away: c.homeAway === "away", logo: logoUrl(c)} : null; }).filter(function(x){ return x && x.name; });
