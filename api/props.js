@@ -708,7 +708,8 @@ module.exports = async (req, res) => {
       // added to the shared day tally so the count stays honest.
       try {
         const sbBefore = await sbCacheRow(sport);
-        if (sbBefore !== undefined && fullProps.length > ((sbBefore && Array.isArray(sbBefore.props)) ? sbBefore.props.length : 0)) {
+        const playersOf = (arr) => new Set((Array.isArray(arr) ? arr : []).map((p) => p.player || p.name || "")).size;
+        if (sbBefore !== undefined && playersOf(fullProps) > playersOf(sbBefore && sbBefore.props)) {
           await sbCachePut(sport, fullProps, 0, 0);
           const sbAfter = await sbCacheRow(sport);
           if (sbAfter && String(sbAfter.count_day || "") === etToday()) {
