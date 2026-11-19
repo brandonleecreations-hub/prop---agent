@@ -187,12 +187,15 @@ table.tstats td.tsA,table.tstats td.tsB{font-weight:700}
 .glitterfx.pglit{background-image:radial-gradient(circle,rgba(216,180,254,.95) 0 1.2px,transparent 1.9px),radial-gradient(circle,rgba(178,107,255,.9) 0 1px,transparent 1.7px),radial-gradient(circle,rgba(255,255,255,.7) 0 .8px,transparent 1.4px);background-size:88px 88px,60px 60px,44px 44px}
 @keyframes glitShift{from{background-position:0 0,18px 26px,40px 8px}to{background-position:26px 18px,44px 4px,8px 30px}}
 @keyframes glitTwinkle{from{opacity:.35}to{opacity:.95}}
+img[src*="stamp=1"]{padding:2px;box-sizing:border-box;background-color:rgba(122,84,8,.6);background-image:radial-gradient(circle,rgba(255,240,196,.95) 0 1.1px,transparent 1.8px),radial-gradient(circle,rgba(245,185,66,.95) 0 .9px,transparent 1.6px),radial-gradient(circle,rgba(255,255,255,.8) 0 .7px,transparent 1.3px);background-size:15px 15px,11px 11px,8px 8px;background-position:1px 0,5px 4px,0 7px;animation:stampAvShift 3.1s ease-in-out infinite alternate,stampAvGlow 2.2s ease-in-out infinite alternate}
+@keyframes stampAvShift{from{background-position:1px 0,5px 4px,0 7px}to{background-position:9px 6px,0 11px,8px 2px}}
+@keyframes stampAvGlow{0%,100%{box-shadow:0 0 8px rgba(245,197,24,.7),0 0 16px rgba(245,185,66,.38)}50%{box-shadow:0 0 15px rgba(245,197,24,1),0 0 30px rgba(245,185,66,.65)}}
 .stampspark{position:absolute;inset:0;pointer-events:none;border-radius:var(--r);background-image:radial-gradient(circle,rgba(255,240,196,.95) 0 1.2px,transparent 1.9px),radial-gradient(circle,rgba(245,185,66,.9) 0 1px,transparent 1.7px),radial-gradient(circle,rgba(255,255,255,.7) 0 .8px,transparent 1.4px);background-size:86px 86px,58px 58px,42px 42px;background-position:6px 4px,26px 18px,2px 34px;animation:glitShift2 3.1s ease-in-out infinite alternate,glitTwinkle 1.9s ease-in-out infinite alternate}
 @keyframes glitShift2{from{background-position:6px 4px,26px 18px,2px 34px}to{background-position:30px 22px,4px 40px,36px 10px}}
 @keyframes lgndGlow{0%,100%{box-shadow:0 12px 26px rgba(0,0,0,.38),0 0 12px rgba(178,107,255,.45)}50%{box-shadow:0 12px 26px rgba(0,0,0,.38),0 0 30px rgba(178,107,255,.85)}}
 .tiercard.lgnd .flipfront{animation:lgndGlow 2.2s ease-in-out infinite}
 #myCards .tiercard.lgnd .flipfront{animation:lgndGlow 2.2s ease-in-out infinite}
-@media (prefers-reduced-motion: reduce){.glitterfx,.stampspark,.tiercard.lgnd .flipfront{animation:none}}
+@media (prefers-reduced-motion: reduce){.glitterfx,.stampspark,img[src*="stamp=1"],.tiercard.lgnd .flipfront{animation:none}}
 @keyframes sparkdrift{from{transform:translateY(0)}to{transform:translateY(-7px)}}
 #myCards{display:block}
 .cardsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
@@ -369,7 +372,7 @@ table.tstats td.tsA,table.tstats td.tsB{font-weight:700}
 #cardZoom.open{display:flex}
 #cardZoom .zoomcard{width:min(84vw,302px);animation:zoomin .28s cubic-bezier(.2,.9,.3,1.35) both}
 #cardZoom .tiercard{min-height:0}
-#cardZoom .setprof,#cardZoom .dlcard,#cardZoom .setprofs,#cardZoom .dlspecial,#cardZoom .dlring,#cardZoom .dlstamp{display:none}
+#cardZoom .setprof,#cardZoom .dlcard,#cardZoom .setprofs,#cardZoom .setpic,#cardZoom .dlspecial,#cardZoom .dlring,#cardZoom .dlstamp{display:none}
 .zoomhint{margin-top:12px;font-size:12px;color:#9aa7bd}
 .field3d{position:relative;border-radius:14px;padding:6px 7px 5px;margin-bottom:7px;overflow:hidden;background:linear-gradient(180deg,rgba(10,6,24,.06),rgba(10,6,24,.24)),url("/api/banners?s=field&v=2") center 50%/cover no-repeat #0a0618;animation:fielddrift 18s ease-in-out infinite alternate;box-shadow:inset 0 0 0 2px rgba(255,255,255,.14), inset 0 -30px 44px rgba(0,0,0,.42), inset 0 22px 34px rgba(0,0,0,.30);transform:perspective(720px) rotateX(12deg);transform-origin:50% 100%}
 .field3d{flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto}
@@ -2301,6 +2304,8 @@ function findProp(id){
 /* ---------- home: top agents / upcoming / news ---------- */
 function myWins(){ return tickets.filter(function(t){ return t.result==="win" && !ticketHasCustom(t); }).length + (parseInt(lsGet("pa_bonuswins", 0), 10) || 0) + (parseInt(lsGet("pa_winbank", 0), 10) || 0) + (parseInt(lsGet("pa_battlewins", 0), 10) || 0); }
 function maxWins(){ var m = 0; try { m = parseInt(lsGet("pa_maxwins", 0), 10) || 0; } catch(e){} var w = myWins(); if (w > m){ m = w; try { lsSet("pa_maxwins", m); } catch(e){} } return m; }
+function stampAvatarUrl(ci){ return "/api/battle?v=4&s=" + ci + "&stamp=1"; }
+function avatarIsStamp(u){ return /(?:^|[?&])stamp=1(?:&|$)/.test(String(u || "")); }
 function frameColor(feat){
   var s = String(feat || "");
   if (!s) return "";
@@ -2309,9 +2314,9 @@ function frameColor(feat){
   for (var i = TIERS.length - 1; i >= 0; i--){ if (s.indexOf(TIERS[i].name) >= 0) return TIERS[i].color; }
   return "";
 }
-function frameStyle(feat, w){ var c = frameColor(feat); return c ? ("border:" + (w || 2) + "px solid " + c + ";box-shadow:0 0 9px " + c + "99") : ""; }
-function frameCss(feat, w){ var s = frameStyle(feat, w); return s ? ";" + s : ""; }
-function applyAvatarFrame(el, feat){ if (!el) return; var c = frameColor(feat); el.style.border = c ? "3px solid " + c : ""; el.style.boxShadow = c ? "0 0 14px " + c + "99" : ""; }
+function frameStyle(feat, w, av){ if (avatarIsStamp(av)) return "border:" + (w || 2) + "px solid #f5c518;box-shadow:0 0 12px rgba(245,197,24,.95),0 0 24px rgba(245,185,66,.55)"; var c = frameColor(feat); return c ? ("border:" + (w || 2) + "px solid " + c + ";box-shadow:0 0 9px " + c + "99") : ""; }
+function frameCss(feat, w, av){ var s = frameStyle(feat, w, av); return s ? ";" + s : ""; }
+function applyAvatarFrame(el, feat){ if (!el) return; if (avatarIsStamp(el.getAttribute("src") || "")) { el.style.border = "3px solid #f5c518"; el.style.boxShadow = "0 0 16px rgba(245,197,24,.95),0 0 30px rgba(245,185,66,.55)"; return; } var c = frameColor(feat); el.style.border = c ? "3px solid " + c : ""; el.style.boxShadow = c ? "0 0 14px " + c + "99" : ""; }
 function agentRows(){
   var rows = cloudAgents
     ? cloudAgents.filter(function(a){ return a.id !== cloudUid; }).map(function(a){ return {id:a.id, name:a.display_name||"Agent", wins:a.wins||0, me:false, avatar:a.avatar_url||"", featured:a.featured_card||"", streak:(typeof agentStreaks !== "undefined" && agentStreaks[a.id]) || 0}; })
@@ -2325,7 +2330,7 @@ function renderTopAgents(){
   var rows = agentRows().slice(0,5);
   setHtml($("topAgents"), '<div class="card">'+rows.map(function(r,i){
     var t = tierFor(r.wins);
-    return '<div class="leg'+(r.id?' agentclick':'')+'"'+(r.id?' data-agent="'+r.id+'"':'')+'><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px' + frameCss(r.featured, 2) + '">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.name+'</span>'+streakBadge(r.streak)+'</div><span class="note">'+r.wins+' winning tickets</span></div>';
+    return '<div class="leg'+(r.id?' agentclick':'')+'"'+(r.id?' data-agent="'+r.id+'"':'')+'><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px' + frameCss(r.featured, 2, r.avatar) + '">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.name+'</span>'+streakBadge(r.streak)+'</div><span class="note">'+r.wins+' winning tickets</span></div>';
   }).join("")+'</div>');
 }
 function renderUpcoming(){
@@ -3934,7 +3939,7 @@ function renderBoard(){
   renderFollowing();
   var rows = agentRows();
   $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Wins</th></tr>'
-    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+(r.id?' class="agentclick" data-agent="'+r.id+'"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px' + frameCss(r.featured, 2) + '">':'')+'<b>'+esc(r.name)+'</b>'+streakBadge(r.streak)+'</td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
+    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+(r.id?' class="agentclick" data-agent="'+r.id+'"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px' + frameCss(r.featured, 2, r.avatar) + '">':'')+'<b>'+esc(r.name)+'</b>'+streakBadge(r.streak)+'</td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
   var wins = maxWins();
   $("tiers").innerHTML = tierProgressHTML(charWins(tierCharIdx()), tierCharIdx()); bindTierStrip();
   var cards = allPlayerCardLegs();
@@ -3970,6 +3975,7 @@ function renderBoard(){
   document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); var av0 = b.getAttribute("data-avatar")||""; profile.avatar = av0; profile.featured = b.getAttribute("data-featured")||""; if (av0.indexOf("/api/avatars") === 0) profile.char = av0; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
   document.querySelectorAll(".dlcard").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadCard(b.getAttribute("data-kind"), parseInt(b.getAttribute("data-idx"),10), b); }); });
   document.querySelectorAll(".setprofs").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); profile.avatar = b.getAttribute("data-avatar") || ""; profile.featured = b.getAttribute("data-featured") || ""; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
+  document.querySelectorAll(".setpic").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); profile.avatar = b.getAttribute("data-avatar") || ""; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
   document.querySelectorAll(".dlspecial").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadSpecialCard(b); }); });
   document.querySelectorAll(".dlring").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadRingCard(b); }); });
   document.querySelectorAll(".dlstamp").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadStampCard(parseInt(b.getAttribute("data-ci"), 10), b); }); });
@@ -4133,7 +4139,7 @@ function stampCardHTML(ci){
     + '<div class="tcwin"><img class="cardart" src="/api/battle?v=4&s=' + ci + '" alt="">' + (un ? '<span class="stampbadge">FOIL</span>' : '<div class="lockveil">LOCKED</div>') + '</div>'
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">GOLD FOIL STAMP</span><span class="rarpill" style="background:#f5c518;color:#1a1405">STAMP EDITION</span></div>'
     + '<div class="tierto" style="margin-top:6px">' + (un ? 'You pulled the gold foil stamp edition of ' + cname + '.' : 'The gold foil stamp edition of ' + cname + ' — hiding in about 1 pack in 7.') + '</div>'
-    + (un ? '<div style="display:flex;gap:6px;margin-top:8px"><button class="mini setprofs" data-avatar="/api/battle?v=4&s=' + ci + '" data-featured="' + cname + ' · Gold Foil Stamp">Set as profile card</button><button class="mini dlstamp" data-ci="' + ci + '">Download PNG</button></div>' : '')
+    + (un ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"><button class="mini setpic" data-avatar="' + stampAvatarUrl(ci) + '">Set as profile picture</button><button class="mini setprofs" data-avatar="/api/battle?v=4&s=' + ci + '" data-featured="' + cname + ' · Gold Foil Stamp">Set as profile card</button><button class="mini dlstamp" data-ci="' + ci + '">Download PNG</button></div>' : '')
     + '</div><div class="stampspark"></div><div class="foilshine"></div></div>';
   return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"' + (un ? '' : ' data-noflip="1"') + '><div class="tierinner">' + front + stampBackHTML(ci) + '</div></div>';
 }
@@ -4417,7 +4423,7 @@ function clashLbHtml(){
   list.sort(function(a, b){ return b.w - a.w || a.l - b.l; });
   list = list.slice(0, 5);
   if (!list.length) return '<div class="clashlb"><div class="clashlb-t">\uD83C\uDFC6 TOP CLASHERS \u2014 most Grid Clash wins</div><div class="clashlb-none">No battle wins yet \u2014 be the first on this board!</div></div>';
-  return '<div class="clashlb"><div class="clashlb-t">\uD83C\uDFC6 TOP CLASHERS \u2014 most Grid Clash wins</div>' + list.map(function(c, i){ return '<div class="clashlb-r' + (c.me ? ' me' : '') + '"><span class="clashlb-rk">' + (i + 1) + '</span>' + (c.avatar ? '<img src="' + esc(c.avatar) + '" alt=""' + (frameStyle(c.featured, 2) ? ' style="' + frameStyle(c.featured, 2) + '"' : '') + '>' : '') + '<span class="clashlb-nm">' + esc(c.name) + (c.me ? ' (You)' : '') + '</span><span class="clashlb-w">' + c.w + 'W \u2013 ' + c.l + 'L</span></div>'; }).join("") + '</div>';
+  return '<div class="clashlb"><div class="clashlb-t">\uD83C\uDFC6 TOP CLASHERS \u2014 most Grid Clash wins</div>' + list.map(function(c, i){ return '<div class="clashlb-r' + (c.me ? ' me' : '') + '"><span class="clashlb-rk">' + (i + 1) + '</span>' + (c.avatar ? '<img src="' + esc(c.avatar) + '" alt=""' + (frameStyle(c.featured, 2, c.avatar) ? ' style="' + frameStyle(c.featured, 2, c.avatar) + '"' : '') + '>' : '') + '<span class="clashlb-nm">' + esc(c.name) + (c.me ? ' (You)' : '') + '</span><span class="clashlb-w">' + c.w + 'W \u2013 ' + c.l + 'L</span></div>'; }).join("") + '</div>';
 }
 var clashHomeAdEl = $("clashHomeAd"); if (clashHomeAdEl) clashHomeAdEl.addEventListener("click", function(){ sfx("click"); openClash(); });
 function renderClash(){
@@ -5727,7 +5733,7 @@ function openAgent(id, refresh){
     if (!j || !j.ok || !j.profile) { body.innerHTML = '<p class="empty">Could not load this agent.</p>'; return; }
     var p = j.profile, t = tierFor(p.wins || 0), mine = id === cloudUid;
     var st = j.stats || { tickets: 0, wins: p.wins || 0, recordW: 0, recordL: 0, winPct: null, streak: 0, best: 0 };
-    var head = '<div class="row" style="gap:12px;align-items:center"><img src="' + esc(p.avatar_url || "/api/icons?s=192") + '" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)' + frameCss(p.featured_card, 3) + '" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:19px;font-weight:900">' + esc(fmtUser(p.display_name || "Agent")) + streakBadge(st.streak) + '</div><div class="note">' + t.name + ' · ' + (p.wins || 0) + ' wins · ' + (followCounts[id] || 0) + ' followers' + (p.featured_card ? ' · ' + esc(p.featured_card) : '') + '</div></div><button class="ghostbtn" id="vaClose">Close</button></div>'
+    var head = '<div class="row" style="gap:12px;align-items:center"><img src="' + esc(p.avatar_url || "/api/icons?s=192") + '" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)' + frameCss(p.featured_card, 3, p.avatar_url) + '" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:19px;font-weight:900">' + esc(fmtUser(p.display_name || "Agent")) + streakBadge(st.streak) + '</div><div class="note">' + t.name + ' · ' + (p.wins || 0) + ' wins · ' + (followCounts[id] || 0) + ' followers' + (p.featured_card ? ' · ' + esc(p.featured_card) : '') + '</div></div><button class="ghostbtn" id="vaClose">Close</button></div>'
       + (mine ? '<p class="sub" style="margin-top:8px">This is you — exactly what other agents see on your public profile.</p>' : '<div style="margin-top:10px"><button type="button" class="ghostbtn" id="vaFollow" style="font-weight:800;padding:9px 16px;' + (isFollowing(id) ? '' : 'background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none') + '">' + (isFollowing(id) ? '✓ Following — tap to unfollow' : '+ Follow') + '</button></div>');
     var statsRow = '<div class="row" style="gap:7px;flex-wrap:wrap;margin-top:12px">'
       + '<span class="badge">🏆 ' + (st.wins || 0) + ' wins</span>'
@@ -5746,7 +5752,7 @@ function feedAgentsRow(items){
   (items || []).forEach(function(it){ var o = it.owner || {}; if (o.id && !seen[o.id]) { seen[o.id] = 1; owners.push(o); } });
   if (!owners.length) return "";
   return '<div class="fslider" style="padding-bottom:6px">' + owners.map(function(o){
-    return '<div class="fchip" data-agent="' + o.id + '">' + (o.avatar_url ? '<img src="' + esc(o.avatar_url) + '" alt="" style="' + frameCss(o.featured_card || "", 2).replace(/^;/, "") + '">' : "") + '<span><b>' + esc(fmtUser(o.display_name || "Agent")) + '</b><br><span class="note">' + (o.wins || 0) + ' wins</span></span></div>';
+    return '<div class="fchip" data-agent="' + o.id + '">' + (o.avatar_url ? '<img src="' + esc(o.avatar_url) + '" alt="" style="' + frameCss(o.featured_card || "", 2, o.avatar_url).replace(/^;/, "") + '">' : "") + '<span><b>' + esc(fmtUser(o.display_name || "Agent")) + '</b><br><span class="note">' + (o.wins || 0) + ' wins</span></span></div>';
   }).join("") + '</div>';
 }
 function feedTicketCard(it){
@@ -5756,7 +5762,7 @@ function feedTicketCard(it){
   }).join("");
   var more = (t.legs || []).length > 4 ? '<div class="note">+' + ((t.legs || []).length - 4) + ' more legs</div>' : "";
   var mine = t.user_id === cloudUid || o.id === cloudUid;
-  return '<div class="ftcard"><div class="fthd" data-agent="' + o.id + '">' + (o.avatar_url ? '<img src="' + esc(o.avatar_url) + '" alt="" style="' + frameCss(o.featured_card || "", 2).replace(/^;/, "") + '">' : "") + '<b>' + esc(fmtUser(o.display_name || "Agent")) + '</b>' + statusChip(t.status) + '</div>' + legs + more
+  return '<div class="ftcard"><div class="fthd" data-agent="' + o.id + '">' + (o.avatar_url ? '<img src="' + esc(o.avatar_url) + '" alt="" style="' + frameCss(o.featured_card || "", 2, o.avatar_url).replace(/^;/, "") + '">' : "") + '<b>' + esc(fmtUser(o.display_name || "Agent")) + '</b>' + statusChip(t.status) + '</div>' + legs + more
     + '<div style="margin-top:6px">' + (mine ? '<span class="note"><span style="color:#ff5d7a">\u2665</span> ' + (t.likes || 0) + '</span>' : '<button type="button" class="likebtn' + (t.likedByMe ? ' on' : '') + '" data-like="' + t.id + '"><span class="hrt">\u2665</span> ' + (t.likes || 0) + '</button>') + '</div></div>';
 }
 var BOARD_ACCORDION_KEYS = ["following", "tiers", "tier", "player", "stamps", "foils", "special"];
@@ -5835,7 +5841,7 @@ function renderSearchResults(){
     if (!j.results.length) { box.innerHTML = '<p class="empty">No agents match "' + esc(q) + '" yet.</p>'; return; }
     box.innerHTML = j.results.map(function(r){
       var t = tierFor(r.wins || 0), isMe = r.id === cloudUid;
-      return '<div class="leg"><span data-agent="' + r.id + '" class="agentclick" style="display:flex;align-items:center;gap:9px;flex:1;min-width:0">' + (r.avatar_url ? '<img src="' + esc(r.avatar_url) + '" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover' + frameCss(r.featured_card || "", 2) + '">' : '') + '<span style="min-width:0"><b>' + esc(fmtUser(r.display_name || "Agent")) + '</b>' + streakBadge(agentStreaks[r.id] || 0) + '<br><span class="note">' + t.name + ' · ' + (r.wins || 0) + ' wins · ' + (r.followers || 0) + ' followers</span></span></span>' + (isMe ? '<span class="note">You</span>' : '<button type="button" class="likebtn' + (r.following ? ' on' : '') + '" data-follow="' + r.id + '">' + (r.following ? '✓ Following' : '+ Follow') + '</button>') + '</div>';
+      return '<div class="leg"><span data-agent="' + r.id + '" class="agentclick" style="display:flex;align-items:center;gap:9px;flex:1;min-width:0">' + (r.avatar_url ? '<img src="' + esc(r.avatar_url) + '" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover' + frameCss(r.featured_card || "", 2, r.avatar_url) + '">' : '') + '<span style="min-width:0"><b>' + esc(fmtUser(r.display_name || "Agent")) + '</b>' + streakBadge(agentStreaks[r.id] || 0) + '<br><span class="note">' + t.name + ' · ' + (r.wins || 0) + ' wins · ' + (r.followers || 0) + ' followers</span></span></span>' + (isMe ? '<span class="note">You</span>' : '<button type="button" class="likebtn' + (r.following ? ' on' : '') + '" data-follow="' + r.id + '">' + (r.following ? '✓ Following' : '+ Follow') + '</button>') + '</div>';
     }).join("");
   });
 }
@@ -5891,7 +5897,7 @@ setInterval(function(){ loadPickemEvent(); renderPickem(); }, 30000);
 /* ---------- profile + push ---------- */
 function refreshAgentBtn(){
   var t = tierFor(charWins(tierCharIdx()));
-  $("agentBtn").innerHTML = (profile.avatar ? '<img src="'+esc(profile.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px' + frameCss(profile.featured, 2) + '"> ' : "👤 ") + esc(profile.name || "Guest Agent") + " · <b>" + t.name + "</b>";
+  $("agentBtn").innerHTML = (profile.avatar ? '<img src="'+esc(profile.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px' + frameCss(profile.featured, 2, profile.avatar) + '"> ' : "👤 ") + esc(profile.name || "Guest Agent") + " · <b>" + t.name + "</b>";
 }
 var logoImgEl = $("logoImg"); if (logoImgEl) logoImgEl.addEventListener("click", function(){ var ab = $("agentBtn"); if (ab) ab.click(); });
 $("agentBtn").addEventListener("click", function(){
