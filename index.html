@@ -4765,7 +4765,7 @@ var ITEMS = [
   { id: "surge", icon: "⚡", name: "ENERGY SURGE", color: "#f5b942", desc: "Gain +2 Energy cards" },
   { id: "drain", icon: "🔋", name: "ENERGY DRAIN", color: "#4fe3c1", desc: "Steal 1 Energy from the enemy" },
   { id: "aegis", icon: "🛡️", name: "AEGIS SHIELD", color: "#7dd3fc", desc: "Block the next hit against your team" },
-  { id: "power", icon: "🔥", name: "POWER SURGE", color: "#ff8a5c", desc: "+2 stars this round" },
+  { id: "switch", icon: "🔄", name: "FORCED TAG", color: "#e879f9", desc: "Bench the enemy's active fighter — their partner is forced to tag in" },
   { id: "eraser", icon: "🎯", name: "GRID ERASER", color: "#ff5470", desc: "Remove 1 enemy mark from the grid" },
   { id: "patch", icon: "❤️", name: "PATCH UP", color: "#ff7ab6", desc: "Heal 2 damage from your most-hurt fighter" },
   { id: "sneak", icon: "💥", name: "SNEAK HIT", color: "#ff5470", desc: "Enemy active takes damage equal to your active card's DMG" },
@@ -4793,6 +4793,7 @@ function itemPlayable(side, id){
   if (id === "reset" && CL.grid.every(function(c){ return !c; })) return "Grid already empty";
   if (id === "supply" && !(mine ? CL.myDeck : CL.cpuDeck).length) return "Item deck is empty";
   if (id === "tag" && !fAlive(myPair[1 - myAct])) return "Partner is out";
+  if (id === "switch" && !fAlive(foePair[1 - foeAct])) return "Enemy partner is out";
   if (id === "token" && (mine ? CL.myFreeHit : CL.cpuFreeHit)) return "Free Hit already saved";
   if (id === "sabotage" && !(mine ? CL.cpuHand : CL.myHand).length) return "Enemy hand is empty";
   if (id === "sneak" && !fAlive(foePair[foeAct])) return "No target";
@@ -4804,7 +4805,7 @@ function applyItem(side, id){
   if (id === "surge") { var sh = mine ? CL.myHand : CL.cpuHand; sh.push("energy", "energy"); CL.statSurge++; CL.log.push("⚡ +2 \uD83D\uDD2E Energy cards for " + (mine ? "you" : "CPU") + "!"); }
   else if (id === "drain") { var fh = mine ? CL.cpuHand : CL.myHand, mh2 = mine ? CL.myHand : CL.cpuHand, ei = fh.indexOf("energy"); if (ei >= 0) { fh.splice(ei, 1); mh2.push("energy"); CL.log.push("🔋 Drained 1 \uD83D\uDD2E Energy from the enemy!"); } else { drawItems(side, 1); CL.log.push("🔋 No Energy to drain \u2014 drew 1 card instead."); } }
   else if (id === "aegis") { if (mine) CL.myGuard = Math.min(2, CL.myGuard + 1); else CL.cpuGuard = Math.min(2, CL.cpuGuard + 1); CL.log.push("🛡️ A shield is up — next hit on " + (mine ? "your" : "CPU's") + " team blocked."); }
-  else if (id === "power") { if (mine) CL.myTemp = 2; else CL.cpuTemp = 2; CL.log.push("🔥 +2★ this round for " + (mine ? "you" : "CPU") + "!"); }
+  else if (id === "switch") { if (mine) { CL.cpuActive = 1 - CL.cpuActive; CL.lastTag = "cpu"; } else { CL.myActive = 1 - CL.myActive; CL.lastTag = "me"; } sfx("tag"); CL.log.push("🔄 FORCED TAG — " + fName(mine ? CL.cpu[CL.cpuActive] : CL.mine[CL.myActive]) + " is forced in from the bench!"); }
   else if (id === "eraser") { var fm = mine ? "O" : "X", cellIx = -1; for (var li = 0; li < TT_LINES.length && cellIx < 0; li++) { var L = TT_LINES[li], mk = L.filter(function(c){ return CL.grid[c] === fm; }); if (mk.length === 2) cellIx = mk[0]; } if (cellIx < 0) cellIx = CL.grid.indexOf(fm); if (cellIx >= 0) { CL.grid[cellIx] = ""; CL.log.push("🎯 Erased the enemy mark on the " + TT_POS[cellIx] + " square!"); } }
   else if (id === "patch") { var pair = mine ? CL.mine : CL.cpu, hurt = null; pair.forEach(function(f){ if (fAlive(f) && f.hits > 0 && (!hurt || f.hits > hurt.hits)) hurt = f; }); if (hurt) { hurt.hits = Math.max(0, hurt.hits - 2); sfx("heal"); CL.log.push("❤️ " + fName(hurt) + " heals 2 damage!"); } }
   else if (id === "sneak") { var foeA = mine ? CL.cpu[CL.cpuActive] : CL.mine[CL.myActive]; var gk = mine ? "cpuGuard" : "myGuard"; if ((CL[gk] || 0) > 0) { CL[gk]--; CL.log.push("🛡️ Sneak Hit BLOCKED by a guard!"); } else if (fAlive(foeA)) { var sd2 = dmgOf(mine ? CL.mine[CL.myActive] : CL.cpu[CL.cpuActive]); foeA.hits = Math.min(lifeOf(foeA), foeA.hits + sd2); sfx(foeA.hits >= lifeOf(foeA) ? "ko" : "hit"); CL.lastHit = mine ? "cpu" : "me"; CL.lastWin = mine ? "me" : "cpu"; if (foeA.hits >= lifeOf(foeA)) CL.lastKO = foeA; CL.log.push("💥 SNEAK HIT — " + fName(foeA) + " takes " + sd2 + " damage!" + (foeA.hits >= lifeOf(foeA) ? " ELIMINATED!" : "")); } clashCheckEnd(); }
@@ -4836,7 +4837,7 @@ function cpuUseItem(){
   if ((has("surge") || has("drain")) && energyCount("cpu") < hitCost(a) && r < 0.65) return use(has("surge") ? "surge" : "drain");
   if (has("aegis") && a.hits >= lifeOf(a) - 2 && r < 0.45) return use("aegis");
   if (has("token") && energyCount("cpu") < hitCost(a) && r < 0.4) return use("token");
-  if (has("power") && r < 0.35) return use("power");
+  if (has("switch") && r < 0.5) { var foeBench = CL.mine[1 - CL.myActive]; if ((lifeOf(a) - a.hits <= dmgOf(foe) && dmgOf(foe) >= 2) || (a.hits >= lifeOf(a) - 2 && fAlive(foeBench) && dmgOf(foeBench) < dmgOf(foe))) return use("switch"); }
   if (has("eraser") && ttThreat(CL.grid, "X") > 0 && r < 0.5) return use("eraser");
   if (has("tag") && a.hits >= lifeOf(a) - 2 && r < 0.3) return use("tag");
   if (has("supply") && CL.cpuHand.length <= 2 && r < 0.5) return use("supply");
@@ -5410,7 +5411,9 @@ function pvpMirror(o){
     itemUsedRound: o.cpuItemRound, cpuItemRound: o.itemUsedRound, statSurge: o.statSurge,
     lastHit: sw(o.lastHit), lastWin: sw(o.lastWin), lastBlock: sw(o.lastBlock), lastTag: sw(o.lastTag), turn: sw(o.turn) };
 }
+function pvpLegacyCard(id){ return id === "power" ? "switch" : id; }
 function pvpInstall(o){
+  ["myDeck", "cpuDeck", "myHand", "cpuHand", "myPile", "cpuPile"].forEach(function(k){ if (Array.isArray(o[k])) o[k] = o[k].map(pvpLegacyCard); });
   var P = CL.pvp, keepLog = (CL.log || []).slice();
   if (!keepLog.length && o.mine && o.cpu) keepLog = ["🥊 Head-to-head vs " + (P.oppName || "your friend") + " — FIGHT!"];
   CL = { mode: "pvp", boss: 0, sel: 0, mine: o.mine, cpu: o.cpu, myActive: o.myActive, cpuActive: o.cpuActive, round: o.round, busy: false, over: !!o.over, tagged: false,
