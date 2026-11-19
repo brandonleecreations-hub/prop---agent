@@ -197,6 +197,14 @@ table.tstats td.tsA,table.tstats td.tsB{font-weight:700}
 #myCards{display:block}
 .cardsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
 .cardsgrid.packgrid{grid-template-columns:repeat(auto-fill,minmax(102px,1fr));gap:8px}
+.cardsgrid.foilgroups{display:block}
+.foilgrp{margin-bottom:10px}
+.foilgrp:last-child{margin-bottom:0}
+.foilghdr{display:flex;align-items:center;gap:8px;font-weight:900;font-size:12.5px;letter-spacing:.5px;margin:2px 0 6px}
+.foilgcount{color:#9aa7bd;font-size:11px;font-weight:800}
+.foilrail{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.foilrail::-webkit-scrollbar{display:none}
+.foilrail .tiercard{flex:0 0 104px;scroll-snap-align:start}
 .cardsec{margin-bottom:14px}
 .cardsec-h{width:100%;display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,rgba(124,58,237,.25),rgba(245,185,66,.12));border:1px solid rgba(167,139,250,.45);border-radius:11px;padding:9px 12px;color:#fff;font-weight:900;font-size:13px;letter-spacing:.4px;cursor:pointer;text-align:left}
 .cscount{margin-left:auto;font-size:11px;color:#f5c518;font-weight:800;white-space:nowrap}
@@ -3943,7 +3951,7 @@ function renderBoard(){
     return '<div class="tiercard unlocked"><div class="tierinner">' + front + cardBackHTML(esc(l.player), esc(l.team || "") + '<br>' + esc(l.matchup || "") + '<br>Earned on a ticket where every leg hit.') + '</div></div>';
   }).join("");
   var fl0 = foilsGet();
-  var foilCardsOnly = fl0.map(function(k){ var pp = k.split("-"); var tt = TIERS[parseInt(pp[1], 10)]; return tt ? foilCardHTML(tt, parseInt(pp[0], 10)) : ""; }).join("");
+  var foilCardsOnly = TIERS.map(function(t, ti){ var ks = fl0.filter(function(k){ return parseInt(k.split("-")[1], 10) === ti; }); if (!ks.length) return ""; return '<div class="foilgrp"><div class="foilghdr"><span style="color:' + t.color + '">' + t.emoji + ' ' + t.name.toUpperCase() + '</span><span class="foilgcount">' + ks.length + ' pulled</span></div><div class="foilrail">' + ks.map(function(k){ return foilCardHTML(t, parseInt(k.split("-")[0], 10)); }).join("") + '</div></div>'; }).join("");
   renderPacks();
   renderClash();
   var stampCardsOnly = CHARNAMES.map(function(nm, ix){ return stampCardHTML(ix + 1); }).join("");
@@ -3953,7 +3961,7 @@ function renderBoard(){
     cardSec("tier", "🃏 TIER CARDS — " + CHARNAMES[cci - 1], unlockedN + " of 6 unlocked \u00B7 Grid Clash cards", tierCards, true)
     + (cards.length ? cardSec("player", "🏆 PLAYER CARDS — winning tickets", cards.length + " earned", playerCards, false) : "")
     + cardSec("stamps", "🌟 GOLD FOIL STAMPS — 1 in ~7 packs", stampsGet().length + " of 12", stampCardsOnly, false)
-    + (fl0.length ? cardSec("foils", "🎁 PACK PULLS — from packs", fl0.length + " pulled", foilCardsOnly, false, "packgrid") : "")
+    + (fl0.length ? cardSec("foils", "🎁 PACK PULLS — from packs", fl0.length + " pulled", foilCardsOnly, false, "foilgroups") : "")
     + cardSec("special", "⭐ SPECIAL CARDS — Pick'em & chase", specN + " of 2", specialCardHTML() + ringCardHTML(), false);
   document.querySelectorAll(".cardsec-h").forEach(function(h){ h.addEventListener("click", function(){ var sec = h.parentElement; var nowClosed = sec.classList.toggle("closed"); var st = lsGet("pa_cardsecs", {}); st[h.getAttribute("data-cardsec")] = !nowClosed; lsSet("pa_cardsecs", st); var ch = h.querySelector(".csbtn"); if (ch) ch.textContent = nowClosed ? "\u25B8 SHOW" : "\u25BE HIDE"; sfx("click"); }); });
   document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); var av0 = b.getAttribute("data-avatar")||""; profile.avatar = av0; profile.featured = b.getAttribute("data-featured")||""; if (av0.indexOf("/api/avatars") === 0) profile.char = av0; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
