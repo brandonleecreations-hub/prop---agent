@@ -4157,6 +4157,7 @@ function stampCardHTML(ci){
   return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"' + (un ? '' : ' data-noflip="1"') + '><div class="tierinner">' + front + stampBackHTML(ci) + '</div></div>';
 }
 function downloadStampCard(ci, btn){
+  if (stampsGet().indexOf(ci) < 0) { if (btn) { var o0 = btn.textContent; btn.textContent = "Locked \u2014 unlock it first"; setTimeout(function(){ btn.textContent = o0; }, 1600); } return; }
   var img = new Image();
   img.onload = function(){
     var cv = document.createElement("canvas"); cv.width = 630; cv.height = 900;
