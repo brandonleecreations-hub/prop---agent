@@ -774,7 +774,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .pkthumb{animation:pkfloat 3.4s ease-in-out infinite alternate}
 @keyframes pkfloat{from{transform:translateY(-1.5px)}to{transform:translateY(2px)}}
 @media (prefers-reduced-motion: reduce){.pickem::after,.pkart,.pkthumb{animation:none}}
-@media (prefers-reduced-motion: reduce){.neonbg,.neonglowL,.neonglowR,.neonsweep,.packfloat,.packshine{animation:none}}
+@media (prefers-reduced-motion: reduce){.neonbg,.neonglowL,.neonglowR,.neonsweep,.packfloat,.packshine,.packstage.torn,.packstage.torn .ph-t,.packstage.torn .ph-b{animation:none}}
 .cardpop{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center}
 .cardpop.open{display:flex}
 .cardpop .burst{position:absolute;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,#f5c51833 0%,transparent 65%);animation:burstA .8s ease-out both;pointer-events:none}
@@ -789,7 +789,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 @keyframes sparkA{0%{opacity:0;transform:translate(0,0) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(1)}}
 .packpromo{position:relative;border:2px solid #7C3AED;border-radius:16px;padding:14px;background:radial-gradient(120% 120% at 20% 0%, #2a1650 0%, #12101d 60%);overflow:hidden}
 .packpromo::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 32%,rgba(245,197,24,.12) 48%,rgba(255,255,255,.08) 52%,transparent 68%);transform:translateX(-130%);animation:pkshine 5.2s ease-in-out infinite;pointer-events:none}
-.packimg{width:74px;height:96px;object-fit:contain;filter:drop-shadow(0 10px 20px rgba(0,0,0,.55)) drop-shadow(0 0 14px rgba(124,58,237,.45))}
+.packimg{width:56px;height:110px;object-fit:contain;filter:drop-shadow(0 10px 20px rgba(0,0,0,.55)) drop-shadow(0 0 14px rgba(124,58,237,.45))}
 .openbtn{background:linear-gradient(135deg,#7C3AED,#5b21b6);color:#fff;font-weight:900;border:none;border-radius:11px;padding:11px 14px;font-size:14px;cursor:pointer}
 .openbtn.gold{background:linear-gradient(135deg,#f5c518,#d97706);color:#1a1405}
 .openbtn:disabled{opacity:.38;cursor:default}
@@ -1119,10 +1119,10 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .reswin{font-size:32px;font-weight:900;text-align:center;color:#f5c518;text-shadow:0 0 24px rgba(245,197,24,.6)}
 .reslose{font-size:30px;font-weight:900;text-align:center;color:#ff8a8a}
 
-.packstage{width:min(64vw,230px);cursor:pointer;animation:cardpopA .6s cubic-bezier(.2,.9,.3,1.2) both;text-align:center}
+.packstage{width:min(58vw,205px);cursor:pointer;animation:cardpopA .6s cubic-bezier(.2,.9,.3,1.2) both;text-align:center}
 .packstage img{width:100%;border-radius:14px;box-shadow:0 22px 50px rgba(0,0,0,.6),0 0 30px #7c3aed55;display:block}
 .packstage.torn{animation:packtear .8s ease-in both}
-@keyframes packtear{30%{transform:rotate(-2deg) scale(1.03)}55%{transform:rotate(1.6deg) scale(1.05)}100%{transform:scale(1.12);opacity:0}}
+@keyframes packtear{30%{transform:scale(1.02)}55%{transform:scale(1.05)}100%{transform:scale(1.1);opacity:0}}
 .revealrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .revealcard{width:104px;animation:cardpopA .6s cubic-bezier(.2,.9,.3,1.2) both;border-radius:12px;overflow:hidden;border:2px solid #f5c518;background:#0d0d13;box-shadow:0 14px 30px rgba(0,0,0,.5)}
 .revealcard img{width:100%;height:104px;object-fit:cover;display:block}
@@ -1133,10 +1133,10 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 @keyframes ringpulse{from{box-shadow:0 14px 30px rgba(0,0,0,.5),0 0 12px rgba(245,197,24,.35)}to{box-shadow:0 14px 30px rgba(0,0,0,.5),0 0 40px rgba(245,197,24,.85)}}
 .tiercard.ringglow .flipfront{animation:ringpulse 1.8s ease-in-out infinite alternate}
 #packBurst{position:absolute;left:50%;top:36%;width:0;height:0;pointer-events:none;display:none;z-index:5}
-.packsplit{position:relative;width:100%;aspect-ratio:427/640}
-.ph{position:absolute;left:0;width:100%;height:50.6%;background-image:url(/api/banners?s=packcut);background-size:100% 200%;background-repeat:no-repeat}
-.ph-t{top:0;background-position:center top;border-radius:14px 14px 0 0}
-.ph-b{bottom:0;background-position:center bottom;border-radius:0 0 14px 14px}
+.packsplit{position:relative;width:100%;aspect-ratio:420/795}
+.ph{position:absolute;left:0;width:100%;background-image:url(/api/banners?s=packcut&v=2);background-repeat:no-repeat}
+.ph-t{top:0;height:10.4%;background-size:100% 961.5%;background-position:center top;border-radius:14px 14px 0 0;transform-origin:10% 0}
+.ph-b{bottom:0;height:90.6%;background-size:100% 110.4%;background-position:center bottom;border-radius:0 0 14px 14px}
 .packstage.charging .packsplit{animation:charge .48s ease-in-out both}
 @keyframes charge{0%{transform:scale(1)}30%{transform:scale(1.03) rotate(-1.2deg)}55%{transform:scale(1.05) rotate(1.2deg)}80%{transform:scale(1.07) rotate(-1.6deg)}100%{transform:scale(1.08)}}
 .packstage.charging .ph{filter:drop-shadow(0 0 22px rgba(245,197,24,.55))}
@@ -1146,7 +1146,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .packfloat{transform-style:preserve-3d;animation:packsway3d 3.8s ease-in-out infinite alternate;will-change:transform}
 @keyframes packsway3d{from{transform:rotateY(-14deg) rotateX(3deg) translateY(0)}to{transform:rotateY(14deg) rotateX(-2deg) translateY(-7px)}}
 .packstage.torn .packfloat{animation:none}
-.packshine{position:absolute;inset:0;background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.20) 48%,rgba(245,197,24,.16) 52%,transparent 68%);transform:translateX(-130%);animation:pkshine 3.4s ease-in-out infinite;pointer-events:none;-webkit-mask-image:url(/api/banners?s=packcut);-webkit-mask-size:100% 100%;mask-image:url(/api/banners?s=packcut);mask-size:100% 100%}
+.packshine{position:absolute;inset:0;background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.20) 48%,rgba(245,197,24,.16) 52%,transparent 68%);transform:translateX(-130%);animation:pkshine 3.4s ease-in-out infinite;pointer-events:none;-webkit-mask-image:url(/api/banners?s=packcut&v=2);-webkit-mask-size:100% 100%;mask-image:url(/api/banners?s=packcut&v=2);mask-size:100% 100%}
 .packaura{position:relative;height:30px;margin-top:4px;pointer-events:none}
 .packaura i{position:absolute;left:50%;top:50%;width:170px;height:30px;margin:-15px 0 0 -85px;border-radius:50%;border:2px solid rgba(245,197,24,.75);box-shadow:0 0 18px rgba(245,197,24,.35),inset 0 0 14px rgba(124,58,237,.5);animation:auraring 1.9s ease-out infinite}
 .packaura i:nth-child(2){animation-delay:.63s;border-color:rgba(124,58,237,.7)}
@@ -1156,13 +1156,13 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 
 
 
-@keyframes splitT{0%{transform:translate(0,0) rotate(0);opacity:1}28%{transform:translate(-7px,-10px) rotate(-2.5deg);opacity:1}72%{opacity:1}100%{transform:translate(-48px,-88px) rotate(-15deg);opacity:0}}
-@keyframes splitB{0%{transform:translate(0,0) rotate(0);opacity:1}28%{transform:translate(7px,10px) rotate(2.5deg);opacity:1}72%{opacity:1}100%{transform:translate(48px,88px) rotate(13deg);opacity:0}}
+@keyframes splitT{0%{transform:translate(0,0) rotate(0);filter:brightness(1);opacity:1}16%{transform:translate(-2px,-4px) rotate(-1.4deg);filter:brightness(1.07);opacity:1}42%{transform:translate(-11px,-30px) rotate(-6.5deg);filter:brightness(1.3);opacity:1}74%{transform:translate(-24px,-72px) rotate(-13deg);filter:brightness(1.12);opacity:1}100%{transform:translate(-32px,-118px) rotate(-19deg);filter:brightness(1);opacity:0}}
+@keyframes splitB{0%{transform:translate(0,0) rotate(0)}22%{transform:translate(0,3px) rotate(0)}48%{transform:translate(1px,8px) rotate(.5deg)}100%{transform:translate(0,6px) rotate(0)}}
 .ph-t{clip-path:polygon(0 0,100% 0,100% 100%,91% calc(100% - 3px),83% 100%,74% calc(100% - 3px),66% 100%,58% calc(100% - 3px),50% 100%,41% calc(100% - 3px),33% 100%,25% calc(100% - 3px),16% 100%,8% calc(100% - 3px),0 100%)}
 .ph-b{clip-path:polygon(0 3px,8% 0,16% 3px,25% 0,33% 3px,41% 0,50% 3px,58% 0,66% 3px,74% 0,83% 3px,91% 0,100% 3px,100% 100%,0 100%)}
-.packstage.torn .packsplit::after{content:"";position:absolute;left:3%;right:3%;top:49.2%;height:4px;border-radius:99px;background:linear-gradient(90deg,transparent,#fff 30%,#f5c518 50%,#fff 70%,transparent);filter:blur(1px);animation:tearlineA .65s ease-out both;pointer-events:none;z-index:3}
+.packstage.torn .packsplit::after{content:"";position:absolute;left:3%;right:3%;top:9.9%;height:4px;border-radius:99px;background:linear-gradient(90deg,transparent,#fff 30%,#f5c518 50%,#fff 70%,transparent);filter:blur(1px);animation:tearlineA .65s ease-out both;pointer-events:none;z-index:3}
 @keyframes tearlineA{0%{opacity:0;transform:scaleX(.15)}25%{opacity:1}100%{opacity:0;transform:scaleX(1.12)}}
-.packflash{position:absolute;left:50%;top:50%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(245,197,24,.85) 40%,transparent 70%);opacity:0;pointer-events:none}
+.packflash{position:absolute;left:50%;top:10.4%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(245,197,24,.85) 40%,transparent 70%);opacity:0;pointer-events:none}
 .packstage.torn .packflash{animation:flashA .7s ease-out both}
 @keyframes flashA{0%{opacity:0;transform:scale(.4)}25%{opacity:1}100%{opacity:0;transform:scale(3.2)}}
 .revealwrap{position:relative}
@@ -4507,7 +4507,7 @@ function renderPacks(){
   var shared = lsGet("pa_share_day", "") === today;
   var foils = foilsGet();
   box.innerHTML = '<div class="packpromo">'
-    + '<div style="display:flex;gap:12px;align-items:center"><img class="packimg" src="/api/banners?s=packcut" alt="">'
+    + '<div style="display:flex;gap:12px;align-items:center"><img class="packimg" src="/api/banners?s=packcut&v=2" alt="">'
     + '<div><div style="font-weight:900;font-size:17px">🎁 1 FREE PACK <span style="color:#f5c518">EVERY DAY</span></div>'
     + '</div></div>'
     + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'
@@ -6679,7 +6679,7 @@ function openPackPop(demo, free){
   var gl = $("packGlow"); if (gl) gl.style.display = "none";
   var ph2 = $("packHint"); if (ph2) ph2.style.display = "none";
   stage.style.display = "block"; stage.classList.remove("torn"); stage.classList.remove("charging");
-  stage.innerHTML = '<div class="packfloat"><div class="packsplit"><div class="ph ph-t"></div><div class="ph ph-b"></div><div class="packshine"></div><div class="packflash"></div></div><div class="packaura"><i></i><i></i><i></i></div></div><div style="font-weight:900;margin-top:10px;color:#f5c518;letter-spacing:1px">' + (demo ? "DEMO PACK" : "PROP AGENT PACK") + '</div><div class="note">Tap to open</div>';
+  stage.innerHTML = '<div class="packfloat"><div class="packsplit"><div class="ph ph-t"></div><div class="ph ph-b"></div><div class="packshine"></div><div class="packflash"></div></div><div class="packaura"><i></i><i></i><i></i></div></div><div style="font-weight:900;margin-top:10px;color:#f5c518;letter-spacing:1px">' + (demo ? "DEMO PACK" : "AGENT CLASH PACK") + '</div><div class="note">Tap to open</div>';
   cap.textContent = "";
   $("packPop").classList.add("open");
 }
