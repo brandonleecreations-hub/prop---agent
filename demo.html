@@ -228,7 +228,7 @@ function renderStats() {
   var keys = Object.keys(owned);
   document.getElementById("coll").innerHTML = (ringPulled || keys.length) ? (ringPulled ? '<img src="/api/avatars?s=14" title="THE RING · CHASE CARD" alt="">' : '') + keys.map(function(k) {
     var cci = parseInt(k.split("-")[0], 10), tti = parseInt(k.split("-")[1], 10);
-    return '<span class="collcell"><img src="/api/battle?v=13&s=' + artS(cci, tti) + '" style="border-color:' + TIERS[tti].c + '" title="' + NAMES[cci - 1] + ' · ' + TIERS[tti].n + ' FOIL" alt="">' + (tti === 2 ? '<div class="glitterfx"></div>' : tti === 3 ? '<div class="glitterfx pglit"></div>' : '') + '</span>';
+    return '<span class="collcell"><img src="/api/battle?v=14&s=' + artS(cci, tti) + '" style="border-color:' + TIERS[tti].c + '" title="' + NAMES[cci - 1] + ' · ' + TIERS[tti].n + ' FOIL" alt="">' + (tti === 2 ? '<div class="glitterfx"></div>' : tti === 3 ? '<div class="glitterfx pglit"></div>' : '') + '</span>';
   }).join("") : '<span class="empty">No foils yet — open a pack.</span>';
 }
 function openPack(chase) {
@@ -248,7 +248,7 @@ function openPack(chase) {
     reveal.innerHTML = pulls.map(function(pu, i) {
       if (pu.ring) return '<div class="revealcard ringcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's,1.05s"><img src="/api/avatars?s=14" alt="" style="height:122px"><div class="rvinfo"><b style="color:#f5c518">🏆 THE RING</b><br>SIGNED · ONE OF A KIND</div></div>';
       var t = TIERS[pu.ti];
-      return '<div class="revealcard' + (i === 2 || pu.ti >= 1 ? ' bestcard' : '') + (pu.ti === 3 ? ' lgndcard' : '') + '" data-view="' + i + '" style="border-color:' + t.c + ';--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's"><img src="/api/battle?v=13&s=' + artS(pu.ci, pu.ti) + '" alt="">' + (pu.ti === 2 ? '<div class="glitterfx"></div>' : pu.ti === 3 ? '<div class="glitterfx pglit"></div>' : '') + '<div class="rvinfo"><b>' + NAMES[pu.ci - 1] + '</b><br><span style="color:' + t.c + ';font-weight:800">✨ ' + t.n + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
+      return '<div class="revealcard' + (i === 2 || pu.ti >= 1 ? ' bestcard' : '') + (pu.ti === 3 ? ' lgndcard' : '') + '" data-view="' + i + '" style="border-color:' + t.c + ';--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's"><img src="/api/battle?v=14&s=' + artS(pu.ci, pu.ti) + '" alt="">' + (pu.ti === 2 ? '<div class="glitterfx"></div>' : pu.ti === 3 ? '<div class="glitterfx pglit"></div>' : '') + '<div class="rvinfo"><b>' + NAMES[pu.ci - 1] + '</b><br><span style="color:' + t.c + ';font-weight:800">✨ ' + t.n + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
     }).join("");
     var newN = pulls.filter(function(pu){ return !pu.ring && !pu.dup; }).length;
     var dupN = pulls.filter(function(pu){ return pu.dup; }).length;
@@ -297,7 +297,7 @@ function viewPulled(i) {
     var t = TIERS[pu.ti];
     front.style.borderColor = t.c;
     front.classList.toggle("pvlgnd", pu.ti === 3);
-    front.innerHTML = '<img class="art" src="/api/battle?v=13&s=' + artS(pu.ci, pu.ti) + '" alt="">' + (pu.ti === 2 ? '<div class="glitterfx"></div>' : pu.ti === 3 ? '<div class="glitterfx pglit"></div>' : '') + '<div class="pvplate">' + NAMES[pu.ci - 1] + '<small>✨ ' + t.n.toUpperCase() + ' FOIL</small></div>';
+    front.innerHTML = '<img class="art" src="/api/battle?v=14&s=' + artS(pu.ci, pu.ti) + '" alt="">' + (pu.ti === 2 ? '<div class="glitterfx"></div>' : pu.ti === 3 ? '<div class="glitterfx pglit"></div>' : '') + '<div class="pvplate">' + NAMES[pu.ci - 1] + '<small>✨ ' + t.n.toUpperCase() + ' FOIL</small></div>';
     back.innerHTML = '<img src="/api/icons?s=512" alt=""><div style="font-weight:900;color:#f5c518;font-size:19px">PROP AGENT</div><div style="color:#c9c9d4;font-size:12.5px">' + NAMES[pu.ci - 1] + ' · FOIL<br>' + t.n + ' tier gold foil edition<br>Pulled from a Prop Agent pack</div>';
   }
   document.getElementById("pullView").classList.add("open");
