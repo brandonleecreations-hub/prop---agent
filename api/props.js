@@ -1059,6 +1059,206 @@ async function espCs2Schedule() {
     return out;
   }).catch(() => null);
 }
+// ---------- CS2 props attribution (Brandon 2026-11-20) ----------
+// Parlay rows carry no team/matchup, and the schedule lane's roster window
+// covers different matches (bo3's newest list, mostly tier-C) than the
+// props board — measured 0 of 194 real rows attributed client-side. This
+// lane attributes the shared CS2 board server-side instead:
+//   1. each distinct player resolves to his bo3 team (/players/{slug},
+//      cached a day — profiles move slowly);
+//   2. teams sharing a Parlay start-time bucket are paired into real
+//      matches by constructing the bo3 match slug from the two team slugs
+//      + date and VERIFYING the detail's team ids match the pair;
+//   3. rows are attributed from the two match teams' rosters (rosters
+//      catch stale profiles), then by a roster sweep over the bucket's
+//      teams, then by profile team alone (teammates stay together under
+//      their real team name even when their match can't be constructed);
+//   4. only a player bo3 cannot place anywhere stays unattributed.
+// The computed map is cached against a fingerprint of the shared board.
+const espAttrMiss = {}; // slug -> ts, in-memory negative cache for probes
+async function bo3PlayerProfile(nkName, rawNick) {
+  const p = await espCached("esp_p_" + nkName, 24 * 3600 * 1000, 7 * 86400000, async () => {
+    const base = String(rawNick || "").toLowerCase();
+    const cands = [...new Set([base.replace(/[^a-z0-9]/g, ""), base.replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""), base])];
+    for (const slug of cands) {
+      if (!slug) continue;
+      const j = await espGet(BO3_API + "/players/" + encodeURIComponent(slug));
+      if (j && j.nickname && nickKey(j.nickname) === nkName) {
+        const t = j.team || {};
+        return { found: 1, teamId: j.team_id || t.id || 0, teamSlug: t.slug || "", team: t.name || "", img: j.image_url || "" };
+      }
+    }
+    return { found: 0, teamId: 0, teamSlug: "", team: "", img: "" };
+  }).catch(() => null);
+  return p && p.found ? p : null;
+}
+async function bo3DetailProbe(slug) {
+  if (espAttrMiss[slug] && Date.now() - espAttrMiss[slug] < 30 * 60 * 1000) return null;
+  const d = await bo3Detail(slug).catch(() => null);
+  if (!d) { espAttrMiss[slug] = Date.now(); return null; }
+  return d;
+}
+function espAttrDates(startsIso) {
+  const t = new Date(startsIso).getTime();
+  if (!t) return [];
+  const fmt = (ms) => { const d = new Date(ms); return String(d.getUTCDate()).padStart(2, "0") + "-" + String(d.getUTCMonth() + 1).padStart(2, "0") + "-" + d.getUTCFullYear(); };
+  return [fmt(t), fmt(t - 86400000), fmt(t + 86400000)];
+}
+async function espAttrFindMatch(teamA, teamB, startsIso, claimed) {
+  const want = [String(teamA.teamId), String(teamB.teamId)].sort().join(",");
+  for (const ds of espAttrDates(startsIso)) {
+    const slugs = [teamA.teamSlug + "-vs-" + teamB.teamSlug + "-" + ds, teamB.teamSlug + "-vs-" + teamA.teamSlug + "-" + ds]
+      .filter((s) => !claimed.has(s));
+    const dets = await Promise.all(slugs.map((s) => bo3DetailProbe(s)));
+    for (const d of dets) {
+      if (d && (d.teams || []).map((t) => String(t.id)).sort().join(",") === want) return d;
+    }
+  }
+  return null;
+}
+async function espCs2AttrCompute(rows) {
+  const cs2 = rows.filter((r) => r && r.game === "cs2" && r.player);
+  const out = {};
+  const stats = { rows: cs2.length, roster: 0, sweep: 0, teamOnly: 0, other: 0, matches: 0 };
+  if (!cs2.length || cs2.length > 1500) return { players: out, stats };
+  // 1. resolve player profiles (chunked)
+  const profs = {};
+  const distinct = [...new Map(cs2.map((r) => [nickKey(r.player), r.player])).entries()];
+  for (let i = 0; i < distinct.length; i += 6) {
+    const part = await Promise.all(distinct.slice(i, i + 6).map(([k, nick]) => bo3PlayerProfile(k, nick)));
+    part.forEach((p, j) => { profs[distinct[i + j][0]] = p; });
+  }
+  const buckets = {};
+  cs2.forEach((r) => { (buckets[r.starts || ""] = buckets[r.starts || ""] || []).push(r); });
+  const sched = await espCs2Schedule().catch(() => null);
+  const schedMatches = sched ? [].concat(sched.live || [], sched.upcoming || [], sched.finished || []) : [];
+  const claimed = new Set();
+  for (const starts of Object.keys(buckets)) {
+    const brows = buckets[starts];
+    const players = [...new Set(brows.map((r) => r.player))];
+    const teams = {};
+    players.forEach((p) => {
+      const pr = profs[nickKey(p)];
+      if (pr && pr.teamId) { const t = teams[pr.teamId] || (teams[pr.teamId] = { teamId: pr.teamId, teamSlug: pr.teamSlug, team: pr.team, n: 0 }); t.n++; }
+    });
+    const pool = Object.values(teams).sort((a, b) => b.n - a.n);
+    const matches = [];
+    // 2. pair teams into verified matches
+    let progressed = true;
+    while (pool.length >= 2 && progressed) {
+      progressed = false;
+      outer:
+      for (let i = 0; i < pool.length; i++) {
+        for (let j = i + 1; j < pool.length; j++) {
+          if (!pool[i].teamSlug || !pool[j].teamSlug) continue;
+          const d = await espAttrFindMatch(pool[i], pool[j], starts, claimed);
+          if (d) { matches.push(d); claimed.add(d.slug); pool.splice(j, 1); pool.splice(i, 1); progressed = true; break outer; }
+        }
+      }
+    }
+    // schedule cross-reference for a leftover team (its match is already
+    // tracked by the schedule lane but its opponent has no props here)
+    for (const t of [...pool]) {
+      const cand = schedMatches.find((m) => !claimed.has(m.slug) && (m.teams || []).some((tm) => String(tm.id) === String(t.teamId)) && Math.abs(new Date(m.starts) - new Date(starts)) < 4 * 3600 * 1000);
+      if (cand) { const d = await bo3DetailProbe(cand.slug); if (d) { matches.push(d); claimed.add(d.slug); pool.splice(pool.indexOf(t), 1); } }
+    }
+    stats.matches += matches.length;
+    // rosters: match teams + every profile team in the bucket (for the sweep)
+    const allTeams = {};
+    matches.forEach((d) => (d.teams || []).forEach((t) => { allTeams[t.id] = { id: t.id, slug: t.slug, name: t.name }; }));
+    Object.values(teams).forEach((t) => { if (!allTeams[t.teamId]) allTeams[t.teamId] = { id: t.teamId, slug: t.teamSlug, name: t.team }; });
+    const rosterOf = {};
+    const teamArr = Object.values(allTeams);
+    for (let i = 0; i < teamArr.length; i += 6) {
+      const part = await Promise.all(teamArr.slice(i, i + 6).map((t) => bo3Roster(t.slug).catch(() => [])));
+      part.forEach((ros, j) => {
+        const t = teamArr[i + j];
+        rosterOf[t.id] = { name: t.name, nicks: new Set(ros.map((p) => nickKey(p.nick))), imgs: {} };
+        ros.forEach((p) => { rosterOf[t.id].imgs[nickKey(p.nick)] = p.img || ""; });
+      });
+    }
+    const matchOfTeam = {};
+    matches.forEach((d) => (d.teams || []).forEach((t) => { matchOfTeam[t.id] = d; }));
+    const done = new Set();
+    const put = (r, teamName, det, img, via) => {
+      const key = nickKey(r.player) + "|" + (r.starts || "");
+      out[key] = { team: teamName, slug: det ? det.slug : "", state: det ? det.state : "", starts: det ? det.starts : "", matchup: det ? (det.teams || []).map((t) => t.name).join(" vs ") : "", img: img || "", via };
+      done.add(key);
+      stats[via === "roster" ? "roster" : via === "sweep" ? "sweep" : "teamOnly"]++;
+    };
+    // 3a. match rosters first (they catch stale profiles), then profile
+    // teamId inside a found match
+    for (const d of matches) {
+      for (const r of brows) {
+        if (done.has(nickKey(r.player) + "|" + (r.starts || ""))) continue;
+        for (const t of d.teams || []) {
+          const ro = rosterOf[t.id];
+          if (ro && ro.nicks.has(nickKey(r.player))) { put(r, t.name, d, ro.imgs[nickKey(r.player)], "roster"); break; }
+        }
+      }
+      for (const r of brows) {
+        if (done.has(nickKey(r.player) + "|" + (r.starts || ""))) continue;
+        const pr = profs[nickKey(r.player)];
+        if (pr && pr.teamId && (d.teams || []).some((t) => String(t.id) === String(pr.teamId))) {
+          const t = (d.teams || []).find((t) => String(t.id) === String(pr.teamId));
+          put(r, t.name, d, pr.img, "roster");
+        }
+      }
+    }
+    // 3b. roster sweep: a leftover on the roster of a bucket team joins
+    // that team — the team with the most other bucket players wins, and
+    // it must have at least one other bucket player (no stray listings)
+    const teamPresence = {};
+    players.forEach((p) => {
+      const pr = profs[nickKey(p)];
+      if (pr && pr.teamId) teamPresence[pr.teamId] = (teamPresence[pr.teamId] || 0) + 1;
+    });
+    brows.forEach((r) => {
+      if (done.has(nickKey(r.player) + "|" + (r.starts || ""))) return;
+      let best = null, bestScore = 0;
+      for (const t of Object.values(allTeams)) {
+        const ro = rosterOf[t.id];
+        if (!ro || !ro.nicks.has(nickKey(r.player))) continue;
+        let score = teamPresence[t.id] || 0;
+        const pr = profs[nickKey(r.player)];
+        if (pr && String(pr.teamId) === String(t.id)) score--; // don't count himself
+        if (score >= 1 && score > bestScore) { best = t; bestScore = score; }
+      }
+      if (best) put(r, best.name, matchOfTeam[best.id] || null, rosterOf[best.id].imgs[nickKey(r.player)], matchOfTeam[best.id] ? "roster" : "sweep");
+    });
+    // 3c. profile team alone — teammates still together under the real name
+    brows.forEach((r) => {
+      if (done.has(nickKey(r.player) + "|" + (r.starts || ""))) return;
+      const pr = profs[nickKey(r.player)];
+      if (pr && pr.team) put(r, pr.team, null, pr.img, "team");
+    });
+    brows.forEach((r) => { if (!done.has(nickKey(r.player) + "|" + (r.starts || ""))) stats.other++; });
+  }
+  // player-only fallback keys for players in exactly one bucket, so a row
+  // whose starts string shifted (post-attach) still finds its attribution
+  const bucketCount = {};
+  cs2.forEach((r) => { const k = nickKey(r.player); bucketCount[k] = bucketCount[k] || new Set(); bucketCount[k].add(r.starts || ""); });
+  Object.keys(out).forEach((key) => {
+    const nkName = key.split("|")[0];
+    if (bucketCount[nkName] && bucketCount[nkName].size === 1 && !out[nkName]) out[nkName] = out[key];
+  });
+  return { players: out, stats };
+}
+async function espCs2Attribution() {
+  const row = await sbCacheRow("esports_cs2").catch(() => undefined);
+  if (!row || !Array.isArray(row.props) || !row.props.length) return { ok: false, players: {}, stats: null };
+  const rows = row.props;
+  const fp = rows.length + ":" + (rows[0] ? rows[0].starts : "") + ":" + (rows[rows.length - 1] ? rows[rows.length - 1].starts : "") + ":" + (new Date(row.fetched_at).getTime() || 0);
+  const mem = espMem["esp_attr_cs2"];
+  if (mem && mem.data && mem.data.fp === fp && Date.now() - mem.ts < 30 * 60 * 1000) return mem.data;
+  const sb = await espSbGet("esp_attr_cs2").catch(() => null);
+  if (sb && sb.data && sb.data.fp === fp && Date.now() - sb.ts < 30 * 60 * 1000) { espMem["esp_attr_cs2"] = sb; return sb.data; }
+  const computed = await espCs2AttrCompute(rows);
+  const data = { ok: true, game: "cs2", fp, players: computed.players, stats: computed.stats };
+  espMem["esp_attr_cs2"] = { ts: Date.now(), data };
+  espSbPut("esp_attr_cs2", data).catch(() => {});
+  return data;
+}
 async function espGradeCs2(slug, player, stat) {
   const kind = espStatKind(stat);
   if (!kind || (kind !== "k" && kind !== "hs")) return { final: false };
@@ -1221,6 +1421,12 @@ async function espLane(req, res) {
     if (mode === "schedule") {
       const both = await Promise.all([espCs2Schedule(), espLolSchedule()]);
       res.status(200).json({ ok: true, cs2: both[0] || { live: [], upcoming: [], finished: [] }, lol: both[1] || { live: [], upcoming: [], finished: [] } });
+      return;
+    }
+    if (mode === "attribute") {
+      const d = await espCs2Attribution();
+      res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+      res.status(200).json(d);
       return;
     }
     if (mode === "match") {

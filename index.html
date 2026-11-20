@@ -118,9 +118,14 @@ input[type=number]{width:110px}
 .espslider::-webkit-scrollbar{display:none}
 .espslider .ptile{flex:0 0 148px;scroll-snap-align:center;transform:scale(.955);opacity:.88;transition:transform .25s ease,opacity .25s ease;background:linear-gradient(165deg,rgba(139,92,246,.20),rgba(255,255,255,.045) 45%,rgba(0,0,0,.22));border:1px solid rgba(167,139,250,.35);box-shadow:0 10px 20px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.09)}
 .espslider .ptile.uppop{transform:scale(1);opacity:1;box-shadow:0 18px 34px rgba(0,0,0,.55),0 0 0 2px rgba(167,139,250,.6),0 0 22px rgba(124,58,237,.35)}
-.espmslider{display:flex;min-width:0;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:10px 2px 14px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.espmslider{display:flex;min-width:0;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px 2px 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .espmslider::-webkit-scrollbar{display:none}
-.espmslider .card.game{flex:0 0 84%;scroll-snap-align:center;margin:0;transform:scale(.965);opacity:.88;transition:transform .25s ease,opacity .25s ease,box-shadow .25s ease;background-image:linear-gradient(165deg,rgba(255,255,255,.08),rgba(255,255,255,0) 45%);box-shadow:0 10px 20px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.09)}
+/* Narrow compact match cards (Brandon 2026-11-20: "not wide boxes") — in
+   the family of the Live Center's compact game cards: fixed narrow basis,
+   several peeking per row, tighter padding, smaller type. Pop stays. */
+.espmslider .card.game{flex:0 0 172px;scroll-snap-align:start;margin:0;padding:9px 10px;transform:scale(.965);opacity:.88;transition:transform .25s ease,opacity .25s ease,box-shadow .25s ease;background-image:linear-gradient(165deg,rgba(255,255,255,.08),rgba(255,255,255,0) 45%);box-shadow:0 10px 20px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.09)}
+.espmslider .card.game .note{font-size:11px;line-height:1.35}
+.espmslider .gscore{font-size:14px}
 .espmslider .card.game.uppop{transform:scale(1);opacity:1;box-shadow:0 18px 34px rgba(0,0,0,.55),0 0 0 2px rgba(167,139,250,.6),0 0 22px rgba(124,58,237,.35)}
 .espstate{display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 0;font-size:12.5px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;color:var(--purp-lt)}
 .espgrp{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 0;font-weight:900;font-size:14.5px;cursor:pointer}
@@ -548,7 +553,7 @@ dialog h3{margin:0 0 6px;font-size:18px}
 .espgrp>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .espgrp .fcount{flex:0 0 auto;font-size:12px;color:var(--purp-lt);font-weight:700}
 .card.game .espmlab{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.espmslider .gteam{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.espmslider .gteam{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .trk{position:relative;border:1px solid var(--line);border-radius:14px;padding:10px;margin-top:12px;background:radial-gradient(120% 140% at 50% 0%,#1d1440 0%,#0d0a1a 70%)}
 .trk svg{display:block;width:100%;height:auto}
 .trkLbl{font-size:11px;font-weight:800;letter-spacing:1.4px;color:var(--mut);text-transform:uppercase}
@@ -5670,6 +5675,7 @@ function clashFinish(won){
    Upcoming props are pickable; live/finished are view-only, mirroring
    the regular Game Center rules. */
 var espSched = null, espSchedAt = 0, espSchedBusy = false;
+var espAttr = null, espAttrAt = 0, espAttrBusy = false; // server CS2 attribution map (see espEnsureAttr)
 var espOpen = null; // {game, ref, at, data}
 var espSliderN = 0;
 
@@ -5703,6 +5709,27 @@ function espEnsure(){
     if (window._view === "live") { renderLive(); }
     if (espOpen) espRenderGc();
   }).catch(function(){ espSchedBusy = false; });
+  espEnsureAttr();
+}
+/* Server-side CS2 attribution (Brandon 2026-11-20): Parlay rows carry no
+   team, and the schedule lane's rosters cover different matches than the
+   props board, so the /api/props?esports=attribute lane resolves the
+   board's players to their bo3 teams + verified matches server-side.
+   espAttachProps applies that map first; the schedule-roster matching
+   below stays as the fallback. */
+function espEnsureAttr(){
+  if (espAttrBusy) return;
+  if (espAttr && Date.now() - espAttrAt < 60000) return;
+  espAttrBusy = true;
+  espFetchQ("attribute").then(function(d){
+    espAttrBusy = false;
+    if (!d || !d.ok || !d.players) return;
+    espAttr = d.players; espAttrAt = Date.now();
+    espAttachProps(propsCache.esports || []);
+    if (currentSport === "esports" && window._view === "sport") renderEspBoardPage(espLg());
+    if (window._view === "build") renderBuildEsp();
+    if (espOpen) espRenderGc();
+  }).catch(function(){ espAttrBusy = false; });
 }
 function espTick(){
   espEnsure();
@@ -5729,6 +5756,23 @@ function espAttachProps(rows){
   var lolLive = (espSched.lol && espSched.lol.live || [])[0] || null;
   rows.forEach(function(p){
     if (p.game === "cs2") {
+      /* Server attribution map wins when it has this row: it is computed
+         from the board itself (verified matches + rosters), while the
+         schedule roster index below covers a different set of matches. */
+      var am = espAttr ? (espAttr[espNK(p.player) + "|" + (p.starts || "")] || espAttr[espNK(p.player)] || null) : null;
+      if (am && am.team) {
+        p.team = am.team;
+        if (am.img) p.img = am.img;
+        if (am.slug) {
+          p.matchup = am.matchup || p.matchup;
+          p.eventId = "cs2:" + am.slug;
+          p.espState = am.state || p.espState;
+          if (am.starts) p.starts = am.starts;
+        } else {
+          p.eventId = ""; p.matchup = ""; p.espState = "";
+        }
+        return;
+      }
       var hit = idx[espNK(p.player)];
       if (hit) {
         p.team = hit.team;
@@ -5783,8 +5827,18 @@ function espMatchGroups(rows){
       });
     });
   }
-  Object.keys(byRef).forEach(function(ref){ out.push({ ref: ref, game: ref.split(":")[0], state: "", item: null, rows: byRef[ref] }); });
-  ["cs2", "lol"].forEach(function(g){ if (unatt[g].length) out.push({ ref: "", game: g, state: "", item: null, rows: unatt[g] }); });
+  Object.keys(byRef).forEach(function(ref){
+    var rws = byRef[ref];
+    out.push({ ref: ref, game: ref.split(":")[0], state: (rws[0] && rws[0].espState) || "", item: null, rows: rws });
+  });
+  /* Unattributed rows still group BY TEAM (Brandon 2026-11-20: teammates
+     together) — one group per known team, then the truly unknown pile. */
+  ["cs2", "lol"].forEach(function(g){
+    var byTeam = {}, plain = [];
+    unatt[g].forEach(function(p){ if (p.team) (byTeam[p.team] = byTeam[p.team] || []).push(p); else plain.push(p); });
+    Object.keys(byTeam).sort().forEach(function(tn){ out.push({ ref: "", game: g, state: "", item: null, teamGroup: tn, rows: byTeam[tn] }); });
+    if (plain.length) out.push({ ref: "", game: g, state: "", item: null, rows: plain });
+  });
   return out;
 }
 function espMatchItem(game, ref){
@@ -5846,6 +5900,7 @@ function espWireGameLinks(scope){
 }
 function espGroupTitle(mg){
   var it = mg.item;
+  if (!it && mg.teamGroup) return '<span>' + esc(mg.teamGroup) + '</span><span class="fcount">' + mg.rows.length + ' props</span>';
   if (!it) return '<span>' + (mg.game === "lol" ? "League of Legends" : "Counter-Strike 2") + ' props</span><span class="fcount">' + mg.rows.length + ' props</span>';
   var t = it.teams || [];
   var names = t.map(function(tm){ return espTeamLogo(tm, 20) + esc(tm.name || ""); }).join(' <span class="note">vs</span> ');
@@ -5881,8 +5936,13 @@ function renderEspBoardPage(lg){
    pill, never a wrong team. Selections survive board refreshes while
    they are still valid; the default is the first match / first team. */
 var espPillSel = {}; // game -> {m: matchPillKey, t: teamKey}
-function espPillKey(mg){ return mg.ref ? mg.ref : "plain:" + mg.game; }
+function espPillKey(mg){
+  if (mg.ref) return mg.ref;
+  if (mg.teamGroup) return "team:" + mg.game + ":" + mg.teamGroup;
+  return "plain:" + mg.game;
+}
 function espMatchPillLabel(mg){
+  if (mg.teamGroup) return mg.teamGroup + " props";
   var label = "";
   if (mg.item && mg.item.teams && mg.item.teams.length) label = mg.item.teams.map(function(tm){ return tm.name || ""; }).filter(function(x){ return x; }).join(" vs ");
   if (!label) label = mg.rows.map(function(p){ return p.matchup || ""; }).filter(function(x){ return x; })[0] || "";
@@ -5897,6 +5957,10 @@ function espTeamGroupsOf(mg){
     var key = pg.team ? "t:" + pg.team : "__other";
     if (!by[key]) { by[key] = { key: key, name: pg.team || "Other players", players: [] }; order.push(by[key]); }
     by[key].players.push(pg);
+  });
+  /* Teammates together, in a consistent order (Brandon 2026-11-20). */
+  order.forEach(function(tg){
+    tg.players.sort(function(a, b){ var x = a.player.toLowerCase(), y = b.player.toLowerCase(); return x < y ? -1 : (x > y ? 1 : 0); });
   });
   return order;
 }
@@ -6017,11 +6081,11 @@ function espMatchCard(game, it){
   var ref = game === "cs2" ? it.slug : String(it.id);
   var rows = t.map(function(tm, i){
     var sc = st === "pre" ? null : (game === "cs2" ? (it.score ? it.score[i] : null) : (tm.wins != null ? tm.wins : null));
-    return '<div class="gteam">' + espTeamLogo(tm, 22) + esc(tm.name || "") + (sc != null ? ' <span class="gscore">' + esc(sc) + '</span>' : '') + '</div>';
+    return '<div class="gteam">' + espTeamLogo(tm, 18) + esc(tm.name || "") + (sc != null ? ' <span class="gscore">' + esc(sc) + '</span>' : '') + '</div>';
   }).join("");
   var right = st === "in" ? "🔴 LIVE" : (st === "post" ? "🏁 Final" : esc(it.starts ? fmtFullDate(it.starts) : ""));
   var label = (game === "cs2" ? "CS2" : "LoL") + (it.tournament ? " · " + it.tournament : (it.league ? " · " + it.league : ""));
-  return '<div class="card game' + (st === "in" ? " lv" : "") + '" data-game="esports|' + game + ':' + esc(ref) + '" style="cursor:pointer"><div class="row" style="justify-content:space-between"><span class="note espmlab" style="text-transform:uppercase;letter-spacing:1px">' + esc(label) + '</span><span class="note" style="flex:0 0 auto">' + right + '</span></div><div style="margin-top:6px">' + rows + '</div><div class="note" style="margin-top:6px">Tap for the Esports Game Center — scoreboard, player stats & props →</div></div>';
+  return '<div class="card game' + (st === "in" ? " lv" : "") + '" data-game="esports|' + game + ':' + esc(ref) + '" style="cursor:pointer"><div class="row" style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span class="note espmlab" style="text-transform:uppercase;letter-spacing:.6px">' + esc(label) + '</span><span class="note" style="flex:0 0 auto">' + right + '</span></div><div style="margin-top:4px">' + rows + '</div><div class="note" style="margin-top:4px">Tap for Game Center →</div></div>';
 }
 function espFutCard(game, it){
   var t = it.teams || [];
