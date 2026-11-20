@@ -1261,6 +1261,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
       <button type="button" class="tab" data-sort="pct">Best %</button>
       <button type="button" class="tab" data-sort="time">Start time</button>
     </div>
+    <div class="tabs" id="gameFilters" style="margin:0 0 8px"></div>
     <div class="tabs" id="teamFilters" style="margin:0 0 8px"></div>
     <div class="tabs" id="propFilters" style="margin:0 0 12px"></div>
     <div id="popWrap" style="display:none"><h3 style="margin:4px 0 8px;font-size:16px">Popular Players</h3><div class="pgrid" id="popTiles"></div></div>
@@ -2286,6 +2287,8 @@ function updateSlipChip(){
 }
 var currentSport = "all";
 var boardStat = "all";
+var boardGame = "all";
+var boardEvents = {};
 var liveFilter = "all";
 var sportNewsCache = {};
 function renderSportNews(lg){
@@ -2338,8 +2341,9 @@ function renderBoards(){
   $("sportTitle").textContent = lg.label + " Props — Today";
   $("propCountPill").textContent = "";
   $("sportProps").innerHTML = '<p class="empty">Loading props…</p>';
-  var pf0 = $("propFilters"); if (pf0) pf0.innerHTML = "";
-  var tf0 = $("teamFilters"); if (tf0) tf0.innerHTML = "";
+  var pf0 = $("propFilters"); if (pf0) setHtml(pf0, "");
+  var tf0 = $("teamFilters"); if (tf0) setHtml(tf0, "");
+  var gf0 = $("gameFilters"); if (gf0) setHtml(gf0, "");
   var pwL = $("popWrap"); if (pwL) pwL.style.display = "none";
   buildProps(lg).then(function(ps){
     if (currentSport!==lg.key) return;
@@ -2353,7 +2357,8 @@ function renderBoards(){
       }).catch(function(){});
       return;
     }
-    getScoreboard(lg, 1).then(function(evs){
+    getScoreboard(lg, boardSpanDays(ps)).then(function(evs){
+      boardEvents[lg.key] = evs || [];
       var lt = {};
       (evs||[]).forEach(function(e){ var st = e.status && e.status.type && e.status.type.state; if (st!=="in") return; var det = (e.status.type.shortDetail || e.status.type.detail || "LIVE"); eventTeams(e).forEach(function(t){ lt[(t.name||"").toLowerCase()] = {detail: det}; }); });
       liveTeamsByLeague[lg.key] = lt;
@@ -2365,6 +2370,86 @@ function renderBoards(){
       } else renderBoardTiles(lg, ps);
     });
   }).catch(function(){ $("sportProps").innerHTML = '<p class="empty">Props could not load — check your connection and tap Refresh.</p>'; });
+}
+/* Days of ESPN scoreboard the board needs: enough to cover the latest
+   prop start on the board (game pills pair props with real games). */
+function boardSpanDays(ps){
+  var max = 0;
+  (ps || []).forEach(function(p){ if (p.starts){ var t = new Date(p.starts).getTime(); if (isFinite(t) && t > max) max = t; } });
+  if (!max) return 1;
+  var a = new Date(); a.setHours(0, 0, 0, 0);
+  var b = new Date(max); b.setHours(0, 0, 0, 0);
+  var d = Math.round((b - a) / 86400000) + 1;
+  return d < 1 ? 1 : (d > 5 ? 5 : d);
+}
+/* Game pills (Brandon 2026-11-20): derive the board's games from its FULL
+   unfiltered props + the league's ESPN games, and assign every prop to at
+   most one game. A prop is assigned only when the data determines its game:
+   its feed matchup, a combo whose players' own props all point at one game,
+   or its team/player matched to an ESPN game near its start time. Anything
+   else stays unassigned — it shows under "All games" only, never guessed
+   into a game (no cross-game leaks). */
+function boardGamesFor(lg, ps){
+  var evs = boardEvents[lg.key] || [];
+  var games = [], byKey = {}, pairMap = {};
+  function reg(g){
+    if (!byKey[g.key]){ byKey[g.key] = g; games.push(g); if (g.pair) (pairMap[g.pair] = pairMap[g.pair] || []).push(g); }
+    return byKey[g.key];
+  }
+  evs.forEach(function(ev){
+    var ts = eventTeams(ev); if (!ts || ts.length < 2) return;
+    var comp = (ev.competitions || [])[0];
+    var shorts = ((comp && comp.competitors) || []).map(function(c){ return (c.team && (c.team.shortDisplayName || c.team.displayName)) || ""; });
+    var g = { key: "ev" + String(ev.id || ""), starts: ev.date || "", label: "", teamKeys: [], nameKeys: [], pair: "" };
+    ts.forEach(function(t){ g.teamKeys.push(teamNameKey(t.name)); g.nameKeys.push(nameKeyOf(t.name)); });
+    g.pair = g.teamKeys.slice().sort().join("|");
+    g.label = (shorts[0] || ts[0].name) + " vs " + (shorts[1] || ts[1].name);
+    reg(g);
+  });
+  function timeOk(a, b){ if (!a || !b) return true; return Math.abs(new Date(a).getTime() - new Date(b).getTime()) <= 12 * 3600 * 1000; }
+  var byMu = {};
+  ps.forEach(function(p){
+    var mu = (p.matchup || "").trim(); if (!mu) return;
+    var mk = nameKeyOf(mu); if (byMu[mk]) return;
+    var parts = mu.split(/\s+(?:@|vs)\s+/i).map(function(s){ return s.trim(); }).filter(function(s){ return s; });
+    var g = null;
+    if (parts.length === 2){
+      var pair = [teamNameKey(parts[0]), teamNameKey(parts[1])].sort().join("|");
+      var cands = pairMap[pair] || [];
+      for (var i = 0; i < cands.length; i++){ if (timeOk(p.starts, cands[i].starts)){ g = cands[i]; break; } }
+      if (!g) g = reg({ key: "mu" + mk, starts: p.starts || "", label: parts[0] + " vs " + parts[1], teamKeys: [teamNameKey(parts[0]), teamNameKey(parts[1])], nameKeys: [nameKeyOf(parts[0]), nameKeyOf(parts[1])], pair: pair });
+    } else {
+      g = reg({ key: "mu" + mk, starts: p.starts || "", label: mu, teamKeys: [], nameKeys: [], pair: "" });
+    }
+    byMu[mk] = g;
+  });
+  var soloMu = {};
+  ps.forEach(function(p){ if (p.matchup && p.player.indexOf(" + ") < 0){ var g0 = byMu[nameKeyOf(p.matchup)]; if (g0) soloMu[nameKeyOf(p.player)] = g0.key; } });
+  var keyOf = {}, counts = {};
+  function assign(p, g){ if (!g) return; keyOf[p.id] = g.key; counts[g.key] = (counts[g.key] || 0) + 1; }
+  ps.forEach(function(p){
+    if (p.matchup){ assign(p, byMu[nameKeyOf(p.matchup)]); return; }
+    if (p.player.indexOf(" + ") > -1){
+      var ns = p.player.split(" + "), gk = null, okAll = ns.length > 1;
+      ns.forEach(function(nm){ var k = soloMu[nameKeyOf(nm)]; if (!k) okAll = false; else if (!gk) gk = k; else if (gk !== k) okAll = false; });
+      if (okAll && gk) assign(p, byKey[gk]);
+      return;
+    }
+    if (!p.starts) return;
+    var tk = p.team ? teamNameKey(p.team) : "", pk = nameKeyOf(p.player), best = null, bd = Infinity;
+    games.forEach(function(g){
+      if (g.key.indexOf("ev") !== 0 || !g.starts) return;
+      var hit = (tk && g.teamKeys.indexOf(tk) > -1) || (pk && g.nameKeys.indexOf(pk) > -1);
+      if (!hit) return;
+      var d = Math.abs(new Date(p.starts).getTime() - new Date(g.starts).getTime());
+      if (d <= 12 * 3600 * 1000 && d < bd){ bd = d; best = g; }
+    });
+    assign(p, best);
+  });
+  var list = games.filter(function(g){ return counts[g.key]; });
+  list.forEach(function(g){ g.count = counts[g.key]; });
+  list.sort(function(a, b){ return new Date(a.starts || "2999") - new Date(b.starts || "2999") || a.label.localeCompare(b.label); });
+  return { list: list, keyOf: keyOf, byKey: byKey };
 }
 function renderBoardTiles(lg, ps){
   var stats = [];
@@ -2382,6 +2467,13 @@ function renderBoardTiles(lg, ps){
   var tf = $("teamFilters");
   if (tf){ setHtml(tf, teamList.length ? '<button type="button" class="tab'+(boardTeam==="all"?" on":"")+'" data-team="all">All teams</button>' + teamList.map(function(t){ return '<button type="button" class="tab'+(boardTeam===t?" on":"")+'" data-team="'+esc(t)+'">'+esc(t)+'</button>'; }).join("") : "");
     tf.querySelectorAll("[data-team]").forEach(function(b){ b.addEventListener("click", function(){ boardTeam = b.getAttribute("data-team"); renderBoards(); }); }); }
+  /* Game pills: always derived from the FULL board (ps), "All games" first;
+     shown whenever at least one game has props assigned. */
+  var gi = boardGamesFor(lg, ps);
+  if (boardGame!=="all" && !gi.byKey[boardGame]) boardGame = "all";
+  var gf = $("gameFilters");
+  if (gf){ setHtml(gf, gi.list.length ? '<button type="button" class="tab'+(boardGame==="all"?" on":"")+'" data-gpill="all">All games</button>' + gi.list.map(function(g){ return '<button type="button" class="tab'+(boardGame===g.key?" on":"")+'" data-gpill="'+esc(g.key)+'">'+esc(g.label)+(g.starts ? ' · '+esc(fmtClock(g.starts)) : '')+'</button>'; }).join("") : "");
+    gf.querySelectorAll("[data-gpill]").forEach(function(b){ b.addEventListener("click", function(){ boardGame = b.getAttribute("data-gpill"); renderBoards(); }); }); }
   var liveMap = liveTeamsByLeague[lg.key] || {};
   var bm = breakMap[lg.key] || {};
   var fresh = ps.filter(function(p){ if (!p.starts) return true; if (p.brk && p.team && bm[p.team.toLowerCase()]) return true; return new Date(p.starts).getTime() > Date.now() - 10 * 60 * 1000; });
@@ -2399,9 +2491,12 @@ function renderBoardTiles(lg, ps){
   if (boardQuery) gs = gs.filter(function(g){ return g.player.toLowerCase().indexOf(boardQuery)>-1; });
   if (boardTeam !== "all") brkGroups = brkGroups.filter(function(g){ return g.team === boardTeam; });
   if (boardQuery) brkGroups = brkGroups.filter(function(g){ return g.player.toLowerCase().indexOf(boardQuery) > -1; });
+  if (boardGame!=="all"){ var gkOf = gi.keyOf; var gOnly = function(g){ var c = {}; for (var k in g) c[k] = g[k]; c.props = g.props.filter(function(p){ return gkOf[p.id]===boardGame; }); return c; };
+    gs = gs.map(gOnly).filter(function(g){ return g.props.length; });
+    brkGroups = brkGroups.map(gOnly).filter(function(g){ return g.props.length; }); }
   brkGroups = sortGroups(brkGroups, "pct");
   gs = sortGroups(gs, boardSort);
-  var filtered = boardStat!=="all" || boardTeam!=="all" || boardQuery;
+  var filtered = boardStat!=="all" || boardTeam!=="all" || boardGame!=="all" || boardQuery;
   var pw = $("popWrap");
   if (pw){ if (!filtered && boardSort==="popular" && gs.length>3){ pw.style.display = ""; setHtml($("popTiles"), gs.slice(0,6).map(tileHtml).join("")); bindTiles($("popTiles")); } else pw.style.display = "none"; }
   var box = $("sportProps");
@@ -5884,8 +5979,9 @@ function espGroupTitle(mg){
 /* ---------- sport-tab board ---------- */
 function renderEspBoardPage(lg){
   var pw = $("popWrap"); if (pw) pw.style.display = "none";
-  var pf = $("propFilters"); if (pf) pf.innerHTML = "";
-  var tf = $("teamFilters"); if (tf) tf.innerHTML = "";
+  var pf = $("propFilters"); if (pf) setHtml(pf, "");
+  var tf = $("teamFilters"); if (tf) setHtml(tf, "");
+  var gf = $("gameFilters"); if (gf) setHtml(gf, "");
   var box = $("sportProps"); if (!box) return;
   espEnsure();
   buildProps(lg).then(function(ps){
@@ -7546,7 +7642,7 @@ document.querySelectorAll("nav.bottom button").forEach(function(b){
 });
 function setSport(key){
   currentSport = key; lsSet("pa_sport", key);
-  boardStat = "all"; boardTeam = "all"; boardQuery = ""; var bq = $("boardSearch"); if (bq) bq.value = "";
+  boardStat = "all"; boardTeam = "all"; boardGame = "all"; boardQuery = ""; var bq = $("boardSearch"); if (bq) bq.value = "";
   document.querySelectorAll("#sportTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-sport")===key); });
   if (key==="all") showView("home"); else { showView("sport"); renderBoards(); }
 }

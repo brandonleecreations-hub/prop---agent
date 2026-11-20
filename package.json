@@ -5,5 +5,5 @@
   "description": "Prop Agent \u2014 Props Ticker (static site + push endpoint)",
   "name": "prop-agent",
   "private": true,
-  "version": "1.0.126"
+  "version": "1.0.127"
 }
