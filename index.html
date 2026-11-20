@@ -25,7 +25,11 @@ header{position:sticky;top:0;z-index:50;background:radial-gradient(620px 130px a
 .hwrap{max-width:1060px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:10px}
 .logo{width:52px;height:52px;border-radius:13px;object-fit:cover;flex:0 0 auto;cursor:pointer;box-shadow:0 0 18px rgba(124,58,237,.35)}
 h1{font-size:28px;margin:0;letter-spacing:.5px;font-weight:900;text-transform:uppercase;line-height:1.02;white-space:nowrap;text-shadow:0 3px 16px rgba(147,51,234,.55)}
-h1 small{display:block;font-size:11.5px;color:#a7adb8;font-weight:600;letter-spacing:2.2px;text-transform:uppercase;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+h1 small{display:block;font-size:11.5px;color:#a7adb8;font-weight:600;letter-spacing:2.2px;text-transform:uppercase;margin-top:3px;white-space:nowrap;overflow:hidden;max-width:46vw;position:relative;height:12px}
+.hticktrack{position:absolute;left:0;top:0;display:flex;white-space:nowrap;line-height:12px;animation:htickmove 20s linear infinite;will-change:transform}
+.htickseg{flex:0 0 auto}
+@keyframes htickmove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion: reduce){.hticktrack{animation:none}}
 .hbars{margin-top:7px}
 .hbars i{display:block;height:5px;border-radius:3px}
 .hbars i:first-child{width:100%;background:linear-gradient(90deg,#7C3AED,#6366f1 45%,#22d3ee)}
@@ -1286,7 +1290,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <div class="hwrap">
     <img class="logo" id="logoImg" src="/api/icons?s=192" alt="Prop Agent" title="Your agent profile">
     <div style="min-width:0">
-      <h1>Prop Agent <small>Props Ticker · All Sports</small></h1>
+      <h1>Prop Agent <small class="htick"><span class="hticktrack"><span class="htickseg">Props Ticker · All Sports ·&nbsp;</span><span class="htickseg">Props Ticker · All Sports ·&nbsp;</span><span class="htickseg">Props Ticker · All Sports ·&nbsp;</span><span class="htickseg">Props Ticker · All Sports ·&nbsp;</span></span></small></h1>
       <div class="hbars"><i></i><i></i></div>
     </div>
     <div class="hsp"></div>
@@ -6451,7 +6455,7 @@ function renderBuildEsp(){
     espAttachProps(ps);
     var rows = ps.filter(function(p){ return espFreshRow(p) && p.espState !== "in" && p.espState !== "post"; });
     buildEspPresent = !!rows.length;
-    var h = '<div class="sporthd" style="margin-top:14px"><span class="sportname">\uD83C\uDFAE Esports</span><span class="sportct">' + (rows.length ? rows.length + ' props' : 'matches') + '</span></div>';
+    var h = '<div class="teamhead sporthead">\uD83C\uDFAE Esports<span style="margin-left:auto;font-size:11px;color:#cdbcf5;font-weight:800;letter-spacing:.6px">SWIPE \u203a</span></div>';
     if (rows.length) {
       var groups = espMatchGroups(rows);
       h += espBuildMatchHtml("cs2", "Counter-Strike 2", groups);
