@@ -1330,10 +1330,8 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <div class="tabs" id="boardSort" style="margin:2px 0 8px">
       <button type="button" class="tab on" data-sort="popular">Popular first</button>
       <button type="button" class="tab" data-sort="pct">Best %</button>
-      <button type="button" class="tab" data-sort="time">Start time</button>
     </div>
     <div class="tabs" id="gameFilters" style="margin:0 0 8px"></div>
-    <div class="tabs" id="teamFilters" style="margin:0 0 8px"></div>
     <div class="tabs" id="propFilters" style="margin:0 0 12px"></div>
     <div id="popWrap" style="display:none"><h3 style="margin:4px 0 8px;font-size:16px">Popular Players</h3><div class="pgrid" id="popTiles"></div></div>
     <div class="pgrid" id="sportProps"><p class="empty">Loading props…</p></div>
@@ -1374,9 +1372,8 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <div class="tabs" id="buildSort" style="margin:2px 0 8px">
       <button type="button" class="tab" data-bsort="popular">Popular first</button>
       <button type="button" class="tab on" data-bsort="pct">Best %</button>
-      <button type="button" class="tab" data-bsort="time">Start time</button>
     </div>
-    <div class="tabs" id="buildTeams" style="margin:0 0 4px"></div>
+    <div class="tabs" id="buildSports" style="margin:0 0 4px"></div>
     <div id="searchResults"><p class="empty">Loading players…</p></div>
     <div class="card slip" id="slipBuild" style="margin-top:14px"></div>
     <details class="card" style="margin-top:14px">
@@ -1960,9 +1957,12 @@ function propCard(p, vo){
     + (vo ? '<div class="ml"><span class="gplive">' + (vo === "final" ? (p.liveActual!=null ? '🏁 FINAL · final ' + p.liveActual + ' ' + esc(p.stat) : '🏁 FINAL · view only') : (p.liveActual!=null ? '🔴 LIVE · now ' + p.liveActual + ' ' + esc(p.stat) : '🔴 LIVE · view only')) + '</span></div>' : '<div class="ml"><button class="more'+(slipHas(p.id,"MORE")?" sel":"")+'" data-pick="'+esc(p.id)+'|MORE">MORE<span>'+esc(sub)+'</span></button><button class="less'+(slipHas(p.id,"LESS")?" sel":"")+'" data-pick="'+esc(p.id)+'|LESS">LESS<span>'+esc(sub)+'</span></button></div>')
     + '</div></div>';
 }
-var boardQuery = "", boardSort = "popular", boardTeam = "all";
-var buildSort = "pct", buildTeam = "all";
+var boardQuery = "", boardSort = "popular";
+var buildSort = "pct", buildSport = "all";
 var buildGameByLeague = {};   /* league key -> selected Build matchup pill (game key, or "__other") */
+var buildSportList = [];      /* regular league keys with a Build section in the latest render, display order */
+var buildSportLabels = {};    /* league key -> sport pill label (the section's own name) */
+var buildEspPresent = false;  /* set by renderBuildEsp: the Esports Build section currently has props */
 var buildRenderSeq = 0;
 var teamCache = lsGet("pa_teams", {});
 var aidCache = lsGet("pa_aids", {});
@@ -1983,7 +1983,6 @@ function playerGroups(ps){
 function sortGroups(gs, mode){
   var out = gs.slice();
   if (mode==="pct") out.sort(function(a,b){ return groupMaxPct(b)-groupMaxPct(a) || b.props.length-a.props.length; });
-  else if (mode==="time") out.sort(function(a,b){ return new Date(a.starts||"2999")-new Date(b.starts||"2999") || a.player.localeCompare(b.player); });
   else out.sort(function(a,b){ return b.props.length-a.props.length || groupMaxPct(b)-groupMaxPct(a) || new Date(a.starts||"2999")-new Date(b.starts||"2999"); });
   return out;
 }
@@ -2443,7 +2442,6 @@ function renderBoards(){
   $("propCountPill").textContent = "";
   $("sportProps").innerHTML = '<p class="empty">Loading props…</p>';
   var pf0 = $("propFilters"); if (pf0) setHtml(pf0, "");
-  var tf0 = $("teamFilters"); if (tf0) setHtml(tf0, "");
   var gf0 = $("gameFilters"); if (gf0) setHtml(gf0, "");
   var pwL = $("popWrap"); if (pwL) pwL.style.display = "none";
   buildProps(lg).then(function(ps){
@@ -2553,6 +2551,9 @@ function boardGamesFor(lg, ps){
   return { list: list, keyOf: keyOf, byKey: byKey };
 }
 function renderBoardTiles(lg, ps){
+  /* "Start time" sort was removed (Brandon 2026-11-20): a stale "time"
+     state falls back to Popular first, pill highlight included. */
+  if (boardSort === "time") { boardSort = "popular"; document.querySelectorAll("#boardSort [data-sort]").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-sort") === boardSort); }); }
   var stats = [];
   ps.forEach(function(p){ if (stats.indexOf(p.stat)<0) stats.push(p.stat); });
   var counts = {}; ps.forEach(function(p){ counts[p.stat] = (counts[p.stat]||0)+1; });
@@ -2562,12 +2563,6 @@ function renderBoardTiles(lg, ps){
   var pf = $("propFilters");
   setHtml(pf, fw.map(function(x){ return '<button type="button" class="tab'+(boardStat===x.k?" on":"")+'" data-stat="'+esc(x.k)+'">'+esc(x.label)+'</button>'; }).join(""));
   pf.querySelectorAll("[data-stat]").forEach(function(b){ b.addEventListener("click", function(){ boardStat = b.getAttribute("data-stat"); renderBoards(); }); });
-  var teams = {}; ps.forEach(function(p){ if (p.team) teams[p.team] = (teams[p.team]||0)+1; });
-  var teamList = Object.keys(teams).sort(function(a,b){ return teams[b]-teams[a]; }).slice(0,10);
-  if (boardTeam!=="all" && !teams[boardTeam]) boardTeam = "all";
-  var tf = $("teamFilters");
-  if (tf){ setHtml(tf, teamList.length ? '<button type="button" class="tab'+(boardTeam==="all"?" on":"")+'" data-team="all">All teams</button>' + teamList.map(function(t){ return '<button type="button" class="tab'+(boardTeam===t?" on":"")+'" data-team="'+esc(t)+'">'+esc(t)+'</button>'; }).join("") : "");
-    tf.querySelectorAll("[data-team]").forEach(function(b){ b.addEventListener("click", function(){ boardTeam = b.getAttribute("data-team"); renderBoards(); }); }); }
   /* Game pills: always derived from the FULL board (ps), "All games" first;
      shown whenever at least one game has props assigned. */
   var gi = boardGamesFor(lg, ps);
@@ -2588,16 +2583,14 @@ function renderBoardTiles(lg, ps){
   var brkPlayers = {}; brkGroups.forEach(function(g){ brkPlayers[g.player] = 1; });
   var gs = allGroups.filter(function(g){ return !(g.team && liveMap[g.team.toLowerCase()]) && !brkPlayers[g.player]; });
   if (boardStat!=="all") gs = gs.map(function(g){ return {player:g.player, team:g.team, img:g.img, league:g.league, leagueLabel:g.leagueLabel, starts:g.starts, props:g.props.filter(function(p){ return p.stat===boardStat; })}; }).filter(function(g){ return g.props.length; });
-  if (boardTeam!=="all") gs = gs.filter(function(g){ return g.team===boardTeam; });
   if (boardQuery) gs = gs.filter(function(g){ return g.player.toLowerCase().indexOf(boardQuery)>-1; });
-  if (boardTeam !== "all") brkGroups = brkGroups.filter(function(g){ return g.team === boardTeam; });
   if (boardQuery) brkGroups = brkGroups.filter(function(g){ return g.player.toLowerCase().indexOf(boardQuery) > -1; });
   if (boardGame!=="all"){ var gkOf = gi.keyOf; var gOnly = function(g){ var c = {}; for (var k in g) c[k] = g[k]; c.props = g.props.filter(function(p){ return gkOf[p.id]===boardGame; }); return c; };
     gs = gs.map(gOnly).filter(function(g){ return g.props.length; });
     brkGroups = brkGroups.map(gOnly).filter(function(g){ return g.props.length; }); }
   brkGroups = sortGroups(brkGroups, "pct");
   gs = sortGroups(gs, boardSort);
-  var filtered = boardStat!=="all" || boardTeam!=="all" || boardGame!=="all" || boardQuery;
+  var filtered = boardStat!=="all" || boardGame!=="all" || boardQuery;
   var pw = $("popWrap");
   if (pw){ if (!filtered && boardSort==="popular" && gs.length>3){ pw.style.display = ""; setHtml($("popTiles"), gs.slice(0,6).map(tileHtml).join("")); bindTiles($("popTiles")); } else pw.style.display = "none"; }
   var box = $("sportProps");
@@ -3718,7 +3711,8 @@ function buildSectionHtml(L, all, label, EMO, searching){
      kept per league and resets to the first pill when its game leaves the
      board. While searching there is no pill row: matches show across
      games, each game group with its header. If no game can be derived at
-     all, the section falls back to one flat slider. The pill row shows
+     all, the section falls back to one slider under an "Other players"
+     header. The pill row shows
      only when there is more than one pill to switch between; the selected
      game's header always names the matchup. */
   var lg = leagueByKey(L);
@@ -3771,7 +3765,11 @@ function buildSectionHtml(L, all, label, EMO, searching){
   function groupHtml(b){ return '<div class="bteamgroup" data-bgroup="' + esc(b.key) + '">' + headFor(b) + '<div class="bslider">' + b.groups.map(tileHtml).join("") + '</div></div>'; }
   function sportHead(n){ return '<div class="teamhead sporthead">' + (EMO[String(L).toLowerCase()] || "\uD83C\uDFC5") + ' ' + esc(label) + ' \u00b7 ' + n + ' players<span style="margin-left:auto;font-size:11px;color:#cdbcf5;font-weight:800;letter-spacing:.6px">SWIPE \u203a</span></div>'; }
   if (!gi.list.length){
-    return sportHead(all.length) + '<div class="bteamgroup" data-bgroup="all"><div class="bslider">' + all.map(tileHtml).join("") + '</div></div>';
+    /* No game can be determined for any prop in this sport: they all
+       sit under an "Other players" header \u2014 props never float loose
+       without a game grouping (Brandon 2026-11-20). */
+    var ocnt = ' <span class="bcount">' + all.length + ' player' + (all.length === 1 ? "" : "s") + '</span>';
+    return sportHead(all.length) + '<div class="bteamgroup" data-bgroup="all"><div class="bteamhead">Other players' + ocnt + '</div><div class="bslider">' + all.map(tileHtml).join("") + '</div></div>';
   }
   if (searching){
     var seenP = {}; buckets.forEach(function(b){ b.groups.forEach(function(g){ seenP[g.player] = 1; }); });
@@ -3794,6 +3792,27 @@ function buildSlidersInit(box){
   if (!box) return;
   box.querySelectorAll(".bslider").forEach(function(tr, i){ popSliderInit(tr, "bld" + i, ".ptile", "0px -30% 0px -30%"); });
 }
+/* Build sport pills (Brandon 2026-11-20): the row under the sort pills
+   picks ONE sport for the whole Build page \u2014 "All sports" plus one pill
+   per sport that actually has a section. It replaces the old team row:
+   inside a sport, props are organized BY GAME (the matchup pills), never
+   by team. The list is rebuilt from state on every render \u2014 regular
+   leagues from the latest renderBuild (buildSportList), Esports from
+   renderBuildEsp (buildEspPresent) \u2014 so the row always matches the page. */
+function renderBuildSportPills(){
+  var el = $("buildSports"); if (!el) return;
+  var keys = buildSportList.slice();
+  if (buildEspPresent && keys.indexOf("esports") === -1) keys.push("esports");
+  if (!keys.length){ setHtml(el, ""); return; }
+  var h = '<button type="button" class="tab' + (buildSport === "all" ? " on" : "") + '" data-bsport="all">All sports</button>';
+  h += keys.map(function(k){
+    var lab = k === "esports" ? "Esports" : (buildSportLabels[k] || String(k).toUpperCase());
+    return '<button type="button" class="tab' + (buildSport === k ? " on" : "") + '" data-bsport="' + esc(k) + '">' + esc(lab) + '</button>';
+  }).join("");
+  if (setHtml(el, h)){
+    el.querySelectorAll("[data-bsport]").forEach(function(b){ b.addEventListener("click", function(){ var s = b.getAttribute("data-bsport"); if (s !== buildSport){ buildSport = s; renderBuild(); } }); });
+  }
+}
 function renderBuild(){
   var box = $("searchResults"); if (!box) return;
   var mySeq = ++buildRenderSeq;
@@ -3801,34 +3820,40 @@ function renderBuild(){
   var q = ((inp && inp.value) || "").trim().toLowerCase();
   allProps().then(function(ps){
     var gs = playerGroups(ps);
-    var teams = {}; gs.forEach(function(g){ if (g.team) teams[g.team] = (teams[g.team]||0)+1; });
-    var teamList = Object.keys(teams).sort(function(a,b){ return teams[b]-teams[a]; }).slice(0,12);
-    if (buildTeam!=="all" && !teams[buildTeam]) buildTeam = "all";
-    var tf = $("buildTeams");
-    if (tf){ setHtml(tf, teamList.length ? '<button type="button" class="tab'+(buildTeam==="all"?" on":"")+'" data-bteam="all">All teams</button>' + teamList.map(function(t){ return '<button type="button" class="tab'+(buildTeam===t?" on":"")+'" data-bteam="'+esc(t)+'">'+esc(t)+'</button>'; }).join("") : "");
-      tf.querySelectorAll("[data-bteam]").forEach(function(b){ b.addEventListener("click", function(){ buildTeam = b.getAttribute("data-bteam"); renderBuild(); }); }); }
-    if (buildTeam!=="all") gs = gs.filter(function(g){ return g.team===buildTeam; });
     if (q) gs = gs.filter(function(g){ return (g.player+" "+g.team+" "+g.props.map(function(p){ return p.stat; }).join(" ")).toLowerCase().indexOf(q)>-1; });
+    if (buildSort === "time") { buildSort = "popular"; document.querySelectorAll("#buildSort [data-bsort]").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-bsort") === buildSort); }); }
     gs = sortGroups(gs, buildSort);
-    if (!gs.length){ box.innerHTML = '<p class="empty">No matching players — try another name or team.</p>'; buildSlidersInit(box); renderAllSlips(); return; }
     var byLeague = {}, lorder = [];
     gs.forEach(function(g){ var L = g.league || "other"; if (!byLeague[L]){ byLeague[L] = []; lorder.push(L); } byLeague[L].push(g); });
     var EMO = {nfl:"\uD83C\uDFC8",nba:"\uD83C\uDFC0",nhl:"\uD83C\uDFD2",cfb:"\uD83C\uDFC8",cbb:"\uD83C\uDFC0",wbb:"\uD83C\uDFC0",mlb:"\u26BE",tennis:"\uD83C\uDFBE"};
     var PRIO = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
     lorder.sort(function(a,b){ var ai = PRIO.indexOf(String(a).toLowerCase()), bi = PRIO.indexOf(String(b).toLowerCase()); ai = ai<0?99:ai; bi = bi<0?99:bi; return ai-bi; });
+    /* Sport pills (Brandon 2026-11-20): the row lists the sports that
+       have a section in this render; the selected sport narrows the
+       page to its section alone (header, matchup pills, sliders). A
+       selection whose sport left the page falls back to All sports \u2014
+       the same reset the old team row had. */
+    buildSportList = lorder.slice();
+    buildSportLabels = {};
+    lorder.forEach(function(L){ buildSportLabels[L] = (byLeague[L][0] && byLeague[L][0].leagueLabel) || String(L).toUpperCase(); });
+    if (buildSport !== "all" && buildSport !== "esports" && !byLeague[buildSport]) buildSport = "all";
+    renderBuildSportPills();
+    if (!gs.length && buildSport !== "esports"){ box.innerHTML = '<p class="empty">No matching players \u2014 try another name or team.</p>'; buildSlidersInit(box); renderAllSlips(); return; }
+    var showLeagues = buildSport === "all" ? lorder : (buildSport === "esports" ? [] : [buildSport]);
     /* Matchup pills need each league's ESPN games in boardEvents (the
        same cache renderBoards fills) before buildSectionHtml can assign
        props to games, so fetch the scoreboards in parallel first
        (getScoreboard is 25s-cached; zero Parlay credits). */
-    Promise.all(lorder.map(function(L){
+    Promise.all(showLeagues.map(function(L){
       var lg2 = leagueByKey(L);
       if (!lg2 || !lg2.sport || !lg2.league) return Promise.resolve();
       var lps = []; byLeague[L].forEach(function(g){ (g.props || []).forEach(function(p){ lps.push(p); }); });
       return getScoreboard(lg2, boardSpanDays(lps)).then(function(evs){ boardEvents[L] = evs || []; }).catch(function(){});
     })).then(function(){
       if (mySeq !== buildRenderSeq) return;   /* a newer render superseded this one */
-      box.innerHTML = lorder.map(function(L){ var label = (byLeague[L][0] && byLeague[L][0].leagueLabel) || String(L).toUpperCase(); return buildSectionHtml(L, byLeague[L], label, EMO, !!q); }).join("") + espBuildSectionHtml();
-      renderBuildEsp();
+      var espShown = buildSport === "all" || buildSport === "esports";
+      box.innerHTML = showLeagues.map(function(L){ return buildSectionHtml(L, byLeague[L], buildSportLabels[L], EMO, !!q); }).join("") + (espShown ? espBuildSectionHtml() : "");
+      if (espShown) renderBuildEsp();
       bindTiles(box);
       buildSlidersInit(box);
       box.querySelectorAll("[data-bgpill]").forEach(function(b){ b.addEventListener("click", function(){ var L2 = b.getAttribute("data-bgpill"), k2 = b.getAttribute("data-bggame"); buildGameByLeague[L2] = k2; renderBuild(); }); });
@@ -6208,7 +6233,6 @@ function espGroupTitle(mg){
 function renderEspBoardPage(lg){
   var pw = $("popWrap"); if (pw) pw.style.display = "none";
   var pf = $("propFilters"); if (pf) setHtml(pf, "");
-  var tf = $("teamFilters"); if (tf) setHtml(tf, "");
   var gf = $("gameFilters"); if (gf) setHtml(gf, "");
   var box = $("sportProps"); if (!box) return;
   espEnsure();
@@ -6399,7 +6423,8 @@ function renderBuildEsp(){
     if (!$("buildEsp")) return;
     espAttachProps(ps);
     var rows = ps.filter(function(p){ return espFreshRow(p) && p.espState !== "in" && p.espState !== "post"; });
-    if (!rows.length) { box.innerHTML = ""; return; }
+    if (!rows.length) { box.innerHTML = ""; if (buildEspPresent){ buildEspPresent = false; renderBuildSportPills(); } if (buildSport === "esports"){ buildSport = "all"; renderBuild(); } return; }
+    if (!buildEspPresent){ buildEspPresent = true; renderBuildSportPills(); }
     var groups = espMatchGroups(rows);
     var h = '<div class="sporthd" style="margin-top:14px"><span class="sportname">\uD83C\uDFAE Esports</span><span class="sportct">' + rows.length + ' props</span></div>';
     h += espBuildGameHtml("cs2", "\uD83C\uDFAF Counter-Strike 2", groups);
@@ -7872,7 +7897,7 @@ document.querySelectorAll("nav.bottom button").forEach(function(b){
 });
 function setSport(key){
   currentSport = key; lsSet("pa_sport", key);
-  boardStat = "all"; boardTeam = "all"; boardGame = "all"; boardQuery = ""; var bq = $("boardSearch"); if (bq) bq.value = "";
+  boardStat = "all"; boardGame = "all"; boardQuery = ""; var bq = $("boardSearch"); if (bq) bq.value = "";
   document.querySelectorAll("#sportTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-sport")===key); });
   if (key==="all") showView("home"); else { showView("sport"); renderBoards(); }
 }
