@@ -672,9 +672,9 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #searchResults .bslider .ptile:nth-child(2){animation-delay:.03s}#searchResults .bslider .ptile:nth-child(3){animation-delay:.06s}#searchResults .bslider .ptile:nth-child(4){animation-delay:.09s}#searchResults .bslider .ptile:nth-child(5){animation-delay:.12s}#searchResults .bslider .ptile:nth-child(6){animation-delay:.15s}#searchResults .bslider .ptile:nth-child(7){animation-delay:.18s}#searchResults .bslider .ptile:nth-child(8){animation-delay:.21s}#searchResults .bslider .ptile:nth-child(9){animation-delay:.24s}#searchResults .bslider .ptile:nth-child(10){animation-delay:.27s}
 @keyframes tilein{from{opacity:0;transform:translateY(9px) scale(.96)}to{opacity:1;transform:none}}
 #searchResults .bslider{display:flex;gap:10px;overflow-x:auto;padding:12px 2px 16px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-#searchResults .bteampills{display:flex;gap:6px;overflow-x:auto;padding:0 2px 9px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-#searchResults .bteampills::-webkit-scrollbar{display:none}
-#searchResults .bteampill{padding:4px 10px;font-size:11.5px;font-weight:800}
+#searchResults .bgamepills{display:flex;gap:6px;overflow-x:auto;padding:0 2px 9px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#searchResults .bgamepills::-webkit-scrollbar{display:none}
+#searchResults .bgamepill{padding:4px 10px;font-size:11.5px;font-weight:800}
 #searchResults .bslider::-webkit-scrollbar{display:none}
 #searchResults .bslider .ptile{flex:0 0 118px;scroll-snap-align:center;transform:scale(.955);opacity:.86;background-image:linear-gradient(165deg,rgba(255,255,255,.10),rgba(255,255,255,0) 45%);box-shadow:0 8px 18px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.13);transition:transform .25s ease,opacity .25s ease,box-shadow .25s ease,border-color .15s ease}
 #searchResults .bslider .ptile.uppop{transform:scale(1);opacity:1;box-shadow:0 20px 36px rgba(0,0,0,.62),0 6px 14px rgba(0,0,0,.5),0 0 0 1px rgba(178,107,255,.30),inset 0 1px 0 rgba(255,255,255,.22),0 0 18px rgba(196,168,255,.55),0 0 6px rgba(196,168,255,.45)}
@@ -1868,7 +1868,8 @@ function propCard(p, vo){
 }
 var boardQuery = "", boardSort = "popular", boardTeam = "all";
 var buildSort = "pct", buildTeam = "all";
-var buildTeamByLeague = {};
+var buildGameByLeague = {};   /* league key -> selected Build matchup pill (game key, or "__other") */
+var buildRenderSeq = 0;
 var teamCache = lsGet("pa_teams", {});
 var aidCache = lsGet("pa_aids", {});
 var liveTeamsByLeague = {};
@@ -3605,38 +3606,88 @@ function ensureTeamLogos(L){
   }).catch(function(){ teamLogoState[L] = "fail"; });
 }
 function buildSectionHtml(L, all, label, EMO, searching){
-  /* Brandon 2026-11-19: Build props grouped BY TEAM (v1.0.93) — each team
-     gets its own labeled slider under the sport; players with no known
-     team land in a final Other group. The team pills are now true TABS
-     (Brandon, later 2026-11-19): there is no "All" view — a section shows
-     ONE team's group at a time, the selected tab's. Group order is the
-     same as the groups have always used (teams A-Z, Other last; the Other
-     group gets its own tab). Default selection is the first group; a
-     selection no longer on the board resets to the first group. While a
-     search query is active there is no tab row: matches show across teams
-     in their groups, so search can still find any player. A section with
-     a single group needs no tabs — it just shows that group's slider,
-     and a lone Other group keeps its headerless look. */
-  var buckets = {}, border = [];
-  all.forEach(function(g){ var t = g.team || ""; if (!buckets[t]){ buckets[t] = []; border.push(t); } buckets[t].push(g); });
-  var gorder = border.filter(function(t){ return t !== ""; }).sort();
-  if (buckets[""]) gorder.push("");
-  if (gorder.some(function(t){ return !!t; })) ensureTeamLogos(L);
-  var pills = "", shownKeys;
-  if (searching || gorder.length < 2){
-    shownKeys = gorder;
-  } else {
-    var sel = buildTeamByLeague[L];
-    if (!buckets[sel]){ sel = gorder[0]; buildTeamByLeague[L] = sel; }
-    pills = '<div class="bteampills">' + gorder.map(function(t){ return '<button type="button" class="tab bteampill'+(sel===t?" on":"")+'" data-btpill="'+esc(L)+'" data-btteam="'+esc(t)+'">'+esc(t || "Other")+'</button>'; }).join("") + '</div>';
-    shownKeys = [sel];
+  /* Brandon 2026-11-20: Build props are organized BY GAME — the pill row
+     is one pill per MATCHUP ("Team A vs Team B · time"), replacing the
+     v1.0.102 team tabs. Games and prop assignment reuse the board game
+     pills' machinery (boardGamesFor): a prop counts toward a game only
+     when the data determines it — its feed matchup, a combo whose players
+     all point at one game, or its team/player matched to the ESPN game
+     near its start. A player is never guessed into a game: props with no
+     determined game land in a final "Other players" pill, shown there with
+     exactly those props. One pill is selected at a time; the selection is
+     kept per league and resets to the first pill when its game leaves the
+     board. While searching there is no pill row: matches show across
+     games, each game group with its header. If no game can be derived at
+     all, the section falls back to one flat slider. The pill row shows
+     only when there is more than one pill to switch between; the selected
+     game's header always names the matchup. */
+  var lg = leagueByKey(L);
+  var lps = []; all.forEach(function(g){ (g.props || []).forEach(function(p){ lps.push(p); }); });
+  var gi = boardGamesFor(lg, lps);
+  function subGroup(g, keep){
+    var ps = (g.props || []).filter(keep); if (!ps.length) return null;
+    var c = {}; for (var k in g) c[k] = g[k];
+    c.props = ps;
+    c.starts = ps.map(function(p){ return p.starts || ""; }).filter(function(s){ return !!s; }).sort()[0] || "";
+    return c;
   }
-  var shownCount = 0; shownKeys.forEach(function(t){ shownCount += buckets[t].length; });
-  var groups = shownKeys.map(function(t){
-    var head = (t === "" && gorder.length === 1) ? "" : '<div class="bteamhead" data-blogo="'+esc(L)+'" data-bteam="'+esc(t)+'">'+(t ? tlogoImg(buildTeamLogo(L, t), 22) : "")+esc(t || "Other")+' <span class="bcount">'+buckets[t].length+' player'+(buckets[t].length===1?"":"s")+'</span></div>';
-    return '<div class="bteamgroup" data-bgroup="'+esc(t || "other")+'">' + head + '<div class="bslider">' + buckets[t].map(tileHtml).join("") + '</div></div>';
-  }).join("");
-  return '<div class="teamhead sporthead">'+(EMO[String(L).toLowerCase()]||"\uD83C\uDFC5")+' '+esc(label)+' \u00b7 '+shownCount+' players<span style="margin-left:auto;font-size:11px;color:#cdbcf5;font-weight:800;letter-spacing:.6px">SWIPE \u203a</span></div>' + pills + groups;
+  var buckets = [], valid = {};
+  gi.list.forEach(function(gm){
+    var gs = [];
+    all.forEach(function(g){ var c = subGroup(g, function(p){ return gi.keyOf[p.id] === gm.key; }); if (c) gs.push(c); });
+    if (gs.length){ var b = { key: gm.key, game: gm, groups: gs }; buckets.push(b); valid[gm.key] = b; }
+  });
+  var other = [];
+  all.forEach(function(g){ var c = subGroup(g, function(p){ return !gi.keyOf[p.id]; }); if (c) other.push(c); });
+  if (other.length){ var ob = { key: "__other", game: null, groups: other }; buckets.push(ob); valid["__other"] = ob; }
+  if (all.some(function(g){ return !!g.team; })) ensureTeamLogos(L);
+  function gameTeamNames(b){
+    /* Both teams of the matchup, for the header logos: full names from the
+       ESPN event behind an "ev" game, else the label's two sides (feed
+       matchup names), else the shown groups' own teams. */
+    var names = [];
+    if (b.game.key.indexOf("ev") === 0){
+      var evs = boardEvents[L] || [];
+      for (var i = 0; i < evs.length; i++){
+        if ("ev" + String(evs[i].id || "") === b.game.key){ names = eventTeams(evs[i]).map(function(t){ return t.name; }).filter(function(n){ return !!n; }); break; }
+      }
+    }
+    if (names.length < 2 && b.game.label){
+      var parts = b.game.label.split(" vs ");
+      if (parts.length === 2) names = parts;
+    }
+    if (names.length < 2){
+      var seen = {}; names.forEach(function(n){ seen[teamNameKey(n)] = 1; });
+      b.groups.forEach(function(g){ if (g.team && !seen[teamNameKey(g.team)] && names.length < 2){ seen[teamNameKey(g.team)] = 1; names.push(g.team); } });
+    }
+    return names.slice(0, 2);
+  }
+  function headFor(b){
+    var n = b.groups.length, cnt = ' <span class="bcount">' + n + ' player' + (n === 1 ? "" : "s") + '</span>';
+    if (!b.game) return '<div class="bteamhead">Other players' + cnt + '</div>';
+    var logos = gameTeamNames(b).map(function(t){ return '<span data-blogo="' + esc(L) + '" data-bteam="' + esc(t) + '">' + tlogoImg(buildTeamLogo(L, t), 22) + '</span>'; }).join("");
+    return '<div class="bteamhead">' + logos + esc(b.game.label) + cnt + '</div>';
+  }
+  function groupHtml(b){ return '<div class="bteamgroup" data-bgroup="' + esc(b.key) + '">' + headFor(b) + '<div class="bslider">' + b.groups.map(tileHtml).join("") + '</div></div>'; }
+  function sportHead(n){ return '<div class="teamhead sporthead">' + (EMO[String(L).toLowerCase()] || "\uD83C\uDFC5") + ' ' + esc(label) + ' \u00b7 ' + n + ' players<span style="margin-left:auto;font-size:11px;color:#cdbcf5;font-weight:800;letter-spacing:.6px">SWIPE \u203a</span></div>'; }
+  if (!gi.list.length){
+    return sportHead(all.length) + '<div class="bteamgroup" data-bgroup="all"><div class="bslider">' + all.map(tileHtml).join("") + '</div></div>';
+  }
+  if (searching){
+    var seenP = {}; buckets.forEach(function(b){ b.groups.forEach(function(g){ seenP[g.player] = 1; }); });
+    return sportHead(Object.keys(seenP).length) + buckets.map(groupHtml).join("");
+  }
+  var sel = buildGameByLeague[L];
+  if (!valid[sel]) sel = buckets[0].key;
+  buildGameByLeague[L] = sel;
+  var pills = "";
+  if (buckets.length > 1){
+    pills = '<div class="bgamepills">' + buckets.map(function(b){
+      var txt = b.game ? (esc(b.game.label) + (b.game.starts ? ' \u00b7 ' + esc(fmtClock(b.game.starts)) : '')) : "Other players";
+      return '<button type="button" class="tab bgamepill' + (sel === b.key ? " on" : "") + '" data-bgpill="' + esc(L) + '" data-bggame="' + esc(b.key) + '">' + txt + '</button>';
+    }).join("") + '</div>';
+  }
+  return sportHead(valid[sel].groups.length) + pills + groupHtml(valid[sel]);
 }
 function buildSlidersInit(box){
   Object.keys(popObsBySlot).forEach(function(k){ if (k.indexOf("bld") === 0 && popObsBySlot[k]){ popObsBySlot[k].disconnect(); popObsBySlot[k] = null; } });
@@ -3645,6 +3696,7 @@ function buildSlidersInit(box){
 }
 function renderBuild(){
   var box = $("searchResults"); if (!box) return;
+  var mySeq = ++buildRenderSeq;
   var inp = $("searchInput");
   var q = ((inp && inp.value) || "").trim().toLowerCase();
   allProps().then(function(ps){
@@ -3664,12 +3716,24 @@ function renderBuild(){
     var EMO = {nfl:"\uD83C\uDFC8",nba:"\uD83C\uDFC0",nhl:"\uD83C\uDFD2",cfb:"\uD83C\uDFC8",cbb:"\uD83C\uDFC0",wbb:"\uD83C\uDFC0",mlb:"\u26BE",tennis:"\uD83C\uDFBE"};
     var PRIO = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
     lorder.sort(function(a,b){ var ai = PRIO.indexOf(String(a).toLowerCase()), bi = PRIO.indexOf(String(b).toLowerCase()); ai = ai<0?99:ai; bi = bi<0?99:bi; return ai-bi; });
-    box.innerHTML = lorder.map(function(L){ var label = (byLeague[L][0] && byLeague[L][0].leagueLabel) || String(L).toUpperCase(); return buildSectionHtml(L, byLeague[L], label, EMO, !!q); }).join("") + espBuildSectionHtml();
-    renderBuildEsp();
-    bindTiles(box);
-    buildSlidersInit(box);
-    box.querySelectorAll("[data-btpill]").forEach(function(b){ b.addEventListener("click", function(){ var L2 = b.getAttribute("data-btpill"), t2 = b.getAttribute("data-btteam"); buildTeamByLeague[L2] = t2; renderBuild(); }); });
-    renderAllSlips();
+    /* Matchup pills need each league's ESPN games in boardEvents (the
+       same cache renderBoards fills) before buildSectionHtml can assign
+       props to games, so fetch the scoreboards in parallel first
+       (getScoreboard is 25s-cached; zero Parlay credits). */
+    Promise.all(lorder.map(function(L){
+      var lg2 = leagueByKey(L);
+      if (!lg2 || !lg2.sport || !lg2.league) return Promise.resolve();
+      var lps = []; byLeague[L].forEach(function(g){ (g.props || []).forEach(function(p){ lps.push(p); }); });
+      return getScoreboard(lg2, boardSpanDays(lps)).then(function(evs){ boardEvents[L] = evs || []; }).catch(function(){});
+    })).then(function(){
+      if (mySeq !== buildRenderSeq) return;   /* a newer render superseded this one */
+      box.innerHTML = lorder.map(function(L){ var label = (byLeague[L][0] && byLeague[L][0].leagueLabel) || String(L).toUpperCase(); return buildSectionHtml(L, byLeague[L], label, EMO, !!q); }).join("") + espBuildSectionHtml();
+      renderBuildEsp();
+      bindTiles(box);
+      buildSlidersInit(box);
+      box.querySelectorAll("[data-bgpill]").forEach(function(b){ b.addEventListener("click", function(){ var L2 = b.getAttribute("data-bgpill"), k2 = b.getAttribute("data-bggame"); buildGameByLeague[L2] = k2; renderBuild(); }); });
+      renderAllSlips();
+    });
   }).catch(function(){ box.innerHTML = '<p class="empty">Players could not load — check your connection and tap Refresh.</p>'; });
 }
 
