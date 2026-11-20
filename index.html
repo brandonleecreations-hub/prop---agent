@@ -1140,7 +1140,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .tiercard.ringglow .flipfront{animation:ringpulse 1.8s ease-in-out infinite alternate}
 #packBurst{position:absolute;left:50%;top:36%;width:0;height:0;pointer-events:none;display:none;z-index:5}
 .packsplit{position:relative;width:100%;aspect-ratio:420/795}
-.ph{position:absolute;left:0;width:100%;background-image:url(/api/banners?s=packcut&v=2);background-repeat:no-repeat}
+.ph{position:absolute;left:0;width:100%;background-image:url(/api/banners?s=packcut&v=3);background-repeat:no-repeat}
 .ph-t{top:0;height:10.4%;background-size:100% 961.5%;background-position:center top;border-radius:14px 14px 0 0;transform-origin:10% 0}
 .ph-b{bottom:0;height:90.6%;background-size:100% 110.4%;background-position:center bottom;border-radius:0 0 14px 14px}
 .packstage.charging .packsplit{animation:charge .48s ease-in-out both}
@@ -1152,7 +1152,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .packfloat{transform-style:preserve-3d;animation:packsway3d 3.8s ease-in-out infinite alternate;will-change:transform}
 @keyframes packsway3d{from{transform:rotateY(-14deg) rotateX(3deg) translateY(0)}to{transform:rotateY(14deg) rotateX(-2deg) translateY(-7px)}}
 .packstage.torn .packfloat{animation:none}
-.packshine{position:absolute;inset:0;background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.20) 48%,rgba(245,197,24,.16) 52%,transparent 68%);transform:translateX(-130%);animation:pkshine 3.4s ease-in-out infinite;pointer-events:none;-webkit-mask-image:url(/api/banners?s=packcut&v=2);-webkit-mask-size:100% 100%;mask-image:url(/api/banners?s=packcut&v=2);mask-size:100% 100%}
+.packshine{position:absolute;inset:0;background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.20) 48%,rgba(245,197,24,.16) 52%,transparent 68%);transform:translateX(-130%);animation:pkshine 3.4s ease-in-out infinite;pointer-events:none;-webkit-mask-image:url(/api/banners?s=packcut&v=3);-webkit-mask-size:100% 100%;mask-image:url(/api/banners?s=packcut&v=3);mask-size:100% 100%}
 .packaura{position:relative;height:30px;margin-top:4px;pointer-events:none}
 .packaura i{position:absolute;left:50%;top:50%;width:170px;height:30px;margin:-15px 0 0 -85px;border-radius:50%;border:2px solid rgba(245,197,24,.75);box-shadow:0 0 18px rgba(245,197,24,.35),inset 0 0 14px rgba(124,58,237,.5);animation:auraring 1.9s ease-out infinite}
 .packaura i:nth-child(2){animation-delay:.63s;border-color:rgba(124,58,237,.7)}
@@ -4536,7 +4536,7 @@ function renderPacks(){
   var shared = lsGet("pa_share_day", "") === today;
   var foils = foilsGet();
   box.innerHTML = '<div class="packpromo">'
-    + '<div style="display:flex;gap:12px;align-items:center"><img class="packimg" src="/api/banners?s=packcut&v=2" alt="">'
+    + '<div style="display:flex;gap:12px;align-items:center"><img class="packimg" src="/api/banners?s=packcut&v=3" alt="">'
     + '<div><div style="font-weight:900;font-size:17px">🎁 1 FREE PACK <span style="color:#f5c518">EVERY DAY</span></div>'
     + '</div></div>'
     + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'
