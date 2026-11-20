@@ -32,6 +32,13 @@ const SPORT_KEYS = [
   "basketball_nba", "basketball_ncaab", "basketball_wncaab", "basketball_wnba",
   "americanfootball_nfl", "americanfootball_ncaaf",
   "icehockey_nhl", "baseball_mlb", "tennis", "tennis_atp", "tennis_wta",
+  // SOCCER TEST (Brandon 2026-11-19): soccer_epl admitted to prove whether
+  // Parlay's soccer keys carry real PLAYER PROPS or only match lines (the
+  // tennis_atp/wta trap). Deliberately NO ESPN_PATHS entry yet: the
+  // schedule gate fails OPEN without one, so the one approved test pull
+  // rides the brk lane. Pending Brandon's go/no-go for a full Soccer tab;
+  // if the test proves props, the gate mapping + windows follow.
+  "soccer_epl",
 ];
 
 const STAT_LABELS = {
