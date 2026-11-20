@@ -56,6 +56,45 @@ function cleanKeyList(v) {
   return out.slice(0, 500);
 }
 
+/* Leaderboard stats v1 (Brandon 2026-11-19): ticket wins and the Agent
+   Clash record are recorded SEPARATELY from tier points. profiles.wins
+   stays the points total (tickets + Pick'em + battle points) that drives
+   tiers. The Clash record lives in battle_w/battle_l as before. Ticket
+   wins get a fresh server-side counter kept in a props_cache row
+   (sport = "lb_stats_v1", props = { __reset, u: { uid: { tw } } }):
+   clients report their post-reset count on every profile POST and the
+   server keeps the max. A derivation from the tickets table was rejected:
+   every cloudSave DELETEs + re-INSERTs a user's rows (so created_at is
+   just the last sync time and cannot gate history), and the 30-day win
+   retention would make a derived count silently decay. The counter never
+   decays and starts at zero for everyone.
+   RESET: the first board read after this ships zeroes every recorded
+   battle_w/battle_l (one-time sweep, guarded by __reset in the marker
+   row) so both leaderboard stats start fresh; tier points, cards, coins
+   and tickets are NOT touched. */
+const LB_KEY = "lb_stats_v1";
+async function lbLoad() {
+  const r = await rest("props_cache?select=props&sport=eq." + LB_KEY, { headers: sbHeaders() });
+  const row = (Array.isArray(r.json) && r.json[0]) || null;
+  const p = row && row.props && typeof row.props === "object" && !Array.isArray(row.props) ? row.props : null;
+  return { reset: p ? (p.__reset || 0) : 0, u: (p && p.u && typeof p.u === "object" && !Array.isArray(p.u)) ? p.u : {} };
+}
+async function lbStore(state) {
+  const props = { __reset: state.reset || 0, u: state.u || {} };
+  const r = await rest("props_cache?sport=eq." + LB_KEY, { method: "PATCH", headers: sbHeaders({ Prefer: "return=representation" }), body: JSON.stringify({ props: props }) });
+  if (!(Array.isArray(r.json) && r.json.length)) {
+    await rest("props_cache", { method: "POST", headers: sbHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }), body: JSON.stringify({ sport: LB_KEY, props: props }) });
+  }
+}
+async function lbEnsureReset(state) {
+  if (state.reset) return state;
+  await rest("profiles?battle_w=gt.0", { method: "PATCH", headers: sbHeaders({ Prefer: "return=minimal" }), body: JSON.stringify({ battle_w: 0 }) });
+  await rest("profiles?battle_l=gt.0", { method: "PATCH", headers: sbHeaders({ Prefer: "return=minimal" }), body: JSON.stringify({ battle_l: 0 }) });
+  state.reset = Date.now();
+  await lbStore(state);
+  return state;
+}
+
 // profiles.id has a foreign key to auth.users (the original build used
 // Supabase Auth). A device's self-made UUID is not an auth user, so the
 // first save for a new device creates a device auth user server-side and
@@ -82,9 +121,20 @@ module.exports = async (req, res) => {
   if (!SB_URL || !SRK) { res.status(200).json({ ok: false, configured: false }); return; }
   try {
     if (req.method === "GET" && req.query && req.query.board) {
-      let r = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card,battle_w,battle_l&order=wins.desc&limit=50", { headers: sbHeaders() });
-      if (r.status !== 200) r = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card&order=wins.desc&limit=50", { headers: sbHeaders() });
-      res.status(200).json({ ok: r.status === 200, board: Array.isArray(r.json) ? r.json : [] });
+      let lb = { reset: 0, u: {} };
+      try { lb = await lbEnsureReset(await lbLoad()); } catch (e) {}
+      let r = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card,battle_w,battle_l&order=wins.desc&limit=200", { headers: sbHeaders() });
+      if (r.status !== 200) r = await rest("profiles?select=id,display_name,wins,avatar_url,featured_card&order=wins.desc&limit=200", { headers: sbHeaders() });
+      let board = Array.isArray(r.json) ? r.json : [];
+      board.forEach((p) => {
+        const e = lb.u[p.id];
+        p.ticket_wins = (e && typeof e.tw === "number") ? e.tw : 0;
+        if (typeof p.battle_w !== "number") p.battle_w = 0;
+        if (typeof p.battle_l !== "number") p.battle_l = 0;
+      });
+      board.sort((a, b) => (b.ticket_wins - a.ticket_wins) || ((b.wins || 0) - (a.wins || 0)) || ((b.battle_w || 0) - (a.battle_w || 0)));
+      board = board.slice(0, 50);
+      res.status(200).json({ ok: r.status === 200, board: board });
       return;
     }
     if (req.method === "GET" && req.query && req.query.uid) {
@@ -148,6 +198,14 @@ module.exports = async (req, res) => {
       if (body.packunlock !== undefined) extras.packunlock = cleanKeyList(body.packunlock);
       if (body.foils !== undefined) extras.foils = cleanKeyList(body.foils);
       if (Object.keys(extras).length) { try { await rest("profiles?id=eq." + uid, { method: "PATCH", headers: sbHeaders({ Prefer: "return=minimal" }), body: JSON.stringify(extras) }); } catch (e) {} }
+      const lbTw = parseInt(body.lb_ticket_wins, 10);
+      if (isFinite(lbTw) && lbTw >= 0) {
+        try {
+          const lb = await lbLoad();
+          const cur = (lb.u[uid] && typeof lb.u[uid].tw === "number") ? lb.u[uid].tw : 0;
+          if (lbTw > cur) { lb.u[uid] = { tw: Math.min(1000000, lbTw) }; await lbStore(lb); }
+        } catch (e) {}
+      }
       const prev = await rest("tickets?select=legs&user_id=eq." + uid + "&limit=500", { headers: sbHeaders() });
       const likeMap = {};
       if (Array.isArray(prev.json)) prev.json.forEach((r) => {

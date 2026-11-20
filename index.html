@@ -2323,6 +2323,30 @@ function findProp(id){
 
 /* ---------- home: top agents / upcoming / news ---------- */
 function myWins(){ return tickets.filter(function(t){ return t.result==="win" && !ticketHasCustom(t); }).length + (parseInt(lsGet("pa_bonuswins", 0), 10) || 0) + (parseInt(lsGet("pa_winbank", 0), 10) || 0) + (parseInt(lsGet("pa_battlewins", 0), 10) || 0); }
+/* Leaderboard stats (Brandon 2026-11-19): ticket wins and the Clash record
+   are recorded SEPARATELY from tier points. myWins() above stays the points
+   total (ticket wins + Pick'em bonus + banked wins + battle points) that
+   drives tiers and is NOT a leaderboard stat anymore. myTicketWins() is the
+   clean ticket-win count (won non-custom tickets + wins banked before the
+   30-day cleanup deletes them, so it never drops). lbTicketWins() is the
+   post-reset count the leaderboard records: a one-time baseline
+   (pa_lb_base) is subtracted so history does not count. */
+function myTicketWins(){ return tickets.filter(function(t){ return t.result==="win" && !ticketHasCustom(t); }).length + (parseInt(lsGet("pa_winbank", 0), 10) || 0); }
+function lbTicketWins(){ var base = parseInt(lsGet("pa_lb_base", 0), 10) || 0; var n = myTicketWins() - base; return n > 0 ? n : 0; }
+/* One-time leaderboard reset (guard pa_lbreset1, Brandon 2026-11-19): the
+   old board mixed ticket wins with battle points, so both recorded stats
+   start at zero. This zeroes ONLY the pa_battles W-L record and sets the
+   ticket-win baseline; tier points (pa_battlewins, pa_charwins), cards,
+   coins and tickets are untouched. pa_lb_pending keeps cloudInit from
+   resurrecting the pre-reset server battle record before the first
+   post-reset cloudSave lands. */
+function lbResetMigrate(){
+  if (lsGet("pa_lbreset1", 0)) return;
+  lsSet("pa_lb_base", myTicketWins());
+  lsSet("pa_battles", { w: 0, l: 0 });
+  lsSet("pa_lb_pending", 1);
+  lsSet("pa_lbreset1", 1);
+}
 function maxWins(){ var m = 0; try { m = parseInt(lsGet("pa_maxwins", 0), 10) || 0; } catch(e){} var w = myWins(); if (w > m){ m = w; try { lsSet("pa_maxwins", m); } catch(e){} } return m; }
 function stampAvatarUrl(ci){ return "/api/battle?v=6&s=" + ci + "&stamp=1"; }
 function avatarIsStamp(u){ return /(?:^|[?&])stamp=1(?:&|$)/.test(String(u || "")); }
@@ -2338,11 +2362,16 @@ function frameStyle(feat, w, av){ if (avatarIsStamp(av)) return "border:" + (w |
 function frameCss(feat, w, av){ var s = frameStyle(feat, w, av); return s ? ";" + s : ""; }
 function applyAvatarFrame(el, feat){ if (!el) return; if (avatarIsStamp(el.getAttribute("src") || "")) { el.style.border = "3px solid #f5c518"; el.style.boxShadow = "0 0 16px rgba(245,197,24,.95),0 0 30px rgba(245,185,66,.55)"; return; } var c = frameColor(feat); el.style.border = c ? "3px solid " + c : ""; el.style.boxShadow = c ? "0 0 14px " + c + "99" : ""; }
 function agentRows(){
+  var mine = battlesGet();
+  var mySrv = null;
+  if (cloudAgents) for (var si = 0; si < cloudAgents.length; si++) if (cloudAgents[si].id === cloudUid) mySrv = cloudAgents[si];
   var rows = cloudAgents
-    ? cloudAgents.filter(function(a){ return a.id !== cloudUid; }).map(function(a){ return {id:a.id, name:a.display_name||"Agent", wins:a.wins||0, me:false, avatar:a.avatar_url||"", featured:a.featured_card||"", streak:(typeof agentStreaks !== "undefined" && agentStreaks[a.id]) || 0}; })
-    : SEED_AGENTS.map(function(a){ return {id:"", name:a.name, wins:a.wins, me:false, avatar:"", streak:0}; });
-  rows.push({id:cloudUid, name:(profile.name||"You")+" (You)", wins:myWins(), me:true, avatar:profile.avatar||"", featured:profile.featured||"", streak:myStreak()});
-  rows.sort(function(a,b){ return b.wins-a.wins; });
+    ? cloudAgents.filter(function(a){ return a.id !== cloudUid; }).map(function(a){ return {id:a.id, name:a.display_name||"Agent", wins:a.wins||0, ticketWins:(typeof a.ticket_wins === "number" ? a.ticket_wins : 0), clashW:a.battle_w||0, clashL:a.battle_l||0, me:false, avatar:a.avatar_url||"", featured:a.featured_card||"", streak:(typeof agentStreaks !== "undefined" && agentStreaks[a.id]) || 0}; })
+    : SEED_AGENTS.map(function(a){ return {id:"", name:a.name, wins:a.wins, ticketWins:a.wins, clashW:0, clashL:0, me:false, avatar:"", streak:0}; });
+  var myTw = lbTicketWins();
+  if (mySrv && typeof mySrv.ticket_wins === "number" && mySrv.ticket_wins > myTw) myTw = mySrv.ticket_wins;
+  rows.push({id:cloudUid, name:(profile.name||"You")+" (You)", wins:myWins(), ticketWins:myTw, clashW:Math.max(mine.w||0, mySrv ? (mySrv.battle_w||0) : 0), clashL:Math.max(mine.l||0, mySrv ? (mySrv.battle_l||0) : 0), me:true, avatar:profile.avatar||"", featured:profile.featured||"", streak:myStreak()});
+  rows.sort(function(a,b){ return (b.ticketWins-a.ticketWins) || (b.wins-a.wins); });
   return rows;
 }
 function setHtml(el, html){ if (el && el._lastHtml !== html){ el._lastHtml = html; el.innerHTML = html; return true; } return false; }
@@ -2350,7 +2379,7 @@ function renderTopAgents(){
   var rows = agentRows().slice(0,5);
   setHtml($("topAgents"), '<div class="card">'+rows.map(function(r,i){
     var t = tierFor(r.wins);
-    return '<div class="leg'+(r.id?' agentclick':'')+'"'+(r.id?' data-agent="'+r.id+'"':'')+'><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px' + frameCss(r.featured, 2, r.avatar) + '">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.name+'</span>'+streakBadge(r.streak)+'</div><span class="note">'+r.wins+' winning tickets</span></div>';
+    return '<div class="leg'+(r.id?' agentclick':'')+'"'+(r.id?' data-agent="'+r.id+'"':'')+'><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px' + frameCss(r.featured, 2, r.avatar) + '">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.name+'</span>'+streakBadge(r.streak)+'</div><span class="note">'+r.ticketWins+' winning tickets</span></div>';
   }).join("")+'</div>');
 }
 function renderUpcoming(){
@@ -4019,8 +4048,8 @@ function renderBoard(){
   renderPickem();
   renderFollowing();
   var rows = agentRows();
-  $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Wins</th></tr>'
-    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+(r.id?' class="agentclick" data-agent="'+r.id+'"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px' + frameCss(r.featured, 2, r.avatar) + '">':'')+'<b>'+esc(r.name)+'</b>'+streakBadge(r.streak)+'</td><td>'+t.name+'</td><td>'+r.wins+'</td></tr>'; }).join("") + '</table>';
+  $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Ticket Wins</th><th>Clash</th></tr>'
+    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+(r.id?' class="agentclick" data-agent="'+r.id+'"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px' + frameCss(r.featured, 2, r.avatar) + '">':'')+'<b>'+esc(r.name)+'</b>'+streakBadge(r.streak)+'</td><td>'+t.name+'</td><td>'+r.ticketWins+'</td><td>'+(r.clashW||0)+'W \u2013 '+(r.clashL||0)+'L</td></tr>'; }).join("") + '</table>';
   var wins = maxWins();
   $("tiers").innerHTML = tierProgressHTML(charWins(tierCharIdx()), tierCharIdx()); bindTierStrip();
   var cards = allPlayerCardLegs();
@@ -6454,6 +6483,7 @@ function cloudSave(){
       avatar_url: profile.avatar || "",
       featured_card: profile.featured || "",
       wins: myWins(),
+      lb_ticket_wins: lbTicketWins(),
       coins: coinsGet(),
       battle_w: battlesGet().w || 0,
       battle_l: battlesGet().l || 0,
@@ -6465,6 +6495,7 @@ function cloudSave(){
       tickets: tickets.map(function(t){ return {legs: t.legs, status: t.result || "pending", is_public: t.pub !== false}; })
     })}).then(function(r){ return r.json(); }).then(function(j){
       if (j && j.uid && j.uid !== cloudUid) { cloudUid = j.uid; lsSet("pa_uid", cloudUid); }
+      if (j && j.ok && lsGet("pa_lb_pending", 0)) lsSet("pa_lb_pending", 0);
       fetchBoard();
     }).catch(function(){});
   }, 600);
@@ -6509,7 +6540,7 @@ function cloudInit(){
     var restored = false;
     if (j.profile && j.profile.display_name && !profile.name) { profile.name = j.profile.display_name; lsSet("pa_profile", profile); refreshAgentBtn(); restored = true; }
     if (j.profile && j.profile.avatar_url && !profile.avatar) { profile.avatar = j.profile.avatar_url; profile.featured = String(j.profile.featured_card || "").replace(/^[^A-Za-z0-9]+/, ""); lsSet("pa_profile", profile); refreshAgentBtn(); restored = true; }
-    if (j.profile && typeof j.profile.coins === "number") { coinsSet(j.profile.coins); lsSet("pa_battles", { w: j.profile.battle_w || 0, l: j.profile.battle_l || 0 }); if ((j.profile.ladder || 0) > ladderGet()) lsSet("pa_ladder", j.profile.ladder || 0); restored = true; }
+    if (j.profile && typeof j.profile.coins === "number") { coinsSet(j.profile.coins); if (!lsGet("pa_lb_pending", 0)) lsSet("pa_battles", { w: j.profile.battle_w || 0, l: j.profile.battle_l || 0 }); if ((j.profile.ladder || 0) > ladderGet()) lsSet("pa_ladder", j.profile.ladder || 0); restored = true; }
     if (j.profile && mergeCloudExtras(j.profile)) restored = true;
     if ((!tickets || !tickets.length) && j.tickets && j.tickets.length) {
       tickets = j.tickets.map(function(ct, i){
@@ -6625,6 +6656,7 @@ renderBoard();
     } catch (e) {}
   }
 })();
+lbResetMigrate();
 cloudInit();
 (function bootTab(){
   /* Brandon 2026-11-18: opening the app ALWAYS starts on Home. New users
