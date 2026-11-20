@@ -622,6 +622,23 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #liveHero .card.game.lv .gteam img,#liveCenter .card.game.lv .gteam img{width:30px;height:30px;flex:none}
 #liveHero .card.game.lv .gscore,#liveCenter .card.game.lv .gscore{font-size:13.5px}
 .finstar{font-size:11.5px;line-height:1.35;color:var(--purp-lt);font-weight:700;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Finished Games sliders + Live section sport pills (Brandon 2026-11-20):
+   each sport's finals ride a small swipe slider; cards get a compact
+   variant — team logos (18px) and scores (14.5px, winner gold) stay
+   full-clarity, only padding and the type around them shrink. The card
+   is a flex row by default (.game), so the slider variant stacks its
+   rows in a column exactly like .espmslider cards. Focus-only 3D pop. */
+.finslider{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;min-width:0}
+.finslider::-webkit-scrollbar{display:none}
+.finslider .card.game.fin{flex:0 0 168px;min-width:0;flex-direction:column;align-items:stretch;justify-content:flex-start;scroll-snap-align:start;margin:0;padding:7px 9px;transform:scale(.965);opacity:.88;transition:transform .25s ease,opacity .25s ease,box-shadow .25s ease;background-image:linear-gradient(165deg,rgba(255,255,255,.08),rgba(255,255,255,0) 45%);box-shadow:0 10px 20px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.09)}
+.finslider .card.game.fin .gteam{font-size:12.5px;margin-top:2px;gap:6px}
+.finslider .card.game.fin .gteam img{width:18px;height:18px;flex:none}
+.finslider .card.game.fin .gname{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.finslider .card.game.fin .gscore{font-size:14.5px}
+.finslider .card.game.fin .note{font-size:10.5px;line-height:1.3}
+.finslider .card.game.fin .finstar{font-size:10.5px;margin-top:4px}
+.finslider .card.game.fin.uppop{transform:scale(1);opacity:1;box-shadow:0 18px 34px rgba(0,0,0,.55),0 0 0 2px rgba(167,139,250,.6),0 0 22px rgba(124,58,237,.35),0 0 18px rgba(196,168,255,.55),0 0 6px rgba(196,168,255,.45)}
+@media (prefers-reduced-motion: reduce){.finslider .card.game.fin{transition:none}}
 .pbptick{display:flex;align-items:center;gap:7px;background:#07070c;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:4px 8px;margin-top:8px;overflow:hidden;min-height:24px}
 .pbptick:empty{display:none}
 .pbptick .tkchip{flex:0 0 auto;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;font-size:9px;font-weight:900;letter-spacing:1px;border-radius:5px;padding:2px 5px}
@@ -2382,6 +2399,8 @@ var boardStat = "all";
 var boardGame = "all";
 var boardEvents = {};
 var liveFilter = "all";
+var finPill = "all", futPill = "all";
+var _finGroups = [], _futGroups = [];
 var sportNewsCache = {};
 function renderSportNews(lg){
   if (!lg.sport || !lg.league) return;
@@ -2936,14 +2955,17 @@ function futureCard(lg, ev){
   var tour = ev._tour ? " \u00B7 "+ev._tour : "";
   return '<div class="fcard" data-game="'+lg.key+'|'+(ev._tour ? ev._tour.toLowerCase()+":" : "")+ev.id+'"><div class="ftime">'+esc(when)+tour+'</div>'+rows+'</div>';
 }
-function futSliders(fut){
+function futGroupList(fut){
   var order = [], groups = {};
   fut.forEach(function(g){ var k = g.lg.key; if (!groups[k]){ groups[k] = {lg: g.lg, items: []}; order.push(k); } groups[k].items.push(g); });
   var PRIO_FUT = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
   order.sort(function(a, b){ var ai = PRIO_FUT.indexOf(a), bi = PRIO_FUT.indexOf(b); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; });
-  return order.map(function(k){ var gr = groups[k];
-    return '<div class="fsport"><span>'+esc(gr.lg.key==="tennis" ? "Tennis" : gr.lg.label)+'</span><span class="fcount">'+gr.items.length+' game'+(gr.items.length===1?"":"s")+'</span></div><div class="fslider">'+gr.items.map(function(g){ return futureCard(g.lg, g.ev); }).join("")+'</div>';
-  }).join("");
+  return order.map(function(k){ var gr = groups[k]; var label = gr.lg.key==="tennis" ? "Tennis" : gr.lg.label;
+    return { key: k, pillLabel: label, headLabel: label, count: gr.items.length, countText: gr.items.length + " game" + (gr.items.length===1?"":"s"), bodyHtml: '<div class="fslider">' + gr.items.map(function(g){ return futureCard(g.lg, g.ev); }).join("") + '</div>' };
+  });
+}
+function futSliders(fut){
+  return futGroupList(fut).map(function(g){ return '<div class="fsport"><span>' + esc(g.headLabel) + '</span><span class="fcount">' + esc(g.countText) + '</span></div>' + g.bodyHtml; }).join("");
 }
 /* ===== Finished games: last-5-per-sport saved results (localStorage store) ===== */
 var FIN_KEY = "pa_fin_results", FIN_CAP = 5;
@@ -3036,7 +3058,7 @@ function finCardHtml(en){
   var rows = (en.teams || []).map(function(t){
     var cls = anyW ? (t.w ? " fwin" : " flose") : "";
     var logo = t.logo ? '<img class="tlogo" style="margin-right:6px" src="' + esc(t.logo) + '" width="20" height="20" alt="" loading="lazy" onerror="this.remove()">' : "";
-    return '<div class="gteam' + cls + '">' + logo + esc(t.n) + ' <span class="gscore' + (isT ? " tset" : "") + '">' + esc(t.s) + '</span></div>';
+    return '<div class="gteam' + cls + '">' + logo + '<span class="gname">' + esc(t.n) + '</span><span class="gscore' + (isT ? " tset" : "") + '">' + esc(t.s) + '</span></div>';
   }).join("");
   var leagueLine = isT ? "Tennis" + (en.tour ? " \u00B7 " + en.tour : " \u00B7 ATP") : en.label;
   var right = en.detail + (en.d ? " \u00B7 " + fmtDay(en.d) : "");
@@ -3098,6 +3120,56 @@ function hydratePbpMinis(){
   });
 }
 
+/* Live section sport pills (Brandon 2026-11-20): Future Games and
+   Finished Games each get a pill row under their header — All + one
+   pill per sport that has games in the section; a pill shows only
+   that sport's slider group. Selections reset to All when the Live
+   tab is entered (showView, same first-pill rule as the other tabs)
+   and survive re-renders while staying on the tab. The top Live
+   filter pills keep their whole-page behavior; these section pills
+   only narrow their own section's groups. */
+function pillRowHtml(kind, groups, sel){
+  return '<div class="tabs" style="margin:2px 0 4px;padding:0 0 2px">'
+    + '<button type="button" class="tab' + (sel === "all" ? " on" : "") + '" data-' + kind + 'pill="all">All</button>'
+    + groups.map(function(g){ return '<button type="button" class="tab' + (sel === g.key ? " on" : "") + '" data-' + kind + 'pill="' + esc(g.key) + '">' + esc(g.pillLabel) + '</button>'; }).join("")
+    + '</div>';
+}
+function sectionGroupsHtml(sel, groups){
+  var show = sel === "all" ? groups : groups.filter(function(g){ return g.key === sel; });
+  if (!show.length) show = groups;
+  return show.map(function(g){ return '<div class="fsport"><span>' + esc(g.headLabel) + '</span><span class="fcount">' + esc(g.countText) + '</span></div>' + g.bodyHtml; }).join("");
+}
+function groupsTotal(groups){ return groups.reduce(function(a, g){ return a + (g.count || 0); }, 0); }
+function futBlockHtml(){
+  if (futPill !== "all" && !_futGroups.some(function(g){ return g.key === futPill; })) futPill = "all";
+  var total = groupsTotal(_futGroups);
+  return '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Future Games</h2><span style="color:var(--purp-lt);font-weight:700">' + total + ' game' + (total===1?"":"s") + '</span></div>'
+    + (total ? pillRowHtml("fut", _futGroups, futPill) + sectionGroupsHtml(futPill, _futGroups) : '<p class="empty">No future games in the next two days.</p>');
+}
+function renderFutBlock(){
+  var fb = $("futBlock"); if (!fb) return;
+  /* #futBlock lives inside #liveCenter, whose setHtml cache holds the
+     block as it was composed at render time — invalidate it so the
+     next renderLive rebuilds the block from the current futPill
+     instead of serving the narrowed block from cache. */
+  var lc2 = $("liveCenter"); if (lc2) lc2._lastHtml = null;
+  if (setHtml(fb, futBlockHtml())){
+    fb.querySelectorAll("[data-futpill]").forEach(function(b){ b.addEventListener("click", function(){ futPill = b.getAttribute("data-futpill"); renderFutBlock(); }); });
+    fb.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
+  }
+}
+function renderFinBlock(){
+  var lf = $("liveFinished"); if (!lf) return;
+  if (finPill !== "all" && !_finGroups.some(function(g){ return g.key === finPill; })) finPill = "all";
+  var total = groupsTotal(_finGroups);
+  var html = total ? '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Finished Games</h2><span style="color:var(--purp-lt);font-weight:700">' + total + ' game' + (total===1?"":"s") + '</span></div>'
+    + pillRowHtml("fin", _finGroups, finPill) + sectionGroupsHtml(finPill, _finGroups) : "";
+  if (setHtml(lf, html)){
+    lf.querySelectorAll("[data-finpill]").forEach(function(b){ b.addEventListener("click", function(){ finPill = b.getAttribute("data-finpill"); renderFinBlock(); }); });
+    lf.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
+    lf.querySelectorAll(".finslider").forEach(function(tr, i){ try { popSliderInit(tr, "fin" + i, ".card.game", "0px -30% 0px -30%"); } catch (e) {} });
+  }
+}
 function renderLive(){
   var leagues = LEAGUES.slice(1).filter(function(lg){ return lg.key!=="esports" && (liveFilter==="all" || lg.key===liveFilter); });
   var jobs = leagues.map(function(lg){
@@ -3137,7 +3209,7 @@ function renderLive(){
     finAll.forEach(function(en){ var k3 = en.lg; if (!fgroups[k3]){ fgroups[k3] = { label: en.label, items: [] }; forder.push(k3); } fgroups[k3].items.push(en); });
     var PRIO_FIN = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
     forder.sort(function(a, b){ var ai = PRIO_FIN.indexOf(a), bi = PRIO_FIN.indexOf(b); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; });
-    var finHtml = forder.map(function(k3){ var gr = fgroups[k3]; return '<div class="fsport"><span>' + esc(k3 === "tennis" ? "Tennis" : gr.label) + '</span><span class="fcount">' + gr.items.length + ' final' + (gr.items.length===1?"":"s") + '</span></div>' + gr.items.map(function(en){ return finCardHtml(en); }).join(""); }).join("");
+    var finGroups = forder.map(function(k3){ var gr = fgroups[k3]; var flabel = k3 === "tennis" ? "Tennis" : gr.label; return { key: k3, pillLabel: flabel, headLabel: flabel, count: gr.items.length, countText: gr.items.length + ' final' + (gr.items.length===1?"":"s"), bodyHtml: '<div class="finslider">' + gr.items.map(function(en){ return finCardHtml(en); }).join("") + '</div>' }; });
     var espGame = (liveFilter === "cs2" || liveFilter === "lol") ? liveFilter : null;
     /* Esports placement (Brandon 2026-11-20 14:42): dedicated sections
        hold LIVE matches only; upcoming CS2/LoL groups ride the shared
@@ -3149,9 +3221,9 @@ function renderLive(){
     var espFut = espFutGroupsHtml(espGames);
     var espFin = espFinGroupsHtml(espGames);
     var futCount = fut.length + espFut.count;
-    var futBlock = '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Future Games</h2><span style="color:var(--purp-lt);font-weight:700">' + futCount + ' game' + (futCount===1?"":"s") + '</span></div>'
-      + (fut.length ? futSliders(fut) : "") + espFut.html
-      + (futCount ? "" : '<p class="empty">No future games in the next two days.</p>');
+    _futGroups = futGroupList(fut).concat(espFut.groups || []);
+    _finGroups = finGroups.concat(espFin.groups || []);
+    var futBlock = '<div id="futBlock">' + futBlockHtml() + '</div>';
     var html;
     if (espGame) {
       html = espLiveHtml + futBlock;
@@ -3166,11 +3238,10 @@ function renderLive(){
     var lc = $("liveCenter");
     if (setHtml(lc, html)) {
       lc.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
+      lc.querySelectorAll("[data-futpill]").forEach(function(b){ b.addEventListener("click", function(){ futPill = b.getAttribute("data-futpill"); renderFutBlock(); }); });
       try { espWireSliders(lc); } catch (e) {}
     }
-    var lf = $("liveFinished");
-    var finTotal = finAll.length + espFin.count;
-    if (lf && setHtml(lf, finTotal ? '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Finished Games</h2><span style="color:var(--purp-lt);font-weight:700">' + finTotal + ' game' + (finTotal===1?"":"s") + '</span></div>' + finHtml + espFin.html : "")) lf.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
+    renderFinBlock();
     hydratePbpMinis();
     try { espTick(); } catch (e) {}
   });
@@ -6482,15 +6553,15 @@ function espFutCard(game, it){
    finished groups show the newest FIN_CAP, matching the per-sport
    last-5 rule. Taps ride data-game="esports|game:ref" -> openEspGame. */
 function espFutGroupsHtml(games){
-  var h = "", n = 0;
+  var groups = [], n = 0;
   (games || []).forEach(function(game){
     var items = (espSched && espSched[game] && espSched[game].upcoming) || [];
     if (!items.length) return;
     n += items.length;
-    h += '<div class="fsport"><span>' + (game === "cs2" ? "\uD83C\uDFAF CS2" : "\uD83D\uDC09 LoL") + '</span><span class="fcount">' + items.length + " match" + (items.length === 1 ? "" : "es") + '</span></div>'
-      + '<div class="fslider">' + items.map(function(it){ return espFutCard(game, it); }).join("") + "</div>";
+    var label = game === "cs2" ? "\uD83C\uDFAF CS2" : "\uD83D\uDC09 LoL";
+    groups.push({ key: game, pillLabel: label, headLabel: label, count: items.length, countText: items.length + " match" + (items.length === 1 ? "" : "es"), bodyHtml: '<div class="fslider">' + items.map(function(it){ return espFutCard(game, it); }).join("") + "</div>" });
   });
-  return { html: h, count: n };
+  return { html: groups.map(function(g){ return '<div class="fsport"><span>' + esc(g.headLabel) + '</span><span class="fcount">' + esc(g.countText) + '</span></div>' + g.bodyHtml; }).join(""), count: n, groups: groups };
 }
 function espFinEntry(game, it){
   var t = it.teams || [];
@@ -6506,17 +6577,17 @@ function espFinEntry(game, it){
   return { id: "esports|" + game + ":" + ref, gid: game + ":" + ref, lg: "esports", label: game === "cs2" ? "CS2" : "LoL", d: it.starts || "", detail: "Final", star: "", teams: teams };
 }
 function espFinGroupsHtml(games){
-  var h = "", n = 0;
+  var groups = [], n = 0;
   (games || []).forEach(function(game){
     var items = ((espSched && espSched[game] && espSched[game].finished) || []).slice();
     if (!items.length) return;
     items.sort(function(a, b){ return new Date(b.starts || 0) - new Date(a.starts || 0); });
     items = items.slice(0, FIN_CAP);
     n += items.length;
-    h += '<div class="fsport"><span>' + (game === "cs2" ? "\uD83C\uDFAF CS2" : "\uD83D\uDC09 LoL") + '</span><span class="fcount">' + items.length + " final" + (items.length === 1 ? "" : "s") + '</span></div>'
-      + items.map(function(it){ return finCardHtml(espFinEntry(game, it)); }).join("");
+    var label = game === "cs2" ? "\uD83C\uDFAF CS2" : "\uD83D\uDC09 LoL";
+    groups.push({ key: game, pillLabel: label, headLabel: label, count: items.length, countText: items.length + " final" + (items.length === 1 ? "" : "s"), bodyHtml: '<div class="finslider">' + items.map(function(it){ return finCardHtml(espFinEntry(game, it)); }).join("") + "</div>" });
   });
-  return { html: h, count: n };
+  return { html: groups.map(function(g){ return '<div class="fsport"><span>' + esc(g.headLabel) + '</span><span class="fcount">' + esc(g.countText) + '</span></div>' + g.bodyHtml; }).join(""), count: n, groups: groups };
 }
 /* Esports on the Live page (Brandon 2026-11-20, updated 14:42): LIVE CS2
    and LoL matches appear inside their own dedicated sections below
@@ -7954,7 +8025,7 @@ function showView(name){
   if (window._view !== name){
     if (name === "build"){ buildSport = "all"; buildGameByLeague = {}; espBuildMatchSel = {}; }
     else if (name === "sport"){ boardGame = "all"; boardStat = "all"; if (currentSport === "esports") espPillSel = {}; }
-    else if (name === "live"){ liveFilter = "all"; document.querySelectorAll("#liveTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-lsport") === "all"); }); }
+    else if (name === "live"){ liveFilter = "all"; finPill = "all"; futPill = "all"; document.querySelectorAll("#liveTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-lsport") === "all"); }); }
   }
   document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("on"); });
   var el = $("view-"+name); if (el) el.classList.add("on");
