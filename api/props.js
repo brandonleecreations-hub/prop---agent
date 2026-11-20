@@ -216,6 +216,20 @@ function etSlot() {
   for (let i = SLOT_HOURS_ET.length - 1; i >= 0; i--) { if (h >= SLOT_HOURS_ET[i]) return i + 1; }
   return 0;
 }
+// Managed budget (Brandon 2026-11-19, approved over a fixed lean
+// schedule): the day is spent like a budget. Core sports — everything
+// that predates the 2026-11-19 expansion — pull first and are never
+// budget-gated. The NEW sports (esports_cs2, esports_lol and every
+// soccer_* key) fill in only while the day's booked total leaves room
+// under a soft budget of 80: they may start a paid pull (window claim
+// or brk lane) only when usedToday + 6 <= 80, and otherwise serve
+// their cached board for that window. The 50 line stays the credit
+// watch's notify line (dailyCap above, reported in the tally) and the
+// 100 hard stop stays the backstop for everyone.
+const DAILY_BUDGET = 80;
+const NEW_SPORT_KEYS = ["esports_cs2", "esports_lol"];
+function isNewSport(sport) { return NEW_SPORT_KEYS.indexOf(sport) !== -1 || String(sport || "").indexOf("soccer_") === 0; }
+function budgetOpen(usedToday) { return usedToday + 6 <= DAILY_BUDGET; }
 async function sbReq(path, opts) {
   if (!SB_URL || !SB_SVC) return null;
   try {
@@ -241,6 +255,14 @@ async function sbCacheRow(sport) {
 async function sbCacheAll() {
   const rows = await sbReq("props_cache?select=sport,credits_today,count_day");
   return Array.isArray(rows) ? rows : null;
+}
+// Booked credits across ALL sports for the current ET day, from the
+// shared props_cache rows; null when the shared store is unavailable.
+async function sbUsedToday() {
+  const rows = await sbCacheAll();
+  if (!rows) return null;
+  const today = etToday();
+  return rows.reduce((sum, r) => sum + (String(r.count_day || "") === today ? (r.credits_today | 0) : 0), 0);
 }
 function sbFresh(row) {
   if (!row) return false;
@@ -1225,7 +1247,7 @@ module.exports = async (req, res) => {
     const todayT = etToday();
     let totalT = 0; const sportsT = {};
     rowsT.forEach((r) => { const c = String(r.count_day || "") === todayT ? (r.credits_today | 0) : 0; sportsT[r.sport] = c; totalT += c; });
-    res.status(200).json({ ok: true, tally: true, day: todayT, cap: dailyCap(), totalToday: totalT, sports: sportsT });
+    res.status(200).json({ ok: true, tally: true, day: todayT, cap: dailyCap(), totalToday: totalT, sports: sportsT, budget: DAILY_BUDGET, budgetUsed: totalT, newSportsOpen: budgetOpen(totalT) });
     return;
   }
   const sport = (req.query && req.query.sport) || "";
@@ -1248,6 +1270,21 @@ module.exports = async (req, res) => {
       res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=60");
       res.status(200).json({ ok: true, configured: true, brk: true, props: [] });
       return;
+    }
+    // Managed budget (Brandon 2026-11-19): the brk lane is a paid lane
+    // too — new-sport keys ride it only while the day's booked total
+    // leaves room under the soft budget; otherwise they serve the
+    // cached board, exactly like the window-claim gate. When the
+    // shared tally is unreadable the gate cannot be evaluated and the
+    // lane fails open, like every other shared-store helper.
+    if (isNewSport(sport)) {
+      const usedBrk = await sbUsedToday();
+      if (usedBrk !== null && !budgetOpen(usedBrk)) {
+        if (hit) { res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=60"); res.status(200).json({ ok: true, configured: true, cached: true, brk: true, props: hit.props }); return; }
+        res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=60");
+        res.status(200).json({ ok: true, configured: true, brk: true, props: [] });
+        return;
+      }
     }
     try {
       if (!inflight[sport]) {
@@ -1363,9 +1400,13 @@ module.exports = async (req, res) => {
     const slot = etSlot();
     const slotUsed = !!(sbRow && slot > 0 && String(sbRow.count_day || "") === etToday() && (sbRow.last_slot | 0) >= slot);
     if (slot === 0 || slotUsed) { await serveStaleOrFallback(res, sport, hit, sbRow); return; }
-    const allRows = await sbCacheAll();
-    const usedToday = (allRows || []).reduce((sum, r) => sum + (String(r.count_day || "") === etToday() ? (r.credits_today | 0) : 0), 0);
+    const usedToday = (await sbUsedToday()) || 0;
     if (usedToday + 6 > 100) { await serveStaleOrFallback(res, sport, hit, sbRow); return; } // hard stop 100; the 50 cap is the notify line (dailyCap, reported in the tally) — Brandon approved going over when needed
+    // Managed budget (Brandon 2026-11-19): new sports fill in only
+    // while the day's budget leaves room — over the soft line they
+    // serve their cached board this window instead of claiming a pull.
+    // Core sports are never budget-gated.
+    if (isNewSport(sport) && !budgetOpen(usedToday)) { await serveStaleOrFallback(res, sport, hit, sbRow); return; }
     sbClaimed = await sbClaim(sport, sbRow, slot);
     if (!sbClaimed) {
       const freshRow = await sbCacheRow(sport);
