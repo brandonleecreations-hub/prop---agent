@@ -247,6 +247,8 @@ img[src*="stamp=1"]{padding:2px;box-sizing:border-box;background-color:rgba(122,
 .tiermini{flex:1;min-width:0;text-align:center;background:#171331;border:1.5px solid var(--tc);border-radius:9px;padding:4px 2px 3px}
 .tiermini img{width:100%;height:46px;object-fit:cover;object-position:top;border-radius:5px;display:block}
 .tiermini img.tmlgd{object-position:50% 22%}
+.tiermini img.tmpos11{object-position:50% 34%}
+.tiermini img.tmpos11L{object-position:50% 30%}
 .tiermini.lk img{filter:grayscale(1);opacity:.45}
 .tiermini .tmn{display:block;font-size:8px;font-weight:800;color:var(--tc);letter-spacing:.3px;margin-top:3px;white-space:nowrap;overflow:hidden}
 .tiermini .tms{display:block;font-size:8px;color:#9a8bc7}
@@ -4039,7 +4041,8 @@ function tierProgressHTML(wins, ci){
   var bar = '<div class="tierbar"><div class="tbfill" style="width:' + pct + '%;background:linear-gradient(90deg,#7C3AED,' + cur.color + ')"></div>' + ticks + '</div>';
   var minis = '<div class="tierminis">' + TIERS.map(function(t, ti){
     var un = wins >= t.wins || packUnlockHas(ci, ti) || starterUnlockHas(ci, ti);
-    return '<div class="tiermini' + (un ? ' un' : ' lk') + (ti === curIdx ? ' cur' : '') + '" style="--tc:' + t.color + '"><img' + (ti === TIERS.length - 1 ? ' class="tmlgd"' : '') + ' src="' + esc(cardArtUrl(ci, ti)) + '" alt=""><span class="tmn">' + t.name + '</span><span class="tms">' + (un ? "\u2605".repeat(ti + 1) : '\uD83D\uDD12 ' + t.wins) + '</span></div>';
+    var imgCls = ti === TIERS.length - 1 ? (ci === 11 ? 'tmlgd tmpos11L' : 'tmlgd') : (ci === 11 ? 'tmpos11' : '');
+    return '<div class="tiermini' + (un ? ' un' : ' lk') + (ti === curIdx ? ' cur' : '') + '" style="--tc:' + t.color + '"><img' + (imgCls ? ' class="' + imgCls + '"' : '') + ' src="' + esc(cardArtUrl(ci, ti)) + '" alt=""><span class="tmn">' + t.name + '</span><span class="tms">' + (un ? "\u2605".repeat(ti + 1) : '\uD83D\uDD12 ' + t.wins) + '</span></div>';
   }).join("") + '</div>';
   return '<div class="tierprog">' + strip + head + bar + minis + '</div>';
 }
