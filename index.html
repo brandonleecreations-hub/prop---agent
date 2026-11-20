@@ -1954,7 +1954,7 @@ var buildSport = "all";
 var buildGameByLeague = {};   /* league key -> selected Build matchup pill (game key, or "__other") */
 var buildSportList = [];      /* regular league keys with a Build section in the latest render, display order */
 var buildSportLabels = {};    /* league key -> sport pill label (the section's own name) */
-var buildEspPresent = false;  /* set by renderBuildEsp: the Esports Build section currently has props */
+var buildEspPresent = false;  /* set by renderBuildEsp: the Esports Build section currently has props (the sport pill is always shown regardless) */
 var buildRenderSeq = 0;
 var teamCache = lsGet("pa_teams", {});
 var aidCache = lsGet("pa_aids", {});
@@ -3789,12 +3789,13 @@ function buildSlidersInit(box){
    per sport that actually has a section. It replaces the old team row:
    inside a sport, props are organized BY GAME (the matchup pills), never
    by team. The list is rebuilt from state on every render \u2014 regular
-   leagues from the latest renderBuild (buildSportList), Esports from
-   renderBuildEsp (buildEspPresent) \u2014 so the row always matches the page. */
+   leagues from the latest renderBuild (buildSportList); the Esports
+   pill is ALWAYS in the row (Brandon 2026-11-20) \u2014 selecting it
+   loads the Esports section on demand, props or not. */
 function renderBuildSportPills(){
   var el = $("buildSports"); if (!el) return;
   var keys = buildSportList.slice();
-  if (buildEspPresent && keys.indexOf("esports") === -1) keys.push("esports");
+  if (keys.indexOf("esports") === -1) keys.push("esports");
   if (!keys.length){ setHtml(el, ""); return; }
   var h = '<button type="button" class="tab' + (buildSport === "all" ? " on" : "") + '" data-bsport="all">All sports</button>';
   h += keys.map(function(k){
@@ -6356,52 +6357,69 @@ function espBoardHtml(groups){
 }
 /* ---------- Build page section ---------- */
 function espBuildSectionHtml(){ return '<div id="buildEsp"></div>'; }
-/* Build Esports = team pills (Brandon 2026-11-20): under each game (CS2,
-   then LoL) the teams are PILL TABS \u2014 one team selected at a time, and
-   the selected team's players show in the compact 3D-pop slider. A player
-   always sits under his own team's pill (server/roster attribution);
-   unattributed players get an "Other players" pill, never a wrong team.
-   A team's players from every match live under that one pill; the team's
-   matches stay listed as compact Game Center links above the slider.
-   Selection state is Build-only (espBuildPillSel), independent of the
-   Esports tab's espPillSel, and survives re-renders while still valid. */
-var espBuildPillSel = {}; // game -> teamKey
-function espBuildTeamAgg(g, groups){
-  var order = [], by = {};
-  groups.forEach(function(mg){
-    if (mg.game !== g) return;
-    espTeamGroupsOf(mg).forEach(function(tg){
-      var agg = by[tg.key];
-      if (!agg) { agg = by[tg.key] = { key: tg.key, name: tg.name, players: [], matches: [] }; order.push(agg); }
-      tg.players.forEach(function(pg){ agg.players.push(pg); });
-      if (mg.ref && agg.matches.indexOf(mg) === -1) agg.matches.push(mg);
-    });
-  });
-  order.sort(function(a, b){ return (a.key === "__other" ? 1 : 0) - (b.key === "__other" ? 1 : 0); });
-  order.forEach(function(agg){
-    agg.players.sort(function(a, b){ var x = a.player.toLowerCase(), y = b.player.toLowerCase(); return x < y ? -1 : (x > y ? 1 : 0); });
-  });
-  return order;
-}
-function espBuildGameHtml(g, label, groups){
-  var aggs = espBuildTeamAgg(g, groups);
-  if (!aggs.length) return "";
-  var ti = 0;
-  for (var i = 0; i < aggs.length; i++) if (aggs[i].key === espBuildPillSel[g]) { ti = i; break; }
-  var agg = aggs[ti];
+/* Build Esports = organized like the rest of the Build page (Brandon
+   2026-11-20): under each game (CS2, then LoL) the MATCH pills are the
+   primary organizer — one pill per match, same style as the other
+   sports' matchup pills — and the selected match's players (both teams)
+   show in the compact 3D-pop slider under it. Props that belong to no
+   determined match sit under an "Other players" pill, never a wrong
+   match (no cross-match leaks). Selection state is Build-only
+   (espBuildMatchSel), independent of the Esports tab's espPillSel, and
+   survives re-renders while still valid. The Esports TAB keeps its own
+   match -> team pill organization — this is Build only. With no
+   pre-game props at all, the section falls back to the schedule's
+   matches (espBuildMatchesHtml) so the always-present Esports sport
+   pill never opens a dead view. */
+var espBuildMatchSel = {}; // game -> espPillKey of the selected match group
+function espBuildMatchHtml(g, label, groups){
+  var mgs = groups.filter(function(mg){ return mg.game === g; });
+  if (!mgs.length) return "";
+  var sel = null;
+  mgs.forEach(function(mg){ if (espPillKey(mg) === espBuildMatchSel[g]) sel = mg; });
+  if (!sel) { sel = mgs[0]; espBuildMatchSel[g] = espPillKey(sel); }
   var h = '<div class="espb-game">' + label + "</div>";
-  h += '<div class="esppills">' + aggs.map(function(x, xi){
-    return '<button type="button" class="esppill' + (xi === ti ? " on" : "") + '" data-espbgame="' + g + '" data-espbpill-t="' + esc(x.key) + '">' + esc(x.name) + "</button>";
-  }).join("") + "</div>";
-  agg.matches.forEach(function(mg){ h += '<div class="espb-match" data-espgc="' + esc(mg.ref) + '">' + espGroupTitle(mg) + "</div>"; });
-  h += '<div class="espslider">' + agg.players.map(function(pg){ return espTileHtml(pg, ""); }).join("") + "</div>";
+  if (mgs.length > 1){
+    h += '<div class="bgamepills">' + mgs.map(function(mg){
+      var lab;
+      if (!mg.ref && !mg.teamGroup) lab = "Other players";
+      else {
+        lab = espMatchPillLabel(mg);
+        if (mg.item && mg.item.starts && mg.state === "pre") lab += ' \u00B7 ' + fmtClock(mg.item.starts);
+      }
+      return '<button type="button" class="tab bgamepill' + (mg === sel ? " on" : "") + '" data-espbgame="' + g + '" data-espbmatch="' + esc(espPillKey(mg)) + '">' + esc(lab) + "</button>";
+    }).join("") + "</div>";
+  }
+  if (sel.ref) h += '<div class="espb-match" data-espgc="' + esc(sel.ref) + '">' + espGroupTitle(sel) + "</div>";
+  else h += '<div class="espgrp">' + espGroupTitle(sel) + "</div>";
+  var players = espPlayerGroups(sel.rows).slice();
+  players.sort(function(a, b){ var x = a.player.toLowerCase(), y = b.player.toLowerCase(); return x < y ? -1 : (x > y ? 1 : 0); });
+  h += '<div class="espslider">' + players.map(function(pg){ return espTileHtml(pg, ""); }).join("") + "</div>";
   return h;
+}
+function espBuildMatchesHtml(){
+  /* No pre-game props right now: the section still shows the matches,
+     organized like the Esports tab (game, then Live -> Upcoming ->
+     Finished sliders) — never a dead empty view (Brandon 2026-11-20). */
+  var h = "";
+  [["cs2", "\uD83C\uDFAF Counter-Strike 2"], ["lol", "\uD83D\uDC09 League of Legends"]].forEach(function(gd){
+    var g = gd[0], any = false, s = '<div class="espb-game">' + gd[1] + "</div>";
+    [["live", "\uD83D\uDD34 Live"], ["upcoming", "Upcoming"], ["finished", "\uD83C\uDFC1 Finished"]].forEach(function(sd){
+      var items = espSched && espSched[g] ? (espSched[g][sd[0]] || []) : [];
+      if (!items.length) return;
+      any = true;
+      s += '<div class="espstate"><span>' + sd[1] + '</span><span class="fcount">' + items.length + " match" + (items.length === 1 ? "" : "es") + "</span></div>";
+      s += '<div class="espmslider">' + items.map(function(it){ return espMatchCard(g, it); }).join("") + "</div>";
+    });
+    if (any) h += s;
+  });
+  if (!h) return '<p class="empty">No esports matches or props right now \u2014 they land here as series are scheduled.</p>';
+  return h + '<p class="note" style="margin:4px 2px 0">Props post closer to match time \u2014 tap a match to open its Game Center.</p>';
 }
 function espWireBuildPills(scope){
   if (!scope) return;
-  scope.querySelectorAll("[data-espbpill-t]").forEach(function(b){
+  scope.querySelectorAll("[data-espbmatch]").forEach(function(b){
     b.addEventListener("click", function(){
-      espBuildPillSel[b.getAttribute("data-espbgame")] = b.getAttribute("data-espbpill-t");
+      espBuildMatchSel[b.getAttribute("data-espbgame")] = b.getAttribute("data-espbmatch");
       renderBuildEsp();
     });
   });
@@ -6414,14 +6432,17 @@ function renderBuildEsp(){
     if (!$("buildEsp")) return;
     espAttachProps(ps);
     var rows = ps.filter(function(p){ return espFreshRow(p) && p.espState !== "in" && p.espState !== "post"; });
-    if (!rows.length) { box.innerHTML = ""; if (buildEspPresent){ buildEspPresent = false; renderBuildSportPills(); } if (buildSport === "esports"){ buildSport = "all"; renderBuild(); } return; }
-    if (!buildEspPresent){ buildEspPresent = true; renderBuildSportPills(); }
-    var groups = espMatchGroups(rows);
-    var h = '<div class="sporthd" style="margin-top:14px"><span class="sportname">\uD83C\uDFAE Esports</span><span class="sportct">' + rows.length + ' props</span></div>';
-    h += espBuildGameHtml("cs2", "\uD83C\uDFAF Counter-Strike 2", groups);
-    h += espBuildGameHtml("lol", "\uD83D\uDC09 League of Legends", groups);
+    buildEspPresent = !!rows.length;
+    var h = '<div class="sporthd" style="margin-top:14px"><span class="sportname">\uD83C\uDFAE Esports</span><span class="sportct">' + (rows.length ? rows.length + ' props' : 'matches') + '</span></div>';
+    if (rows.length) {
+      var groups = espMatchGroups(rows);
+      h += espBuildMatchHtml("cs2", "\uD83C\uDFAF Counter-Strike 2", groups);
+      h += espBuildMatchHtml("lol", "\uD83D\uDC09 League of Legends", groups);
+    } else {
+      h += espBuildMatchesHtml();
+    }
     box.innerHTML = h;
-    espWireSliders(box); bindTiles(box); espWireGcLinks(box); espWireBuildPills(box);
+    espWireSliders(box); bindTiles(box); espWireGcLinks(box); espWireGameLinks(box); espWireBuildPills(box);
   }).catch(function(){});
 }
 function espMatchCard(game, it){
