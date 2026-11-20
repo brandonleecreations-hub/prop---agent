@@ -3009,13 +3009,18 @@ function renderLive(){
     var PRIO_FIN = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
     forder.sort(function(a, b){ var ai = PRIO_FIN.indexOf(a), bi = PRIO_FIN.indexOf(b); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; });
     var finHtml = forder.map(function(k3){ var gr = fgroups[k3]; return '<div class="fsport"><span>' + esc(k3 === "tennis" ? "Tennis" : gr.label) + '</span><span class="fcount">' + gr.items.length + ' final' + (gr.items.length===1?"":"s") + '</span></div>' + gr.items.map(function(en){ return finCardHtml(en); }).join(""); }).join("");
+    var espLiveHtml = liveFilter === "all" ? (espLiveSectionHtml("cs2", "\uD83C\uDFAF", "CS2") + espLiveSectionHtml("lol", "\uD83D\uDC09", "LoL")) : "";
     var html =
       '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Live Games</h2><span style="color:var(--purp-lt);font-weight:700">' + live.length + ' game' + (live.length===1?"":"s") + '</span></div>'
       + (live.length ? liveHtml : '<p class="empty">No games live right now.</p>')
+      + espLiveHtml
       + '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Future Games</h2><span style="color:var(--purp-lt);font-weight:700">' + fut.length + ' game' + (fut.length===1?"":"s") + '</span></div>'
       + (fut.length ? futSliders(fut) : '<p class="empty">No future games in the next two days.</p>');
     var lc = $("liveCenter");
-    if (setHtml(lc, html)) lc.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
+    if (setHtml(lc, html)) {
+      lc.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
+      try { espWireSliders(lc); } catch (e) {}
+    }
     var lf = $("liveFinished");
     if (lf && setHtml(lf, finAll.length ? '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Finished Games</h2><span style="color:var(--purp-lt);font-weight:700">' + finAll.length + ' game' + (finAll.length===1?"":"s") + '</span></div>' + finHtml : "")) lf.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
     hydratePbpMinis();
@@ -6137,9 +6142,27 @@ function espFutCard(game, it){
   var rows = t.map(function(tm){ return '<div class="fteam">' + espTeamLogo(tm, 20) + '<span>' + esc(tm.name || "") + '</span></div>'; }).join("");
   return '<div class="fcard" data-game="esports|' + game + ':' + esc(game === "cs2" ? it.slug : String(it.id)) + '"><div class="ftime">' + esc(it.starts ? fmtFullDate(it.starts) : "") + (it.tournament ? " · " + esc(it.tournament) : "") + '</div>' + rows + '</div>';
 }
-/* Esports matches are NOT listed in the Live Center (Brandon 2026-11-19):
-   esports games + props live only in the Esports tab. The Game Center
-   below still opens here from the tab/Build via #espGameDetail. */
+/* Esports on the Live page (Brandon 2026-11-20, supersedes the 2026-11-19
+   removal): CS2 and LoL games appear ONLY inside their own dedicated
+   sections below (espLiveSectionHtml, rendered by renderLive between Live
+   Games and Future Games) — never inside another sport's section, counts
+   or tabs, and never mixed with each other. Esports PROPS stay in the
+   Esports tab / Build. The Game Center below opens here from the tab,
+   Build and these Live sections via #espGameDetail. */
+function espLiveSectionHtml(game, icon, name){
+  if (!espSched || !espSched[game]) return "";
+  var STATES = [["live", "\uD83D\uDD34 Live"], ["upcoming", "Upcoming"], ["finished", "\uD83C\uDFC1 Finished"]];
+  var total = 0, body = "";
+  STATES.forEach(function(sd){
+    var items = espSched[game][sd[0]] || [];
+    if (!items.length) return;
+    total += items.length;
+    body += '<div class="espstate"><span>' + sd[1] + '</span><span class="fcount">' + items.length + " match" + (items.length === 1 ? "" : "es") + "</span></div>"
+      + '<div class="espmslider">' + items.map(function(it){ return espMatchCard(game, it); }).join("") + "</div>";
+  });
+  if (!total) return "";
+  return '<div class="liveesp" data-liveesp="' + game + '"><div class="fsport"><span>' + icon + " " + name + '</span><span class="fcount">' + total + " match" + (total === 1 ? "" : "es") + "</span></div>" + body + "</div>";
+}
 /* ---------- Esports Game Center ---------- */
 function openEspGame(ref){
   var gi = String(ref || "").indexOf(":");
