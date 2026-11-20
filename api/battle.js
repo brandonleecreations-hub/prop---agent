@@ -27,6 +27,9 @@ const IMGS = {
 // GitHub push size ceiling); merge it in so every key serves as before.
 Object.assign(IMGS, require("../battle-data.js"));
 
+// Diamond art for all 12 agents lives in ../battle-data-diamond.js (same split).
+Object.assign(IMGS, require("../battle-data-diamond.js"));
+
 module.exports = (req, res) => {
   const s = String((req.query && req.query.s) || "1");
   const b64 = IMGS[s] || IMGS["1"];
