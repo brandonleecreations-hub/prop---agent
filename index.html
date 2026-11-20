@@ -65,11 +65,11 @@ h2:first-child{margin-top:4px}
 .starts-pill{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.4px;color:var(--teal);border:1.5px solid var(--teal);border-radius:999px;padding:7px 14px;margin:2px 0 10px}
 /* Prop countdown (Brandon 2026-11-20): a small chip on every prop with a
    known start - appears only inside the final hour (mm:ss; ONE 1s ticker
-   updates textContent only, no re-renders) and turns amber at 10:00 or
-   less. On player tiles it sits in the top-right corner, absolutely
-   positioned, so tile sizes and slider layouts never move. */
-.cdchip{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.3px;color:#c4b5fd;margin-left:6px;vertical-align:middle;white-space:nowrap}
-.cdchip.cdwarn{color:#fbbf24}
+   updates textContent only, no re-renders). Amber for its whole life
+   (Brandon 2026-11-20 16:51: no purple phase, no color switch). On player
+   tiles it sits in the top-right corner, absolutely positioned, so tile
+   sizes and slider layouts never move. */
+.cdchip{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.3px;color:#fbbf24;margin-left:6px;vertical-align:middle;white-space:nowrap}
 .ptile{position:relative}
 .ptile .cdchip{position:absolute;top:6px;right:8px;margin-left:0}
 .psrc{font-size:12px;color:var(--mut);line-height:1.5}
@@ -1935,8 +1935,6 @@ function cdTick(){
       var txt = "\u23F1 " + Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
       if (n.textContent !== txt) n.textContent = txt;
       if (n.style.display === "none") n.style.display = "";
-      var warn = rem <= 600000;
-      if (warn !== n.classList.contains("cdwarn")) n.classList.toggle("cdwarn", warn);
     } else if (n.style.display !== "none") n.style.display = "none";
   }
 }
