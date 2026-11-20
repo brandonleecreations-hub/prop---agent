@@ -182,9 +182,9 @@
 <script>
 var NAMES = ["The Closer","The Boss","The Operator","All-American","The Dealmaker","The Executive","The Slugger","The Playmaker","The Captain","The Franchise","The Ace","The Islander"];
 var TIERS = [
-  { n: "Rookie",   c: "#9aa7bd", w: 70 },
+  { n: "Rookie",   c: "#9aa7bd", w: 68 },
   { n: "Gold",     c: "#f5b942", w: 23 },
-  { n: "Diamond",  c: "#7dd3fc", w: 5 },
+  { n: "Diamond",  c: "#7dd3fc", w: 7 },
   { n: "Legend",   c: "#b26bff", w: 2 }
 ];
 var opened = 0, foilCount = 0, ringPulled = false, owned = {}, busy = false;
@@ -198,7 +198,7 @@ function pickBase() {
   if (r < 0.45) return 0; if (r < 0.78) return 1; return 2;
 }
 function pickPackTier() {
-  var W = [70, 23, 5, 2], tot = 0, i;
+  var W = [68, 23, 7, 2], tot = 0, i;
   for (i = 0; i < W.length; i++) tot += W[i];
   var r = Math.random() * tot;
   for (i = 0; i < W.length; i++) { r -= W[i]; if (r <= 0) return i; }

@@ -1049,6 +1049,27 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .itog{background:linear-gradient(135deg,#7c3aed,#5b21b6);border:1px solid #f5b942;color:#fff;font-weight:900;font-size:10px;border-radius:999px;padding:2px 10px;cursor:pointer;float:right;letter-spacing:.5px}
 .itemhandwrap{flex:1;min-width:0}
 #itemPop{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:6;padding:18px}
+#pickPop{position:absolute;inset:0;display:none;z-index:5;align-items:flex-start;justify-content:center;padding:12px 8px;overflow-y:auto}
+#pickPop.open{display:flex}
+#pickPop .ppbox{position:relative;width:100%;max-width:440px;background:radial-gradient(120% 130% at 50% 0%,#2a1454 0%,#160b31 72%);border:2px solid #f5b942;border-radius:16px;padding:12px 10px 14px;box-shadow:0 18px 44px rgba(0,0,0,.55),0 0 24px rgba(245,185,66,.28);animation:pickPopIn .18s ease-out}
+@keyframes pickPopIn{from{transform:scale(.84) translateY(14px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+@media (prefers-reduced-motion: reduce){#pickPop .ppbox{animation:none}}
+#pickPop .pphead{position:relative;text-align:center;margin-bottom:12px;padding:0 30px}
+#pickPop .ppttl{font-family:'Bungee','Archivo Black',sans-serif;font-size:17px;letter-spacing:.5px;color:#fff}
+#pickPop .ppsub{font-size:11.5px;color:#c4b5fd;margin-top:2px;font-weight:700}
+#pickPop .ppx{position:absolute;top:-4px;right:-2px;width:30px;height:30px;border-radius:50%;border:2px solid #f5b942;background:#241243;color:#fff;font-weight:900;cursor:pointer}
+#pickPop .ppcards{display:flex;flex-wrap:wrap;gap:14px 10px;justify-content:center}
+#pickPop .ppcard{position:relative;width:min(42vw,164px)}
+#pickPop .ppcard.pair{width:min(44vw,178px)}
+#pickPop .ppcard .tiercard{min-height:0;cursor:default}
+#pickPop .ppcard.pickable .tiercard{cursor:pointer}
+#pickPop .ppcard.cur{transform:scale(1.03)}
+#pickPop .ppcard.cur .tiercard{box-shadow:0 0 0 3px #ffd94d,0 0 30px rgba(255,217,77,.85);border-radius:12px}
+#pickPop .ppcard.blocked .tiercard{filter:saturate(.45) brightness(.72)}
+#pickPop .ppcurtag,#pickPop .ppblocktag,#pickPop .ppopentag{position:absolute;top:-9px;left:50%;transform:translateX(-50%);z-index:6;font-size:9.5px;font-weight:900;letter-spacing:.4px;padding:3px 8px;border-radius:99px;white-space:nowrap}
+#pickPop .ppcurtag{background:#ffd94d;color:#231600;box-shadow:0 0 14px rgba(255,217,77,.8)}
+#pickPop .ppblocktag{background:#3a3f52;color:#c8cede;border:1px solid #9aa7bd}
+#pickPop .ppopentag{background:#7C3AED;color:#fff;box-shadow:0 0 12px rgba(168,85,247,.7)}
 .itemview{transform:perspective(600px) rotateX(3deg);width:min(88vw,320px);background:linear-gradient(165deg,#1d1533,#0c0918);border:2px solid var(--ic,#f5b942);border-radius:16px;padding:18px 16px;text-align:center;box-shadow:0 18px 44px rgba(0,0,0,.6),0 0 22px -4px var(--ic,#f5b942);animation:cardpopA .3s cubic-bezier(.2,.9,.3,1.2) both}
 .ivicon{font-size:46px;line-height:1.1}
 .ivname{font-weight:900;font-size:17px;letter-spacing:1px;margin-top:6px}
@@ -4350,7 +4371,7 @@ function diamondArt(ci, ti){ return !!diamondArtKey(ci, ti); }
 /* Tier-bar mini face framing for the Diamond workout art: object-position Y% per
    character, measured from the face position in each 512x512 D image (the mini
    frame is a wide 46px-tall cover crop, so faces lower in the art need a lower window). */
-var DIA_MINI_POS = { "1": 0, "2": 0, "3": 0, "4": 3, "5": 3, "6": 26, "7": 62, "8": 3, "9": 0, "10": 0, "11": 3, "12": 18 };
+var DIA_MINI_POS = { "1": 0, "2": 0, "3": 0, "4": 3, "5": 3, "6": 26, "7": 62, "8": 3, "9": 0, "10": 0, "11": 3, "12": 14 };
 function cardArtUrl(ci, ti){ var k = legendArtKey(ci, ti) || diamondArtKey(ci, ti); return k ? "/api/battle?v=6&s=" + k : "/api/battle?v=6&s=" + ci; }
 function tierCardHTML(t, wins, withBtns, ci){
   var ti = TIERS.indexOf(t);
@@ -4647,7 +4668,7 @@ function starterUnlockHas(ci, ti){ return !!STARTER_UNLOCKS[ci + "-" + ti]; }
 function cardUnlocked(ci, ti){ return ti <= 0 || charTierIdx(ci) >= ti || packUnlockHas(ci, ti) || starterUnlockHas(ci, ti); }
 function pickTiers(ci){ var out = []; for (var ti = 0; ti <= charTierIdx(ci); ti++) out.push(ti); packUnlocksGet().forEach(function(k){ var pp = k.split("-"); if (parseInt(pp[0], 10) === ci) { var t2 = parseInt(pp[1], 10); if (out.indexOf(t2) < 0) out.push(t2); } }); for (var sk in STARTER_UNLOCKS) { var sp = sk.split("-"); if (parseInt(sp[0], 10) === ci) { var t3 = parseInt(sp[1], 10); if (out.indexOf(t3) < 0) out.push(t3); } } return out.sort(function(a, b){ return a - b; }); }
 function bestPickTier(ci){ var pt = pickTiers(ci); return pt[pt.length - 1]; }
-var PACK_TIER_W = [70, 23, 5, 2];
+var PACK_TIER_W = [68, 23, 7, 2];
 function drawPackTier(){ var tot = 0, i; for (i = 0; i < PACK_TIER_W.length; i++) tot += PACK_TIER_W[i]; var r = Math.random() * tot; for (i = 0; i < PACK_TIER_W.length; i++) { r -= PACK_TIER_W[i]; if (r <= 0) return i; } return 0; }
 function dayStr(){ var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
 function maxTierIdx(){ var w = maxWins(), idx = 0; TIERS.forEach(function(t, i){ if (w >= t.wins) idx = i; }); return idx; }
@@ -5269,15 +5290,16 @@ function ensureClashPop(){
   var el = document.createElement("div");
   el.id = "clashPop";
   el.addEventListener("pointerdown", function(){ try { if (AC && AC.state === "suspended") AC.resume(); if (lsGet("pa_music", 1) !== 0 && !MUS.on) musicStart(); } catch(e){} });
-  el.innerHTML = '<button id="musBtn" title="Music on/off">' + (lsGet("pa_music", 1) === 0 ? "🔇" : "🎵") + '</button><div class="clashpanel" id="clashPanel"></div><div id="clashZoom"></div><div id="itemPop"></div>';
+  el.innerHTML = '<button id="musBtn" title="Music on/off">' + (lsGet("pa_music", 1) === 0 ? "🔇" : "🎵") + '</button><div class="clashpanel" id="clashPanel"></div><div id="clashZoom"></div><div id="itemPop"></div><div id="pickPop"></div>';
   document.body.appendChild(el);
   el.addEventListener("click", function(e){ if (e.target === el) closeClash(); });
   el.querySelector("#musBtn").addEventListener("click", function(e){ e.stopPropagation(); musicToggle(); });
+  el.querySelector("#pickPop").addEventListener("click", function(e){ if (e.target === this) closePickPop(); });
   el.querySelector("#clashZoom").addEventListener("click", function(e){ var card = e.target.closest ? e.target.closest(".tiercard") : null; if (card) card.classList.toggle("flipped"); else closeZoom(); });
   el.querySelector("#itemPop").addEventListener("click", function(e){ if (e.target === el.querySelector("#itemPop")) closeItemView(); });
 }
 function openClash(){ ensureClashPop(); $("clashPop").classList.add("open"); musicStart(); clashMenu(); }
-function closeClash(){ if (LOB) pvpLobbyCleanup(); if (CL && CL.mode === "pvp") { pvpPollStop(); if (CL.pvp.stage === "battle" && !CL.over) { CL.pvp.finSent = true; pvpSendFinal(false); var bb = battlesGet(); bb.l = (bb.l || 0) + 1; lsSet("pa_battles", bb); lsSet("pa_clash_last", Date.now()); cloudSave(); } } var p = $("clashPop"); if (p) p.classList.remove("open"); if (CL && CL.ttResolve) CL.ttResolve(-1); if (CL && CL.abResolve) CL.abResolve(""); musicStop(); closeZoom(); closeItemView(); CL = null; renderClash(); renderPacks(); }
+function closeClash(){ if (LOB) pvpLobbyCleanup(); if (CL && CL.mode === "pvp") { pvpPollStop(); if (CL.pvp.stage === "battle" && !CL.over) { CL.pvp.finSent = true; pvpSendFinal(false); var bb = battlesGet(); bb.l = (bb.l || 0) + 1; lsSet("pa_battles", bb); lsSet("pa_clash_last", Date.now()); cloudSave(); } } var p = $("clashPop"); if (p) p.classList.remove("open"); if (CL && CL.ttResolve) CL.ttResolve(-1); if (CL && CL.abResolve) CL.abResolve(""); musicStop(); closeZoom(); closeItemView(); closePickPop(); CL = null; renderClash(); renderPacks(); }
 function clashPanel(html){ var p = $("clashPanel"); if (p) { p.classList.remove("startbg"); p.classList.remove("menufit"); p.innerHTML = html; p.scrollTop = 0; } }
 function clashMenu(){
   CL = null;
@@ -5332,13 +5354,56 @@ function clashFixPair(changed){
   alt = clashAltTier(CL.mine[changed].ci, CL.mine[other].ti);
   if (alt >= 0) CL.mine[changed].ti = alt;
 }
+/* Brandon 2026-11-20: tapping a character in the picker pops up his tier
+   cards (real tierCardHTML cards) - tap one to pick it for the active slot.
+   Locked cards still SHOW (dimmed + LOCKED, unpickable); the card you are
+   on is highlighted. Free modes show all 4 tiers; Tier Clash shows exactly
+   the pair's 2 cards, arranged freely across the slots with one-of-each
+   still enforced (a tier your partner already holds is blocked). */
+var PICKPOP_CI = 0;
+function pickPopPickable(ci, ti){
+  if (!CL) return false;
+  var oth = CL.mine[1 - CL.sel];
+  if (oth && oth.ti === ti) return false;
+  if (CL.pair) return CL.pair.indexOf(ti) >= 0 && pairPickOk(ci, ti);
+  return cardUnlocked(ci, ti);
+}
+function pairPopAnyOk(ci){
+  if (!CL || !CL.pair) return true;
+  for (var i = 0; i < CL.pair.length; i++) if (pickPopPickable(ci, CL.pair[i])) return true;
+  return false;
+}
+function closePickPop(){ var pop = $("pickPop"); if (pop) { pop.classList.remove("open"); pop.innerHTML = ""; } PICKPOP_CI = 0; }
+function openPickPop(ci){
+  var pop = $("pickPop");
+  if (!pop || !CL) return;
+  PICKPOP_CI = ci;
+  var cur = CL.mine[CL.sel];
+  var oth = CL.mine[1 - CL.sel];
+  var tis = CL.pair ? CL.pair : [0, 1, 2, 3];
+  var cards = "";
+  for (var i = 0; i < tis.length; i++) {
+    var ti = tis[i];
+    var pickable = pickPopPickable(ci, ti);
+    var isCur = !!(cur && cur.ci === ci && cur.ti === ti);
+    var tag = "";
+    if (isCur) tag = '<div class="ppcurtag">\u2713 YOUR PICK</div>';
+    else if (oth && oth.ti === ti) tag = '<div class="ppblocktag">\uD83D\uDEAB PARTNER HAS THIS TIER</div>';
+    else if (CL.pair && pickable && !cardUnlocked(ci, ti)) tag = '<div class="ppopentag">\u2B50 PICKABLE IN THIS CLASH</div>';
+    cards += '<div class="ppcard' + (CL.pair ? ' pair' : '') + (isCur ? ' cur' : '') + (pickable ? ' pickable' : ' nopick') + ((oth && oth.ti === ti && !isCur) ? ' blocked' : '') + '"' + (pickable ? ' data-pickpop="' + ci + '-' + ti + '"' : '') + '>' + tierCardHTML(TIERS[ti], charWins(ci), false, ci) + tag + '</div>';
+  }
+  pop.innerHTML = '<div class="ppbox"><div class="pphead"><div class="ppttl">' + CHARNAMES[ci - 1] + '</div><div class="ppsub">' + (CL.sel === 0 ? '\u2B50 STARTER' : '\uD83D\uDD01 TAG PARTNER') + (CL.pair ? ' \u00B7 TIER CLASH ' + TIERS[CL.pair[0]].name + '\u2013' + TIERS[CL.pair[1]].name : '') + ' \u2014 tap a card to pick it</div><button class="ppx" data-pickpopclose="1">\u2715</button></div><div class="ppcards">' + cards + '</div></div>';
+  pop.classList.add("open");
+  sfx("click");
+}
 function clashPickRender(){
+  closePickPop();
   var maxTi = maxTierIdx();
   var slots = "";
   for (var s = 0; s < 2; s++) {
     var f = CL.mine[s];
     slots += '<div class="pickslot' + (CL.sel === s ? ' on' : '') + '" data-pickslot="' + s + '">'
-      + '<div class="pickrole">' + (s === 0 ? '⭐ STARTER' : '🔁 TAG PARTNER') + (CL.pair ? ' · ' + TIERS[CL.pair[s]].name.toUpperCase() : '') + '</div>'
+      + '<div class="pickrole">' + (s === 0 ? '⭐ STARTER' : '🔁 TAG PARTNER') + (CL.pair ? ' · ' + TIERS[CL.pair[0]].name.toUpperCase() + '\u2013' + TIERS[CL.pair[1]].name.toUpperCase() : '') + '</div>'
       + (f ? '<img src="' + cardArtUrl(f.ci, f.ti) + '" alt=""><div class="picknm">' + fName(f) + '</div><div class="pickpw" style="color:' + TIERS[f.ti].color + '">' + TIERS[f.ti].name + ' ' + "★".repeat(f.ti + 1) + '</div><div class="pickpw2">⚡ ' + POWERS[f.ci - 1].name + '</div><div class="pickpw3">' + POWERS[f.ci - 1].desc + '</div><div class="pickpw2" style="color:#c4b5fd">\uD83D\uDCA5 DMG ' + dmgOf(f) + ' · \u2764\uFE0F LIFE ' + lifeOf(f) + ' · cost \u00D7' + hitCost(f) + '</div><span class="readbtn slotread" data-readcard="' + f.ci + '">🔍</span>'
            : '<div class="pickempty">Tap an agent below</div>')
       + '</div>';
@@ -5347,7 +5412,7 @@ function clashPickRender(){
   for (var ci = 1; ci <= 12; ci++) {
     var taken = (CL.mine[0] && CL.mine[0].ci === ci) || (CL.mine[1] && CL.mine[1].ci === ci);
     var isSel = CL.mine[CL.sel] && CL.mine[CL.sel].ci === ci;
-    grid += '<button class="agentpick' + (isSel ? ' on' : '') + '" data-pickagent="' + ci + '"' + (((taken || (CL.pair && !pairPickOk(ci, CL.pair[CL.sel]))) && !isSel) ? ' disabled' : '') + '><img src="/api/battle?v=6&s=' + ci + '" alt=""><span>' + CHARNAMES[ci - 1].replace("THE ", "") + '</span><span class="readbtn" data-readcard="' + ci + '" title="Read the full card">🔍</span></button>';
+    grid += '<button class="agentpick' + (isSel ? ' on' : '') + '" data-pickagent="' + ci + '"' + (((taken || (CL.pair && !pairPopAnyOk(ci))) && !isSel) ? ' disabled' : '') + '><img src="/api/battle?v=6&s=' + ci + '" alt=""><span>' + CHARNAMES[ci - 1].replace("THE ", "") + '</span><span class="readbtn" data-readcard="' + ci + '" title="Read the full card">🔍</span></button>';
   }
   grid += '</div>';
   var tiers = "";
@@ -5366,12 +5431,12 @@ function clashPickRender(){
       tiers += '</div>';
     }
   }
-  var ready = CL.mine[0] && CL.mine[1] && (!CL.pair || (CL.mine[0].ti === CL.pair[0] && CL.mine[1].ti === CL.pair[1]));
+  var ready = CL.mine[0] && CL.mine[1] && (!CL.pair || ((CL.mine[0].ti === CL.pair[0] && CL.mine[1].ti === CL.pair[1]) || (CL.mine[0].ti === CL.pair[1] && CL.mine[1].ti === CL.pair[0])));
   var stepHtml = !CL.mine[0] ? '<div class="stepbanner"><span class="stepn">STEP 1</span>⭐ PICK YOUR STARTER <span class="stepdown">▼</span></div>'
     : (!CL.mine[1] ? '<div class="stepbanner"><span class="stepn">STEP 2</span>🔁 PICK YOUR BENCH <span class="stepdim">— your tag partner</span> <span class="stepdown">▼</span></div>'
     : '<div class="stepbanner done"><span class="stepn">READY</span>✅ PAIR SET — TAP FIGHT! 🥊</div>');
   clashPanel('<div class="clashttl' + (CL.mode === "pvp" ? ' pvpttl' : '') + '">' + (CL.mode === "pvp" ? '👥 HEAD-TO-HEAD' : CL.mode === "ladder" ? '🏆 LADDER — BOSS ' + CL.boss : CL.pair ? '🎖️ TIER CLASH — ' + TIERS[CL.pair[0]].name.toUpperCase() + '–' + TIERS[CL.pair[1]].name.toUpperCase() : '⚡ QUICK CLASH') + '</div>'
-    + '<div class="clashsub">' + (CL.mode === "pvp" ? '👥 vs <b>' + (CL.pvp.oppName || 'your friend') + '</b> — build your pair. They pick theirs too; a coin flip starts the battle.' + (CL.pvp.oppPicked ? ' <b style="color:#4fe3c1">✓ Your friend is ready!</b>' : '') : CL.pair ? 'One of EACH tier — pick a ' + TIERS[CL.pair[0]].name + ' fighter for the first slot and a ' + TIERS[CL.pair[1]].name + ' fighter for the second slot. The CPU fields one of each too. Tap 🔍 on any agent to read their full card first.' : 'Build your pair. The CPU matches your tiers — a fair fight. Tap 🔍 on any agent to read their full card first.') + '</div>'
+    + '<div class="clashsub">' + (CL.mode === "pvp" ? '👥 vs <b>' + (CL.pvp.oppName || 'your friend') + '</b> — build your pair: tap an agent to see his cards and pick. They pick theirs too; a coin flip starts the battle.' + (CL.pvp.oppPicked ? ' <b style="color:#4fe3c1">✓ Your friend is ready!</b>' : '') : CL.pair ? 'One of EACH tier — your two fighters are one ' + TIERS[CL.pair[0]].name + ' and one ' + TIERS[CL.pair[1]].name + ', in either slot. Tap an agent to see his two cards and pick. The CPU fields one of each too. Tap 🔍 on any agent to read their full card first.' : 'Build your pair — tap an agent to see his cards and pick one. The CPU matches your tiers — a fair fight. Tap 🔍 on any agent to read their full card first.') + '</div>'
     + stepHtml
     + '<div class="pickslots">' + slots + '</div>' + grid + tiers
     + '<button class="clashbig gold' + (ready ? ' ready' : '') + '" data-clashfight="1"' + (ready ? '' : ' disabled') + '>🥊 FIGHT!<span>' + (ready ? 'Your pair is ready' : 'Pick both fighters first') + '</span></button>'
@@ -6870,8 +6935,10 @@ document.addEventListener("click", function(e){
   if ((t = e.target.closest("[data-clashmenu]"))) { if (LOB) pvpLobbyCleanup(); clashMenu(); return; }
   if ((t = e.target.closest("[data-clashmode]"))) { clashSetup(t.getAttribute("data-clashmode")); return; }
   if ((t = e.target.closest("[data-pickslot]"))) { if (CL) { CL.sel = parseInt(t.getAttribute("data-pickslot"), 10); sfx("click"); clashPickRender(); } return; }
-  if ((t = e.target.closest("[data-pickagent]"))) { if (CL) { var ci = parseInt(t.getAttribute("data-pickagent"), 10); if (CL.mine[1 - CL.sel] && CL.mine[1 - CL.sel].ci === ci) return; var wasSel = CL.sel; var pickTi = bestPickTier(ci); if (CL.pair) { if (!pairPickOk(ci, CL.pair[CL.sel])) return; pickTi = CL.pair[CL.sel]; } else { var othF = CL.mine[1 - CL.sel]; if (othF) { var altT = clashAltTier(ci, othF.ti); if (altT >= 0) pickTi = altT; } } CL.mine[CL.sel] = mkFighter(ci, pickTi); if (!CL.pair) clashFixPair(CL.sel); if (!CL.mine[1 - CL.sel]) CL.sel = 1 - CL.sel; if (CL.mine[0] && CL.mine[1]) sfx("gridwin"); else sfx(wasSel === 1 ? "tag" : "click"); clashPickRender(); } return; }
+  if ((t = e.target.closest("[data-pickagent]"))) { if (CL) { var ci = parseInt(t.getAttribute("data-pickagent"), 10); if (CL.mine[1 - CL.sel] && CL.mine[1 - CL.sel].ci === ci) return; openPickPop(ci); } return; }
   if ((t = e.target.closest("[data-picktier]"))) { if (CL && CL.mine[CL.sel]) { var pkTi = parseInt(t.getAttribute("data-picktier"), 10); if (!CL.pair && CL.mine[1 - CL.sel] && CL.mine[1 - CL.sel].ti === pkTi) return; CL.mine[CL.sel].ti = pkTi; if (!CL.pair) clashFixPair(CL.sel); sfx("click"); clashPickRender(); } return; }
+  if ((t = e.target.closest("[data-pickpopclose]"))) { closePickPop(); sfx("click"); return; }
+  if ((t = e.target.closest("[data-pickpop]"))) { if (CL) { var ppv = t.getAttribute("data-pickpop").split("-"); var pci2 = parseInt(ppv[0], 10), pti2 = parseInt(ppv[1], 10); if (!pickPopPickable(pci2, pti2)) return; var wasSel3 = CL.sel; CL.mine[CL.sel] = mkFighter(pci2, pti2); if (!CL.pair) clashFixPair(CL.sel); closePickPop(); if (!CL.mine[1 - CL.sel]) CL.sel = 1 - CL.sel; if (CL.mine[0] && CL.mine[1]) sfx("gridwin"); else sfx(wasSel3 === 1 ? "tag" : "click"); clashPickRender(); } return; }
   if ((t = e.target.closest("[data-clashfight]"))) { if (CL && CL.mine[0] && CL.mine[1]) { if (CL.mode === "pvp") pvpSubmitPicks(); else clashStartFight(); } return; }
   if ((t = e.target.closest("[data-pvpshare]"))) { pvpShare(); return; }
   if ((t = e.target.closest("[data-pvpcancel]"))) { pvpPollStop(); CL = null; clashMenu(); return; }
@@ -7874,6 +7941,7 @@ showView = function(name){
 };
 function paTopLayerClose(){
   var el;
+  el = $("pickPop"); if (el && el.classList.contains("open")) { closePickPop(); return true; }
   el = document.getElementById("pullView"); if (el && el.classList.contains("open")) { el.classList.remove("open"); return true; }
   el = $("welcomePop"); if (el && el.style.display === "block") { closeWelcome(); return true; }
   el = $("vaTkPop"); var vaD = $("viewAgentDlg"); if (el && vaD && vaD.open && el.style.display !== "none") { closeVaTicket(); return true; }
