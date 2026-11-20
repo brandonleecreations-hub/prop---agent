@@ -709,6 +709,21 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .vidcard img{width:118px;height:66px;object-fit:cover;border-radius:9px;display:block;background:#1b1030}
 .vidplay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;text-shadow:0 2px 8px rgba(0,0,0,.85)}
 #slipChip{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:60;background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none;font-weight:800;padding:11px 18px;border-radius:999px;box-shadow:0 10px 24px rgba(124,58,237,.5);display:none;cursor:pointer}
+/* Sport-tab sticky slip (Brandon 2026-11-20: "when building tickets in tab
+   doesn't show you're building it"): #slipSport is the SAME slip element
+   renderAllSlips fills everywhere else — on a sport tab it docks just above
+   the fixed bottom nav (bottom:80px clears it) so the ticket you're
+   building — picks, count, Lock In — stays in view while you scroll the
+   board. Compact chrome only in this bar: the per-leg team/time note, the
+   tickets-today note and the public/private block stay on the full slips
+   (Home/Build); guard states still read on the Lock In button label.
+   renderSlip hides the bar entirely while the slip is empty. */
+#view-sport #slipSport{position:sticky;bottom:80px;z-index:45;padding:10px 12px;box-shadow:0 -10px 28px rgba(0,0,0,.5),0 12px 26px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.05)}
+#view-sport #slipSport h3{font-size:15px;margin:0 0 2px}
+#view-sport #slipSport .leg{padding:4px 0;font-size:13px}
+#view-sport #slipSport .leg .note{display:none}
+#view-sport #slipSport .pubblock{display:none}
+#view-sport #slipSport .ticknote{display:none}
 /* Build-tab slip pop (Brandon 2026-11-19: "fix it and make it look cool
    and pop") — on the Build view the ticket being built gets the app's pop
    treatment: deep purple gradient, glow ring, soft sheen sweep. Same
@@ -1811,18 +1826,21 @@ function slipHtml(){
   return '<h3 style="margin:0 0 6px">Your slip ('+n+' pick'+(n===1?"":"s")+')</h3>'
     + (n ? legs : '<p class="empty">No picks yet — tap a sport tab above, then tap MORE or LESS on any prop card. It lands here instantly; tap the same pick again to take it off.</p>')
     + '<div class="row" style="margin-top:12px"><span class="pay">'+(can ? n+' of '+MAX_SLIP_LEGS+' picks — ready to lock in' : 'Pick at least 2 to lock a ticket (max '+MAX_SLIP_LEGS+')')+'</span></div>'
-    + '<div class="note" style="margin-top:6px">🎟️ Tickets today: '+locks+' of '+DAILY_TICKET_LIMIT+(limitHit ? ' — daily limit reached, back tomorrow' : '')+'</div>'
+    + '<div class="note ticknote" style="margin-top:6px">🎟️ Tickets today: '+locks+' of '+DAILY_TICKET_LIMIT+(limitHit ? ' — daily limit reached, back tomorrow' : '')+'</div>'
     + (n >= MAX_SLIP_LEGS ? '<div class="note" style="margin-top:4px;color:#f87171;font-weight:700">🧢 Max '+MAX_SLIP_LEGS+' legs per ticket — remove a pick to add another.</div>' : '')
     + (hedge ? '<div class="note" style="margin-top:4px;color:#f87171;font-weight:700">🚫 Anti-hedge: '+esc(hedge)+'</div>' : '')
     + (startedMsg ? '<div class="note" style="margin-top:4px;color:#f87171;font-weight:700">🚫 Game started: '+esc(startedMsg)+'</div>' : '')
     + (slip.some(function(l){ return !!l.custom; }) ? '<div class="note" style="margin-top:4px;color:#f5c518;font-weight:700">🧩 Custom pick on this slip — tickets with custom picks earn no tier points, coins or packs. Custom picks are graded by you, not the box score.</div>' : '')
-    + '<div class="row" style="margin-top:10px;gap:8px"><span class="note">Who can see this slip?</span><button type="button" class="likebtn'+(slipPublic?' on':'')+'" data-slipub="1">🌐 Public</button><button type="button" class="likebtn'+(!slipPublic?' on':'')+'" data-slipub="0">🔒 Private</button></div>'
-    + (slipPublic ? '<div class="note" style="margin-top:4px">Public slips show on your profile — other agents can see and like them.</div>' : '<div class="note" style="margin-top:4px">Private slips stay on your account only — nobody else can see or like them.</div>')
+    + '<div class="pubblock"><div class="row" style="margin-top:10px;gap:8px"><span class="note">Who can see this slip?</span><button type="button" class="likebtn'+(slipPublic?' on':'')+'" data-slipub="1">🌐 Public</button><button type="button" class="likebtn'+(!slipPublic?' on':'')+'" data-slipub="0">🔒 Private</button></div>'
+    + (slipPublic ? '<div class="note" style="margin-top:4px">Public slips show on your profile — other agents can see and like them.</div>' : '<div class="note" style="margin-top:4px">Private slips stay on your account only — nobody else can see or like them.</div>') + '</div>'
     + '<div style="margin-top:12px"><button class="bigbtn" id="lockBtn" '+(canLock?"":"disabled")+'>'+(can ? (limitHit ? "Daily Limit Reached" : (hedge ? "Blocked — Opposite Pick" : (startedMsg ? "Blocked — Game Started" : "Lock In Ticket"))) : "Lock In (pick 2+ to enable)")+'</button></div>';
 }
 function renderSlip(el){
   if (!el) return;
   el.innerHTML = slipHtml();
+  /* The sport tab's sticky bar (see #view-sport #slipSport CSS) is hidden
+     while the slip is empty — nothing to show until the first pick. */
+  if (el.id === "slipSport") el.style.display = slip.length ? "" : "none";
   var btn = el.querySelector("#lockBtn");
   el.querySelectorAll("[data-remove]").forEach(function(b){ b.addEventListener("click", function(){ removeLeg(b.getAttribute("data-remove")); }); });
   el.querySelectorAll("[data-slipub]").forEach(function(b){ b.addEventListener("click", function(){ slipPublic = b.getAttribute("data-slipub") === "1"; lsSet("pa_slipub", slipPublic); renderAllSlips(); }); });
@@ -2282,7 +2300,13 @@ function loadLiveForPlayer(g, list){
 }
 function updateSlipChip(){
   var sc = $("slipChip"); if (!sc) return;
-  var show = slip.length>0 && (window._view==="sport" || window._view==="build");
+  /* The chip button sits AFTER the script in the DOM, so the boot-time
+     registration below the script never found it — wire it here, once,
+     where the element provably exists. */
+  if (!sc._wired){ sc._wired = 1; sc.addEventListener("click", function(){ showView("home"); }); }
+  /* Build view only: sport tabs now carry the sticky #slipSport bar, and
+     the chip would float on top of it. */
+  var show = slip.length>0 && window._view==="build";
   sc.style.display = show ? "" : "none";
   if (show) sc.textContent = "Your slip · " + slip.length + " pick" + (slip.length===1?"":"s") + " →";
 }
@@ -3742,7 +3766,7 @@ var bsEl = $("boardSearch"); if (bsEl) bsEl.addEventListener("input", function(e
 document.querySelectorAll("#boardSort [data-sort]").forEach(function(b){ b.addEventListener("click", function(){ boardSort = b.getAttribute("data-sort"); document.querySelectorAll("#boardSort [data-sort]").forEach(function(x){ x.classList.toggle("on", x===b); }); renderBoards(); }); });
 document.querySelectorAll("#buildSort [data-bsort]").forEach(function(b){ b.addEventListener("click", function(){ buildSort = b.getAttribute("data-bsort"); document.querySelectorAll("#buildSort [data-bsort]").forEach(function(x){ x.classList.toggle("on", x===b); }); renderBuild(); }); });
 document.querySelectorAll(".hlopen").forEach(function(b){ b.addEventListener("click", function(){ showView("live"); }); });
-var scEl = $("slipChip"); if (scEl) scEl.addEventListener("click", function(){ showView("home"); });
+/* #slipChip is wired inside updateSlipChip(): the button element sits after this script in the DOM, so it does not exist at this point in the boot. */
 (function(){ var sel = $("cSport"); LEAGUES.slice(1).forEach(function(l){ var o=document.createElement("option"); o.value=l.key; o.textContent=l.label; sel.appendChild(o); }); })();
 $("cAdd").addEventListener("click", function(){
   var player = $("cPlayer").value.trim(), stat = $("cStat").value.trim(), line = parseFloat($("cLine").value);
