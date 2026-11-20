@@ -4343,7 +4343,15 @@ function cardBackHTML(title, sub){
 var LEGEND_ART = { "1": "1L", "2": "2L", "3": "3L", "4": "4L", "5": "5L", "6": "6L", "7": "7L", "8": "8L", "9": "9L", "10": "10L", "11": "11L", "12": "12L" };
 function legendArtKey(ci, ti){ return ti === TIERS.length - 1 ? (LEGEND_ART[ci] || null) : null; }
 function legendArt(ci, ti){ return !!legendArtKey(ci, ti); }
-function cardArtUrl(ci, ti){ var k = legendArtKey(ci, ti); return k ? "/api/battle?v=6&s=" + k : "/api/battle?v=6&s=" + ci; }
+/* Brandon 2026-11-20: DIAMOND cards carrying his workout-clothes art (battle s=<ci>D), standard cover fit. */
+var DIAMOND_ART = { "1": "1D", "2": "2D", "3": "3D", "4": "4D", "5": "5D", "6": "6D", "7": "7D", "8": "8D", "9": "9D", "10": "10D", "11": "11D", "12": "12D" };
+function diamondArtKey(ci, ti){ return ti === 2 ? (DIAMOND_ART[ci] || null) : null; }
+function diamondArt(ci, ti){ return !!diamondArtKey(ci, ti); }
+/* Tier-bar mini face framing for the Diamond workout art: object-position Y% per
+   character, measured from the face position in each 512x512 D image (the mini
+   frame is a wide 46px-tall cover crop, so faces lower in the art need a lower window). */
+var DIA_MINI_POS = { "1": 0, "2": 0, "3": 0, "4": 3, "5": 3, "6": 26, "7": 62, "8": 3, "9": 0, "10": 0, "11": 3, "12": 18 };
+function cardArtUrl(ci, ti){ var k = legendArtKey(ci, ti) || diamondArtKey(ci, ti); return k ? "/api/battle?v=6&s=" + k : "/api/battle?v=6&s=" + ci; }
 function tierCardHTML(t, wins, withBtns, ci){
   var ti = TIERS.indexOf(t);
   ci = ci || charIdxOf();
@@ -4411,8 +4419,9 @@ function tierProgressHTML(wins, ci){
   var bar = '<div class="tierbar"><div class="tbfill" style="width:' + pct + '%;background:linear-gradient(90deg,#7C3AED,' + cur.color + ')"></div>' + ticks + '</div>';
   var minis = '<div class="tierminis">' + TIERS.map(function(t, ti){
     var un = wins >= t.wins || packUnlockHas(ci, ti) || starterUnlockHas(ci, ti);
-    var imgCls = ti === TIERS.length - 1 ? (ci === 11 ? 'tmlgd tmpos11L' : 'tmlgd') : (ci === 11 ? 'tmpos11' : '');
-    return '<div class="tiermini' + (un ? ' un' : ' lk') + (ti === curIdx ? ' cur' : '') + '" style="--tc:' + t.color + '"><img' + (imgCls ? ' class="' + imgCls + '"' : '') + ' src="' + esc(cardArtUrl(ci, ti)) + '" alt=""><span class="tmn">' + t.name + '</span><span class="tms">' + (un ? "\u2605".repeat(ti + 1) : '\uD83D\uDD12 ' + t.wins) + '</span></div>';
+    var imgCls = ti === TIERS.length - 1 ? (ci === 11 ? 'tmlgd tmpos11L' : 'tmlgd') : (ti === 2 ? '' : (ci === 11 ? 'tmpos11' : ''));
+    var diaStyle = ti === 2 ? ' style="object-position:50% ' + (DIA_MINI_POS[ci] || 0) + '%"' : '';
+    return '<div class="tiermini' + (un ? ' un' : ' lk') + (ti === curIdx ? ' cur' : '') + '" style="--tc:' + t.color + '"><img' + (imgCls ? ' class="' + imgCls + '"' : '') + diaStyle + ' src="' + esc(cardArtUrl(ci, ti)) + '" alt=""><span class="tmn">' + t.name + '</span><span class="tms">' + (un ? "\u2605".repeat(ti + 1) : '\uD83D\uDD12 ' + t.wins) + '</span></div>';
   }).join("") + '</div>';
   return '<div class="tierprog">' + strip + head + bar + minis + '</div>';
 }
@@ -5330,7 +5339,7 @@ function clashPickRender(){
     var f = CL.mine[s];
     slots += '<div class="pickslot' + (CL.sel === s ? ' on' : '') + '" data-pickslot="' + s + '">'
       + '<div class="pickrole">' + (s === 0 ? '⭐ STARTER' : '🔁 TAG PARTNER') + (CL.pair ? ' · ' + TIERS[CL.pair[s]].name.toUpperCase() : '') + '</div>'
-      + (f ? '<img src="/api/battle?v=6&s=' + f.ci + '" alt=""><div class="picknm">' + fName(f) + '</div><div class="pickpw" style="color:' + TIERS[f.ti].color + '">' + TIERS[f.ti].name + ' ' + "★".repeat(f.ti + 1) + '</div><div class="pickpw2">⚡ ' + POWERS[f.ci - 1].name + '</div><div class="pickpw3">' + POWERS[f.ci - 1].desc + '</div><div class="pickpw2" style="color:#c4b5fd">\uD83D\uDCA5 DMG ' + dmgOf(f) + ' · \u2764\uFE0F LIFE ' + lifeOf(f) + ' · cost \u00D7' + hitCost(f) + '</div><span class="readbtn slotread" data-readcard="' + f.ci + '">🔍</span>'
+      + (f ? '<img src="' + cardArtUrl(f.ci, f.ti) + '" alt=""><div class="picknm">' + fName(f) + '</div><div class="pickpw" style="color:' + TIERS[f.ti].color + '">' + TIERS[f.ti].name + ' ' + "★".repeat(f.ti + 1) + '</div><div class="pickpw2">⚡ ' + POWERS[f.ci - 1].name + '</div><div class="pickpw3">' + POWERS[f.ci - 1].desc + '</div><div class="pickpw2" style="color:#c4b5fd">\uD83D\uDCA5 DMG ' + dmgOf(f) + ' · \u2764\uFE0F LIFE ' + lifeOf(f) + ' · cost \u00D7' + hitCost(f) + '</div><span class="readbtn slotread" data-readcard="' + f.ci + '">🔍</span>'
            : '<div class="pickempty">Tap an agent below</div>')
       + '</div>';
   }
@@ -5530,7 +5539,7 @@ function fxFor(side, f){ if (!CL || !f) return ""; if (CL.lastKO === f) return "
 function fighterHTML(f, active, extra, fx){
   var t = TIERS[f.ti];
   return '<div class="fcard' + (active ? ' active' : ' bench') + (fAlive(f) ? '' : ' ko') + (extra || '') + (fx === "tag" ? ' tagin' : '') + '" data-zci="' + f.ci + '" data-zti="' + f.ti + '" style="border-color:' + t.color + '">'
-    + '<img src="/api/battle?v=6&s=' + f.ci + '" alt=""' + (fx === "pain" ? ' class="imgflinch"' : fx === "rage" ? ' class="imgpunch"' : '') + '>'
+    + '<img src="' + cardArtUrl(f.ci, f.ti) + '" alt=""' + (fx === "pain" ? ' class="imgflinch"' : fx === "rage" ? ' class="imgpunch"' : '') + '>'
     + '<div class="fcnm">' + fName(f) + '</div>'
     + '<div class="fcst" style="color:' + t.color + '">' + t.name + ' ' + "★".repeat(f.ti + 1) + '</div>'
     + '<div class="fcpw' + ((f.used.pwr || f.used.hail || f.used.island) ? ' spent' : '') + '">⚡ ' + POWERS[f.ci - 1].name + ((f.used.pwr || f.used.hail || f.used.island) ? ' · USED' : '') + '</div><div class="fcatk">\uD83D\uDCA5 DMG ' + dmgOf(f) + ' · \u2764\uFE0F ' + (lifeOf(f) - f.hits) + '/' + lifeOf(f) + ' · cost \u00D7' + hitCost(f) + '</div>' + pipsHTML(f)
