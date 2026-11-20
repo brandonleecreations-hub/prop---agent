@@ -123,7 +123,7 @@ input[type=number]{width:110px}
 /* Narrow compact match cards (Brandon 2026-11-20: "not wide boxes") — in
    the family of the Live Center's compact game cards: fixed narrow basis,
    several peeking per row, tighter padding, smaller type. Pop stays. */
-.espmslider .card.game{flex:0 0 172px;scroll-snap-align:start;margin:0;padding:9px 10px;transform:scale(.965);opacity:.88;transition:transform .25s ease,opacity .25s ease,box-shadow .25s ease;background-image:linear-gradient(165deg,rgba(255,255,255,.08),rgba(255,255,255,0) 45%);box-shadow:0 10px 20px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.09)}
+.espmslider .card.game{flex:0 0 172px;min-width:0;flex-direction:column;align-items:stretch;justify-content:flex-start;scroll-snap-align:start;margin:0;padding:9px 10px;transform:scale(.965);opacity:.88;transition:transform .25s ease,opacity .25s ease,box-shadow .25s ease;background-image:linear-gradient(165deg,rgba(255,255,255,.08),rgba(255,255,255,0) 45%);box-shadow:0 10px 20px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.09)}
 .espmslider .card.game .note{font-size:11px;line-height:1.35}
 .espmslider .gscore{font-size:14px}
 .espmslider .card.game.uppop{transform:scale(1);opacity:1;box-shadow:0 18px 34px rgba(0,0,0,.55),0 0 0 2px rgba(167,139,250,.6),0 0 22px rgba(124,58,237,.35)}
@@ -6082,9 +6082,13 @@ function espMatchCard(game, it){
     var sc = st === "pre" ? null : (game === "cs2" ? (it.score ? it.score[i] : null) : (tm.wins != null ? tm.wins : null));
     return '<div class="gteam">' + espTeamLogo(tm, 18) + esc(tm.name || "") + (sc != null ? ' <span class="gscore">' + esc(sc) + '</span>' : '') + '</div>';
   }).join("");
-  var right = st === "in" ? "🔴 LIVE" : (st === "post" ? "🏁 Final" : esc(it.starts ? fmtFullDate(it.starts) : ""));
+  var right = st === "in" ? "🔴 LIVE" : (st === "post" ? "🏁 Final" : "");
   var label = (game === "cs2" ? "CS2" : "LoL") + (it.tournament ? " · " + it.tournament : (it.league ? " · " + it.league : ""));
-  return '<div class="card game' + (st === "in" ? " lv" : "") + '" data-game="esports|' + game + ':' + esc(ref) + '" style="cursor:pointer"><div class="row" style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span class="note espmlab" style="text-transform:uppercase;letter-spacing:.6px">' + esc(label) + '</span><span class="note" style="flex:0 0 auto">' + right + '</span></div><div style="margin-top:4px">' + rows + '</div><div class="note" style="margin-top:4px">Tap for Game Center →</div></div>';
+  /* Upcoming matches: the full date is too long for the 172px header row
+     (its flex:0 0 auto span inflated the card's min-content) — it gets
+     its own block line under the header instead, like .fcard .ftime. */
+  var dateLine = st === "pre" && it.starts ? '<div class="note" style="margin-top:2px">' + esc(fmtFullDate(it.starts)) + "</div>" : "";
+  return '<div class="card game' + (st === "in" ? " lv" : "") + '" data-game="esports|' + game + ':' + esc(ref) + '" style="cursor:pointer"><div class="row" style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span class="note espmlab" style="text-transform:uppercase;letter-spacing:.6px">' + esc(label) + '</span>' + (right ? '<span class="note" style="flex:0 0 auto">' + right + "</span>" : "") + "</div>" + dateLine + '<div style="margin-top:4px">' + rows + '</div><div class="note" style="margin-top:4px">Tap for Game Center →</div></div>';
 }
 function espFutCard(game, it){
   var t = it.teams || [];
