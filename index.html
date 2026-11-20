@@ -59,6 +59,15 @@ h2:first-child{margin-top:4px}
 .pstat{font-size:13px;font-weight:700;letter-spacing:2px;color:var(--txt);margin-top:12px;text-transform:uppercase}
 .pline-big{font-size:48px;font-weight:900;line-height:1.05;margin:2px 0 10px}
 .starts-pill{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.4px;color:var(--teal);border:1.5px solid var(--teal);border-radius:999px;padding:7px 14px;margin:2px 0 10px}
+/* Prop countdown (Brandon 2026-11-20): a small chip on every prop with a
+   known start - appears only inside the final hour (mm:ss; ONE 1s ticker
+   updates textContent only, no re-renders) and turns amber at 10:00 or
+   less. On player tiles it sits in the top-right corner, absolutely
+   positioned, so tile sizes and slider layouts never move. */
+.cdchip{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.3px;color:#c4b5fd;margin-left:6px;vertical-align:middle;white-space:nowrap}
+.cdchip.cdwarn{color:#fbbf24}
+.ptile{position:relative}
+.ptile .cdchip{position:absolute;top:6px;right:8px;margin-left:0}
 .psrc{font-size:12px;color:var(--mut);line-height:1.5}
 .pimg{width:64px;height:64px;border-radius:50%;background:var(--panel2);object-fit:cover;flex:0 0 auto;border:1px solid var(--line)}
 .pinit{width:64px;height:64px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:var(--gold);flex:0 0 auto}
@@ -1908,6 +1917,24 @@ function renderSlip(el){
 function renderAllSlips(){ renderSlip($("slipHome")); renderSlip($("slipSport")); renderSlip($("slipBuildTop")); renderSlip($("slipBuild")); renderSlip($("slipDlg")); updateSlipChip(); }
 
 /* ---------- prop cards ---------- */
+function cdChipHtml(starts){ var t = starts ? new Date(starts).getTime() : NaN; return isFinite(t) ? '<span class="cdchip" data-cd="' + t + '" style="display:none"></span>' : ''; }
+function cdTick(){
+  var nodes = document.querySelectorAll("[data-cd]");
+  if (!nodes.length) return;
+  var now = Date.now();
+  for (var i = 0; i < nodes.length; i++){
+    var n = nodes[i], rem = parseInt(n.getAttribute("data-cd"), 10) - now;
+    if (rem > 0 && rem <= 3600000){
+      var s = Math.ceil(rem / 1000);
+      var txt = "\u23F1 " + Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+      if (n.textContent !== txt) n.textContent = txt;
+      if (n.style.display === "none") n.style.display = "";
+      var warn = rem <= 600000;
+      if (warn !== n.classList.contains("cdwarn")) n.classList.toggle("cdwarn", warn);
+    } else if (n.style.display !== "none") n.style.display = "none";
+  }
+}
+setInterval(cdTick, 1000);
 function propCard(p, vo){
   /* Original layout: purple-gradient photo banner, centered name / team /
      matchup / stat / GIANT line, teal STARTS pill, source lines, MORE (purple)
@@ -1926,7 +1953,7 @@ function propCard(p, vo){
     + (matchLine ? '<div class="pmeta">'+esc(matchLine)+'</div>' : '')
     + '<div class="pstat">'+esc(p.stat)+'</div>'
     + '<div class="pline-big">'+p.line+'</div>' + (p.pct!=null ? '<div><span class="pctchip">'+p.pct+'% IMPLIED</span></div>' : '')
-    + (startsTxt ? '<div><span class="starts-pill">'+esc(startsTxt)+'</span></div>' : '')
+    + (startsTxt ? '<div><span class="starts-pill">'+esc(startsTxt)+'</span>' + cdChipHtml(p.starts) + '</div>' : '')
     + (p.liveActual!=null && !vo ? '<div class="plive-line">LIVE · '+p.liveActual+' '+esc(p.stat)+' so far · line '+p.line+'</div>' : '')
     + (p.half || (p.brk && !vo) ? '' : '<div class="l5row" data-l5="1" data-aid="'+esc(p.athleteId||"")+'" data-player="'+esc(p.player)+'" data-lg="'+esc(p.league)+'" data-stat="'+esc(p.stat)+'" data-line="'+p.line+'"></div>')
     + '<div class="psrc">PrizePicks · '+esc(p.leagueLabel)+' · via Parlay API'+(srcDate ? ' · '+esc(srcDate) : '')+'</div>'
@@ -1965,7 +1992,7 @@ function tileHtml(g){
   return '<div class="ptile" data-player="'+esc(g.player)+'" data-league="'+esc(g.league)+'">'
     + '<span class="pwrap"><span class="pinit">'+esc(initials(g.player))+'</span>' + (g.img ? '<img src="'+esc(g.img)+'" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>'
     + '<div class="pn">'+esc(g.player)+'</div><div class="pm">'+esc([g.team, g.leagueLabel].filter(function(x){ return x; }).join(" · "))+'</div>'
-    + '<span class="pc">'+g.props.length+' prop'+(g.props.length===1?"":"s")+(g.starts ? ' · '+esc(fmtClock(g.starts)) : '')+'</span>'
+    + '<span class="pc">'+g.props.length+' prop'+(g.props.length===1?"":"s")+(g.starts ? ' · '+esc(fmtClock(g.starts)) : '')+'</span>' + cdChipHtml(g.starts)
     + (g.brk ? '<br><span class="plive" style="background:rgba(245,197,24,.16);color:var(--gold)">⏸ '+esc(g.brkDetail || "AT THE BREAK")+'</span>' : (lt ? '<br><span class="plive">LIVE · '+esc(lt.detail)+'</span>' : '')) + '</div>';
 }
 function bindTiles(scope){ if (!scope) return; scope.querySelectorAll("[data-player]").forEach(function(t){ t.addEventListener("click", function(){ openPlayer(t.getAttribute("data-player"), t.getAttribute("data-league"), t.getAttribute("data-viewonly")==="1", t.getAttribute("data-final")==="1"); }); }); }
@@ -2016,7 +2043,7 @@ function dlgPropCard(p, vo){
   return '<div class="dprop"><div class="dp-hd"><span class="dp-stat" title="'+esc(p.stat)+'">'+esc(p.stat)+'</span><span class="dp-line">'+p.line+'</span>'
     + (p.half ? '<span class="dp-halfb">⏱ 1ST HALF</span>' : '')
     + (p.liveActual!=null && !vo ? '<span class="dp-now">now '+p.liveActual+'</span>' : '')
-    + '</div><div class="dp-row2">' + act + strip + '</div></div>';
+    + cdChipHtml(p.starts) + '</div><div class="dp-row2">' + act + strip + '</div></div>';
 }
 function dlgOrdered(list){
   var full = list.filter(function(p){ return !p.half; });
@@ -3259,7 +3286,7 @@ function renderGameProps(lg, s){
       return '<div class="gprow" data-player="' + esc(g.player) + '" data-league="' + esc(g.league) + '">'
         + '<span class="pwrap"><span class="pinit">' + esc(initials(g.player)) + '</span>' + (g.img ? '<img src="' + esc(g.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>'
         + '<span class="gpm"><span class="gpn">' + esc(g.player) + ' <span class="gpc">' + g.props.length + ' prop' + (g.props.length === 1 ? "" : "s") + '</span></span>'
-        + '<span class="gpl">' + tops + more + '</span></span>'
+        + '<span class="gpl">' + tops + more + cdChipHtml(g.starts) + '</span></span>'
         + '<span class="gpa">\u203A</span></div>';
     };
     if (liveView || finalView){
@@ -6114,7 +6141,7 @@ function espTileHtml(g, vo){
   return '<div class="ptile esptile" data-player="' + esc(g.player) + '" data-league="esports"' + (vo ? ' data-viewonly="1"' : '') + (vo === "final" ? ' data-final="1"' : '') + '>'
     + '<span class="pwrap"><span class="pinit">' + esc(initials(g.player)) + '</span>' + (g.img ? '<img src="' + esc(g.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>'
     + '<div class="pn">' + esc(g.player) + '</div><div class="pm">' + esc([g.team, g.game === "lol" ? "League of Legends" : "Counter-Strike 2"].filter(function(x){ return x; }).join(" · ")) + '</div>'
-    + '<span class="pc">' + g.props.length + ' prop' + (g.props.length === 1 ? "" : "s") + (g.starts ? ' · ' + esc(fmtClock(g.starts)) : '') + '</span>'
+    + '<span class="pc">' + g.props.length + ' prop' + (g.props.length === 1 ? "" : "s") + (g.starts ? ' · ' + esc(fmtClock(g.starts)) : '') + '</span>' + cdChipHtml(g.starts)
     + (vo ? '<br><span class="plive">' + (vo === "final" ? "🏁 FINAL" : "🔴 LIVE") + '</span>' : '') + '</div>';
 }
 function espWireSliders(scope){
