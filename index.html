@@ -690,13 +690,13 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #searchResults .ptile{animation:tilein .32s ease backwards}
 #searchResults .bslider .ptile:nth-child(2){animation-delay:.03s}#searchResults .bslider .ptile:nth-child(3){animation-delay:.06s}#searchResults .bslider .ptile:nth-child(4){animation-delay:.09s}#searchResults .bslider .ptile:nth-child(5){animation-delay:.12s}#searchResults .bslider .ptile:nth-child(6){animation-delay:.15s}#searchResults .bslider .ptile:nth-child(7){animation-delay:.18s}#searchResults .bslider .ptile:nth-child(8){animation-delay:.21s}#searchResults .bslider .ptile:nth-child(9){animation-delay:.24s}#searchResults .bslider .ptile:nth-child(10){animation-delay:.27s}
 @keyframes tilein{from{opacity:0;transform:translateY(9px) scale(.96)}to{opacity:1;transform:none}}
-#searchResults .bslider{display:flex;gap:10px;overflow-x:auto;padding:12px 2px 16px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#searchResults .bslider{display:flex;gap:10px;overflow-x:auto;padding:14px 4px 18px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 #searchResults .bgamepills{display:flex;gap:6px;overflow-x:auto;padding:0 2px 9px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 #searchResults .bgamepills::-webkit-scrollbar{display:none}
 #searchResults .bgamepill{padding:4px 10px;font-size:11.5px;font-weight:800}
 #searchResults .bslider::-webkit-scrollbar{display:none}
-#searchResults .bslider .ptile{flex:0 0 118px;scroll-snap-align:center;transform:scale(.955);opacity:.86;background-image:linear-gradient(165deg,rgba(255,255,255,.10),rgba(255,255,255,0) 45%);box-shadow:0 8px 18px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.13);transition:transform .25s ease,opacity .25s ease,box-shadow .25s ease,border-color .15s ease}
-#searchResults .bslider .ptile.uppop{transform:scale(1);opacity:1;box-shadow:0 20px 36px rgba(0,0,0,.62),0 6px 14px rgba(0,0,0,.5),0 0 0 1px rgba(178,107,255,.30),inset 0 1px 0 rgba(255,255,255,.22),0 0 18px rgba(196,168,255,.55),0 0 6px rgba(196,168,255,.45)}
+#searchResults .bslider .ptile{flex:0 0 118px;scroll-snap-align:center;transform:scale(.94);opacity:.8;background-image:linear-gradient(165deg,rgba(255,255,255,.10),rgba(255,255,255,0) 45%);box-shadow:0 8px 18px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.13);transition:transform .25s ease,opacity .25s ease,box-shadow .25s ease,border-color .15s ease}
+#searchResults .bslider .ptile.uppop{transform:scale(1.05);opacity:1;box-shadow:0 20px 36px rgba(0,0,0,.62),0 6px 14px rgba(0,0,0,.5),0 0 0 1px rgba(178,107,255,.30),inset 0 1px 0 rgba(255,255,255,.22),0 0 18px rgba(196,168,255,.55),0 0 6px rgba(196,168,255,.45)}
 #searchResults .bslider .ptile:active{transform:scale(.93)}
 #searchResults .bteamhead{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:800;color:#efe9ff;letter-spacing:.3px;margin:13px 2px 1px}
 #searchResults .bteamhead .bcount{font-size:11px;font-weight:700;color:#b7a8e8}
@@ -1327,10 +1327,6 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <div class="row" style="justify-content:space-between;margin:0 0 12px"><h3 style="margin:0;font-size:17px">Future Games</h3><span class="badge" id="propCountPill"></span></div>
     <p class="sub">Every card is a real PrizePicks line — player, team, matchup, stat and the big line, labeled with its source. A prop is on this board <b>only</b> before its game starts — the moment a game tips off, its props come off the board.</p>
     <div class="searchbar"><input type="text" id="boardSearch" placeholder="Find a player — tap their tile and all their props pop up"></div>
-    <div class="tabs" id="boardSort" style="margin:2px 0 8px">
-      <button type="button" class="tab on" data-sort="popular">Popular first</button>
-      <button type="button" class="tab" data-sort="pct">Best %</button>
-    </div>
     <div class="tabs" id="gameFilters" style="margin:0 0 8px"></div>
     <div class="tabs" id="propFilters" style="margin:0 0 12px"></div>
     <div id="popWrap" style="display:none"><h3 style="margin:4px 0 8px;font-size:16px">Popular Players</h3><div class="pgrid" id="popTiles"></div></div>
@@ -1369,10 +1365,6 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <p class="sub"><b>1 ·</b> Tap a player — all their props pop up &nbsp;·&nbsp; <b>2 ·</b> Tap MORE or LESS — it's on your slip &nbsp;·&nbsp; <b>3 ·</b> Pick at least 2 and lock in below. No money, no typing — just More or Less.</p>
     <div class="card slip" id="slipBuildTop" style="margin:0 0 12px"></div>
     <div class="searchbar"><input type="text" id="searchInput" placeholder="Find a player — type a name or team (e.g. “Ball”)"></div>
-    <div class="tabs" id="buildSort" style="margin:2px 0 8px">
-      <button type="button" class="tab" data-bsort="popular">Popular first</button>
-      <button type="button" class="tab on" data-bsort="pct">Best %</button>
-    </div>
     <div class="tabs" id="buildSports" style="margin:0 0 4px"></div>
     <div id="searchResults"><p class="empty">Loading players…</p></div>
     <div class="card slip" id="slipBuild" style="margin-top:14px"></div>
@@ -1957,8 +1949,8 @@ function propCard(p, vo){
     + (vo ? '<div class="ml"><span class="gplive">' + (vo === "final" ? (p.liveActual!=null ? '🏁 FINAL · final ' + p.liveActual + ' ' + esc(p.stat) : '🏁 FINAL · view only') : (p.liveActual!=null ? '🔴 LIVE · now ' + p.liveActual + ' ' + esc(p.stat) : '🔴 LIVE · view only')) + '</span></div>' : '<div class="ml"><button class="more'+(slipHas(p.id,"MORE")?" sel":"")+'" data-pick="'+esc(p.id)+'|MORE">MORE<span>'+esc(sub)+'</span></button><button class="less'+(slipHas(p.id,"LESS")?" sel":"")+'" data-pick="'+esc(p.id)+'|LESS">LESS<span>'+esc(sub)+'</span></button></div>')
     + '</div></div>';
 }
-var boardQuery = "", boardSort = "popular";
-var buildSort = "pct", buildSport = "all";
+var boardQuery = "";
+var buildSport = "all";
 var buildGameByLeague = {};   /* league key -> selected Build matchup pill (game key, or "__other") */
 var buildSportList = [];      /* regular league keys with a Build section in the latest render, display order */
 var buildSportLabels = {};    /* league key -> sport pill label (the section's own name) */
@@ -2551,9 +2543,9 @@ function boardGamesFor(lg, ps){
   return { list: list, keyOf: keyOf, byKey: byKey };
 }
 function renderBoardTiles(lg, ps){
-  /* "Start time" sort was removed (Brandon 2026-11-20): a stale "time"
-     state falls back to Popular first, pill highlight included. */
-  if (boardSort === "time") { boardSort = "popular"; document.querySelectorAll("#boardSort [data-sort]").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-sort") === boardSort); }); }
+  /* Sort pills removed entirely (Brandon 2026-11-20): boards run ONE
+     fixed order — Popular first (most props, then best %, then earliest
+     start), the order the Popular Players section has always used. */
   var stats = [];
   ps.forEach(function(p){ if (stats.indexOf(p.stat)<0) stats.push(p.stat); });
   var counts = {}; ps.forEach(function(p){ counts[p.stat] = (counts[p.stat]||0)+1; });
@@ -2589,10 +2581,10 @@ function renderBoardTiles(lg, ps){
     gs = gs.map(gOnly).filter(function(g){ return g.props.length; });
     brkGroups = brkGroups.map(gOnly).filter(function(g){ return g.props.length; }); }
   brkGroups = sortGroups(brkGroups, "pct");
-  gs = sortGroups(gs, boardSort);
+  gs = sortGroups(gs, "popular");
   var filtered = boardStat!=="all" || boardGame!=="all" || boardQuery;
   var pw = $("popWrap");
-  if (pw){ if (!filtered && boardSort==="popular" && gs.length>3){ pw.style.display = ""; setHtml($("popTiles"), gs.slice(0,6).map(tileHtml).join("")); bindTiles($("popTiles")); } else pw.style.display = "none"; }
+  if (pw){ if (!filtered && gs.length>3){ pw.style.display = ""; setHtml($("popTiles"), gs.slice(0,6).map(tileHtml).join("")); bindTiles($("popTiles")); } else pw.style.display = "none"; }
   var box = $("sportProps");
   var brkHtml = "";
   if (brkGroups.length){
@@ -3792,7 +3784,7 @@ function buildSlidersInit(box){
   if (!box) return;
   box.querySelectorAll(".bslider").forEach(function(tr, i){ popSliderInit(tr, "bld" + i, ".ptile", "0px -30% 0px -30%"); });
 }
-/* Build sport pills (Brandon 2026-11-20): the row under the sort pills
+/* Build sport pills (Brandon 2026-11-20): the row under the search bar
    picks ONE sport for the whole Build page \u2014 "All sports" plus one pill
    per sport that actually has a section. It replaces the old team row:
    inside a sport, props are organized BY GAME (the matchup pills), never
@@ -3821,8 +3813,9 @@ function renderBuild(){
   allProps().then(function(ps){
     var gs = playerGroups(ps);
     if (q) gs = gs.filter(function(g){ return (g.player+" "+g.team+" "+g.props.map(function(p){ return p.stat; }).join(" ")).toLowerCase().indexOf(q)>-1; });
-    if (buildSort === "time") { buildSort = "popular"; document.querySelectorAll("#buildSort [data-bsort]").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-bsort") === buildSort); }); }
-    gs = sortGroups(gs, buildSort);
+    /* Sort pills removed entirely (Brandon 2026-11-20): Build keeps its
+       one fixed arrangement (Best % order) — no UI, no state. */
+    gs = sortGroups(gs, "pct");
     var byLeague = {}, lorder = [];
     gs.forEach(function(g){ var L = g.league || "other"; if (!byLeague[L]){ byLeague[L] = []; lorder.push(L); } byLeague[L].push(g); });
     var EMO = {nfl:"\uD83C\uDFC8",nba:"\uD83C\uDFC0",nhl:"\uD83C\uDFD2",cfb:"\uD83C\uDFC8",cbb:"\uD83C\uDFC0",wbb:"\uD83C\uDFC0",mlb:"\u26BE",tennis:"\uD83C\uDFBE"};
@@ -3864,8 +3857,6 @@ function renderBuild(){
 
 $("searchInput").addEventListener("input", function(e){ renderSearch(e.target.value); });
 var bsEl = $("boardSearch"); if (bsEl) bsEl.addEventListener("input", function(e){ boardQuery = e.target.value.trim().toLowerCase(); renderBoards(); });
-document.querySelectorAll("#boardSort [data-sort]").forEach(function(b){ b.addEventListener("click", function(){ boardSort = b.getAttribute("data-sort"); document.querySelectorAll("#boardSort [data-sort]").forEach(function(x){ x.classList.toggle("on", x===b); }); renderBoards(); }); });
-document.querySelectorAll("#buildSort [data-bsort]").forEach(function(b){ b.addEventListener("click", function(){ buildSort = b.getAttribute("data-bsort"); document.querySelectorAll("#buildSort [data-bsort]").forEach(function(x){ x.classList.toggle("on", x===b); }); renderBuild(); }); });
 document.querySelectorAll(".hlopen").forEach(function(b){ b.addEventListener("click", function(){ showView("live"); }); });
 /* #slipChip is wired inside updateSlipChip(): the button element sits after this script in the DOM, so it does not exist at this point in the boot. */
 (function(){ var sel = $("cSport"); LEAGUES.slice(1).forEach(function(l){ var o=document.createElement("option"); o.value=l.key; o.textContent=l.label; sel.appendChild(o); }); })();
