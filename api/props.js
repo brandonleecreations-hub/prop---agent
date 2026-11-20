@@ -39,6 +39,18 @@ const SPORT_KEYS = [
   // rides the brk lane. Pending Brandon's go/no-go for a full Soccer tab;
   // if the test proves props, the gate mapping + windows follow.
   "soccer_epl",
+  // SOCCER TEST batch 2 (Brandon 2026-11-19, "do soccer too right now"):
+  // MLS + La Liga + Bundesliga + Ligue 1 all have fixtures within 48h, so
+  // these keys get the same player-props-vs-match-lines proof pull as
+  // soccer_epl. Same rules: NO ESPN_PATHS entries (gate fails open, test
+  // pulls ride the brk lane), pending Brandon's go/no-go for a Soccer tab.
+  "soccer_usa_mls", "soccer_spain_la_liga", "soccer_germany_bundesliga",
+  "soccer_france_ligue_one",
+  // ESPORTS TEST (Brandon 2026-11-19): CS2 + League of Legends admitted to
+  // prove whether Parlay's esports keys carry real PLAYER PROPS. Same
+  // brk-lane test rules as the soccer keys above; stats/scores would come
+  // from PandaScore if Brandon green-lights an Esports section.
+  "esports_cs2", "esports_lol",
 ];
 
 const STAT_LABELS = {
