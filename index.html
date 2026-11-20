@@ -2129,6 +2129,7 @@ function fillPlayerDlg(){
   var list = (propsCache[dlgPlayer.league]||[]).filter(function(p){ return p.player===dlgPlayer.name; });
   var body = $("playerDlgBody"); if (!body) return;
   if (!list.length){ body.className = ""; body.innerHTML = '<p class="empty">No props found for '+esc(dlgPlayer.name)+'.</p>'; return; }
+  if (dlgPlayer.league === "esports" && typeof espOpen !== "undefined" && espOpen && espOpen.data) espApplyLiveActuals(espOpen.data);
   var g = playerGroups(list)[0];
   var live = liveTeamsByLeague[g.league] && liveTeamsByLeague[g.league][(g.team || "").toLowerCase()];
   var bmD = (breakMap[g.league] && g.team) ? breakMap[g.league][g.team.toLowerCase()] : null;
@@ -6247,6 +6248,7 @@ function espRenderGc(){
   var gd = $("espGameDetail");
   if (!gd || !espOpen || !espOpen.data) return;
   var d = espOpen.data;
+  espApplyLiveActuals(d);
   gd.innerHTML = '<button class="gcBack" type="button">← All games</button>'
     + espScoreHeadHtml(d)
     + (d.game === "lol" ? espLolSbHtml(d) : espCs2SbHtml(d))
@@ -6368,6 +6370,64 @@ function espLolPlHtml(p, d, side){
 function espLolGoldHtml(pb, pr){
   var gb = pb ? pb.gold || 0 : 0, gr = pr ? pr.gold || 0 : 0, t = (gb + gr) || 1;
   return '<div class="lolgc"><div class="lolgn"><span>' + gb.toLocaleString() + '</span><span>' + gr.toLocaleString() + '</span></div><div class="lolbar"><i class="b" style="width:' + Math.round(gb / t * 100) + '%"></i><i class="r" style="width:' + Math.round(gr / t * 100) + '%"></i></div></div>';
+}
+/* ----- Live/final values on Game Center prop rows (Brandon 2026-11-20) -----
+   The regular sports set p.liveActual from the ESPN summary; esports props
+   get theirs from the open match's own stat tables (espOpen.data) — the
+   same numbers the scoreboard above them shows. Scoped sums mirror the
+   server grade lane (espScope/espStatKind): "MAPS 1-2 Kills" sums maps
+   1+2, an unscoped stat sums every map with posted stats. Display only —
+   grading still resolves through the server lane and stays unresolved
+   until the series is final. Values land on the shared propsCache rows,
+   so the player dialog's LIVE/FINAL chips light up and refresh with the
+   Game Center's own cadence. */
+function espScopeOf(stat){
+  var s = String(stat || "");
+  if (/maps?\s*1\s*[-\u2013]\s*2/i.test(s)) return [1, 2];
+  var m = /map\s*(\d)/i.exec(s);
+  if (m) return [parseInt(m[1], 10)];
+  return null;
+}
+function espKindOf(stat){
+  var s = String(stat || "").toLowerCase();
+  if (/headshot/.test(s)) return "hs";
+  if (/kill/.test(s)) return "k";
+  if (/death/.test(s)) return "d";
+  if (/assist/.test(s)) return "a";
+  if (/\bcs\b|creep/.test(s)) return "cs";
+  return "";
+}
+function espLiveValueFor(d, p){
+  var kind = espKindOf(p.stat); if (!kind) return null;
+  var pk = espNK(p.player); if (!pk) return null;
+  var total = 0, found = false;
+  if (d.game === "cs2") {
+    var scope = espScopeOf(p.stat);
+    (d.maps || []).forEach(function(m){
+      if (scope && scope.indexOf(m.n) === -1) return;
+      var row = (m.players || []).filter(function(r){ return espNK(r.nick) === pk || espNK(r.name) === pk; })[0];
+      if (!row) return;
+      total += kind === "hs" ? (row.hs || 0) : kind === "d" ? (row.d || 0) : kind === "a" ? (row.a || 0) : (row.k || 0);
+      found = true;
+    });
+  } else if (d.game === "lol") {
+    (d.games || []).forEach(function(g){
+      var row = (g.players || []).filter(function(r){ return espNK(r.name) === pk || espNK(r.full) === pk; })[0];
+      if (!row) return;
+      total += kind === "k" ? (row.k || 0) : kind === "d" ? (row.d || 0) : kind === "a" ? (row.a || 0) : (row.cs || 0);
+      found = true;
+    });
+  }
+  return found ? total : null;
+}
+function espApplyLiveActuals(d){
+  if (!d || (d.state !== "in" && d.state !== "post")) return;
+  (propsCache.esports || []).forEach(function(p){
+    if (p.game !== d.game) return;
+    if (d.game === "cs2" && p.eventId !== "cs2:" + d.slug) return;
+    var v = espLiveValueFor(d, p);
+    if (v != null) p.liveActual = v;
+  });
 }
 /* ----- Game Center props ----- */
 function espGcPropsHtml(d){
