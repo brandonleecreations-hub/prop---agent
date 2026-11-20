@@ -291,6 +291,13 @@ img[src*="stamp=1"]{padding:2px;box-sizing:border-box;background-color:rgba(122,
 @keyframes posterglow{0%,100%{box-shadow:0 10px 22px rgba(0,0,0,.5),0 0 14px rgba(245,185,66,.28)}50%{box-shadow:0 10px 22px rgba(0,0,0,.5),0 0 28px rgba(245,185,66,.55)}}
 @media (prefers-reduced-motion: reduce){.posterad,.posterad img{animation:none}}
 .fslider{display:flex;gap:9px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.upslider{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:16px 4px 18px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.upslider::-webkit-scrollbar{display:none}
+.upslider .card.game{flex:0 0 78%;scroll-snap-align:center;margin:0;transform:scale(.955);opacity:.85;transition:transform .25s ease,opacity .25s ease,box-shadow .25s ease;background-image:linear-gradient(165deg,rgba(255,255,255,.10),rgba(255,255,255,0) 45%);box-shadow:0 8px 18px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.13)}
+.upslider .card.game.uppop{transform:scale(1);opacity:1;box-shadow:0 20px 36px rgba(0,0,0,.62),0 6px 14px rgba(0,0,0,.5),0 0 0 1px rgba(178,107,255,.30),inset 0 1px 0 rgba(255,255,255,.22)}
+.upslider.few1 .card.game{flex-basis:88%;margin:0 auto}
+.upslider.few2 .card.game{flex-basis:46%}
+@media (prefers-reduced-motion: reduce){ .upslider .card.game{transition:none} }
 .fslider::-webkit-scrollbar{display:none}
 .fcard{flex:0 0 auto;width:158px;scroll-snap-align:start;background:#12121c;border:1px solid var(--line);border-radius:12px;padding:8px 10px;cursor:pointer}
 .ftime{font-size:11px;color:var(--purp-lt);font-weight:700;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -2388,6 +2395,22 @@ function renderTopAgents(){
     return '<div class="leg'+(r.id?' agentclick':'')+'"'+(r.id?' data-agent="'+r.id+'"':'')+'><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px' + frameCss(r.featured, 2, r.avatar) + '">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.name+'</span>'+streakBadge(r.streak)+'</div><span class="note">'+r.ticketWins+' winning tickets</span></div>';
   }).join("")+'</div>');
 }
+var upObserver = null;
+function upSliderInit(){
+  if (upObserver) { upObserver.disconnect(); upObserver = null; }
+  var box = $("upcoming"); if (!box) return;
+  var track = box.querySelector(".upslider"); if (!track) return;
+  var cards = track.querySelectorAll(".card.game"); if (!cards.length) return;
+  cards.forEach(function(c){ c.classList.remove("uppop"); });
+  cards[0].classList.add("uppop");
+  if (!("IntersectionObserver" in window)) return;
+  upObserver = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if (en.intersectionRatio >= 0.6) cards.forEach(function(c){ c.classList.toggle("uppop", c === en.target); });
+    });
+  }, { root: track, threshold: [0.6, 0.9] });
+  cards.forEach(function(c){ upObserver.observe(c); });
+}
 function renderUpcoming(){
   var jobs = PROP_LEAGUES.concat(["tennis","mlb"]).map(function(k){ var lg = leagueByKey(k); return getScoreboard(lg, 3).then(function(ev){ return {lg:lg, ev:ev}; }); });
   Promise.all(jobs).then(function(rs){
@@ -2470,13 +2493,14 @@ function renderUpcoming(){
        shown when it has games, left off the page entirely when it has
        none (Brandon 2026-11-17). Rows already tap through to Game Center. */
     var _su = $("secUpcoming"); if (_su) _su.style.display = (window._liveNow === 0 && !ups.length) ? "none" : "";
-    var upChanged = setHtml($("upcoming"), ups.length ? ups.map(function(u){
+    var upChanged = setHtml($("upcoming"), ups.length ? '<div class="upslider' + (ups.length === 1 ? ' few1' : ups.length === 2 ? ' few2' : '') + '">' + ups.map(function(u){
       var ts = eventTeams(u.ev);
       var aU = ts.filter(function(t){ return t.homeAway==="away"; })[0], hU = ts.filter(function(t){ return t.homeAway==="home"; })[0];
       var mHtml = (aU && hU) ? tlogoImg(aU.logo,17)+esc(aU.name)+' @ '+tlogoImg(hU.logo,17)+esc(hU.name) : ts.map(function(t){ return tlogoImg(t.logo,17)+esc(t.name); }).join(' @ ');
       return '<div class="card game" data-game="'+u.lg.key+'|'+u.ev.id+'" style="cursor:pointer"><div><div class="gteam">'+mHtml+'</div><div style="color:var(--purp-lt);font-size:11.5px;font-weight:800;letter-spacing:1.2px;margin-top:2px">'+esc(u.lg.label.toUpperCase())+'</div></div><div class="gstat">'+esc(fmtDay(u.ev.date))+' '+esc(new Date(u.ev.date).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}))+'</div></div>';
-    }).join("") : '<p class="empty">No upcoming games found right now.</p>');
+    }).join("") + '</div>' : '<p class="empty">No upcoming games found right now.</p>');
     if (upChanged) $("upcoming").querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); showView("live"); window._gameFrom = "home"; openGame(p[0], p[1]); }); });
+    if (upChanged) upSliderInit();
   });
 }
 function articleHtml(a, picks){
