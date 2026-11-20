@@ -682,6 +682,15 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .vidcard img{width:118px;height:66px;object-fit:cover;border-radius:9px;display:block;background:#1b1030}
 .vidplay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;text-shadow:0 2px 8px rgba(0,0,0,.85)}
 #slipChip{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:60;background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none;font-weight:800;padding:11px 18px;border-radius:999px;box-shadow:0 10px 24px rgba(124,58,237,.5);display:none;cursor:pointer}
+/* Build-tab slip pop (Brandon 2026-11-19: "fix it and make it look cool
+   and pop") — on the Build view the ticket being built gets the app's pop
+   treatment: deep purple gradient, glow ring, soft sheen sweep. Same
+   size/footprint family as the slip elsewhere; the LOCKED IN stamp
+   animation is untouched, and the sheen never intercepts taps. */
+#view-build .card.slip{position:relative;background:linear-gradient(160deg,#2a1650,#170b31 60%,#120826);border:1px solid rgba(178,107,255,.55);box-shadow:0 12px 30px -10px rgba(124,58,237,.55),0 0 0 1px rgba(178,107,255,.22),inset 0 1px 0 rgba(255,255,255,.09)}
+#view-build .card.slip::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.09) 48%,rgba(255,255,255,.02) 52%,transparent 70%);background-size:250% 100%;animation:slippopshine 3.6s ease-in-out infinite}
+@keyframes slippopshine{0%{background-position:120% 0}55%,100%{background-position:-120% 0}}
+@media (prefers-reduced-motion: reduce){ #view-build .card.slip::after{animation:none} }
 .teamhead{font-size:15px;font-weight:900;margin:18px 0 8px;color:var(--purp-lt);letter-spacing:.4px}
 #playerDlg{max-width:520px;width:96vw;height:auto;max-height:100dvh;padding:12px 12px 10px;overflow:hidden}
 #playerDlgBody{display:flex;flex-direction:column;min-height:0}
@@ -1259,6 +1268,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <section class="view" id="view-build">
     <h2>Build Your Ticket</h2>
     <p class="sub"><b>1 ·</b> Tap a player — all their props pop up &nbsp;·&nbsp; <b>2 ·</b> Tap MORE or LESS — it's on your slip &nbsp;·&nbsp; <b>3 ·</b> Pick at least 2 and lock in below. No money, no typing — just More or Less.</p>
+    <div class="card slip" id="slipBuildTop" style="margin:0 0 12px"></div>
     <div class="searchbar"><input type="text" id="searchInput" placeholder="Find a player — type a name or team (e.g. “Ball”)"></div>
     <div class="tabs" id="buildSort" style="margin:2px 0 8px">
       <button type="button" class="tab" data-bsort="popular">Popular first</button>
@@ -1798,7 +1808,7 @@ function renderSlip(el){
   });
 }
 
-function renderAllSlips(){ renderSlip($("slipHome")); renderSlip($("slipSport")); renderSlip($("slipBuild")); updateSlipChip(); }
+function renderAllSlips(){ renderSlip($("slipHome")); renderSlip($("slipSport")); renderSlip($("slipBuildTop")); renderSlip($("slipBuild")); updateSlipChip(); }
 
 /* ---------- prop cards ---------- */
 function propCard(p, vo){
@@ -3505,29 +3515,39 @@ function ensureTeamLogos(L){
     applyTeamLogos(L);
   }).catch(function(){ teamLogoState[L] = "fail"; });
 }
-function buildSectionHtml(L, all, label, EMO){
-  var tset = {}; all.forEach(function(g){ if (g.team) tset[g.team] = 1; });
-  var tlist = Object.keys(tset).sort();
-  if (tlist.length) ensureTeamLogos(L);
-  var sel = buildTeamByLeague[L] || "all";
-  if (sel !== "all" && !tset[sel]){ sel = "all"; delete buildTeamByLeague[L]; }
-  var shown = (sel === "all") ? all : all.filter(function(g){ return g.team === sel; });
-  var pills = (tlist.length >= 2) ? '<div class="bteampills"><button type="button" class="tab bteampill'+(sel==="all"?" on":"")+'" data-btpill="'+esc(L)+'" data-btteam="all">All</button>' + tlist.map(function(t){ return '<button type="button" class="tab bteampill'+(sel===t?" on":"")+'" data-btpill="'+esc(L)+'" data-btteam="'+esc(t)+'">'+esc(t)+'</button>'; }).join("") + '</div>' : "";
-  /* Brandon 2026-11-19: Build props grouped BY TEAM — each team gets its
-     own labeled slider under the sport. Stable partition of the shown list
-     (same team attribution the pills use), so player order inside a team is
-     unchanged; groups alphabetical like the pills; players with no known
-     team land in a final Other group. No player is dropped or duplicated. */
+function buildSectionHtml(L, all, label, EMO, searching){
+  /* Brandon 2026-11-19: Build props grouped BY TEAM (v1.0.93) — each team
+     gets its own labeled slider under the sport; players with no known
+     team land in a final Other group. The team pills are now true TABS
+     (Brandon, later 2026-11-19): there is no "All" view — a section shows
+     ONE team's group at a time, the selected tab's. Group order is the
+     same as the groups have always used (teams A-Z, Other last; the Other
+     group gets its own tab). Default selection is the first group; a
+     selection no longer on the board resets to the first group. While a
+     search query is active there is no tab row: matches show across teams
+     in their groups, so search can still find any player. A section with
+     a single group needs no tabs — it just shows that group's slider,
+     and a lone Other group keeps its headerless look. */
   var buckets = {}, border = [];
-  shown.forEach(function(g){ var t = g.team || ""; if (!buckets[t]){ buckets[t] = []; border.push(t); } buckets[t].push(g); });
+  all.forEach(function(g){ var t = g.team || ""; if (!buckets[t]){ buckets[t] = []; border.push(t); } buckets[t].push(g); });
   var gorder = border.filter(function(t){ return t !== ""; }).sort();
   if (buckets[""]) gorder.push("");
-  var multi = gorder.length > 1;
-  var groups = gorder.map(function(t){
-    var head = (t === "" && !multi) ? "" : '<div class="bteamhead" data-blogo="'+esc(L)+'" data-bteam="'+esc(t)+'">'+(t ? tlogoImg(buildTeamLogo(L, t), 22) : "")+esc(t || "Other")+' <span class="bcount">'+buckets[t].length+' player'+(buckets[t].length===1?"":"s")+'</span></div>';
+  if (gorder.some(function(t){ return !!t; })) ensureTeamLogos(L);
+  var pills = "", shownKeys;
+  if (searching || gorder.length < 2){
+    shownKeys = gorder;
+  } else {
+    var sel = buildTeamByLeague[L];
+    if (!buckets[sel]){ sel = gorder[0]; buildTeamByLeague[L] = sel; }
+    pills = '<div class="bteampills">' + gorder.map(function(t){ return '<button type="button" class="tab bteampill'+(sel===t?" on":"")+'" data-btpill="'+esc(L)+'" data-btteam="'+esc(t)+'">'+esc(t || "Other")+'</button>'; }).join("") + '</div>';
+    shownKeys = [sel];
+  }
+  var shownCount = 0; shownKeys.forEach(function(t){ shownCount += buckets[t].length; });
+  var groups = shownKeys.map(function(t){
+    var head = (t === "" && gorder.length === 1) ? "" : '<div class="bteamhead" data-blogo="'+esc(L)+'" data-bteam="'+esc(t)+'">'+(t ? tlogoImg(buildTeamLogo(L, t), 22) : "")+esc(t || "Other")+' <span class="bcount">'+buckets[t].length+' player'+(buckets[t].length===1?"":"s")+'</span></div>';
     return '<div class="bteamgroup" data-bgroup="'+esc(t || "other")+'">' + head + '<div class="bslider">' + buckets[t].map(tileHtml).join("") + '</div></div>';
   }).join("");
-  return '<div class="teamhead sporthead">'+(EMO[String(L).toLowerCase()]||"\uD83C\uDFC5")+' '+esc(label)+' \u00b7 '+shown.length+' players<span style="margin-left:auto;font-size:11px;color:#cdbcf5;font-weight:800;letter-spacing:.6px">SWIPE \u203a</span></div>' + pills + groups;
+  return '<div class="teamhead sporthead">'+(EMO[String(L).toLowerCase()]||"\uD83C\uDFC5")+' '+esc(label)+' \u00b7 '+shownCount+' players<span style="margin-left:auto;font-size:11px;color:#cdbcf5;font-weight:800;letter-spacing:.6px">SWIPE \u203a</span></div>' + pills + groups;
 }
 function buildSlidersInit(box){
   Object.keys(popObsBySlot).forEach(function(k){ if (k.indexOf("bld") === 0 && popObsBySlot[k]){ popObsBySlot[k].disconnect(); popObsBySlot[k] = null; } });
@@ -3549,17 +3569,18 @@ function renderBuild(){
     if (buildTeam!=="all") gs = gs.filter(function(g){ return g.team===buildTeam; });
     if (q) gs = gs.filter(function(g){ return (g.player+" "+g.team+" "+g.props.map(function(p){ return p.stat; }).join(" ")).toLowerCase().indexOf(q)>-1; });
     gs = sortGroups(gs, buildSort);
-    if (!gs.length){ box.innerHTML = '<p class="empty">No matching players — try another name or team.</p>'; buildSlidersInit(box); return; }
+    if (!gs.length){ box.innerHTML = '<p class="empty">No matching players — try another name or team.</p>'; buildSlidersInit(box); renderAllSlips(); return; }
     var byLeague = {}, lorder = [];
     gs.forEach(function(g){ var L = g.league || "other"; if (!byLeague[L]){ byLeague[L] = []; lorder.push(L); } byLeague[L].push(g); });
     var EMO = {nfl:"\uD83C\uDFC8",nba:"\uD83C\uDFC0",nhl:"\uD83C\uDFD2",cfb:"\uD83C\uDFC8",cbb:"\uD83C\uDFC0",wbb:"\uD83C\uDFC0",mlb:"\u26BE",tennis:"\uD83C\uDFBE"};
     var PRIO = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
     lorder.sort(function(a,b){ var ai = PRIO.indexOf(String(a).toLowerCase()), bi = PRIO.indexOf(String(b).toLowerCase()); ai = ai<0?99:ai; bi = bi<0?99:bi; return ai-bi; });
-    box.innerHTML = lorder.map(function(L){ var label = (byLeague[L][0] && byLeague[L][0].leagueLabel) || String(L).toUpperCase(); return buildSectionHtml(L, byLeague[L], label, EMO); }).join("") + espBuildSectionHtml();
+    box.innerHTML = lorder.map(function(L){ var label = (byLeague[L][0] && byLeague[L][0].leagueLabel) || String(L).toUpperCase(); return buildSectionHtml(L, byLeague[L], label, EMO, !!q); }).join("") + espBuildSectionHtml();
     renderBuildEsp();
     bindTiles(box);
     buildSlidersInit(box);
-    box.querySelectorAll("[data-btpill]").forEach(function(b){ b.addEventListener("click", function(){ var L2 = b.getAttribute("data-btpill"), t2 = b.getAttribute("data-btteam"); if (t2 === "all" || buildTeamByLeague[L2] === t2) delete buildTeamByLeague[L2]; else buildTeamByLeague[L2] = t2; renderBuild(); }); });
+    box.querySelectorAll("[data-btpill]").forEach(function(b){ b.addEventListener("click", function(){ var L2 = b.getAttribute("data-btpill"), t2 = b.getAttribute("data-btteam"); buildTeamByLeague[L2] = t2; renderBuild(); }); });
+    renderAllSlips();
   }).catch(function(){ box.innerHTML = '<p class="empty">Players could not load — check your connection and tap Refresh.</p>'; });
 }
 
