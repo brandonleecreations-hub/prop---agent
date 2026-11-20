@@ -6700,9 +6700,19 @@ renderBoard();
 lbResetMigrate();
 cloudInit();
 (function bootTab(){
-  /* Brandon 2026-11-18: opening the app ALWAYS starts on Home. New users
-     get the 10-second welcome first (it overlays), then land on Home. */
-  showView("home");
+  /* Brandon 2026-11-19: refresh/reopen stays on the tab you were on
+     (supersedes the 2026-11-18 always-Home rule). showView saves pa_tab on
+     every navigation; restore it here when valid. New users have no saved
+     tab, so they land on Home (the welcome overlays first). A saved sport
+     tab restores through setSport so its board actually renders. */
+  var t = lsGet("pa_tab", "");
+  if (t === "sport") {
+    var sk = lsGet("pa_sport", "");
+    if (sk && sk !== "all" && leagueByKey(sk).key === sk) { setSport(sk); return; }
+    t = "home";
+  }
+  if (["home", "tickets", "live", "build", "board"].indexOf(t) < 0) t = "home";
+  showView(t);
 })();
 if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").catch(function(){}); }
 setInterval(function(){ boardCache = {}; refreshHome(); if (window._view === "tickets") renderTickets(); if ($("view-live").classList.contains("on")){ renderLive(); if (window._openGame) openGame(window._openGame.key, window._openGame.eventId, true); }
