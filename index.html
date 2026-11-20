@@ -1108,7 +1108,6 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <!-- HOME -->
   <section class="view" id="view-home">
     <div id="liveHero"></div>
-    <div id="heroStats"></div>
     <p class="note" id="heroStatus"></p>
     <div id="pickemHome" class="pickemBox"></div>
     <div id="topTicket"></div>
@@ -2470,11 +2469,7 @@ function renderUpcoming(){
           if (newTrack && keepX) newTrack.scrollLeft = keepX;
         }
       }
-      var hst = $("heroStats");
-      if (hst && heroChanged) {
-        if (!liveAll.length) hst.innerHTML = "";
-        else { var tg = picks[0]; fetchJson(ESPN+tg.lg.sport+"/"+tg.lg.league+"/summary?event="+encodeURIComponent(tg.ev.id)).then(function(sm){ renderPerf(hst, tg.lg, sm); }).catch(function(){ hst.innerHTML = ""; }); }
-      }
+      /* game card under the live slider removed from Home 2026-11-19 at Brandon's word */
     } catch(e) { /* hero is decorative — never break Home */ }
     var ups = [];
     rs.forEach(function(r){ r.ev.forEach(function(ev){
@@ -2656,25 +2651,6 @@ function renderNews(){
       }
     });
   });
-}
-/* ---------- home hero stats card: linescores / team totals only — Top Performers
-   removed from Home 2026-11-19 at Brandon's word (Game Center keeps its own) ---------- */
-function renderPerf(el, lg, s){
-  try {
-    var comp = (s.header && s.header.competitions || [])[0];
-    if (!comp || !comp.competitors) { el.innerHTML = ""; return; }
-    var cs = comp.competitors;
-    var nper = 0; cs.forEach(function(c){ nper = Math.max(nper, (c.linescores||[]).length); });
-    var isT = lg.key === "tennis";
-    var head = "<tr><th>Team</th>";
-    for (var i=0;i<nper;i++) head += "<th>"+(isT ? "S" : "P")+(i+1)+"</th>";
-    head += "<th>Total</th></tr>";
-    var rows = cs.map(function(c){
-      var cells = (c.linescores||[]).map(function(x){ return "<td>"+esc(x.displayValue!=null ? x.displayValue : "")+"</td>"; }).join("");
-      return "<tr><td>"+teamLogo(c,20)+esc(c.team.displayName)+"</td>"+cells+"<td style=\"color:var(--purp-lt);font-weight:800\">"+esc(c.score!=null ? c.score : "")+"</td></tr>";
-    }).join("");
-    el.innerHTML = '<div class="card"><table class="lb">'+head+rows+'</table></div>';
-  } catch(e) { el.innerHTML = ""; }
 }
 function matchName(ts){
   var a = ts.filter(function(t){ return t.homeAway==="away"; })[0], h = ts.filter(function(t){ return t.homeAway==="home"; })[0];
