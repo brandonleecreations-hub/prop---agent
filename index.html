@@ -2395,21 +2395,29 @@ function renderTopAgents(){
     return '<div class="leg'+(r.id?' agentclick':'')+'"'+(r.id?' data-agent="'+r.id+'"':'')+'><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px' + frameCss(r.featured, 2, r.avatar) + '">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.name+'</span>'+streakBadge(r.streak)+'</div><span class="note">'+r.ticketWins+' winning tickets</span></div>';
   }).join("")+'</div>');
 }
-var upObserver = null;
-function upSliderInit(){
-  if (upObserver) { upObserver.disconnect(); upObserver = null; }
-  var box = $("upcoming"); if (!box) return;
-  var track = box.querySelector(".upslider"); if (!track) return;
+var popObsBySlot = {};
+function popSliderInit(track, slot){
+  if (popObsBySlot[slot]) { popObsBySlot[slot].disconnect(); popObsBySlot[slot] = null; }
+  if (!track) return;
   var cards = track.querySelectorAll(".card.game"); if (!cards.length) return;
   cards.forEach(function(c){ c.classList.remove("uppop"); });
   cards[0].classList.add("uppop");
   if (!("IntersectionObserver" in window)) return;
-  upObserver = new IntersectionObserver(function(entries){
+  var obs = new IntersectionObserver(function(entries){
     entries.forEach(function(en){
       if (en.intersectionRatio >= 0.6) cards.forEach(function(c){ c.classList.toggle("uppop", c === en.target); });
     });
   }, { root: track, threshold: [0.6, 0.9] });
-  cards.forEach(function(c){ upObserver.observe(c); });
+  popObsBySlot[slot] = obs;
+  cards.forEach(function(c){ obs.observe(c); });
+}
+function upSliderInit(){
+  var box = $("upcoming"); if (!box) return;
+  popSliderInit(box.querySelector(".upslider"), "up");
+}
+function heroSliderInit(){
+  var hero = $("liveHero"); if (!hero) return;
+  popSliderInit(hero.querySelector(".upslider"), "hero");
 }
 function renderUpcoming(){
   var jobs = PROP_LEAGUES.concat(["tennis","mlb"]).map(function(k){ var lg = leagueByKey(k); return getScoreboard(lg, 3).then(function(ev){ return {lg:lg, ev:ev}; }); });
@@ -2432,42 +2440,34 @@ function renderUpcoming(){
       var hero = $("liveHero");
       var PRIO = {nfl:0, nba:1, nhl:2, cfb:3, cbb:4, wbb:5, mlb:6, tennis:7};
       var ranked = liveAll.slice().sort(function(x, y){ return (PRIO[x.lg.key] != null ? PRIO[x.lg.key] : 9) - (PRIO[y.lg.key] != null ? PRIO[y.lg.key] : 9); });
-      var picks = [];
-      ranked.forEach(function(g){ if (picks.length < 4 && !picks.some(function(p){ return p.lg.key === g.lg.key; })) picks.push(g); });
-      if (picks.length < 4) ranked.forEach(function(g){ if (picks.length < 4 && picks.indexOf(g) === -1) picks.push(g); });
+      /* Brandon 2026-11-19: ALL live games ride one 3D slider up top (the
+         Upcoming slider's component + card size), prime games first by
+         league priority. picks[0] stays the lead game for the stats card. */
+      var picks = ranked;
       var heroSig = picks.map(function(g){ var tt = eventTeams(g.ev); var st2 = g.ev.status && g.ev.status.type || {}; return g.ev.id + ":" + tt.map(function(x){ return x.score||""; }).join("-") + ":" + (st2.shortDetail||""); }).join(",");
       var heroChanged = heroSig !== window._heroSig;
       if (heroChanged) window._heroSig = heroSig;
       if (hero && heroChanged) {
         if (!picks.length) { hero.innerHTML = ""; }
-        else if (picks.length >= 2) {
-          var miniHero = function(g){
+        else {
+          var oldTrack = hero.querySelector(".upslider");
+          var keepX = oldTrack ? oldTrack.scrollLeft : 0;
+          var heroSlide = function(g){
             var ts = eventTeams(g.ev);
             var st = g.ev.status && g.ev.status.type || {};
             var a = ts[0] || {}, b = ts[1] || {};
-            return '<div class="hero hero2" data-hero="' + g.lg.key + '|' + g.ev.id + '">'
-              + '<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px"><span class="hlg">' + esc(g.lg.label.toUpperCase()) + '</span><span class="herolive" style="margin:0;padding:3px 9px;font-size:11px">🔴 ' + esc(st.shortDetail || st.detail || "LIVE") + '</span></div>'
+            return '<div class="card game heroslide" data-hero="' + g.lg.key + '|' + g.ev.id + '">'
+              + '<div style="flex:1;min-width:0">'
+              + '<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px"><span class="hlg">' + esc(g.lg.label.toUpperCase()) + '</span><span class="herolive" style="margin:0;padding:3px 9px;font-size:11px">\uD83D\uDD34 ' + esc(st.shortDetail || st.detail || "LIVE") + '</span></div>'
               + '<div class="hrow"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(a.logo, 19) + esc(a.name || "") + '</span><b>' + esc(a.score != null ? a.score : "0") + '</b></div>'
               + '<div class="hrow"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(b.logo, 19) + esc(b.name || "") + '</span><b>' + esc(b.score != null ? b.score : "0") + '</b></div>'
-              + '<p class="herotap" style="font-size:11.5px">Tap for game center →</p></div>';
+              + '<p class="herotap" style="font-size:11.5px">Tap for game center \u2192</p></div></div>';
           };
-          hero.innerHTML = '<div class="heroes2">' + picks.map(miniHero).join("") + '</div>';
+          hero.innerHTML = '<div class="upslider heroslider' + (picks.length === 1 ? ' few1' : picks.length === 2 ? ' few2' : '') + '">' + picks.map(heroSlide).join("") + '</div>';
           hero.querySelectorAll("[data-hero]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-hero").split("|"); showView("live"); window._gameFrom = "home"; openGame(p[0], p[1]); }); });
-        }
-        else {
-          var g = picks[0], ts = eventTeams(g.ev);
-          var st = g.ev.status && g.ev.status.type || {};
-          var a = ts[0] || {}, b = ts[1] || {};
-          var nm = function(t){ var n = t.name || ""; var parts = n.split(" "); return {first: parts.slice(0,-1).join(" ") || n, last: parts[parts.length-1] || ""}; };
-          var na = nm(a), nb = nm(b);
-          hero.innerHTML = '<div class="hero" id="heroCard"><div class="heroscore">'
-            + '<div class="heroname">'+tlogoImg(a.logo, 32)+esc(na.first)+' '+esc(na.last)+'<small>'+esc(na.last)+'</small></div>'
-            + '<div><span class="hscore">'+esc(a.score!=null?a.score:"0")+'</span> <span class="hdash">—</span> <span class="hscore">'+esc(b.score!=null?b.score:"0")+'</span></div>'
-            + '<div class="heroname" style="text-align:right">'+tlogoImg(b.logo, 32)+esc(nb.first)+' '+esc(nb.last)+'<small>'+esc(nb.last)+'</small></div></div>'
-            + '<div style="text-align:center"><span class="herolive">🔴 LIVE · '+esc(st.shortDetail||st.detail||g.lg.label)+'</span></div>'
-            + '<p class="herotap">Tap for the game center — props, tracker &amp; plays →</p></div>';
-          var hc = $("heroCard");
-          if (hc) hc.addEventListener("click", function(){ showView("live"); window._gameFrom = "home"; openGame(g.lg.key, g.ev.id); });
+          heroSliderInit();
+          var newTrack = hero.querySelector(".upslider");
+          if (newTrack && keepX) newTrack.scrollLeft = keepX;
         }
       }
       var hst = $("heroStats");
