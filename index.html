@@ -2661,7 +2661,7 @@ function lbResetMigrate(){
   lsSet("pa_lbreset1", 1);
 }
 function maxWins(){ var m = 0; try { m = parseInt(lsGet("pa_maxwins", 0), 10) || 0; } catch(e){} var w = myWins(); if (w > m){ m = w; try { lsSet("pa_maxwins", m); } catch(e){} } return m; }
-function stampAvatarUrl(ci){ return "/api/battle?v=6&s=" + ci + "&stamp=1"; }
+function stampAvatarUrl(ci){ return "/api/battle?v=7&s=" + ci + "&stamp=1"; }
 function avatarIsStamp(u){ return /(?:^|[?&])stamp=1(?:&|$)/.test(String(u || "")); }
 function frameColor(feat){
   var s = String(feat || "");
@@ -4427,7 +4427,7 @@ function diamondArt(ci, ti){ return !!diamondArtKey(ci, ti); }
    character, measured from the face position in each 512x512 D image (the mini
    frame is a wide 46px-tall cover crop, so faces lower in the art need a lower window). */
 var DIA_MINI_POS = { "1": 0, "2": 0, "3": 0, "4": 3, "5": 3, "6": 26, "7": 62, "8": 3, "9": 0, "10": 0, "11": 3, "12": 18 };
-function cardArtUrl(ci, ti){ var k = legendArtKey(ci, ti) || diamondArtKey(ci, ti); return k ? "/api/battle?v=6&s=" + k : "/api/battle?v=6&s=" + ci; }
+function cardArtUrl(ci, ti){ var k = legendArtKey(ci, ti) || diamondArtKey(ci, ti); return k ? "/api/battle?v=7&s=" + k : "/api/battle?v=7&s=" + ci; }
 function tierCardHTML(t, wins, withBtns, ci){
   var ti = TIERS.indexOf(t);
   ci = ci || charIdxOf();
@@ -4485,7 +4485,7 @@ function renderTiers(){ var el = $("tiers"); if (!el) return; el.innerHTML = tie
 function bindTierStrip(){ var els = document.querySelectorAll("#tiers .tcface"); for (var i = 0; i < els.length; i++) els[i].addEventListener("click", function(){ var n = parseInt(this.getAttribute("data-tierchar"), 10); if (n) { lsSet("pa_tierchar", n); sfx("click"); renderTiers(); } }); }
 function tierProgressHTML(wins, ci){
   ci = ci || charIdxOf() || 1;
-  var strip = '<div class="tcstrip">' + CHARNAMES.map(function(nm, k){ var n1 = k + 1; return '<img class="tcface' + (n1 === ci ? ' on' : '') + '" data-tierchar="' + n1 + '" src="/api/battle?v=6&s=' + n1 + '" alt="' + nm + '" title="' + nm + '">'; }).join("") + '</div>';
+  var strip = '<div class="tcstrip">' + CHARNAMES.map(function(nm, k){ var n1 = k + 1; return '<img class="tcface' + (n1 === ci ? ' on' : '') + '" data-tierchar="' + n1 + '" src="/api/battle?v=7&s=' + n1 + '" alt="' + nm + '" title="' + nm + '">'; }).join("") + '</div>';
   var cur = tierFor(wins), curIdx = TIERS.indexOf(cur), nxt = nextTier(wins);
   var segN = TIERS.length - 1, frac = 0;
   if (curIdx < segN) { var loW = TIERS[curIdx].wins, hiW = TIERS[curIdx + 1].wins; frac = hiW > loW ? Math.max(0, Math.min(1, (wins - loW) / (hiW - loW))) : 1; }
@@ -4513,7 +4513,7 @@ function renderBoard(){
   var cards = allPlayerCardLegs();
   var cci = cardCharIdx();
   var stripEl = $("cardStrip");
-  if (stripEl) stripEl.innerHTML = CHARNAMES.map(function(n, k){ var n1 = k + 1; return '<img src="/api/battle?v=6&s=' + n1 + '" data-ci="' + n1 + '" class="' + (n1 === cci ? 'on' : '') + '" title="' + n + '" alt="' + n + '">'; }).join("");
+  if (stripEl) stripEl.innerHTML = CHARNAMES.map(function(n, k){ var n1 = k + 1; return '<img src="/api/battle?v=7&s=' + n1 + '" data-ci="' + n1 + '" class="' + (n1 === cci ? 'on' : '') + '" title="' + n + '" alt="' + n + '">'; }).join("");
   var tierCards = TIERS.map(function(t){ return tierCardHTML(t, charWins(cci), true, cci); }).join("");
   var playerCards = cards.map(function(l, li){
     var photo = photoCache[(l.player || "").toLowerCase()] || "";
@@ -5469,7 +5469,7 @@ function clashPickRender(){
   for (var ci = 1; ci <= 12; ci++) {
     var taken = (CL.mine[0] && CL.mine[0].ci === ci) || (CL.mine[1] && CL.mine[1].ci === ci);
     var isSel = CL.mine[CL.sel] && CL.mine[CL.sel].ci === ci;
-    grid += '<button class="agentpick' + (isSel ? ' on' : '') + '" data-pickagent="' + ci + '"' + (((taken || (CL.pair && !pairPopAnyOk(ci))) && !isSel) ? ' disabled' : '') + '><img src="/api/battle?v=6&s=' + ci + '" alt=""><span>' + CHARNAMES[ci - 1].replace("THE ", "") + '</span><span class="readbtn" data-readcard="' + ci + '" title="Read the full card">🔍</span></button>';
+    grid += '<button class="agentpick' + (isSel ? ' on' : '') + '" data-pickagent="' + ci + '"' + (((taken || (CL.pair && !pairPopAnyOk(ci))) && !isSel) ? ' disabled' : '') + '><img src="/api/battle?v=7&s=' + ci + '" alt=""><span>' + CHARNAMES[ci - 1].replace("THE ", "") + '</span><span class="readbtn" data-readcard="' + ci + '" title="Read the full card">🔍</span></button>';
   }
   grid += '</div>';
   var tiers = "";
@@ -7508,7 +7508,7 @@ function renderAvatarGrid(){
   var cur = (profile && profile.char) || "";
   g.innerHTML = "";
   for (var i = 1; i <= 12; i++) { (function(n){
-    var u = "/api/battle?v=6&s=" + n;
+    var u = "/api/battle?v=7&s=" + n;
     var im = document.createElement("img");
     im.src = u; im.alt = "Character " + n; im.loading = "lazy";
     im.style.cssText = "width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;cursor:pointer;border:3px solid " + (cur === u ? "#7C3AED" : "rgba(255,255,255,.08)");
