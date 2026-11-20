@@ -3361,10 +3361,12 @@ function openGame(key, eventId, isRefresh){
     var pbpBtn = $("pbpBtn");
     if (pbpBtn) pbpBtn.addEventListener("click", function(){ var all = $("pbpAll"); if (!all) return; var open = all.style.display !== "none"; if (!open && !all.innerHTML) all.innerHTML = plays.slice(15).map(fmtPlay).join(""); all.style.display = open ? "none" : ""; window._pbpOpen = !open; pbpBtn.textContent = open ? "Show all plays" : "Show fewer plays"; });
     /* Brandon 2026-11-18: under the score header the order is Team Stats,
-       then props, in every game state (score -> Team Stats -> props). */
+       then props, in every game state (score -> Team Stats -> props).
+       Brandon 2026-11-19: for LIVE games the tracker sits above Player Stats
+       (score -> Team Stats -> Live Tracker -> Player Stats -> props). */
     var gtEl = $("gameTracker"), gpEl = $("gameProps"), tsEl = $("gameTstats"), psEl = $("gamePstats");
     if (gpEl && tsEl && tsEl.parentNode && tsEl.parentNode === gpEl.parentNode){
-      if (gtEl && gtEl.parentNode === gpEl.parentNode){ gpEl.parentNode.insertBefore(gpEl, gtEl); gpEl.parentNode.insertBefore(tsEl, gpEl); if (psEl) gpEl.parentNode.insertBefore(psEl, gpEl); }
+      if (gtEl && gtEl.parentNode === gpEl.parentNode){ gpEl.parentNode.insertBefore(gpEl, gtEl); gpEl.parentNode.insertBefore(tsEl, gpEl); if (psEl) gpEl.parentNode.insertBefore(psEl, gpEl); if (st.state === "in") { if (psEl) gpEl.parentNode.insertBefore(gtEl, psEl); else gpEl.parentNode.insertBefore(gtEl, gpEl); } }
       else {
         var gdEl2 = $("gameDetail"), lsTbl = gdEl2 ? gdEl2.querySelector("table.lb") : null;
         if (lsTbl && lsTbl.parentNode === gpEl.parentNode){ lsTbl.parentNode.insertBefore(tsEl, lsTbl.nextSibling); lsTbl.parentNode.insertBefore(gpEl, tsEl.nextSibling); if (psEl) lsTbl.parentNode.insertBefore(psEl, gpEl); }
