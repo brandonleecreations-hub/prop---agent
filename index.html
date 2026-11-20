@@ -1290,9 +1290,6 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <p class="note" id="heroStatus"></p>
     <div id="topTicket"></div>
     <div id="tickerWrap" style="display:none"><h2>Your Players Ticker</h2><p class="sub">Your picks, live — follows the players on your slip and tickets, updated with the scores every 30 seconds.</p><div class="tickwrap" id="yourTicker"></div></div>
-    <div id="secAgents"><h2>Top Agents</h2>
-    <p class="sub">Ranked by most winning tickets — tap an agent to see their shared tickets.</p>
-    <div id="topAgents"><p class="empty">Loading Top Agents…</p></div></div>
     <div id="secUpcoming"><h2>Upcoming Games</h2>
     <div id="upcoming"><p class="empty">Loading upcoming games from ESPN…</p></div></div>
     <div class="homeclash posterad" id="clashHomeAd"><img src="/api/banners?s=clashposter&v=2" alt="Agent Clash Card Game — tap to play"></div>
@@ -2678,13 +2675,6 @@ function agentRows(){
   return rows;
 }
 function setHtml(el, html){ if (el && el._lastHtml !== html){ el._lastHtml = html; el.innerHTML = html; return true; } return false; }
-function renderTopAgents(){
-  var rows = agentRows().slice(0,5);
-  setHtml($("topAgents"), '<div class="card">'+rows.map(function(r,i){
-    var t = tierFor(r.wins);
-    return '<div class="leg'+(r.id?' agentclick':'')+'"'+(r.id?' data-agent="'+r.id+'"':'')+'><span style="font-size:17px">'+["🥇","🥈","🥉","4️⃣","5️⃣"][i]+'</span><div style="flex:1">'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px;margin-right:6px' + frameCss(r.featured, 2, r.avatar) + '">':'')+'<b>'+esc(r.name)+'</b> <span class="badge">'+t.name+'</span>'+streakBadge(r.streak)+'</div><span class="note">'+r.ticketWins+' winning tickets</span></div>';
-  }).join("")+'</div>');
-}
 var popObsBySlot = {};
 function popSliderInit(track, slot, cardSel, rootMargin){
   if (popObsBySlot[slot]) { popObsBySlot[slot].disconnect(); popObsBySlot[slot] = null; }
@@ -2726,8 +2716,6 @@ function renderUpcoming(){
       var hs = $("heroStatus");
       if (hs) hs.textContent = "Updated " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}) + " · auto-refresh 30s · ESPN · " + total + " games on the board · " + liveAll.length + " live now";
       window._liveNow = liveAll.length;
-      var _nl = liveAll.length===0;
-      var _sa = $("secAgents"); if (_sa) _sa.style.display = _nl ? "none" : "";
       renderTicker();
       var hero = $("liveHero");
       var PRIO = {nfl:0, nba:1, nhl:2, cfb:3, cbb:4, wbb:5, mlb:6, tennis:7};
@@ -4291,7 +4279,7 @@ function renderTickets(){
         }
       });
       if (fsDirty) { lsSet("pa_tickets", tickets); cloudSave(); }
-      renderTopAgents(); renderBoard();
+      renderBoard();
     });
   });
 }
@@ -7223,7 +7211,7 @@ function loadSocialState(){
     if (j && j.ok) { myFollows = j.following || []; lsSet("pa_follows", myFollows); feedAt = 0; renderFollowing(); }
   });
   socialGet("counts=1").then(function(j){ if (j && j.ok) followCounts = j.counts || {}; });
-  socialGet("streaks=1").then(function(j){ if (j && j.ok) { agentStreaks = j.streaks || {}; renderTopAgents(); renderBoard(); } });
+  socialGet("streaks=1").then(function(j){ if (j && j.ok) { agentStreaks = j.streaks || {}; renderBoard(); } });
   loadMyLikes();
 }
 function loadMyLikes(){
@@ -7528,7 +7516,7 @@ $("agSave").addEventListener("click", function(){
   var nm = $("agName").value.trim();
   var finishSave = function(){
     profile.name = nm; profile.email = $("agEmail").value.trim();
-    lsSet("pa_profile", profile); refreshAgentBtn(); renderTopAgents(); renderBoard(); cloudSave(); $("agentDlg").close();
+    lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); $("agentDlg").close();
   };
   if (nm && nm !== (profile.name || "") && nm !== "Guest Agent") {
     socialGet("username=" + encodeURIComponent(nm) + "&me=" + encodeURIComponent(cloudUid)).then(function(j){
@@ -7891,7 +7879,7 @@ function cloudSave(){
 }
 function fetchBoard(){
   fetch("/api/profile?board=1").then(function(r){ return r.json(); }).then(function(j){
-    if (j && j.ok && Array.isArray(j.board)) { cloudAgents = j.board; renderTopAgents(); renderBoard(); }
+    if (j && j.ok && Array.isArray(j.board)) { cloudAgents = j.board; renderBoard(); }
   }).catch(function(){});
 }
 /* Cloud extras restore (2026-11-19): per-character tier points, pack
@@ -7946,7 +7934,7 @@ function cloudInit(){
       var rebuiltBw = j.profile.wins - twN - (parseInt(lsGet("pa_bonuswins", 0), 10) || 0) - (parseInt(lsGet("pa_winbank", 0), 10) || 0);
       if (rebuiltBw > 0) { lsSet("pa_battlewins", rebuiltBw); restored = true; }
     }
-    if (restored) { renderAllSlips(); renderTickets(); renderTopAgents(); renderBoard(); renderTicker(); }
+    if (restored) { renderAllSlips(); renderTickets(); renderBoard(); renderTicker(); }
   }).catch(function(){});
 }
 
@@ -8012,7 +8000,7 @@ function setSport(key){
 })();
 
 /* ---------- init + refresh ---------- */
-function refreshHome(){ renderTopAgents(); renderUpcoming(); renderTicker(); renderTopTicket(); }
+function refreshHome(){ renderUpcoming(); renderTicker(); renderTopTicket(); }
 var _rb = $("refreshBtn"); if (_rb) _rb.addEventListener("click", function(){ boardCache = {}; propsCache = {}; refreshHome(); if ($("view-live").classList.contains("on")) renderLive(); if (currentSport!=="all") renderBoards(); });
 var _cc = $("coinChip"); if (_cc) _cc.addEventListener("click", function(){ showView("board"); });
 coinChipUpdate();
