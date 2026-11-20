@@ -7888,6 +7888,18 @@ function cloudInit(){
 /* ---------- navigation ---------- */
 function showView(name){
   if (window._openGame) closeGame(true);
+  /* Start back at the first pill (Brandon 2026-11-20): ENTERING a tab
+     resets its pill/filter selections to the first/default pill, every
+     time — Build: All sports + first-game matchup pills; sport boards:
+     All games + All stats (setSport resets too, on sport switches);
+     Esports tab: first match + first team; Live: All Sports. Only on a
+     real entry (the view actually changes): re-renders and refreshes
+     while staying on the tab keep the user's place. */
+  if (window._view !== name){
+    if (name === "build"){ buildSport = "all"; buildGameByLeague = {}; espBuildMatchSel = {}; }
+    else if (name === "sport"){ boardGame = "all"; boardStat = "all"; if (currentSport === "esports") espPillSel = {}; }
+    else if (name === "live"){ liveFilter = "all"; document.querySelectorAll("#liveTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-lsport") === "all"); }); }
+  }
   document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("on"); });
   var el = $("view-"+name); if (el) el.classList.add("on");
   var navName = name==="sport" ? "home" : name;
