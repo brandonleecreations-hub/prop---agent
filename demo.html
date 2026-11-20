@@ -77,6 +77,22 @@
   @keyframes cardfan { 0% { transform: translate(var(--fx,0px),30px) rotate(var(--fr,0deg)) scale(.5); opacity: 0; } 55% { opacity: 1; } 100% { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; } }
   .revealcard.bestcard { box-shadow: 0 14px 30px rgba(0,0,0,.5), 0 0 26px rgba(245,197,24,.45); }
   .revealcard.ringcard { animation: cardfan .7s cubic-bezier(.2,.9,.3,1.28) both, ringpulse 1.5s ease-in-out 1.05s infinite alternate; }
+  .glitterfx{position:absolute;inset:0;pointer-events:none;z-index:3;border-radius:inherit;background-image:radial-gradient(circle,rgba(255,255,255,.95) 0 1.2px,transparent 1.9px),radial-gradient(circle,rgba(125,211,252,.9) 0 1px,transparent 1.7px),radial-gradient(circle,rgba(255,255,255,.65) 0 .8px,transparent 1.4px);background-size:92px 92px,64px 64px,46px 46px;background-position:0 0,18px 26px,40px 8px;animation:glitShift 3.4s ease-in-out infinite alternate,glitTwinkle 1.7s ease-in-out infinite alternate}
+  .glitterfx.pglit{background-image:radial-gradient(circle,rgba(216,180,254,.95) 0 1.2px,transparent 1.9px),radial-gradient(circle,rgba(178,107,255,.9) 0 1px,transparent 1.7px),radial-gradient(circle,rgba(255,255,255,.7) 0 .8px,transparent 1.4px);background-size:88px 88px,60px 60px,44px 44px}
+  .revealcard .glitterfx{background-size:40px 40px,30px 30px,22px 22px}
+  .revealcard .glitterfx.pglit{background-size:38px 38px,29px 29px,21px 21px}
+  #pullView .glitterfx{background-size:54px 54px,40px 40px,30px 30px}
+  #pullView .glitterfx.pglit{background-size:52px 52px,38px 38px,29px 29px}
+  .collcell{position:relative;display:inline-block;line-height:0}
+  .collcell .glitterfx{background-size:26px 26px,20px 20px,15px 15px;border-radius:9px}
+  .collcell .glitterfx.pglit{background-size:25px 25px,19px 19px,14px 14px}
+  @keyframes glitShift{from{background-position:0 0,18px 26px,40px 8px}to{background-position:26px 18px,44px 4px,8px 30px}}
+  @keyframes glitTwinkle{from{opacity:.35}to{opacity:.95}}
+  @keyframes lgndGlow{0%,100%{box-shadow:0 14px 30px rgba(0,0,0,.5),0 0 12px rgba(178,107,255,.45)}50%{box-shadow:0 14px 30px rgba(0,0,0,.5),0 0 30px rgba(178,107,255,.85)}}
+  .revealcard.lgndcard{animation:cardfan .7s cubic-bezier(.2,.9,.3,1.28) both,lgndGlow 2.2s ease-in-out infinite}
+  @keyframes lgndGlowPV{0%,100%{box-shadow:0 24px 50px rgba(0,0,0,.6),0 0 14px rgba(178,107,255,.5)}50%{box-shadow:0 24px 50px rgba(0,0,0,.6),0 0 38px rgba(178,107,255,.9)}}
+  #pvFront.pvlgnd{animation:lgndGlowPV 2.2s ease-in-out infinite}
+  @media (prefers-reduced-motion: reduce){.glitterfx,.revealcard.lgndcard,#pvFront.pvlgnd{animation:none}}
   #pullView { position: fixed; inset: 0; z-index: 55; display: none; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
   #pullView.open { display: flex; }
   .pvwrap { width: min(68vw,250px); perspective: 1100px; animation: celzoom .55s cubic-bezier(.2,.9,.3,1.3) both; }
@@ -207,7 +223,8 @@ function renderStats() {
   document.getElementById("stats").innerHTML = "Packs opened: <b>" + opened + "</b> · Foils pulled: <b>" + foilCount + "</b> · THE RING: <b>" + (ringPulled ? "PULLED! 🏆" : "still hiding…") + "</b>";
   var keys = Object.keys(owned);
   document.getElementById("coll").innerHTML = (ringPulled || keys.length) ? (ringPulled ? '<img src="/api/avatars?s=14" title="THE RING · CHASE CARD" alt="">' : '') + keys.map(function(k) {
-    return '<img src="/api/battle?v=6&s=' + k.split("-")[0] + '" style="border-color:' + TIERS[parseInt(k.split("-")[1], 10)].c + '" title="' + NAMES[parseInt(k.split("-")[0], 10) - 1] + ' · ' + TIERS[parseInt(k.split("-")[1], 10)].n + ' FOIL" alt="">';
+    var cci = parseInt(k.split("-")[0], 10), tti = parseInt(k.split("-")[1], 10);
+    return '<span class="collcell"><img src="/api/battle?v=6&s=' + cci + '" style="border-color:' + TIERS[tti].c + '" title="' + NAMES[cci - 1] + ' · ' + TIERS[tti].n + ' FOIL" alt="">' + (tti === 2 ? '<div class="glitterfx"></div>' : tti === 3 ? '<div class="glitterfx pglit"></div>' : '') + '</span>';
   }).join("") : '<span class="empty">No foils yet — open a pack.</span>';
 }
 function openPack(chase) {
@@ -227,7 +244,7 @@ function openPack(chase) {
     reveal.innerHTML = pulls.map(function(pu, i) {
       if (pu.ring) return '<div class="revealcard ringcard" data-view="' + i + '" style="--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's,1.05s"><img src="/api/avatars?s=14" alt="" style="height:122px"><div class="rvinfo"><b style="color:#f5c518">🏆 THE RING</b><br>SIGNED · ONE OF A KIND</div></div>';
       var t = TIERS[pu.ti];
-      return '<div class="revealcard' + (i === 2 || pu.ti >= 1 ? ' bestcard' : '') + '" data-view="' + i + '" style="border-color:' + t.c + ';--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's"><img src="/api/battle?v=6&s=' + pu.ci + '" alt=""><div class="rvinfo"><b>' + NAMES[pu.ci - 1] + '</b><br><span style="color:' + t.c + ';font-weight:800">✨ ' + t.n + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
+      return '<div class="revealcard' + (i === 2 || pu.ti >= 1 ? ' bestcard' : '') + (pu.ti === 3 ? ' lgndcard' : '') + '" data-view="' + i + '" style="border-color:' + t.c + ';--fx:' + ((1 - i) * 112) + 'px;--fr:' + ((i - 1) * 11) + 'deg;animation-delay:' + (i * 0.16) + 's"><img src="/api/battle?v=6&s=' + pu.ci + '" alt="">' + (pu.ti === 2 ? '<div class="glitterfx"></div>' : pu.ti === 3 ? '<div class="glitterfx pglit"></div>' : '') + '<div class="rvinfo"><b>' + NAMES[pu.ci - 1] + '</b><br><span style="color:' + t.c + ';font-weight:800">✨ ' + t.n + ' FOIL</span>' + (pu.dup ? '<br><span style="color:#9aa7bd;font-weight:700">DUPLICATE — not saved</span>' : '') + '</div></div>';
     }).join("");
     var newN = pulls.filter(function(pu){ return !pu.ring && !pu.dup; }).length;
     var dupN = pulls.filter(function(pu){ return pu.dup; }).length;
@@ -269,12 +286,14 @@ function viewPulled(i) {
   document.getElementById("pvWrap").classList.remove("flipped");
   if (pu.ring) {
     front.style.borderColor = "#f5c518";
+    front.classList.remove("pvlgnd");
     front.innerHTML = '<img class="art" src="/api/avatars?s=14" alt=""><div class="pvplate">THE RING<small>🏆 CHASE · SIGNED · ONE OF A KIND</small></div>';
     back.innerHTML = '<img src="/api/icons?s=512" alt=""><div style="font-weight:900;color:#f5c518;font-size:19px">PROP AGENT</div><div style="color:#f5c518;letter-spacing:1.5px;font-weight:800;font-size:12px">THE RING · CHAMPIONSHIP EDITION</div><div style="color:#c9c9d4;font-size:12.5px">Signed · One of a Kind<br>The rarest pull in the game</div>';
   } else {
     var t = TIERS[pu.ti];
     front.style.borderColor = t.c;
-    front.innerHTML = '<img class="art" src="/api/battle?v=6&s=' + pu.ci + '" alt=""><div class="pvplate">' + NAMES[pu.ci - 1] + '<small>✨ ' + t.n.toUpperCase() + ' FOIL</small></div>';
+    front.classList.toggle("pvlgnd", pu.ti === 3);
+    front.innerHTML = '<img class="art" src="/api/battle?v=6&s=' + pu.ci + '" alt="">' + (pu.ti === 2 ? '<div class="glitterfx"></div>' : pu.ti === 3 ? '<div class="glitterfx pglit"></div>' : '') + '<div class="pvplate">' + NAMES[pu.ci - 1] + '<small>✨ ' + t.n.toUpperCase() + ' FOIL</small></div>';
     back.innerHTML = '<img src="/api/icons?s=512" alt=""><div style="font-weight:900;color:#f5c518;font-size:19px">PROP AGENT</div><div style="color:#c9c9d4;font-size:12.5px">' + NAMES[pu.ci - 1] + ' · FOIL<br>' + t.n + ' tier gold foil edition<br>Pulled from a Prop Agent pack</div>';
   }
   document.getElementById("pullView").classList.add("open");
