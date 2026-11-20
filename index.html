@@ -17,7 +17,7 @@
   --r:14px;
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+html,body{margin:0;padding:0;overflow-x:clip;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 a{color:var(--blu);text-decoration:none}
 button{font-family:inherit;cursor:pointer}
 header{position:sticky;top:0;z-index:50;background:radial-gradient(620px 130px at 6% 0%, rgba(124,58,237,.20), rgba(0,0,0,0) 60%), rgba(0,0,0,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
@@ -492,7 +492,7 @@ img[src*="stamp=1"]{padding:2px;box-sizing:border-box;background-color:rgba(122,
 .charstrip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px}
 .charstrip img{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid var(--line);cursor:pointer;flex:0 0 auto}
 .charstrip img.on{border-color:#a78bfa;box-shadow:0 0 12px rgba(124,58,237,.8)}
-nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(10,10,10,.97);border-top:1px solid var(--line)}
+nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(10,10,10,.97);border-top:1px solid var(--line);transform:translateZ(0)}
 nav.bottom .nwrap{max-width:1060px;margin:0 auto;display:flex}
 nav.bottom button{flex:1;background:none;border:none;color:var(--mut);font-size:11.5px;font-weight:700;padding:7px 2px 9px;margin:5px 2px;border-radius:14px}
 nav.bottom button.on{color:#fff;background:linear-gradient(135deg,var(--purp),var(--purp2));box-shadow:0 6px 20px rgba(124,58,237,.6), inset 0 1px 0 rgba(255,255,255,.25)}
@@ -530,6 +530,19 @@ dialog h3{margin:0 0 6px;font-size:18px}
 .empty{color:var(--mut);font-size:14px;padding:8px 0}
 #sportProps>.empty,#sportProps>#sportNews,#sportProps>#sportGames{grid-column:1/-1}
 #sportProps>.fsport,#sportProps>.espstate,#sportProps>.espmslider,#sportProps>.espslider,#sportProps>.espgrp{grid-column:1/-1;min-width:0}
+#sportProps>.esppills{grid-column:1/-1;min-width:0}
+.esppills{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.esppills::-webkit-scrollbar{display:none}
+.esppill{flex:0 0 auto;background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:11.5px;font-weight:800;white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.esppill.on{background:linear-gradient(135deg,var(--purp),var(--purp2));border-color:var(--purp);color:#fff}
+.espb-game{font-size:12.5px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;color:var(--purp-lt);margin:12px 0 0}
+.espb-match{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:10px 0 0;font-size:12.5px;font-weight:800;min-width:0;cursor:pointer}
+.espb-match>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.espb-match .fcount{flex:0 0 auto}
+.espb-team{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:#cfc4f5;margin:8px 2px 0}
+.espb-team .bcount{font-size:10.5px;font-weight:700;color:#b7a8e8}
+#buildEsp .espslider{padding:6px 2px 10px}
+#buildEsp .espslider .ptile{flex:0 0 118px}
 .espgrp{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:8px 0 0;font-size:13px;font-weight:800;cursor:pointer;min-width:0}
 .espgrp>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .espgrp .fcount{flex:0 0 auto;font-size:12px;color:var(--purp-lt);font-weight:700}
@@ -2678,7 +2691,8 @@ var hlSportCache = {}, hlSportFetching = {}, hlSportSig = "";
 var HL_QUERIES = { nba: "NBA highlights", nfl: "NFL highlights", nhl: "NHL highlights", cfb: "College Football highlights", cbb: "College Basketball highlights", wbb: "Women's College Basketball highlights", mlb: "MLB highlights", tennis: "Tennis highlights" };
 function renderLiveSportHl(){
   var box = $("liveSportHl"); if (!box) return;
-  var lgs = liveFilter === "all" ? ["nfl", "nba", "nhl"] : [liveFilter];
+  var lgs = (liveFilter === "all" ? ["nfl", "nba", "nhl"] : [liveFilter]).filter(function(k){ return !!HL_QUERIES[k]; });
+  if (!lgs.length) { box.innerHTML = ""; hlSportSig = ""; return; }
   var sig = lgs.join(",");
   if (sig !== hlSportSig) {
     hlSportSig = sig;
@@ -2950,7 +2964,7 @@ function hydratePbpMinis(){
 }
 
 function renderLive(){
-  var leagues = LEAGUES.slice(1).filter(function(lg){ return liveFilter==="all" || lg.key===liveFilter; });
+  var leagues = LEAGUES.slice(1).filter(function(lg){ return lg.key!=="esports" && (liveFilter==="all" || lg.key===liveFilter); });
   var jobs = leagues.map(function(lg){
     if (lg.key==="tennis"){
       var wtaLg = {key:"tennisw", label:"Tennis", sport:"tennis", league:"wta"};
@@ -2990,16 +3004,16 @@ function renderLive(){
     forder.sort(function(a, b){ var ai = PRIO_FIN.indexOf(a), bi = PRIO_FIN.indexOf(b); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; });
     var finHtml = forder.map(function(k3){ var gr = fgroups[k3]; return '<div class="fsport"><span>' + esc(k3 === "tennis" ? "Tennis" : gr.label) + '</span><span class="fcount">' + gr.items.length + ' final' + (gr.items.length===1?"":"s") + '</span></div>' + gr.items.map(function(en){ return finCardHtml(en); }).join(""); }).join("");
     var html =
-      '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Live Games</h2><span style="color:var(--purp-lt);font-weight:700">' + (live.length + ((liveFilter === "all" || liveFilter === "esports") ? (window.__espLiveN || 0) : 0)) + ' game' + (live.length===1?"":"s") + '</span></div>'
-      + (live.length ? liveHtml : '') + espLiveHtml() + ((live.length || window.__espShownLive) ? '' : '<p class="empty">No games live right now.</p>')
+      '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Live Games</h2><span style="color:var(--purp-lt);font-weight:700">' + live.length + ' game' + (live.length===1?"":"s") + '</span></div>'
+      + (live.length ? liveHtml : '<p class="empty">No games live right now.</p>')
       + '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Future Games</h2><span style="color:var(--purp-lt);font-weight:700">' + fut.length + ' game' + (fut.length===1?"":"s") + '</span></div>'
-      + (fut.length ? futSliders(fut) : '') + espFutHtml() + ((fut.length || window.__espShownFut) ? '' : '<p class="empty">No future games in the next two days.</p>');
+      + (fut.length ? futSliders(fut) : '<p class="empty">No future games in the next two days.</p>');
     var lc = $("liveCenter");
     if (setHtml(lc, html)) lc.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
     var lf = $("liveFinished");
     if (lf && setHtml(lf, finAll.length ? '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Finished Games</h2><span style="color:var(--purp-lt);font-weight:700">' + finAll.length + ' game' + (finAll.length===1?"":"s") + '</span></div>' + finHtml : "")) lf.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
     hydratePbpMinis();
-    try { espTick(); renderEspFinished(); } catch (e) {}
+    try { espTick(); } catch (e) {}
     renderLiveSportHl(); renderLiveHighlights();
   });
 }
@@ -5684,7 +5698,7 @@ function espEnsure(){
     espAttachProps(propsCache.esports || []);
     if (currentSport === "esports" && window._view === "sport") renderEspBoardPage(espLg());
     if (window._view === "build") renderBuildEsp();
-    if (window._view === "live") { renderLive(); renderEspFinished(); }
+    if (window._view === "live") { renderLive(); }
     if (espOpen) espRenderGc();
   }).catch(function(){ espSchedBusy = false; });
 }
@@ -5852,16 +5866,90 @@ function renderEspBoardPage(lg){
        render view-only like the regular sports' finished Game Centers,
        and every match card below opens the Esports Game Center. */
     var rows = ps.filter(function(p){ return p.espState === "in" || p.espState === "post" || espFreshRow(p); });
-    box.innerHTML = espBoardHtml(espMatchGroups(rows));
-    espWireSliders(box); bindTiles(box); espWireGcLinks(box); espWireGameLinks(box);
+    window._espLastGroups = espMatchGroups(rows);
+    box.innerHTML = espBoardHtml(window._espLastGroups);
+    espWireSliders(box); bindTiles(box); espWireGcLinks(box); espWireGameLinks(box); espWirePills(box);
   }).catch(function(){});
+}
+/* Props pill tabs (Brandon 2026-11-19): under each game section the props
+   are organized by match and by team — match pills pick the match, team
+   pills pick the team, and only the selected team's players show, in
+   their own 3D-pop slider. A player always lands under his own team's
+   pill (roster attribution); unattributed players get an "Other players"
+   pill, never a wrong team. Selections survive board refreshes while
+   they are still valid; the default is the first match / first team. */
+var espPillSel = {}; // game -> {m: matchPillKey, t: teamKey}
+function espPillKey(mg){ return mg.ref ? mg.ref : "plain:" + mg.game; }
+function espMatchPillLabel(mg){
+  var label = "";
+  if (mg.item && mg.item.teams && mg.item.teams.length) label = mg.item.teams.map(function(tm){ return tm.name || ""; }).filter(function(x){ return x; }).join(" vs ");
+  if (!label) label = mg.rows.map(function(p){ return p.matchup || ""; }).filter(function(x){ return x; })[0] || "";
+  if (!label) label = mg.game === "lol" ? "League of Legends props" : "Counter-Strike 2 props";
+  if (mg.state === "in") label = "\uD83D\uDD34 " + label;
+  else if (mg.state === "post") label = "\uD83C\uDFC1 " + label;
+  return label;
+}
+function espTeamGroupsOf(mg){
+  var order = [], by = {};
+  espPlayerGroups(mg.rows).forEach(function(pg){
+    var key = pg.team ? "t:" + pg.team : "__other";
+    if (!by[key]) { by[key] = { key: key, name: pg.team || "Other players", players: [] }; order.push(by[key]); }
+    by[key].players.push(pg);
+  });
+  return order;
+}
+function espPropsAreaHtml(g, gGroups){
+  var sel = espPillSel[g] || {};
+  var mi = 0;
+  for (var i = 0; i < gGroups.length; i++) if (espPillKey(gGroups[i]) === sel.m) { mi = i; break; }
+  var mg = gGroups[mi];
+  var tgs = espTeamGroupsOf(mg);
+  var ti = 0;
+  for (var j = 0; j < tgs.length; j++) if (tgs[j].key === sel.t) { ti = j; break; }
+  var tg = tgs[ti];
+  var vo = mg.state === "in" ? "live" : (mg.state === "post" ? "final" : "");
+  var total = gGroups.reduce(function(n, x){ return n + x.rows.length; }, 0);
+  var h = '<div class="espstate"><span>' + (g === "lol" ? "\uD83D\uDC09" : "\uD83C\uDFAF") + ' Player props</span><span class="fcount">' + total + ' props</span></div>';
+  h += '<div class="esppills">' + gGroups.map(function(x, xi){
+    return '<button type="button" class="esppill' + (xi === mi ? " on" : "") + '" data-espgame="' + g + '" data-esppill-m="' + esc(espPillKey(x)) + '">' + esc(espMatchPillLabel(x)) + '</button>';
+  }).join("") + "</div>";
+  h += '<div class="espgrp" data-espgc="' + esc(mg.ref) + '">' + espGroupTitle(mg) + "</div>";
+  h += '<div class="esppills">' + tgs.map(function(x, xi){
+    return '<button type="button" class="esppill' + (xi === ti ? " on" : "") + '" data-espgame="' + g + '" data-esppill-t="' + esc(x.key) + '">' + esc(x.name) + '</button>';
+  }).join("") + "</div>";
+  h += '<div class="espslider">' + tg.players.map(function(pg){ return espTileHtml(pg, vo); }).join("") + "</div>";
+  return h;
+}
+function espWirePills(scope){
+  if (!scope) return;
+  scope.querySelectorAll("[data-esppill-m]").forEach(function(b){
+    b.addEventListener("click", function(){
+      var g = b.getAttribute("data-espgame");
+      var sel = espPillSel[g] || (espPillSel[g] = {});
+      sel.m = b.getAttribute("data-esppill-m"); sel.t = "";
+      espRepaintBoard();
+    });
+  });
+  scope.querySelectorAll("[data-esppill-t]").forEach(function(b){
+    b.addEventListener("click", function(){
+      var g = b.getAttribute("data-espgame");
+      var sel = espPillSel[g] || (espPillSel[g] = {});
+      sel.t = b.getAttribute("data-esppill-t");
+      espRepaintBoard();
+    });
+  });
+}
+function espRepaintBoard(){
+  var box = $("sportProps"); if (!box || !window._espLastGroups) return;
+  box.innerHTML = espBoardHtml(window._espLastGroups);
+  espWireSliders(box); bindTiles(box); espWireGcLinks(box); espWireGameLinks(box); espWirePills(box);
 }
 /* The tab, organized like the rest of the app (Brandon 2026-11-19): by
    game first (Counter-Strike 2, then League of Legends), inside each game
    by state in the app's standard order — Live, Upcoming, Finished — with
-   the props board grouped by match under its game. Every group rides its
-   own 3D-pop slider: the matches in an .espmslider, each match's props
-   in an .espslider. */
+   each state's matches in their own 3D-pop slider. Under each game, one
+   props area governed by pill tabs: match pills, then team pills, then
+   the selected team's props in a 3D-pop slider. */
 function espBoardHtml(groups){
   if (!espSched && !groups.length) return '<p class="empty">Loading the esports schedule\u2026</p>';
   var GAMES = [["cs2", "Counter-Strike 2", "\uD83C\uDFAF"], ["lol", "League of Legends", "\uD83D\uDC09"]];
@@ -5877,24 +5965,15 @@ function espBoardHtml(groups){
     var any = false;
     STATES.forEach(function(sd){
       var items = espSched && espSched[g] ? (espSched[g][sd[0]] || []) : [];
-      var mgs = gGroups.filter(function(mg){ return mg.state === sd[1]; });
-      if (!items.length && !mgs.length) return;
+      if (!items.length) return;
       any = true;
-      var mProps = mgs.reduce(function(n, mg){ return n + mg.rows.length; }, 0);
-      h += '<div class="espstate"><span>' + sd[2] + '</span><span class="fcount">' + (items.length ? items.length + " match" + (items.length === 1 ? "" : "es") : mProps + " props") + "</span></div>";
-      if (items.length) h += '<div class="espmslider">' + items.map(function(it){ return espMatchCard(g, it); }).join("") + "</div>";
-      h += mgs.map(function(mg){ return espBoardGroupHtml(mg); }).join("");
+      h += '<div class="espstate"><span>' + sd[2] + '</span><span class="fcount">' + items.length + " match" + (items.length === 1 ? "" : "es") + "</span></div>";
+      h += '<div class="espmslider">' + items.map(function(it){ return espMatchCard(g, it); }).join("") + "</div>";
     });
-    var plain = gGroups.filter(function(mg){ return !mg.state; });
-    if (plain.length) { any = true; h += plain.map(function(mg){ return espBoardGroupHtml(mg); }).join(""); }
+    if (gGroups.length) { any = true; h += espPropsAreaHtml(g, gGroups); }
     if (!any) h += '<p class="empty">' + (g === "lol" ? "League of Legends is between splits right now — no matches or props." : "No CS2 matches or props right now.") + "</p>";
   });
   return h;
-}
-function espBoardGroupHtml(mg){
-  var vo = mg.state === "in" ? "live" : (mg.state === "post" ? "final" : "");
-  return '<div class="espgrp" data-espgc="' + esc(mg.ref) + '">' + espGroupTitle(mg) + "</div>"
-    + '<div class="espslider">' + espPlayerGroups(mg.rows).map(function(g){ return espTileHtml(g, vo); }).join("") + "</div>";
 }
 /* ---------- Build page section ---------- */
 function espBuildSectionHtml(){ return '<div id="buildEsp"></div>'; }
@@ -5907,15 +5986,29 @@ function renderBuildEsp(){
     espAttachProps(ps);
     var rows = ps.filter(function(p){ return espFreshRow(p) && p.espState !== "in" && p.espState !== "post"; });
     if (!rows.length) { box.innerHTML = ""; return; }
-    box.innerHTML = '<div class="sporthd" style="margin-top:14px"><span class="sportname">🎮 Esports</span><span class="sportct">' + rows.length + ' props</span></div>'
-      + espMatchGroups(rows).map(function(mg){
-        return '<div class="bteamgroup"><div class="bteamhead" data-espgc="' + esc(mg.ref) + '">' + espGroupTitle(mg) + '</div>'
-          + '<div class="espslider">' + espPlayerGroups(mg.rows).map(function(g){ return espTileHtml(g, ""); }).join("") + '</div></div>';
-      }).join("");
+    /* Compact + organized (Brandon 2026-11-19): CS2 first, then LoL; each
+       match gets a small truncated header; inside a match, players are
+       grouped BY TEAM under a labeled team header, each team's players
+       in their own compact 3D-pop slider (Build-size 118px tiles).
+       Unattributed players sit under "Other players", never a wrong team. */
+    var groups = espMatchGroups(rows);
+    var h = '<div class="sporthd" style="margin-top:14px"><span class="sportname">🎮 Esports</span><span class="sportct">' + rows.length + ' props</span></div>';
+    [["cs2", "🎯 Counter-Strike 2"], ["lol", "🐉 League of Legends"]].forEach(function(gd){
+      var gs = groups.filter(function(mg){ return mg.game === gd[0]; });
+      if (!gs.length) return;
+      h += '<div class="espb-game">' + gd[1] + "</div>";
+      gs.forEach(function(mg){
+        h += '<div class="espb-match" data-espgc="' + esc(mg.ref) + '">' + espGroupTitle(mg) + "</div>";
+        espTeamGroupsOf(mg).forEach(function(tg){
+          h += '<div class="espb-team">' + esc(tg.name) + '<span class="bcount">' + tg.players.length + " player" + (tg.players.length === 1 ? "" : "s") + "</span></div>"
+            + '<div class="espslider">' + tg.players.map(function(pg){ return espTileHtml(pg, ""); }).join("") + "</div>";
+        });
+      });
+    });
+    box.innerHTML = h;
     espWireSliders(box); bindTiles(box); espWireGcLinks(box);
   }).catch(function(){});
 }
-/* ---------- Live Center ---------- */
 function espMatchCard(game, it){
   var st = espStateOf(game, it);
   var t = it.teams || [];
@@ -5933,50 +6026,9 @@ function espFutCard(game, it){
   var rows = t.map(function(tm){ return '<div class="fteam">' + espTeamLogo(tm, 20) + '<span>' + esc(tm.name || "") + '</span></div>'; }).join("");
   return '<div class="fcard" data-game="esports|' + game + ':' + esc(game === "cs2" ? it.slug : String(it.id)) + '"><div class="ftime">' + esc(it.starts ? fmtFullDate(it.starts) : "") + (it.tournament ? " · " + esc(it.tournament) : "") + '</div>' + rows + '</div>';
 }
-function espLiveHtml(){
-  window.__espShownLive = 0;
-  if (!espSched || (liveFilter !== "all" && liveFilter !== "esports")) return "";
-  var h = "", n = 0;
-  [["cs2", "Counter-Strike 2"], ["lol", "League of Legends"]].forEach(function(pair){
-    var items = (espSched[pair[0]] || {}).live || [];
-    if (!items.length) return;
-    n += items.length;
-    h += '<div class="fsport"><span>\uD83C\uDFAE ' + pair[1] + '</span><span class="fcount">' + items.length + ' live</span></div>' + items.map(function(it){ return espMatchCard(pair[0], it); }).join("");
-  });
-  if (!n) return "";
-  window.__espShownLive = n;
-  return h;
-}
-function espFutHtml(){
-  window.__espShownFut = 0;
-  if (!espSched || (liveFilter !== "all" && liveFilter !== "esports")) return "";
-  var h = "", n = 0;
-  [["cs2", "Counter-Strike 2"], ["lol", "League of Legends"]].forEach(function(pair){
-    var items = (espSched[pair[0]] || {}).upcoming || [];
-    if (!items.length) return;
-    n += items.length;
-    h += '<div class="fsport"><span>🎮 ' + pair[1] + '</span><span class="fcount">' + items.length + ' upcoming</span></div><div class="fslider">' + items.map(function(it){ return espFutCard(pair[0], it); }).join("") + '</div>';
-  });
-  window.__espShownFut = n;
-  return h;
-}
-function renderEspFinished(){
-  var box = $("espFinished"); if (!box) return;
-  if (!espSched) { box.innerHTML = ""; return; }
-  var h = "";
-  [["cs2", "Counter-Strike 2"], ["lol", "League of Legends"]].forEach(function(pair){
-    var items = (espSched[pair[0]] || {}).finished || [];
-    if (!items.length) return;
-    h += '<div class="fsport"><span>\uD83C\uDFAE ' + pair[1] + '</span><span class="fcount">' + items.length + ' finished</span></div>'
-      + items.map(function(it){ return espMatchCard(pair[0], it); }).join("");
-  });
-  /* These cards carry data-game like every other game card; bind them the
-     same way #liveCenter/#liveFinished are bound after setHtml — without
-     this the finished esports cards were dead to taps (Brandon 2026-11-19). */
-  if (setHtml(box, h ? '<h2 style="margin:16px 0 4px">\uD83C\uDFC1 Esports Results</h2>' + h : "")) {
-    box.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
-  }
-}
+/* Esports matches are NOT listed in the Live Center (Brandon 2026-11-19):
+   esports games + props live only in the Esports tab. The Game Center
+   below still opens here from the tab/Build via #espGameDetail. */
 /* ---------- Esports Game Center ---------- */
 function openEspGame(ref){
   var gi = String(ref || "").indexOf(":");
@@ -7351,7 +7403,7 @@ function setSport(key){
 })();
 (function buildLiveTabs(){
   var wrap = $("liveTabs"); if (!wrap) return;
-  [{key:"all", label:"All Sports"}].concat(LEAGUES.slice(1).slice().sort(function(a, b){ var P = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"]; var ai = P.indexOf(a.key), bi = P.indexOf(b.key); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; })).forEach(function(l){
+  [{key:"all", label:"All Sports"}].concat(LEAGUES.slice(1).filter(function(l){ return l.key!=="esports"; }).slice().sort(function(a, b){ var P = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"]; var ai = P.indexOf(a.key), bi = P.indexOf(b.key); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; })).forEach(function(l){
     var b = document.createElement("button");
     b.className = "tab" + (l.key==="all" ? " on" : ""); b.textContent = l.label; b.setAttribute("data-lsport", l.key);
     b.addEventListener("click", function(){ liveFilter = l.key; wrap.querySelectorAll(".tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-lsport")===liveFilter); }); renderLive(); });
