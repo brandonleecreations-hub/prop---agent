@@ -2657,7 +2657,8 @@ function renderNews(){
     });
   });
 }
-/* ---------- home hero stats card: linescores + Top Performers ---------- */
+/* ---------- home hero stats card: linescores / team totals only — Top Performers
+   removed from Home 2026-11-19 at Brandon's word (Game Center keeps its own) ---------- */
 function renderPerf(el, lg, s){
   try {
     var comp = (s.header && s.header.competitions || [])[0];
@@ -2672,20 +2673,7 @@ function renderPerf(el, lg, s){
       var cells = (c.linescores||[]).map(function(x){ return "<td>"+esc(x.displayValue!=null ? x.displayValue : "")+"</td>"; }).join("");
       return "<tr><td>"+teamLogo(c,20)+esc(c.team.displayName)+"</td>"+cells+"<td style=\"color:var(--purp-lt);font-weight:800\">"+esc(c.score!=null ? c.score : "")+"</td></tr>";
     }).join("");
-    var perf = [];
-    if (s.leaders && s.leaders.length) {
-      s.leaders.forEach(function(tl){ (tl.leaders||[]).forEach(function(cat){ var L = (cat.leaders||[])[0]; if (L && L.athlete && perf.length<4) perf.push({name:L.athlete.displayName, stat:(L.displayValue||"")+" "+(cat.shortDisplayName||cat.displayName||"")}); }); });
-    }
-    if (!perf.length && isT && cs.length===2) {
-      perf = cs.map(function(c, idx){
-        var opp = cs[1-idx];
-        var games = (c.linescores||[]).reduce(function(a,x){ return a + (parseFloat(x.displayValue)||0); }, 0);
-        var sets = (c.linescores||[]).filter(function(x, j){ var o = (opp.linescores||[])[j]; return o && (parseFloat(x.displayValue)||0) > (parseFloat(o.displayValue)||0); }).length;
-        return {name:c.team.displayName, stat:games+" games won · "+sets+" sets"};
-      });
-    }
-    var perfHtml = perf.length ? '<div class="row" style="justify-content:space-between;margin-top:12px"><div style="font-size:16px"><b>Top</b> <b style="color:var(--gold)">Performers</b></div><span class="note">Updated '+new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})+'</span></div>' + perf.slice(0,4).map(function(p){ var parts = String(p.name).split(" "); var last = parts.length>1 ? parts[parts.length-1] : ""; var first = parts.length>1 ? parts.slice(0,-1).join(" ") : p.name; return '<div class="row" style="justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span><b>'+esc(first)+'</b>'+(last ? ' <span style="color:var(--purp-lt);font-weight:700">'+esc(last)+'</span>' : '')+'</span><span style="color:var(--cyan);font-weight:700;font-size:13px">'+esc(p.stat)+'</span></div>'; }).join("") : "";
-    el.innerHTML = '<div class="card"><table class="lb">'+head+rows+'</table>'+perfHtml+'</div>';
+    el.innerHTML = '<div class="card"><table class="lb">'+head+rows+'</table></div>';
   } catch(e) { el.innerHTML = ""; }
 }
 function matchName(ts){
