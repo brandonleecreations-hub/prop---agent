@@ -793,9 +793,12 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .openbtn{background:linear-gradient(135deg,#7C3AED,#5b21b6);color:#fff;font-weight:900;border:none;border-radius:11px;padding:11px 14px;font-size:14px;cursor:pointer}
 .openbtn.gold{background:linear-gradient(135deg,#f5c518,#d97706);color:#1a1405}
 .openbtn:disabled{opacity:.38;cursor:default}
-.freestrip{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding:5px 8px;border:1px solid rgba(245,197,24,.35);border-radius:9px;background:rgba(245,197,24,.06);font-size:12px;line-height:1.3}
+.freestrip{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-top:5px;padding:3px 7px;border:1px solid rgba(245,197,24,.35);border-radius:8px;background:rgba(245,197,24,.06);font-size:11px;line-height:1.25}
+.freehdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px;font-size:11px;font-weight:900;letter-spacing:.6px;color:#f5c518}
+.freehdr .csbtn{padding:3px 9px;font-size:10px}
+.freeready{color:#fff;background:rgba(245,197,24,.2);border:1px solid rgba(245,197,24,.55);border-radius:999px;padding:1px 7px;font-size:10px;letter-spacing:.4px}
 .freestrip .freelab{color:#cbd5e1}
-.freeopen{background:linear-gradient(135deg,#f5c518,#d97706);color:#1a1405;font-weight:900;border:none;border-radius:7px;padding:4px 10px;font-size:12px;cursor:pointer;white-space:nowrap}
+.freeopen{background:linear-gradient(135deg,#f5c518,#d97706);color:#1a1405;font-weight:900;border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;white-space:nowrap}
 .freedone{color:#9aa7bd;font-weight:700;white-space:nowrap}
 .foilshine{position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(245,197,24,.32) 48%,rgba(255,255,255,.20) 52%,transparent 70%);transform:translateX(-130%);animation:pkshine 3.6s ease-in-out infinite;pointer-events:none}
 #packPop{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center}
@@ -1223,20 +1226,20 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
         <button class="dlpopb" id="dlPopNotif" type="button">🔔 Notifications</button>
       </div>
     </div>
-    <div class="card" id="installCard" style="display:none;margin-top:20px;padding:0;overflow:hidden;border:2px solid #f5b942;background:radial-gradient(130% 150% at 15% 0%, #4c1d95 0%, #2a1650 46%, #12082b 100%);box-shadow:0 14px 44px rgba(124,58,237,.5)">
-      <div style="display:flex;gap:14px;align-items:center;padding:18px 18px 6px">
-        <img src="/api/icons?s=512" alt="" style="width:76px;height:76px;border-radius:18px;box-shadow:0 8px 26px rgba(0,0,0,.55);flex:0 0 auto">
+    <div class="card" id="installCard" style="display:none;margin-top:14px;padding:0;overflow:hidden;border:2px solid #f5b942;background:radial-gradient(130% 150% at 15% 0%, #4c1d95 0%, #2a1650 46%, #12082b 100%);box-shadow:0 14px 44px rgba(124,58,237,.5)">
+      <div style="display:flex;gap:10px;align-items:center;padding:12px 12px 4px">
+        <img src="/api/icons?s=512" alt="" style="width:52px;height:52px;border-radius:14px;box-shadow:0 8px 26px rgba(0,0,0,.55);flex:0 0 auto">
         <div style="min-width:0">
-          <div style="font-size:11px;font-weight:900;letter-spacing:2.5px;color:#f5b942">FREE · NO DOWNLOAD NEEDED</div>
-          <div style="font-size:26px;font-weight:900;line-height:1.08;color:#fff;text-shadow:0 2px 16px rgba(167,139,250,.65)">PROP AGENT</div>
-          <div style="font-size:13.5px;color:#ddd0ff;line-height:1.45;margin-top:3px">Real player props · Live tickets · <b style="color:#fff">72 collectible agent cards</b> to unlock</div>
+          <div style="font-size:10px;font-weight:900;letter-spacing:2px;color:#f5b942">FREE · NO DOWNLOAD NEEDED</div>
+          <div style="font-size:20px;font-weight:900;line-height:1.08;color:#fff;text-shadow:0 2px 16px rgba(167,139,250,.65)">PROP AGENT</div>
+          <div style="font-size:12.5px;color:#ddd0ff;line-height:1.35;margin-top:2px">Real player props · Live tickets · <b style="color:#fff">72 collectible agent cards</b> to unlock</div>
         </div>
       </div>
-      <p class="sub" id="installNote" style="margin:8px 18px 0;color:#cdbcf5">One tap puts Prop Agent on your home screen — its own icon, full screen, opens like a real app.</p>
-      <p style="margin:10px 18px 0;font-size:14.5px;font-weight:800;color:#f5b942">🎁 Share &amp; earn a FREE PACK — once a day, every day. Open it on the Board tab.</p>
-      <div style="display:flex;gap:10px;padding:14px 18px 18px;flex-wrap:wrap">
-        <button class="ghostbtn" id="installBtn" style="flex:1;min-width:170px;background:linear-gradient(135deg,#f5b942,#d97706);color:#1a1000;border:none;font-weight:900;padding:14px 18px;font-size:15.5px;box-shadow:0 8px 24px rgba(245,185,66,.45)">📲 ADD TO HOME SCREEN</button>
-        <button class="ghostbtn" id="shareBtn" style="flex:1;min-width:140px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.4);font-weight:800;padding:14px 18px;font-size:15px">🔗 Share the app</button>
+      <p class="sub" id="installNote" style="margin:6px 12px 0;color:#cdbcf5">One tap puts Prop Agent on your home screen — its own icon, full screen, opens like a real app.</p>
+      <p style="margin:8px 12px 0;font-size:13px;font-weight:800;color:#f5b942">🎁 Share &amp; earn a FREE PACK — once a day, every day. Open it on the Board tab.</p>
+      <div style="display:flex;gap:8px;padding:10px 12px 12px;flex-wrap:wrap">
+        <button class="ghostbtn" id="installBtn" style="flex:1;min-width:150px;background:linear-gradient(135deg,#f5b942,#d97706);color:#1a1000;border:none;font-weight:900;padding:10px 14px;font-size:14px;box-shadow:0 8px 24px rgba(245,185,66,.45)">📲 ADD TO HOME SCREEN</button>
+        <button class="ghostbtn" id="shareBtn" style="flex:1;min-width:120px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.4);font-weight:800;padding:10px 14px;font-size:13.5px">🔗 Share the app</button>
       </div>
       <button type="button" id="wReplay" class="ghostbtn" style="width:100%;margin-top:10px;background:transparent;color:#cfcfe0;border:1px solid rgba(255,255,255,.25);font-weight:700;padding:10px">▶ Watch the 10-second welcome</button>
     </div>
@@ -4431,6 +4434,10 @@ function freePackTake(){
   s.waiting = 0; lsSet("pa_freepack", s);
   return true;
 }
+/* Free-pack strip visibility (Brandon 2026-11-20): its own key in the Board's
+   pa_cardsecs show/hide system; default VISIBLE so nobody loses sight of the pack. */
+function freePackOpen(){ var st = lsGet("pa_cardsecs", {}); return ("freepack" in st) ? !!st["freepack"] : true; }
+function freePackToggle(){ var st = lsGet("pa_cardsecs", {}); st["freepack"] = !freePackOpen(); lsSet("pa_cardsecs", st); renderPacks(); sfx("click"); }
 function migrateTierData(){
   if (lsGet("pa_tiermig", 0)) return;
   var remap = function(arr){
@@ -4496,6 +4503,7 @@ function renderPacks(){
   var box = $("packsBox"); if (!box) return;
   var p = packsGet(), today = dayStr();
   var freeWaiting = freePackState().waiting;
+  var fpOpen = freePackOpen();
   var shared = lsGet("pa_share_day", "") === today;
   var foils = foilsGet();
   box.innerHTML = '<div class="packpromo">'
@@ -4509,7 +4517,8 @@ function renderPacks(){
     + '<button class="openbtn" data-buypack="1"' + (coinsGet() >= CLASH_PACK_COST ? '' : ' disabled') + '>🪙 Buy a Pack · ' + CLASH_PACK_COST + ' Coins</button>'
     + '</div>'
     + '<div class="note" style="margin-top:10px">🏆 Win a 4-leg ticket → <b>15 Clash Coins</b> · 5 legs → <b>1 pack</b> · 6 legs → <b>2 packs</b></div>'
-    + (freeWaiting ? '<div class="freestrip"><span class="freelab">1 waits max \u2014 open it daily, they don\'t stack.</span><button class="freeopen" data-openfreepack="1">\uD83C\uDF81 Free pack \u2014 OPEN</button></div>' : '<div class="freestrip"><span class="freelab">1 waits max \u2014 open it daily, they don\'t stack.</span><span class="freedone">\u2713 Opened \u2014 next one tomorrow</span></div>')
+    + '<div class="freehdr"><span>\uD83C\uDF81 DAILY FREE PACK' + (!fpOpen && freeWaiting ? ' <span class="freeready">READY</span>' : '') + '</span><button type="button" class="csbtn" data-freepacktoggle="1">' + (fpOpen ? '\u25BE HIDE' : '\u25B8 SHOW') + '</button></div>'
+    + (fpOpen ? (freeWaiting ? '<div class="freestrip"><span class="freelab">1 waits max \u2014 open it daily, they don\'t stack.</span><button class="freeopen" data-openfreepack="1">\uD83C\uDF81 Free pack \u2014 OPEN</button></div>' : '<div class="freestrip"><span class="freelab">1 waits max \u2014 open it daily, they don\'t stack.</span><span class="freedone">\u2713 Opened \u2014 next one tomorrow</span></div>') : '')
     + '</div>';
 }
 function ringBackHTML(){
@@ -6675,9 +6684,11 @@ function openPackPop(demo, free){
   $("packPop").classList.add("open");
 }
 document.addEventListener("click", function(e){
-  var c = e.target && e.target.closest ? e.target.closest("[data-openfreepack],[data-openpack],[data-sharepack],[data-demopack]") : null;
+  var c = e.target && e.target.closest ? e.target.closest("[data-freepacktoggle],[data-openfreepack],[data-openpack],[data-sharepack],[data-demopack]") : null;
   if (!c) return;
-  if (c.hasAttribute("data-openfreepack")) {
+  if (c.hasAttribute("data-freepacktoggle")) {
+    freePackToggle();
+  } else if (c.hasAttribute("data-openfreepack")) {
     openPackPop(false, true);
   } else if (c.hasAttribute("data-openpack")) {
     openPackPop(false);
