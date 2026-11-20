@@ -46,10 +46,11 @@ const SPORT_KEYS = [
   // pulls ride the brk lane), pending Brandon's go/no-go for a Soccer tab.
   "soccer_usa_mls", "soccer_spain_la_liga", "soccer_germany_bundesliga",
   "soccer_france_ligue_one",
-  // ESPORTS TEST (Brandon 2026-11-19): CS2 + League of Legends admitted to
-  // prove whether Parlay's esports keys carry real PLAYER PROPS. Same
-  // brk-lane test rules as the soccer keys above; stats/scores would come
-  // from PandaScore if Brandon green-lights an Esports section.
+  // ESPORTS (Brandon 2026-11-19): CS2 props PROVEN (195 rows / 94 players,
+  // per-map Kills + Headshots). LoL rides the same pipeline — its board
+  // lights up whenever Parlay posts rows and reads as an off-day while
+  // empty (pro LoL is in off-season). Scores/stats come from the free
+  // esports lane below (bo3.gg + Riot LoL Esports feeds), NOT ESPN.
   "esports_cs2", "esports_lol",
 ];
 
@@ -479,7 +480,7 @@ async function fetchSportWithKey(sport, key) {
   return rows;
 }
 
-function normalize(rows, keepStarted) {
+function normalize(rows, keepStarted, sportKey) {
   const out = [];
   for (const row of rows) {
     if (!row || typeof row !== "object") continue;
@@ -527,6 +528,7 @@ function normalize(rows, keepStarted) {
       book: row.bookmaker_title || row.bookmaker || "PrizePicks",
       pct,
       half,
+      game: sportKey === "esports_cs2" ? "cs2" : (sportKey === "esports_lol" ? "lol" : ""),
     });
   }
   return out;
@@ -809,9 +811,409 @@ async function partialFill(sport, props) {
   } catch (e) { return { props: board, filled: false }; }
 }
 
+// ================= ESPORTS LANE (Brandon 2026-11-19) =================
+// The Esports section's scores / schedules / player stats / grading data,
+// from the free sources proven in ~/workspace/esports-free-sources.md:
+//   CS2 -> bo3.gg public JSON API (no key): schedule via newest-list
+//     polling + slug tracking, per-map player kills/headshots from
+//     /games/{id}/players_stats, logos + photos on files.bo3.gg.
+//   LoL -> Riot's LoL Esports feeds: getSchedule / getLive /
+//     getEventDetails behind the long-published lolesports.com public web
+//     key (a public web key shipped to every browser for years — NOT a
+//     user secret; a 403 is treated as source-down and fails over), plus
+//     the no-auth feed.lolesports.com livestats window feed for live and
+//     final per-player KDA / CS.
+// Everything is cached server-side (in-memory + the shared props_cache
+// table under esp_* keys) so the app polls smoothly and politely. The
+// failover floor is the manual stepper: a stat that cannot be resolved
+// here stays unresolved — never an auto-loss (the v1.0.57 rule).
+const LOL_WEB_KEY = process.env.LOL_ESPORTS_API_KEY || "0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z";
+const BO3_API = "https://api.bo3.gg/api/v1";
+const LOL_GW = "https://esports-api.lolesports.com/persisted/gw";
+const LOL_FEED = "https://feed.lolesports.com/livestats/v1";
+const espMem = {}; // key -> {ts, data}
+async function espGet(url, headers) {
+  try {
+    const ctl = new AbortController();
+    const to = setTimeout(() => ctl.abort(), 12000);
+    const r = await fetch(url, { headers: Object.assign({ "User-Agent": "PropAgent/1.0" }, headers || {}), signal: ctl.signal });
+    clearTimeout(to);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (e) { return null; }
+}
+async function espSbGet(key) {
+  const rows = await sbReq("props_cache?sport=eq." + encodeURIComponent(key) + "&select=sport,props,fetched_at");
+  if (!Array.isArray(rows) || !rows.length) return null;
+  return { ts: new Date(rows[0].fetched_at).getTime() || 0, data: rows[0].props };
+}
+async function espSbPut(key, data) {
+  const nowIso = new Date().toISOString();
+  const ex = await sbReq("props_cache?sport=eq." + encodeURIComponent(key) + "&select=sport");
+  if (Array.isArray(ex) && ex.length) {
+    await sbReq("props_cache?sport=eq." + encodeURIComponent(key), { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ props: data, fetched_at: nowIso }) });
+  } else if (ex !== null && ex !== undefined) {
+    await sbReq("props_cache", { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ sport: key, props: data, fetched_at: nowIso, credits_today: 0, count_day: etToday(), last_slot: 0 }) });
+  }
+}
+// Cached read-through: in-memory (ttlMs) -> shared store (ttlMs) -> loader
+// -> store both. A failed load serves the shared copy while it is younger
+// than staleMs, else the in-memory copy, else null.
+async function espCached(key, ttlMs, staleMs, loader) {
+  const m = espMem[key];
+  if (m && Date.now() - m.ts < ttlMs) return m.data;
+  const sb = await espSbGet(key).catch(() => null);
+  if (sb && sb.data != null && Date.now() - sb.ts < ttlMs) { espMem[key] = sb; return sb.data; }
+  let data = null;
+  try { data = await loader(); } catch (e) { data = null; }
+  if (data != null) { espMem[key] = { ts: Date.now(), data }; espSbPut(key, data).catch(() => {}); return data; }
+  if (sb && sb.data != null && Date.now() - sb.ts < staleMs) { espMem[key] = sb; return sb.data; }
+  if (m) return m.data;
+  return sb ? sb.data : null;
+}
+function nickKey(s) { return String(s || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+function espStatKind(stat) {
+  const s = String(stat || "").toLowerCase();
+  if (/headshot/.test(s)) return "hs";
+  if (/kill/.test(s)) return "k";
+  if (/death/.test(s)) return "d";
+  if (/assist/.test(s)) return "a";
+  if (/\bcs\b|creep/.test(s)) return "cs";
+  return "";
+}
+// "MAPS 1-2 Kills" -> [1,2]; "Map 3 Headshots" -> [3]; no map scope -> null
+// (the whole played series).
+function espScope(stat) {
+  const s = String(stat || "");
+  if (/maps?\s*1\s*[-\u2013]\s*2/i.test(s)) return [1, 2];
+  const m = /map\s*(\d)/i.exec(s);
+  if (m) return [parseInt(m[1], 10)];
+  return null;
+}
+// ---------- bo3.gg (CS2) ----------
+function bo3TeamNorm(t) {
+  return t ? { id: t.id || 0, slug: t.slug || "", name: t.name || "", logo: t.image_url || t.icon_url || "", rank: t.rank || null }
+           : { id: 0, slug: "", name: "", logo: "", rank: null };
+}
+function bo3MapName(raw) {
+  const s = String(raw || "").replace(/^de_/, "").replace(/^cs_/, "");
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+}
+function bo3DetailNorm(d) {
+  const t1 = bo3TeamNorm(d.team1), t2 = bo3TeamNorm(d.team2);
+  const games = (Array.isArray(d.games) ? d.games : []).slice().sort((a, b) => (a.number || 0) - (b.number || 0));
+  const fin = d.status === "finished" || d.status === "defwin";
+  const startMs = d.start_date ? new Date(d.start_date).getTime() : 0;
+  const state = fin ? "post" : (startMs && startMs > Date.now() ? "pre" : "in");
+  const maps = games.map((g) => {
+    const wId = g.winner_team_clan && g.winner_team_clan.team_id;
+    let s1 = null, s2 = null, winner = 0;
+    if (g.winner_clan_score != null && g.loser_clan_score != null && wId != null) {
+      if (String(wId) === String(t1.id)) { s1 = g.winner_clan_score; s2 = g.loser_clan_score; winner = 1; }
+      else if (String(wId) === String(t2.id)) { s2 = g.winner_clan_score; s1 = g.loser_clan_score; winner = 2; }
+    }
+    return { n: g.number || 0, gameId: g.id, name: bo3MapName(g.map_name), state: g.state || "", status: g.status || "", s1, s2, winner, rounds: g.rounds_count || 0, begin: g.begin_at || "" };
+  });
+  return { game: "cs2", id: d.id, slug: d.slug, starts: d.start_date || "", ends: d.end_date || "", state, status: d.status || "", parsed: d.parsed_status || "", bo: d.bo_type || 0, tournament: (d.tournament && d.tournament.name) || "", tier: d.tier || "", teams: [t1, t2], score: [d.team1_score || 0, d.team2_score || 0], maps };
+}
+async function bo3Detail(slug) {
+  const key = "esp_m_" + slug;
+  const m = espMem[key];
+  if (m && m.data && m.data.state === "post" && m.data.parsed === "done" && Date.now() - m.ts < 30 * 60 * 1000) return m.data;
+  return espCached(key, 45000, 6 * 3600 * 1000, async () => {
+    const d = await espGet(BO3_API + "/matches/" + encodeURIComponent(slug) + "?with=games");
+    if (!d || !d.id) return null;
+    return bo3DetailNorm(d);
+  });
+}
+async function bo3Roster(teamSlug) {
+  if (!teamSlug) return [];
+  const data = await espCached("esp_team_" + teamSlug, 6 * 3600 * 1000, 24 * 3600 * 1000, async () => {
+    const d = await espGet(BO3_API + "/teams/" + encodeURIComponent(teamSlug));
+    if (!d) return null;
+    return (d.players || []).filter((p) => p && !p.is_coach).slice(0, 8).map((p) => ({ nick: p.nickname || "", name: ((p.first_name || "") + " " + (p.last_name || "")).trim(), img: p.image_url || "", slug: p.slug || "" }));
+  }).catch(() => null);
+  return Array.isArray(data) ? data : [];
+}
+async function bo3GameStats(gameId, live) {
+  return espCached("esp_g_" + gameId, live ? 30000 : 30 * 60 * 1000, 24 * 3600 * 1000, async () => {
+    const d = await espGet(BO3_API + "/games/" + gameId + "/players_stats");
+    const rows = Array.isArray(d) ? d : (d && Array.isArray(d.results) ? d.results : null);
+    if (!rows || !rows.length) return null;
+    return rows.map((r) => {
+      const sp = r.steam_profile || {}, pl = sp.player || {};
+      return { nick: sp.nickname || pl.nickname || "", name: ((pl.first_name || "") + " " + (pl.last_name || "")).trim(), img: pl.image_url || "", teamId: (r.team_clan && r.team_clan.team_id) || 0, clan: r.clan_name || "", k: r.kills || 0, hs: r.headshots || 0, d: r.death || 0, a: r.assists || 0, adr: r.adr != null ? Math.round(r.adr * 10) / 10 : null, rating: r.player_rating != null ? Math.round(r.player_rating * 100) / 100 : null, kast: r.kast != null ? Math.round(r.kast * 100) : null };
+    });
+  }).catch(() => null);
+}
+// Running round tally for an in-progress map, from the game's round log —
+// the freshest live score bo3 serves; empty until rounds are logged.
+async function bo3GameRounds(gameId) {
+  const d = await espGet(BO3_API + "/games/" + gameId);
+  if (!d) return null;
+  const rounds = Array.isArray(d.game_rounds) ? d.game_rounds : [];
+  const tally = {};
+  rounds.forEach((r) => { if (r.winner_clan_name) tally[r.winner_clan_name] = (tally[r.winner_clan_name] || 0) + 1; });
+  return { roundsPlayed: rounds.length, tally, wClan: (d.winner_team_clan && d.winner_team_clan.clan_name) || "", wId: (d.winner_team_clan && d.winner_team_clan.team_id) || 0, lClan: (d.loser_team_clan && d.loser_team_clan.clan_name) || "", lId: (d.loser_team_clan && d.loser_team_clan.team_id) || 0 };
+}
+async function espCs2Match(slug) {
+  const det = await bo3Detail(slug);
+  if (!det) return null;
+  for (const m of det.maps) {
+    if (m.state === "done" || m.status === "finished") {
+      const st = await bo3GameStats(m.gameId, false);
+      if (st) { m.players = st; m.statsFrom = "final"; }
+    }
+  }
+  det.liveMap = null;
+  if (det.state === "in") {
+    const cur = det.maps.find((m) => !(m.state === "done" || m.status === "finished"));
+    if (cur) {
+      det.liveMap = cur.n;
+      const rd = await bo3GameRounds(cur.gameId).catch(() => null);
+      if (rd && rd.roundsPlayed) { cur.roundsPlayed = rd.roundsPlayed; cur.tally = rd.tally; cur.clanIds = {}; if (rd.wClan) cur.clanIds[rd.wClan] = rd.wId; if (rd.lClan) cur.clanIds[rd.lClan] = rd.lId; }
+      const st = await bo3GameStats(cur.gameId, true);
+      if (st) { cur.players = st; cur.statsFrom = "live"; }
+    }
+  }
+  return det;
+}
+async function bo3List(sort) {
+  const d = await espGet(BO3_API + "/matches?sort=" + encodeURIComponent(sort));
+  return (d && Array.isArray(d.results)) ? d.results : [];
+}
+async function espCs2Schedule() {
+  return espCached("esp_sched_cs2", 60000, 600000, async () => {
+    const lists = await Promise.all([bo3List("-id"), bo3List("-end_date")]);
+    const seen = {}, rows = [];
+    lists[0].concat(lists[1]).forEach((r) => { if (r && r.id && !seen[r.id]) { seen[r.id] = 1; rows.push(r); } });
+    const now = Date.now();
+    const picked = rows.filter((r) => {
+      const startMs = r.start_date ? new Date(r.start_date).getTime() : 0;
+      const endMs = r.end_date ? new Date(r.end_date).getTime() : 0;
+      const fin = r.status === "finished" || r.status === "defwin";
+      if (fin) return !!(endMs && now - endMs < 48 * 3600 * 1000);
+      return !!(startMs && startMs > now - 6 * 3600 * 1000 && startMs < now + 72 * 3600 * 1000);
+    });
+    picked.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+    const top = picked.slice(0, 24);
+    const dets = [];
+    for (let i = 0; i < top.length; i += 6) {
+      const chunk = await Promise.all(top.slice(i, i + 6).map((r) => bo3Detail(r.slug).catch(() => null)));
+      chunk.forEach((d) => { if (d) dets.push(d); });
+    }
+    const out = { live: [], upcoming: [], finished: [] };
+    for (const det of dets) {
+      const item = { id: det.id, slug: det.slug, starts: det.starts, ends: det.ends, state: det.state, status: det.status, parsed: det.parsed, bo: det.bo, tournament: det.tournament, tier: det.tier, teams: det.teams, score: det.score, maps: det.maps.map((m) => ({ n: m.n, name: m.name, s1: m.s1, s2: m.s2, winner: m.winner, status: m.status })) };
+      if (det.state === "post") { if (out.finished.length < 8) out.finished.push(item); }
+      else if (det.state === "in") out.live.push(item);
+      else if (out.upcoming.length < 10) out.upcoming.push(item);
+    }
+    out.finished.sort((a, b) => new Date(b.ends || b.starts) - new Date(a.ends || a.starts));
+    // Rosters ride along for props attribution + player photos.
+    for (const item of out.live.concat(out.upcoming)) {
+      item.rosters = [];
+      for (const t of item.teams) {
+        const ros = await bo3Roster(t.slug);
+        ros.forEach((p) => item.rosters.push({ nick: p.nick, name: p.name, img: p.img, team: t.name, teamId: t.id }));
+      }
+    }
+    return out;
+  }).catch(() => null);
+}
+async function espGradeCs2(slug, player, stat) {
+  const kind = espStatKind(stat);
+  if (!kind || (kind !== "k" && kind !== "hs")) return { final: false };
+  const det = await bo3Detail(slug);
+  if (!det) return { final: false };
+  const scope = espScope(stat);
+  const pk = nickKey(player);
+  if (!pk) return { final: false };
+  let total = 0, found = false;
+  for (const m of det.maps) {
+    const played = m.state === "done" || m.status === "finished";
+    if (scope) {
+      if (scope.indexOf(m.n) === -1) continue;
+      // A scoped map that never played (2-0 series, "Map 3" leg) cannot be
+      // resolved honestly — PrizePicks voids those; stay manual.
+      if (!played) return { final: false };
+    } else {
+      if (!played) continue;
+      if (det.state !== "post") return { final: false };
+    }
+    const st = await bo3GameStats(m.gameId, false);
+    if (!st) return { final: false };
+    const row = st.find((r) => nickKey(r.nick) === pk || nickKey(r.name) === pk);
+    if (!row) return { final: false };
+    total += kind === "hs" ? row.hs : row.k;
+    found = true;
+  }
+  if (scope && det.state !== "post") {
+    // Scoped legs still need every scoped map final; a live series with
+    // both scoped maps done resolves early only when the match is over.
+    const allDone = det.maps.filter((m) => scope.indexOf(m.n) > -1).every((m) => m.state === "done" || m.status === "finished");
+    if (!allDone) return { final: false };
+  }
+  return found ? { final: true, value: total } : { final: false };
+}
+// ---------- Riot LoL Esports ----------
+async function lolGw(path) { return espGet(LOL_GW + path, { "x-api-key": LOL_WEB_KEY }); }
+function lolTeamNorm(t) {
+  return { id: t.id || "", name: t.name || "", code: t.code || "", logo: t.image || "", wins: t.result ? t.result.gameWins : null, outcome: t.result ? (t.result.outcome || "") : "" };
+}
+async function espLolSchedule() {
+  return espCached("esp_sched_lol", 120000, 900000, async () => {
+    const out = { live: [], upcoming: [], finished: [] };
+    const liveIds = {};
+    const live = await lolGw("/getLive?hl=en-US");
+    const liveEvs = ((((live || {}).data || {}).schedule || {}).events) || [];
+    liveEvs.forEach((ev) => { if (ev && ev.match) liveIds[ev.match.id] = 1; });
+    let events = [];
+    let page = await lolGw("/getSchedule?hl=en-US");
+    events = events.concat((((page || {}).data || {}).schedule || {}).events || []);
+    let tok = page && page.data && page.data.schedule && page.data.schedule.pages && page.data.schedule.pages.newer;
+    let hops = 0;
+    while (tok && hops < 2) {
+      const p2 = await lolGw("/getSchedule?hl=en-US&pageToken=" + encodeURIComponent(tok));
+      const ev2 = (((p2 || {}).data || {}).schedule || {}).events || [];
+      if (!ev2.length) break;
+      events = events.concat(ev2);
+      tok = p2.data.schedule.pages && p2.data.schedule.pages.newer;
+      hops++;
+    }
+    liveEvs.forEach((ev) => { if (ev && ev.match && !events.some((e) => e.match && e.match.id === ev.match.id)) events.push(ev); });
+    const now = Date.now();
+    events.filter((ev) => ev && ev.type === "match" && ev.match && ev.match.id).forEach((ev) => {
+      const n = { id: ev.match.id, starts: ev.startTime || "", state: ev.state || "", league: (ev.league && ev.league.name) || "", block: ev.blockName || "", bo: (ev.match.strategy && ev.match.strategy.count) || 0, teams: (ev.match.teams || []).map(lolTeamNorm) };
+      if (liveIds[n.id] || ev.state === "inProgress") out.live.push(n);
+      else if (ev.state === "unstarted") { if (!n.starts || new Date(n.starts).getTime() < now + 7 * 86400000) out.upcoming.push(n); }
+      else if (ev.state === "completed") out.finished.push(n);
+    });
+    out.upcoming.sort((a, b) => new Date(a.starts) - new Date(b.starts));
+    out.finished.sort((a, b) => new Date(b.starts) - new Date(a.starts));
+    out.finished = out.finished.slice(0, 8);
+    out.upcoming = out.upcoming.slice(0, 10);
+    return out;
+  }).catch(() => null);
+}
+// Freshest frame for a game in ONE call: the window feed returns ~10s of
+// dense frames from startingTime, and any startingTime after the game has
+// ended returns its FINAL frames (verified against GEN vs BLG 2026-11-14:
+// final frame K2/D1/A13, CS 295 for Kiin). startingTime must sit on a
+// round timestamp and the window must end >20s ago, so use now-30s
+// quantized to 10s — for a live game that is also the freshest slice the
+// feed will serve. Falls back to the opening chunk when the late window
+// is empty (a game that just started).
+async function lolGameFrames(gameId) {
+  const t = new Date(Date.now() - 30000);
+  t.setSeconds(Math.floor(t.getSeconds() / 10) * 10, 0);
+  let w = await espGet(LOL_FEED + "/window/" + encodeURIComponent(gameId) + "?startingTime=" + encodeURIComponent(t.toISOString()));
+  if (!w || !Array.isArray(w.frames) || !w.frames.length) w = await espGet(LOL_FEED + "/window/" + encodeURIComponent(gameId));
+  if (!w || !Array.isArray(w.frames) || !w.frames.length) return null;
+  const f = w.frames[w.frames.length - 1];
+  return { frame: f, meta: w.gameMetadata || null, state: f.gameState || "" };
+}
+async function espLolMatch(id) {
+  return espCached("esp_lolm_" + id, 60000, 3600000, async () => {
+    const d = await lolGw("/getEventDetails?hl=en-US&id=" + encodeURIComponent(id));
+    const ev = d && d.data && d.data.event;
+    if (!ev || !ev.match) return null;
+    const teams = (ev.match.teams || []).map(lolTeamNorm);
+    const games = [];
+    for (const g of (ev.match.games || [])) {
+      const gm = { n: g.number, id: g.id, state: g.state, sides: (g.teams || []).map((t) => ({ id: t.id, side: t.side })) };
+      if (g.state === "completed" || g.state === "inProgress") {
+        const fr = await lolGameFrames(g.id).catch(() => null);
+        if (fr) {
+          gm.gameState = fr.state;
+          const meta = fr.meta || {};
+          if (meta.patchVersion) gm.patch = meta.patchVersion;
+          const pmap = {};
+          [meta.blueTeamMetadata, meta.redTeamMetadata].forEach((tm) => { ((tm && tm.participantMetadata) || []).forEach((pm) => { pmap[pm.participantId] = pm; }); });
+          const teamIds = [meta.blueTeamMetadata && meta.blueTeamMetadata.esportsTeamId, meta.redTeamMetadata && meta.redTeamMetadata.esportsTeamId];
+          gm.totals = [fr.frame.blueTeam, fr.frame.redTeam].map((tm) => tm ? { gold: tm.totalGold || 0, towers: tm.towers || 0, kills: tm.totalKills || 0, dragons: (tm.dragons || []).length, barons: tm.barons || 0 } : null);
+          gm.players = [];
+          [fr.frame.blueTeam, fr.frame.redTeam].forEach((tm, ix) => {
+            ((tm && tm.participants) || []).forEach((pt) => {
+              const pm = pmap[pt.participantId] || {};
+              const full = pm.summonerName || "";
+              gm.players.push({ name: full.replace(/^\S+\s+/, ""), full, champ: pm.championId || "", role: pm.role || "", teamId: teamIds[ix] || "", k: pt.kills || 0, d: pt.deaths || 0, a: pt.assists || 0, cs: pt.creepScore || 0, gold: pt.totalGold || 0, level: pt.level || 0 });
+            });
+          });
+        }
+      }
+      games.push(gm);
+    }
+    // A series is final when a side's game wins pass half the best-of —
+    // unplayed tail games (a 3-1 BO5's game 5) must not hold it "live".
+    const boN = (ev.match.strategy && ev.match.strategy.count) || 0;
+    const decided = teams.some((t) => t.wins != null && boN && t.wins > boN / 2);
+    const state = decided ? "post" : (games.some((g) => g.state === "inProgress" || g.state === "completed") ? "in" : "pre");
+    // Data Dragon version for champion portraits (free Riot CDN).
+    const dd = await espCached("esp_ddver", 24 * 3600 * 1000, 7 * 86400000, async () => {
+      const v = await espGet("https://ddragon.leagueoflegends.com/api/versions.json");
+      return Array.isArray(v) && v.length ? v[0] : null;
+    }).catch(() => null);
+    return { game: "lol", id, league: (ev.league && ev.league.name) || "", block: "", state, bo: boN, ddver: dd || "", teams, games };
+  }).catch(() => null);
+}
+async function espGradeLol(id, player, stat) {
+  const kind = espStatKind(stat);
+  if (!kind) return { final: false };
+  const det = await espLolMatch(id);
+  if (!det || det.state !== "post") return { final: false };
+  const pk = nickKey(player);
+  if (!pk) return { final: false };
+  let total = 0, found = false;
+  for (const g of det.games) {
+    if (g.state === "inProgress") return { final: false };
+    if (g.state !== "completed") continue; // unplayed tail games contribute nothing
+    if (!g.players) return { final: false };
+    const row = g.players.find((r) => nickKey(r.name) === pk || nickKey(r.full) === pk);
+    if (!row) continue;
+    total += kind === "k" ? row.k : kind === "d" ? row.d : kind === "a" ? row.a : row.cs;
+    found = true;
+  }
+  return found ? { final: true, value: total } : { final: false };
+}
+async function espLane(req, res) {
+  res.setHeader("Cache-Control", "public, s-maxage=30, stale-while-revalidate=120");
+  const mode = String(req.query.esports || "");
+  try {
+    if (mode === "schedule") {
+      const both = await Promise.all([espCs2Schedule(), espLolSchedule()]);
+      res.status(200).json({ ok: true, cs2: both[0] || { live: [], upcoming: [], finished: [] }, lol: both[1] || { live: [], upcoming: [], finished: [] } });
+      return;
+    }
+    if (mode === "match") {
+      if (req.query.game === "lol") {
+        const d = await espLolMatch(String(req.query.id || ""));
+        res.status(200).json(d ? { ok: true, match: d } : { ok: false, error: "match unavailable" });
+        return;
+      }
+      const d = await espCs2Match(String(req.query.slug || ""));
+      res.status(200).json(d ? { ok: true, match: d } : { ok: false, error: "match unavailable" });
+      return;
+    }
+    if (mode === "grade") {
+      const player = String(req.query.player || ""), stat = String(req.query.stat || "");
+      const out = req.query.game === "lol"
+        ? await espGradeLol(String(req.query.id || ""), player, stat)
+        : await espGradeCs2(String(req.query.slug || ""), player, stat);
+      res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+      res.status(200).json({ ok: true, final: !!out.final, value: out.final ? out.value : null });
+      return;
+    }
+  } catch (e) { res.status(200).json({ ok: false, error: String((e && e.message) || e) }); return; }
+  res.status(400).json({ ok: false, error: "unknown esports mode" });
+}
+
 module.exports = async (req, res) => {
   res.setHeader("Content-Type", "application/json");
   res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=39600");
+  // Esports lane first: it runs on free sources (bo3.gg / Riot feeds) and
+  // the shared cache — it must answer even when no Parlay key is present.
+  if (req.query && req.query.esports) { await espLane(req, res); return; }
   const keys = [process.env.PARLAY_API_KEY, process.env.PARLEY_API_KEY, process.env.PARLAY_API_KEY_2, process.env.PARLEY_API_KEY_2, process.env.PRIZEPICKS_FEED_API_KEY, process.env.PRIZEPICKS_API_KEY, process.env.PARLAY_KEY].filter((v, i, a) => !!v && a.indexOf(v) === i);
   if (!keys.length) { res.setHeader("Cache-Control", "no-store"); res.status(200).json({ ok: false, configured: false, props: [] }); return; }
   // Read-only daily credit tally (Brandon 2026-11-17: watch today's
@@ -854,7 +1256,7 @@ module.exports = async (req, res) => {
       }
       const rows = await inflight[sport];
       const prev = prevFetch[sport];
-      const fullProps = normalize(rows, true);
+      const fullProps = normalize(rows, true, sport);
       const fullKeys = new Set(fullProps.map(rowKey));
       // Rows whose start already passed survive ONLY with proof they were
       // posted mid-game: a fetch made after their game started (and within
@@ -993,7 +1395,7 @@ module.exports = async (req, res) => {
       inflight[sport] = fetchSport(sport, keys).finally(() => { delete inflight[sport]; });
     }
     const rows = await inflight[sport];
-    let props = normalize(rows);
+    let props = normalize(rows, false, sport);
     const parlayProps = props;
     let espnFb = false;
     if (!props.length) {
@@ -1008,7 +1410,7 @@ module.exports = async (req, res) => {
       const fFresh = await partialFill(sport, props);
       if (fFresh.filled) { props = fFresh.props; filled = true; }
     }
-    prevFetch[sport] = { ts: Date.now(), keys: new Set(normalize(rows, true).map(rowKey)) };
+    prevFetch[sport] = { ts: Date.now(), keys: new Set(normalize(rows, true, sport).map(rowKey)) };
     // Retention: the feed has already dropped started games, so carry
     // their props forward from the previous board (shared row when the
     // shared store is in play, else this instance's last board).

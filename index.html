@@ -108,6 +108,56 @@ input[type=number]{width:110px}
 .gscore{font-weight:800;font-size:17px;font-variant-numeric:tabular-nums}
 .tlogo{object-fit:contain;vertical-align:middle;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
 .gcBack{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:999px;padding:8px 15px;font-size:13.5px;font-weight:800;cursor:pointer;margin:0 0 10px}
+
+/* Esports (Brandon 2026-11-19): 3D-pop sliders + Game Center scoreboards.
+   Pop treatment (depth, glow, sheen) kept compact like the #gamePstats
+   rows so the Game Center keeps its one-screen flow. Esports only. */
+.glogo{width:22px;height:22px;object-fit:contain;vertical-align:-6px;margin-right:5px}
+.espslider{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:10px 2px 14px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.espslider::-webkit-scrollbar{display:none}
+.espslider .ptile{flex:0 0 148px;scroll-snap-align:center;transform:scale(.955);opacity:.88;transition:transform .25s ease,opacity .25s ease;background:linear-gradient(165deg,rgba(139,92,246,.20),rgba(255,255,255,.045) 45%,rgba(0,0,0,.22));border:1px solid rgba(167,139,250,.35);box-shadow:0 10px 20px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.09)}
+.espslider .ptile.uppop{transform:scale(1);opacity:1;box-shadow:0 18px 34px rgba(0,0,0,.55),0 0 0 2px rgba(167,139,250,.6),0 0 22px rgba(124,58,237,.35)}
+.espgrp{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 0;font-weight:900;font-size:14.5px;cursor:pointer}
+.espteams{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+.espteam{display:flex;align-items:center;gap:2px;min-width:0;font-size:14.5px}
+.espscore{font-size:24px;font-weight:900;color:var(--gold);white-space:nowrap}
+.espsb{position:relative;border:1px solid rgba(139,92,246,.55);background:linear-gradient(165deg,#1d1140,#100826 60%,#0b0618);border-radius:14px;padding:10px 12px;margin:0 0 10px;box-shadow:0 16px 32px rgba(0,0,0,.5),0 0 18px rgba(124,58,237,.28),inset 0 1px 0 rgba(255,255,255,.09);overflow:hidden}
+.espsb::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.07) 45%,transparent 60%);pointer-events:none}
+.espsbhd{display:flex;justify-content:space-between;align-items:center;font-weight:900;letter-spacing:1px;font-size:13px;margin-bottom:8px}
+.espsblb{font-size:11px;font-weight:900;letter-spacing:1.2px;color:var(--gold);margin:8px 0 2px}
+.espmaps{margin-bottom:2px}
+.espmapchip{display:inline-block;padding:4px 8px;border:1px solid var(--line);border-radius:999px;font-size:11.5px;margin:0 6px 6px 0;background:rgba(255,255,255,.04)}
+.espmapchip.on{border-color:var(--gold);color:var(--gold);box-shadow:0 0 10px rgba(245,185,66,.35)}
+.esplive{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid rgba(255,84,112,.5);background:rgba(255,84,112,.08);border-radius:10px;padding:6px 10px;margin:4px 0 6px;font-weight:900;font-size:13px}
+.esplive b{font-size:19px;color:#ff8fa5}
+.espthd{display:flex;align-items:center;gap:4px;margin:9px 0 3px;font-size:13px}
+.espprow{display:grid;grid-template-columns:28px 1fr 24px 24px 24px 38px;align-items:center;gap:4px;padding:3px 2px;font-size:12.5px;border-bottom:1px solid rgba(255,255,255,.05)}
+.espprow span{text-align:right}
+.espprow .espnm{text-align:left}
+.espphd{font-size:10.5px;color:var(--mut);letter-spacing:.6px;font-weight:800}
+.espava{position:relative;width:26px;height:26px;border-radius:50%;background:#241545;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto;text-align:center}
+.espava.lg{width:34px;height:34px;border-radius:8px}
+.espava img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.espava i{font-style:normal;font-size:10px;font-weight:800;color:#cbb8ff}
+.espnm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.lolbig{display:flex;align-items:center;justify-content:center;gap:14px;font-size:29px;font-weight:900;margin:2px 0 4px}
+.lolblue{color:#7db4ff}
+.lolred{color:#ff9db0}
+.lolobj{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-bottom:6px}
+.lolgold{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:800;margin-bottom:4px}
+.lolbar{display:flex;flex:1;height:5px;border-radius:3px;overflow:hidden;background:rgba(255,255,255,.08)}
+.lolbar i{display:block;height:100%}
+.lolbar i.b{background:#4f8ff7}
+.lolbar i.r{background:#f75f6d}
+.lolrole{border-top:1px solid rgba(255,255,255,.06);padding:6px 0 2px}
+.lolrolelb{text-align:center;font-size:10.5px;letter-spacing:1.5px;color:var(--gold);font-weight:900;margin-bottom:3px}
+.lolrow{display:flex;align-items:flex-start;gap:8px}
+.lolpl{display:flex;gap:7px;align-items:center;min-width:0;flex:1}
+.lolpl.r{flex-direction:row-reverse;text-align:right}
+.lolpn{display:flex;flex-direction:column;min-width:0;font-size:12.5px}
+.lolpn .note{font-size:11px;white-space:nowrap}
+.lolgc{width:86px;flex:0 0 auto;padding-top:2px}
+.lolgn{display:flex;justify-content:space-between;font-size:11px;font-weight:800;margin-bottom:3px}
 .gstat{color:var(--mut);font-size:12.5px;text-align:right}
 .news a{display:block;color:var(--txt);font-weight:600;font-size:14.5px;padding:7px 0;border-bottom:1px solid var(--line)}
 .news a:last-child{border-bottom:none}
@@ -1193,7 +1243,9 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <p class="note" id="liveStatus"></p>
     <div id="liveCenter"><p class="empty">Fetching fresh scores from ESPN…</p></div>
     <div id="gameDetail"></div>
+    <div id="espGameDetail"></div>
     <div id="liveFinished"></div>
+    <div id="espFinished"></div>
     <div id="hlLiveWrap" style="display:none"><h2 style="font-size:17px">🔴 Your Players — Live Highlights</h2><p class="sub">In-game clips of the players on your running tickets — this section goes away when their games end.</p><div class="hlrail" id="hlLiveRail"></div></div>
     <div id="liveSportHl"></div>
   </section>
@@ -1402,7 +1454,8 @@ var LEAGUES = [
   {key:"wbb",   label:"Women's College Basketball",sport:"basketball",  league:"womens-college-basketball", cats:[["Points","pointsPerGame","point"],["Rebounds","reboundsPerGame","rebound"],["Assists","assistsPerGame","assist"]]},
   {key:"tennis",label:"Tennis",            sport:"tennis",      league:"atp",              cats:[]},
   {key:"nhl",   label:"NHL",               sport:"hockey",      league:"nhl",              cats:[["Points","points","point"],["Goals","goals","goal"],["Assists","assists","assist"]]},
-  {key:"mlb",   label:"MLB",               sport:"baseball",    league:"mlb",              cats:[]}
+  {key:"mlb",   label:"MLB",               sport:"baseball",    league:"mlb",              cats:[]},
+  {key:"esports",label:"Esports",           sport:"esports",     league:"esports",          cats:[]}
 ];
 function leagueByKey(k){ for (var i=0;i<LEAGUES.length;i++) if (LEAGUES[i].key===k) return LEAGUES[i]; return LEAGUES[0]; }
 var PROP_LEAGUES = ["nba","nfl","cfb","cbb","wbb","nhl"];
@@ -1550,7 +1603,7 @@ function nextGameFor(events, teamId){
 }
 
 /* ---------- props (real PrizePicks lines via Parlay API) ---------- */
-var PARLAY_KEYS = {nba:"basketball_nba", nfl:"americanfootball_nfl", cfb:"americanfootball_ncaaf", cbb:"basketball_ncaab", wbb:"basketball_wncaab", nhl:"icehockey_nhl", mlb:"baseball_mlb", tennis:"tennis"};
+var PARLAY_KEYS = {nba:"basketball_nba", nfl:"americanfootball_nfl", cfb:"americanfootball_ncaaf", cbb:"basketball_ncaab", wbb:"basketball_wncaab", nhl:"icehockey_nhl", mlb:"baseball_mlb", tennis:"tennis", esports:["esports_cs2","esports_lol"]};
 var propsCache = {};   // leagueKey -> [prop]
 var propsAt = {};      // leagueKey -> last fetch time (ms)
 var propsRefreshing = {};
@@ -1571,6 +1624,7 @@ function ingestProps(lg, rows){
       stat: r.stat, line: r.line,
       matchup: r.matchup || "", starts: r.starts || "", eventId: "",
       img: photoCache[(r.player || "").toLowerCase()] || "",
+      game: lg.key === "esports" ? (r.game || "") : "", espState: "",
       pct: (r.pct != null ? r.pct : null),
       brk: brk,
       half: r.half ? 1 : 0,
@@ -2235,6 +2289,7 @@ function renderSportGames(lg){
 function renderBoards(){
   var lg = leagueByKey(currentSport);
   if (!lg){ currentSport = "nba"; lg = leagueByKey("nba"); }
+  if (lg.key === "esports") { renderEspBoardPage(lg); return; }
   $("sportTitle").textContent = lg.label + " Props — Today";
   $("propCountPill").textContent = "";
   $("sportProps").innerHTML = '<p class="empty">Loading props…</p>';
@@ -2914,15 +2969,16 @@ function renderLive(){
     forder.sort(function(a, b){ var ai = PRIO_FIN.indexOf(a), bi = PRIO_FIN.indexOf(b); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; });
     var finHtml = forder.map(function(k3){ var gr = fgroups[k3]; return '<div class="fsport"><span>' + esc(k3 === "tennis" ? "Tennis" : gr.label) + '</span><span class="fcount">' + gr.items.length + ' final' + (gr.items.length===1?"":"s") + '</span></div>' + gr.items.map(function(en){ return finCardHtml(en); }).join(""); }).join("");
     var html =
-      '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Live Games</h2><span style="color:var(--purp-lt);font-weight:700">' + live.length + ' game' + (live.length===1?"":"s") + '</span></div>'
-      + (live.length ? liveHtml : '<p class="empty">No games live right now.</p>')
+      '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Live Games</h2><span style="color:var(--purp-lt);font-weight:700">' + (live.length + ((liveFilter === "all" || liveFilter === "esports") ? (window.__espLiveN || 0) : 0)) + ' game' + (live.length===1?"":"s") + '</span></div>'
+      + (live.length ? liveHtml : '') + espLiveHtml() + ((live.length || window.__espShownLive) ? '' : '<p class="empty">No games live right now.</p>')
       + '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Future Games</h2><span style="color:var(--purp-lt);font-weight:700">' + fut.length + ' game' + (fut.length===1?"":"s") + '</span></div>'
-      + (fut.length ? futSliders(fut) : '<p class="empty">No future games in the next two days.</p>');
+      + (fut.length ? futSliders(fut) : '') + espFutHtml() + ((fut.length || window.__espShownFut) ? '' : '<p class="empty">No future games in the next two days.</p>');
     var lc = $("liveCenter");
     if (setHtml(lc, html)) lc.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
     var lf = $("liveFinished");
     if (lf && setHtml(lf, finAll.length ? '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Finished Games</h2><span style="color:var(--purp-lt);font-weight:700">' + finAll.length + ' game' + (finAll.length===1?"":"s") + '</span></div>' + finHtml : "")) lf.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
     hydratePbpMinis();
+    try { espTick(); renderEspFinished(); } catch (e) {}
     renderLiveSportHl(); renderLiveHighlights();
   });
 }
@@ -3224,6 +3280,7 @@ function trackerHtml(lg, s, comp, cs){
 }
 
 function closeGame(silent){
+  closeEspGame();
   var dest = window._gameFrom || "live"; window._gameFrom = null;
   window._openGame = null;
   var gd = $("gameDetail"); if (gd) gd.innerHTML = "";
@@ -3231,6 +3288,7 @@ function closeGame(silent){
   if (!silent){ if (dest === "home") showView("home"); else if (dest === "sport") { showView("sport"); renderBoards(); } else { renderLive(); if (window._liveScrollY != null) window.scrollTo(0, window._liveScrollY); } }
 }
 function openGame(key, eventId, isRefresh){
+  if (key === "esports") { openEspGame(eventId); return; }
   window._openGame = {key: key, eventId: eventId};
   var keepY = isRefresh ? (window.scrollY || 0) : 0;
   if (!isRefresh){
@@ -3492,7 +3550,8 @@ function renderBuild(){
     var EMO = {nfl:"\uD83C\uDFC8",nba:"\uD83C\uDFC0",nhl:"\uD83C\uDFD2",cfb:"\uD83C\uDFC8",cbb:"\uD83C\uDFC0",wbb:"\uD83C\uDFC0",mlb:"\u26BE",tennis:"\uD83C\uDFBE"};
     var PRIO = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
     lorder.sort(function(a,b){ var ai = PRIO.indexOf(String(a).toLowerCase()), bi = PRIO.indexOf(String(b).toLowerCase()); ai = ai<0?99:ai; bi = bi<0?99:bi; return ai-bi; });
-    box.innerHTML = lorder.map(function(L){ var label = (byLeague[L][0] && byLeague[L][0].leagueLabel) || String(L).toUpperCase(); return buildSectionHtml(L, byLeague[L], label, EMO); }).join("");
+    box.innerHTML = lorder.map(function(L){ var label = (byLeague[L][0] && byLeague[L][0].leagueLabel) || String(L).toUpperCase(); return buildSectionHtml(L, byLeague[L], label, EMO); }).join("") + espBuildSectionHtml();
+    renderBuildEsp();
     bindTiles(box);
     buildSlidersInit(box);
     box.querySelectorAll("[data-btpill]").forEach(function(b){ b.addEventListener("click", function(){ var L2 = b.getAttribute("data-btpill"), t2 = b.getAttribute("data-btteam"); if (t2 === "all" || buildTeamByLeague[L2] === t2) delete buildTeamByLeague[L2]; else buildTeamByLeague[L2] = t2; renderBuild(); }); });
@@ -3650,6 +3709,16 @@ function gradeTicket(t){
   // returns Promise<{legId:{val,status,final}}>
   var jobs = t.legs.map(function(leg){
     var man = (manualTr[t.id]||{})[leg.id];
+    if (leg.league === "esports" && !leg.custom){
+      if (man != null) return Promise.resolve({id:leg.id, val:man, status:legGrade(leg, man), manual:true, manFinal:!!((manualFin[t.id]||{})[leg.id])});
+      var espRef2 = String(leg.eventId || ""), espGi = espRef2.indexOf(":");
+      if (espGi <= 0) return Promise.resolve({id:leg.id, val:null, status:"manual", manual:true, manFinal:false});
+      var espGq = "grade&game=" + encodeURIComponent(espRef2.slice(0, espGi)) + (espRef2.slice(0, espGi) === "lol" ? "&id=" : "&slug=") + encodeURIComponent(espRef2.slice(espGi + 1)) + "&player=" + encodeURIComponent(leg.player || "") + "&stat=" + encodeURIComponent(leg.stat || "");
+      return fetchJson("/api/props?esports=" + espGq).then(function(g){
+        if (g && g.final && typeof g.value === "number") return {id:leg.id, val:g.value, status:legGrade(leg, g.value), final:true};
+        return {id:leg.id, val:null, status:"manual", manual:true, manFinal:false};
+      }).catch(function(){ return {id:leg.id, val:null, status:"manual", manual:true, manFinal:false}; });
+    }
     if (leg.custom || !leg.eventId || !leg.athleteId){
       var fin = !!((manualFin[t.id]||{})[leg.id]);
       if (man!=null) return Promise.resolve({id:leg.id, val:man, status:legGrade(leg, man), manual:true, manFinal:fin});
@@ -5540,6 +5609,451 @@ function clashFinish(won){
   if (CL.mode === "pvp" && CL.pvp && !CL.pvp.finSent) { CL.pvp.finSent = true; pvpSendFinal(won); }
   if (won && typeof confetti === "function") confetti();
 }
+
+/* ============ ESPORTS (Brandon 2026-11-19) ============
+   One Esports section — Counter-Strike 2 + League of Legends — organized
+   like the other sports: its own tab (built from LEAGUES), props boards
+   grouped by match, a Build-page section, matches in the Live games flow,
+   and an Esports Game Center (scoreboard + player stats + props) fed by
+   the server esports lane in api/props.js (bo3.gg for CS2, Riot's LoL
+   Esports feeds for LoL — ESPN has no esports). Props ride the normal
+   Parlay pipeline (PARLAY_KEYS.esports = both keys, league "esports");
+   match attribution comes from bo3 rosters in the schedule payload.
+   Upcoming props are pickable; live/finished are view-only, mirroring
+   the regular Game Center rules. */
+var espSched = null, espSchedAt = 0, espSchedBusy = false;
+var espOpen = null; // {game, ref, at, data}
+var espSliderN = 0;
+
+function espNK(s){ return String(s || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+function espLg(){ return leagueByKey("esports"); }
+function espFetchQ(q){ return fetchJson("/api/props?esports=" + q); }
+function espStateOf(game, it){
+  if (!it) return "";
+  if (game === "lol") {
+    if (it.state === "inProgress" || it.state === "in") return "in";
+    if (it.state === "completed" || it.state === "post") return "post";
+    return "pre";
+  }
+  return it.state || "";
+}
+function espTeamLogo(tm, sz){
+  return tm && tm.logo ? '<img class="glogo" src="' + esc(tm.logo) + '" alt="" loading="lazy" onerror="this.remove()" style="width:' + (sz || 22) + 'px;height:' + (sz || 22) + 'px">' : "";
+}
+function espEnsure(){
+  if (espSchedBusy) return;
+  if (espSched && Date.now() - espSchedAt < 60000) return;
+  espSchedBusy = true;
+  espFetchQ("schedule").then(function(d){
+    espSchedBusy = false;
+    if (!d || !d.ok) return;
+    espSched = d; espSchedAt = Date.now();
+    window.__espLiveN = ((d.cs2 && d.cs2.live) || []).length + ((d.lol && d.lol.live) || []).length;
+    espAttachProps(propsCache.esports || []);
+    if (currentSport === "esports" && window._view === "sport") renderEspBoardPage(espLg());
+    if (window._view === "build") renderBuildEsp();
+    if (window._view === "live") { renderLive(); renderEspFinished(); }
+    if (espOpen) espRenderGc();
+  }).catch(function(){ espSchedBusy = false; });
+}
+function espTick(){
+  espEnsure();
+  if (espOpen && Date.now() - espOpen.at > (espOpen.game === "lol" ? 60000 : 45000)) espLoadMatch(true);
+}
+/* ---------- attribution: Parlay rows -> bo3 matches ---------- */
+function espRosterIndex(){
+  var idx = {};
+  if (!espSched || !espSched.cs2) return idx;
+  ["live", "upcoming", "finished"].forEach(function(k){
+    (espSched.cs2[k] || []).forEach(function(m){
+      (m.rosters || []).forEach(function(r){
+        idx[espNK(r.nick)] = { slug: m.slug, team: r.team, img: r.img, state: m.state, starts: m.starts, teams: m.teams, tournament: m.tournament };
+      });
+    });
+  });
+  return idx;
+}
+function espAttachProps(rows){
+  if (!rows || !rows.length || !espSched) return;
+  var idx = espRosterIndex();
+  var lolAll = [].concat((espSched.lol && espSched.lol.live) || [], (espSched.lol && espSched.lol.upcoming) || []);
+  var lolSingle = lolAll.length === 1 ? lolAll[0] : null;
+  var lolLive = (espSched.lol && espSched.lol.live || [])[0] || null;
+  rows.forEach(function(p){
+    if (p.game === "cs2") {
+      var hit = idx[espNK(p.player)];
+      if (hit) {
+        p.team = hit.team;
+        var opp = (hit.teams || []).filter(function(t){ return t.name !== hit.team; })[0];
+        p.matchup = hit.team + " vs " + (opp ? opp.name : "");
+        p.eventId = "cs2:" + hit.slug;
+        if (hit.img) p.img = hit.img;
+        p.espState = hit.state;
+        if (!p.starts) p.starts = hit.starts;
+      }
+    } else if (p.game === "lol") {
+      var m = lolSingle || lolLive;
+      if (m) {
+        p.matchup = (m.teams || []).map(function(t){ return t.name; }).join(" vs ");
+        if (lolSingle) p.eventId = "lol:" + m.id;
+        p.espState = espStateOf("lol", m);
+        if (!p.starts) p.starts = m.starts || p.starts;
+      }
+    }
+  });
+}
+function espFreshRow(p){
+  if (p.espState === "in") return true;
+  if (!p.starts) return true;
+  return new Date(p.starts).getTime() > Date.now() - 10 * 60 * 1000;
+}
+function espPlayerGroups(rows){
+  var order = [], by = {};
+  rows.forEach(function(p){
+    var k = p.player;
+    if (!by[k]) { by[k] = { player: p.player, team: p.team || "", img: p.img || "", game: p.game || "", league: "esports", leagueLabel: "Esports", starts: p.starts || "", props: [] }; order.push(by[k]); }
+    by[k].props.push(p);
+    if (!by[k].img && p.img) by[k].img = p.img;
+    if (!by[k].team && p.team) by[k].team = p.team;
+  });
+  return order;
+}
+function espMatchGroups(rows){
+  var byRef = {}, unatt = { cs2: [], lol: [] };
+  rows.forEach(function(p){
+    if (p.eventId) (byRef[p.eventId] = byRef[p.eventId] || []).push(p);
+    else unatt[p.game === "lol" ? "lol" : "cs2"].push(p);
+  });
+  var out = [];
+  if (espSched) {
+    ["cs2", "lol"].forEach(function(g){
+      ["live", "upcoming", "finished"].forEach(function(k){
+        ((espSched[g] || {})[k] || []).forEach(function(it){
+          var ref = g === "cs2" ? "cs2:" + it.slug : "lol:" + it.id;
+          if (byRef[ref]) { out.push({ ref: ref, game: g, state: espStateOf(g, it), item: it, rows: byRef[ref] }); delete byRef[ref]; }
+        });
+      });
+    });
+  }
+  Object.keys(byRef).forEach(function(ref){ out.push({ ref: ref, game: ref.split(":")[0], state: "", item: null, rows: byRef[ref] }); });
+  ["cs2", "lol"].forEach(function(g){ if (unatt[g].length) out.push({ ref: "", game: g, state: "", item: null, rows: unatt[g] }); });
+  return out;
+}
+function espMatchItem(game, ref){
+  if (!espSched || !espSched[game]) return null;
+  var arr = [].concat(espSched[game].live || [], espSched[game].upcoming || [], espSched[game].finished || []);
+  for (var i = 0; i < arr.length; i++) {
+    var it = arr[i];
+    if (game === "cs2" ? it.slug === ref : String(it.id) === String(ref)) return it;
+  }
+  return null;
+}
+/* ---------- tiles + sliders (the app's 3D-pop language) ---------- */
+function espTileHtml(g, vo){
+  return '<div class="ptile esptile" data-player="' + esc(g.player) + '" data-league="esports"' + (vo ? ' data-viewonly="1"' : '') + (vo === "final" ? ' data-final="1"' : '') + '>'
+    + '<span class="pwrap"><span class="pinit">' + esc(initials(g.player)) + '</span>' + (g.img ? '<img src="' + esc(g.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>'
+    + '<div class="pn">' + esc(g.player) + '</div><div class="pm">' + esc([g.team, g.game === "lol" ? "League of Legends" : "Counter-Strike 2"].filter(function(x){ return x; }).join(" · ")) + '</div>'
+    + '<span class="pc">' + g.props.length + ' prop' + (g.props.length === 1 ? "" : "s") + (g.starts ? ' · ' + esc(fmtClock(g.starts)) : '') + '</span>'
+    + (vo ? '<br><span class="plive">' + (vo === "final" ? "🏁 FINAL" : "🔴 LIVE") + '</span>' : '') + '</div>';
+}
+function espWireSliders(scope){
+  if (!scope) return;
+  scope.querySelectorAll(".espslider").forEach(function(tr){
+    espSliderN++;
+    popSliderInit(tr, "esp" + espSliderN, ".esptile", "0px -30% 0px -30%");
+  });
+}
+function espWireGcLinks(scope){
+  if (!scope) return;
+  scope.querySelectorAll("[data-espgc]").forEach(function(el){
+    el.addEventListener("click", function(){ openEspGame(el.getAttribute("data-espgc")); });
+  });
+}
+function espGroupTitle(mg){
+  var it = mg.item;
+  if (!it) return '<span>' + (mg.game === "lol" ? "League of Legends" : "Counter-Strike 2") + ' props</span><span class="fcount">' + mg.rows.length + ' props</span>';
+  var t = it.teams || [];
+  var names = t.map(function(tm){ return espTeamLogo(tm, 20) + esc(tm.name || ""); }).join(' <span class="note">vs</span> ');
+  var meta = mg.state === "in" ? '<span class="plive">🔴 LIVE</span>' : (mg.state === "post" ? '<span class="note">🏁 Final</span>' : '<span class="note">' + esc(it.starts ? fmtFullDate(it.starts) : "") + '</span>');
+  return '<span>' + names + '</span><span class="fcount">' + meta + ' · ' + mg.rows.length + ' props</span>';
+}
+/* ---------- sport-tab board ---------- */
+function renderEspBoardPage(lg){
+  var pw = $("popWrap"); if (pw) pw.style.display = "none";
+  var pf = $("propFilters"); if (pf) pf.innerHTML = "";
+  var tf = $("teamFilters"); if (tf) tf.innerHTML = "";
+  var box = $("sportProps"); if (!box) return;
+  espEnsure();
+  buildProps(lg).then(function(ps){
+    if (currentSport !== "esports" || !$("sportProps")) return;
+    espAttachProps(ps);
+    var pill = $("propCountPill");
+    if (!ps.length) {
+      if (pill) pill.textContent = "";
+      box.innerHTML = '<p class="empty">No esports props on the board right now — CS2 props post before matches, and League of Legends is between splits right now. Matches:</p>' + espSchedMatchesHtml();
+      return;
+    }
+    if (pill) pill.textContent = ps.length + " props · tap a player for all their props";
+    var groups = espMatchGroups(ps.filter(espFreshRow));
+    box.innerHTML = groups.map(function(mg){
+      var vo = mg.state === "in" ? "live" : (mg.state === "post" ? "final" : "");
+      return '<div class="espgrp" data-espgc="' + esc(mg.ref) + '">' + espGroupTitle(mg) + '</div>'
+        + '<div class="espslider">' + espPlayerGroups(mg.rows).map(function(g){ return espTileHtml(g, vo); }).join("") + '</div>';
+    }).join("");
+    espWireSliders(box); bindTiles(box); espWireGcLinks(box);
+  }).catch(function(){});
+}
+function espSchedMatchesHtml(){
+  if (!espSched) return '<p class="empty">Loading the esports schedule…</p>';
+  var h = "";
+  [["cs2", "Counter-Strike 2"], ["lol", "League of Legends"]].forEach(function(pair){
+    var g = pair[0], items = [].concat((espSched[g] || {}).live || [], (espSched[g] || {}).upcoming || []);
+    if (!items.length) return;
+    h += '<div class="fsport"><span>' + (g === "cs2" ? "🎯" : "🐉") + ' ' + pair[1] + '</span><span class="fcount">' + items.length + ' matches</span></div>'
+      + items.map(function(it){ return espMatchCard(g, it); }).join("");
+  });
+  return h || '<p class="empty">No esports matches on the schedule right now.</p>';
+}
+/* ---------- Build page section ---------- */
+function espBuildSectionHtml(){ return '<div id="buildEsp"></div>'; }
+function renderBuildEsp(){
+  var box = $("buildEsp"); if (!box) return;
+  var lg = espLg(); if (!lg) return;
+  espEnsure();
+  buildProps(lg).then(function(ps){
+    if (!$("buildEsp")) return;
+    espAttachProps(ps);
+    var rows = ps.filter(function(p){ return espFreshRow(p) && p.espState !== "in" && p.espState !== "post"; });
+    if (!rows.length) { box.innerHTML = ""; return; }
+    box.innerHTML = '<div class="sporthd" style="margin-top:14px"><span class="sportname">🎮 Esports</span><span class="sportct">' + rows.length + ' props</span></div>'
+      + espMatchGroups(rows).map(function(mg){
+        return '<div class="bteamgroup"><div class="bteamhead" data-espgc="' + esc(mg.ref) + '">' + espGroupTitle(mg) + '</div>'
+          + '<div class="espslider">' + espPlayerGroups(mg.rows).map(function(g){ return espTileHtml(g, ""); }).join("") + '</div></div>';
+      }).join("");
+    espWireSliders(box); bindTiles(box); espWireGcLinks(box);
+  }).catch(function(){});
+}
+/* ---------- Live Center ---------- */
+function espMatchCard(game, it){
+  var st = espStateOf(game, it);
+  var t = it.teams || [];
+  var ref = game === "cs2" ? it.slug : String(it.id);
+  var rows = t.map(function(tm, i){
+    var sc = st === "pre" ? null : (game === "cs2" ? (it.score ? it.score[i] : null) : (tm.wins != null ? tm.wins : null));
+    return '<div class="gteam">' + espTeamLogo(tm, 22) + esc(tm.name || "") + (sc != null ? ' <span class="gscore">' + esc(sc) + '</span>' : '') + '</div>';
+  }).join("");
+  var right = st === "in" ? "🔴 LIVE" : (st === "post" ? "🏁 Final" : esc(it.starts ? fmtFullDate(it.starts) : ""));
+  var label = (game === "cs2" ? "CS2" : "LoL") + (it.tournament ? " · " + it.tournament : (it.league ? " · " + it.league : ""));
+  return '<div class="card game' + (st === "in" ? " lv" : "") + '" data-game="esports|' + game + ':' + esc(ref) + '" style="cursor:pointer"><div class="row" style="justify-content:space-between"><span class="note" style="text-transform:uppercase;letter-spacing:1px">' + esc(label) + '</span><span class="note">' + right + '</span></div><div style="margin-top:6px">' + rows + '</div><div class="note" style="margin-top:6px">Tap for the Esports Game Center — scoreboard, player stats & props →</div></div>';
+}
+function espFutCard(game, it){
+  var t = it.teams || [];
+  var rows = t.map(function(tm){ return '<div class="fteam">' + espTeamLogo(tm, 20) + '<span>' + esc(tm.name || "") + '</span></div>'; }).join("");
+  return '<div class="fcard" data-game="esports|' + game + ':' + esc(game === "cs2" ? it.slug : String(it.id)) + '"><div class="ftime">' + esc(it.starts ? fmtFullDate(it.starts) : "") + (it.tournament ? " · " + esc(it.tournament) : "") + '</div>' + rows + '</div>';
+}
+function espLiveHtml(){
+  window.__espShownLive = 0;
+  if (!espSched || (liveFilter !== "all" && liveFilter !== "esports")) return "";
+  var h = "", n = 0;
+  [["cs2", "Counter-Strike 2"], ["lol", "League of Legends"]].forEach(function(pair){
+    var items = (espSched[pair[0]] || {}).live || [];
+    if (!items.length) return;
+    n += items.length;
+    h += items.map(function(it){ return espMatchCard(pair[0], it); }).join("");
+  });
+  if (!n) return "";
+  window.__espShownLive = n;
+  return '<div class="fsport"><span>🎮 Esports</span><span class="fcount">' + n + ' live</span></div>' + h;
+}
+function espFutHtml(){
+  window.__espShownFut = 0;
+  if (!espSched || (liveFilter !== "all" && liveFilter !== "esports")) return "";
+  var h = "", n = 0;
+  [["cs2", "Counter-Strike 2"], ["lol", "League of Legends"]].forEach(function(pair){
+    var items = (espSched[pair[0]] || {}).upcoming || [];
+    if (!items.length) return;
+    n += items.length;
+    h += '<div class="fsport"><span>🎮 ' + pair[1] + '</span><span class="fcount">' + items.length + ' upcoming</span></div><div class="fslider">' + items.map(function(it){ return espFutCard(pair[0], it); }).join("") + '</div>';
+  });
+  window.__espShownFut = n;
+  return h;
+}
+function renderEspFinished(){
+  var box = $("espFinished"); if (!box) return;
+  if (!espSched) { box.innerHTML = ""; return; }
+  var h = "";
+  [["cs2", "Counter-Strike 2"], ["lol", "League of Legends"]].forEach(function(pair){
+    var items = (espSched[pair[0]] || {}).finished || [];
+    if (!items.length) return;
+    h += '<div class="fsport"><span>🎮 ' + pair[1] + '</span><span class="fcount">' + items.length + ' finished</span></div>'
+      + items.map(function(it){ return espMatchCard(pair[0], it); }).join("");
+  });
+  setHtml(box, h ? '<h2 style="margin:16px 0 4px">🏁 Esports Results</h2>' + h : "");
+}
+/* ---------- Esports Game Center ---------- */
+function openEspGame(ref){
+  var gi = String(ref || "").indexOf(":");
+  if (gi <= 0) return;
+  espOpen = { game: String(ref).slice(0, gi), ref: String(ref).slice(gi + 1), at: 0, data: null };
+  window._openGame = { key: "esports", eventId: String(ref) };
+  window._liveScrollY = window.scrollY || 0;
+  ["liveCenter", "liveTabs", "liveStatus", "liveFinished", "espFinished"].forEach(function(id){ var el = $(id); if (el) el.style.display = "none"; });
+  var gd = $("espGameDetail");
+  if (gd) gd.innerHTML = '<button class="gcBack" type="button">← All games</button><div class="card"><p class="empty">Loading Esports Game Center…</p></div>';
+  window.scrollTo(0, 0);
+  espEnsure();
+  espLoadMatch(false);
+}
+function espLoadMatch(isRefresh){
+  if (!espOpen) return;
+  espOpen.at = Date.now();
+  var q = espOpen.game === "lol" ? ("match&game=lol&id=" + encodeURIComponent(espOpen.ref)) : ("match&game=cs2&slug=" + encodeURIComponent(espOpen.ref));
+  espFetchQ(q).then(function(d){
+    if (!espOpen) return;
+    if (d && d.ok && d.match) { espOpen.data = d.match; espRenderGc(); }
+    else if (!isRefresh) {
+      var gd = $("espGameDetail");
+      if (gd) gd.innerHTML = '<button class="gcBack" type="button">← All games</button><div class="card"><p class="err">Couldn\'t load that match right now — the scoreboard will appear here once the sources report it.</p></div>';
+    }
+  }).catch(function(){});
+}
+function closeEspGame(){
+  espOpen = null;
+  var gd = $("espGameDetail"); if (gd) gd.innerHTML = "";
+  var ef = $("espFinished"); if (ef) ef.style.display = "";
+}
+function espRenderGc(){
+  var gd = $("espGameDetail");
+  if (!gd || !espOpen || !espOpen.data) return;
+  var d = espOpen.data;
+  gd.innerHTML = '<button class="gcBack" type="button">← All games</button>'
+    + espScoreHeadHtml(d)
+    + (d.game === "lol" ? espLolSbHtml(d) : espCs2SbHtml(d))
+    + espGcPropsHtml(d);
+  espWireSliders(gd); bindTiles(gd);
+}
+function espScoreHeadHtml(d){
+  var t = d.teams || [];
+  var s1 = d.game === "cs2" ? (d.score || [])[0] : (t[0] && t[0].wins);
+  var s2 = d.game === "cs2" ? (d.score || [])[1] : (t[1] && t[1].wins);
+  var chip = d.state === "in" ? '<span class="plive">🔴 LIVE</span>' : (d.state === "post" ? '<span class="note">🏁 FINAL</span>' : '<span class="note">' + esc(d.starts ? fmtFullDate(d.starts) : "") + '</span>');
+  var sub = d.game === "cs2" ? (d.tournament || "Counter-Strike 2") : (d.league || "League of Legends");
+  var teamRow = function(tm){ return '<div class="espteam">' + espTeamLogo(tm, 30) + '<b>' + esc(tm.name || "") + '</b></div>'; };
+  return '<div class="card" style="margin-bottom:10px"><div class="row" style="justify-content:space-between"><span class="note" style="text-transform:uppercase;letter-spacing:1px">' + esc(sub) + (d.bo ? ' · BEST OF ' + d.bo : '') + '</span>' + chip + '</div>'
+    + '<div class="espteams">' + teamRow(t[0] || {}) + '<div class="espscore">' + (s1 != null ? s1 : 0) + ' – ' + (s2 != null ? s2 : 0) + '</div>' + teamRow(t[1] || {}) + '</div></div>';
+}
+/* ----- CS2 scoreboard (bo3 layout: map strip, live rounds, K/A/D/ADR) ----- */
+function espTallyScore(m, d){
+  if (!m.tally || !m.clanIds) return null;
+  var counts = {};
+  Object.keys(m.tally).forEach(function(clan){ var tid = m.clanIds[clan]; if (tid != null) counts[tid] = m.tally[clan]; });
+  if (!d.teams || d.teams.length < 2) return null;
+  return (counts[d.teams[0].id] || 0) + "–" + (counts[d.teams[1].id] || 0);
+}
+function espCs2SbHtml(d){
+  var maps = d.maps || [];
+  if (!maps.length) return '<div class="card"><p class="empty">The map-by-map scoreboard appears here once the match starts.</p></div>';
+  var strip = maps.map(function(m){
+    var live = d.liveMap === m.n && d.state === "in";
+    var sc = (m.s1 != null && m.s2 != null) ? m.s1 + "–" + m.s2 : (live ? (espTallyScore(m, d) || "—") : "—");
+    return '<span class="espmapchip' + (live ? " on" : "") + '">MAP ' + m.n + ' · ' + esc(m.name || "") + ' · <b>' + sc + '</b>' + (live ? ' · 🔴' : '') + '</span>';
+  }).join("");
+  var h = '<div class="espsb"><div class="espsbhd"><span>🗺️ SCOREBOARD</span><span class="note">' + (d.state === "in" ? "LIVE" : (d.state === "post" ? "FINAL" : "UPCOMING")) + '</span></div><div class="espmaps">' + strip + '</div>';
+  var liveM = null;
+  maps.forEach(function(m){ if (d.liveMap === m.n) liveM = m; });
+  if (d.state === "in" && liveM) {
+    h += '<div class="esplive"><span>🔴 MAP ' + liveM.n + ' · ' + esc(liveM.name || "") + '</span><b>' + (espTallyScore(liveM, d) || "—") + '</b><span class="note">ROUND ' + ((liveM.roundsPlayed || 0) + 1) + '</span></div>';
+  }
+  var pick = null;
+  for (var i = maps.length - 1; i >= 0; i--) { if ((maps[i].players || []).length) { pick = maps[i]; break; } }
+  if (pick) {
+    var label = pick.statsFrom === "live" ? "MAP " + pick.n + " · LIVE PLAYER STATS"
+      : (d.state === "in" ? "MAP " + pick.n + " · FINAL — the live map's stats post when it ends" : "MAP " + pick.n + " · FINAL PLAYER STATS");
+    h += '<div class="espsblb">' + label + '</div>'
+      + espCs2TeamTable(d, pick, 0) + espCs2TeamTable(d, pick, 1) + espCs2TeamTable(d, pick, -1);
+  } else {
+    h += '<p class="empty" style="margin:6px 0 2px">Player stats post here as maps are played.</p>';
+  }
+  return h + '</div>';
+}
+function espCs2TeamTable(d, pick, teamIdx){
+  var tm = teamIdx >= 0 ? (d.teams[teamIdx] || {}) : null;
+  var rows = (pick.players || []).filter(function(r){
+    if (teamIdx < 0) return !d.teams.some(function(t){ return String(t.id) === String(r.teamId); });
+    return String(r.teamId) === String(tm.id);
+  });
+  if (!rows.length) return "";
+  rows = rows.slice().sort(function(a, b){ return (b.k || 0) - (a.k || 0); });
+  return '<div class="espthd">' + (tm ? espTeamLogo(tm, 20) + '<b>' + esc(tm.name || "") + '</b>' : '<b>Players</b>') + '</div>'
+    + '<div class="espprow espphd"><span></span><span>PLAYER</span><span>K</span><span>A</span><span>D</span><span>ADR</span></div>'
+    + rows.map(function(r){
+      return '<div class="espprow"><span class="espava">' + (r.img ? '<img src="' + esc(r.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '<i>' + esc(initials(r.nick || r.name || "?")) + '</i></span>'
+        + '<span class="espnm">' + esc(r.nick || r.name || "") + '</span><span>' + (r.k || 0) + '</span><span>' + (r.a || 0) + '</span><span>' + (r.d || 0) + '</span><span>' + (r.adr != null ? r.adr : "—") + '</span></div>';
+    }).join("");
+}
+/* ----- LoL live tracker (series header, kills, objectives, gold, roles) ----- */
+function espLolSbHtml(d){
+  var games = d.games || [];
+  var cur = null;
+  games.forEach(function(g){ if (g.state === "inProgress") cur = g; });
+  if (!cur) for (var i = games.length - 1; i >= 0; i--) { if (games[i].state === "completed" && (games[i].players || []).length) { cur = games[i]; break; } }
+  if (!cur) for (var j = 0; j < games.length; j++) { if ((games[j].players || []).length) { cur = games[j]; break; } }
+  if (!cur || !(cur.players || []).length) return '<div class="card"><p class="empty">The live tracker appears here once the game starts — kills, gold, objectives and per-role matchups from Riot\'s live feed.</p></div>';
+  var blueId = "", redId = "";
+  (cur.sides || []).forEach(function(s){ if (s.side === "blue") blueId = String(s.id); else if (s.side === "red") redId = String(s.id); });
+  var bi = 0;
+  (d.teams || []).forEach(function(t, i){ if (String(t.id) === blueId) bi = i; });
+  var ri = bi === 0 ? 1 : 0;
+  var tb = d.teams[bi] || {}, tr = d.teams[ri] || {};
+  var tot = cur.totals || [];
+  var bT = tot[0] || {}, rT = tot[1] || {};
+  var gk = function(v){ return v != null ? (Math.round(v / 100) / 10).toFixed(1) + "k" : "—"; };
+  var series = (tb.code || "") + " " + (tb.wins != null ? tb.wins : 0) + " – " + (tr.wins != null ? tr.wins : 0) + " " + (tr.code || "");
+  var h = '<div class="espsb"><div class="espsbhd"><span>BEST OF ' + (d.bo || 1) + ' · GAME ' + cur.n + '</span><span class="note">' + esc(series) + (cur.gameState === "finished" ? " · 🏁 FINAL" : (d.state === "in" ? " · 🔴 LIVE" : "")) + '</span></div>';
+  h += '<div class="lolbig"><span class="lolblue">' + espTeamLogo(tb, 26) + (bT.kills || 0) + '</span><span class="note" style="font-size:13px">KILLS</span><span class="lolred">' + (rT.kills || 0) + espTeamLogo(tr, 26) + '</span></div>';
+  h += '<div class="lolobj"><span>🗼 ' + (bT.towers || 0) + ' · 🐉 ' + (bT.dragons || 0) + ' · 👹 ' + (bT.barons || 0) + '</span><span>🗼 ' + (rT.towers || 0) + ' · 🐉 ' + (rT.dragons || 0) + ' · 👹 ' + (rT.barons || 0) + '</span></div>';
+  var bg = bT.gold || 0, rg = rT.gold || 0, tot2 = (bg + rg) || 1;
+  h += '<div class="lolgold"><span class="lolblue">' + gk(bg) + ' 🪙</span><span class="lolbar"><i class="b" style="width:' + Math.round(bg / tot2 * 100) + '%"></i><i class="r" style="width:' + Math.round(rg / tot2 * 100) + '%"></i></span><span class="lolred">🪙 ' + gk(rg) + '</span></div>';
+  var roles = [["top", "TOP"], ["jungle", "JUNGLE"], ["mid", "MID"], ["bottom", "ADC"], ["support", "SUPPORT"]];
+  h += roles.map(function(rl){
+    var pb = (cur.players || []).filter(function(p){ return String(p.teamId) === String(tb.id) && p.role === rl[0]; })[0];
+    var pr = (cur.players || []).filter(function(p){ return String(p.teamId) === String(tr.id) && p.role === rl[0]; })[0];
+    if (!pb && !pr) return "";
+    return '<div class="lolrole"><div class="lolrolelb">' + rl[1] + '</div><div class="lolrow">' + espLolPlHtml(pb, d, "b") + espLolGoldHtml(pb, pr) + espLolPlHtml(pr, d, "r") + '</div></div>';
+  }).join("");
+  return h + '</div>';
+}
+function espLolPlHtml(p, d, side){
+  if (!p) return '<div class="lolpl ' + side + '"></div>';
+  var champ = (d.ddver && p.champ) ? "https://ddragon.leagueoflegends.com/cdn/" + d.ddver + "/img/champion/" + encodeURIComponent(p.champ) + ".png" : "";
+  return '<div class="lolpl ' + side + '">'
+    + '<span class="espava lg">' + (champ ? '<img src="' + esc(champ) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '<i>' + esc(initials(p.name || "?")) + '</i></span>'
+    + '<span class="lolpn"><b>' + esc(p.name || "") + '</b><span class="note">⚔️ ' + p.k + '/' + p.d + '/' + p.a + ' · CS ' + p.cs + ' · Lv ' + p.level + '</span></span></div>';
+}
+function espLolGoldHtml(pb, pr){
+  var gb = pb ? pb.gold || 0 : 0, gr = pr ? pr.gold || 0 : 0, t = (gb + gr) || 1;
+  return '<div class="lolgc"><div class="lolgn"><span>' + gb.toLocaleString() + '</span><span>' + gr.toLocaleString() + '</span></div><div class="lolbar"><i class="b" style="width:' + Math.round(gb / t * 100) + '%"></i><i class="r" style="width:' + Math.round(gr / t * 100) + '%"></i></div></div>';
+}
+/* ----- Game Center props ----- */
+function espGcPropsHtml(d){
+  var rows = (propsCache.esports || []).slice();
+  espAttachProps(rows);
+  var mine = rows.filter(function(p){
+    if (p.game !== d.game) return false;
+    if (d.game === "cs2") return p.eventId === "cs2:" + d.slug;
+    return true; // LoL props ride with the section — the feed carries no per-match split
+  });
+  var vo = d.state === "in" ? "live" : (d.state === "post" ? "final" : "");
+  var head = '<div class="espgrp"><span>🎯 ' + (d.game === "cs2" ? "Match props" : "League of Legends props") + '</span><span class="fcount">' + mine.length + ' props</span></div>';
+  if (!mine.length) return head + '<div class="card"><p class="empty">' + (d.state === "post" ? "Props for this match were pre-game only — the board has moved on to the next matches." : "No props posted for this match yet — PrizePicks props appear here when they post.") + '</p></div>';
+  return head + '<div class="espslider">' + espPlayerGroups(mine).map(function(g){ return espTileHtml(g, vo); }).join("") + '</div>'
+    + (vo ? '<p class="note" style="margin:4px 2px 0">' + (vo === "final" ? "🏁 Finished — props are view only." : "🔴 Live — props are view only while the match is on.") + '</p>' : '');
+}
+(function(){
+  var gd = $("espGameDetail");
+  if (gd) gd.addEventListener("click", function(e){ var b = e.target && e.target.closest ? e.target.closest(".gcBack") : null; if (b) closeGame(false); });
+})();
+
 /* ============ HEAD-TO-HEAD PvP ============
    Rooms live in Supabase (clash_rooms) via api/social.js. The battle state
    is stored oriented for the player who moves NEXT; the other phone mirrors
@@ -6550,6 +7064,7 @@ function renderTicker(){
 /* ---------- player photos for Parlay props (ESPN search -> headshot, cached) ---------- */
 var photoCache = lsGet("pa_photos", {});
 function resolvePhotos(lg, list){
+  if (lg && lg.key === "esports") return;
   var need = (list||[]).filter(function(p){ return p.player && ((photoCache[p.player.toLowerCase()]===undefined && !p.img) || (teamCache[p.player.toLowerCase()]===undefined && !p.team) || (aidCache[p.player.toLowerCase()]===undefined && lg && lg.key!=="tennis")); }).slice(0,60);
   if (!need.length) return;
   var chain = Promise.resolve();
@@ -6761,6 +7276,7 @@ refreshAgentBtn();
 renderAllSlips();
 refreshHome();
 renderBoard();
+espEnsure();
 /* account session boot: a logged-in account owns the cloud identity */
 (function(){
   var a = lsGet("pa_auth", null);

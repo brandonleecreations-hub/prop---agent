@@ -283,9 +283,71 @@ module.exports = async (req, res) => {
       }
       return sumCache[k];
     }
+
+    // ---- Esports legs (Brandon 2026-11-19): CS2 legs resolve from
+    // bo3.gg's final per-map player stats — the same source and map-scope
+    // rules as the app (/api/props?esports=grade). Anything that cannot
+    // be resolved returns { final:false } so the ticket stays PENDING and
+    // settles on the owner's manual stepper — never an auto-loss (the
+    // v1.0.57 unresolved rule). LoL legs stay on that floor until Parlay
+    // posts LoL props.
+    function espNickKey(s) { return String(s || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+    async function gradeEsportsLeg(leg) {
+      try {
+        if (!leg || !leg.player || !leg.stat) return { final: false };
+        const espRef = String(leg.eventId || "");
+        const espCi = espRef.indexOf(":");
+        if (espCi <= 0 || espRef.slice(0, espCi) !== "cs2") return { final: false };
+        const espSlug = espRef.slice(espCi + 1);
+        const stat = String(leg.stat);
+        const kind = /headshot/i.test(stat) ? "hs" : (/kill/i.test(stat) ? "k" : "");
+        if (!kind) return { final: false };
+        let scope = null;
+        if (/maps?\s*1\s*[-\u2013]\s*2/i.test(stat)) scope = [1, 2];
+        else { const mm = /map\s*(\d)/i.exec(stat); if (mm) scope = [parseInt(mm[1], 10)]; }
+        const det = await getJson("https://api.bo3.gg/api/v1/matches/" + encodeURIComponent(espSlug) + "?with=games");
+        if (!det || !det.id) return { final: false };
+        const fin = det.status === "finished" || det.status === "defwin";
+        const games = (Array.isArray(det.games) ? det.games : []).slice().sort((a, b) => (a.number || 0) - (b.number || 0));
+        const pk = espNickKey(leg.player);
+        if (!pk || !games.length) return { final: false };
+        let total = 0, found = false;
+        for (const g of games) {
+          const played = g.state === "done" || g.status === "finished";
+          if (scope) {
+            if (scope.indexOf(g.number || 0) === -1) continue;
+            if (!played) return { final: false }; // scoped map never played / not final: stay pending
+          } else {
+            if (!played) continue;
+            if (!fin) return { final: false };
+          }
+          const rows = await getJson("https://api.bo3.gg/api/v1/games/" + g.id + "/players_stats");
+          const list = Array.isArray(rows) ? rows : (rows && Array.isArray(rows.results) ? rows.results : null);
+          if (!list || !list.length) return { final: false };
+          const row = list.find((r) => {
+            const sp = r.steam_profile || {}, pl = sp.player || {};
+            const full = ((pl.first_name || "") + " " + (pl.last_name || "")).trim();
+            return espNickKey(sp.nickname || pl.nickname || "") === pk || espNickKey(full) === pk;
+          });
+          if (!row) return { final: false };
+          total += kind === "hs" ? (row.headshots || 0) : (row.kills || 0);
+          found = true;
+        }
+        if (!found) return { final: false };
+        if (scope && !fin) {
+          const allDone = games.filter((g) => scope.indexOf(g.number || 0) > -1).every((g) => g.state === "done" || g.status === "finished");
+          if (!allDone) return { final: false };
+        }
+        const hit = leg.dir === "LESS" ? total < leg.line : total > leg.line;
+        const push = total === leg.line;
+        return { final: true, hit: hit || push, push, actual: total };
+      } catch (e) { return { final: false }; }
+    }
     async function gradeLeg(leg) {
       // -> { final:bool, hit:bool|null, actual:number|null, unresolved:bool }
-      if (!leg || leg.custom || !leg.starts || !LEAGUES[leg.league]) return { final: false };
+      if (!leg || leg.custom) return { final: false };
+      if (leg.league === "esports") return gradeEsportsLeg(leg);
+      if (!leg.starts || !LEAGUES[leg.league]) return { final: false };
       if (leg.league === "tennis") return { final: false }; // tennis stats aren't in the box-score map
       const ymd = etYmd(leg.starts); if (!ymd) return { final: false };
       const events = await scoreboard(leg.league, ymd);
