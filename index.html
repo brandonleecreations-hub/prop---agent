@@ -4407,7 +4407,7 @@ var POWERS = [
   {name:"FAST BREAK", style:"ATTACK", desc:"Once per game: her attack in round 1 deals +1 damage."},
   {name:"RALLY", style:"COMEBACK", desc:"Once per game: +1 damage on his attack when his team is behind on health."},
   {name:"STAR POWER", style:"ATTACK", desc:"Once per game: his attack deals +2 damage."},
-  {name:"ACE SERVE", style:"DEFENSE", desc:"Once per game: she can't take a hit in the first round."},
+  {name:"SECOND SERVE", style:"DEFENSE", desc:"Once per game: a hit that would KO her leaves her at 1 life."},
   {name:"ISLAND CALM", style:"DEFENSE", desc:"Once per game: a hit against him is blocked."}
 ];
 function charIdxOf(){ var m = /[?&]s=(\d+)/.exec((profile && profile.char) || ""); return m ? parseInt(m[1], 10) : 0; }
@@ -5203,7 +5203,7 @@ async function applyAbility(side, id, B){
   else if (id === "momentum") { if (mine) CL.myTemp = 2; else CL.cpuTemp = 2; CL.log.push("🔥 " + (mine ? "Your" : "CPU") + " MOMENTUM — +2★ next round!"); }
   else if (id === "guard") { if (mine) CL.myGuard = Math.min(2, (CL.myGuard || 0) + 2); else CL.cpuGuard = Math.min(2, (CL.cpuGuard || 0) + 2); CL.log.push("🛡️ " + (mine ? "Your" : "CPU") + " IRON GUARD — next 2 hits blocked!"); }
   else if (id === "heal") { var hurt = null; myPair.forEach(function(f){ if (fAlive(f) && f.hits > 0 && (!hurt || f.hits > hurt.hits)) hurt = f; }); if (hurt) { hurt.hits = Math.max(0, hurt.hits - 2); sfx("heal"); CL.log.push("❤️ SECOND WIND — " + fName(hurt) + " heals 2 damage!"); } }
-  else if (id === "sneak") { if (CL.round === 1 && side === CL.firstPlayer) { CL.log.push("\uD83D\uDEAB SNEAK STRIKE held \u2014 the first player can't strike on Turn 1!"); } else if (fAlive(foeActive)) { var sd = dmgOf(mine ? CL.mine[CL.myActive] : CL.cpu[CL.cpuActive]); foeActive.hits = Math.min(lifeOf(foeActive), foeActive.hits + sd); sfx(foeActive.hits >= lifeOf(foeActive) ? "ko" : "hit"); CL.lastHit = mine ? "cpu" : "me"; CL.lastWin = mine ? "me" : "cpu"; if (foeActive.hits >= lifeOf(foeActive)) CL.lastKO = foeActive; CL.log.push("💥 SNEAK STRIKE — " + fName(foeActive) + " takes " + sd + " damage!" + (foeActive.hits >= lifeOf(foeActive) ? " ELIMINATED!" : "")); } }
+  else if (id === "sneak") { if (CL.round === 1 && side === CL.firstPlayer) { CL.log.push("\uD83D\uDEAB SNEAK STRIKE held \u2014 the first player can't strike on Turn 1!"); } else if (fAlive(foeActive)) { var myA3 = mine ? CL.mine[CL.myActive] : CL.cpu[CL.cpuActive]; var sd = dmgOf(myA3); foeActive.hits = Math.min(lifeOf(foeActive), foeActive.hits + sd); var abSaved = aceSecondServe(foeActive, myA3); sfx(foeActive.hits >= lifeOf(foeActive) ? "ko" : "hit"); CL.lastHit = mine ? "cpu" : "me"; CL.lastWin = mine ? "me" : "cpu"; if (foeActive.hits >= lifeOf(foeActive)) CL.lastKO = foeActive; CL.log.push("💥 SNEAK STRIKE — " + fName(foeActive) + " takes " + sd + " damage!" + (foeActive.hits >= lifeOf(foeActive) ? " ELIMINATED!" : "")); if (abSaved) CL.log.push("🎾 SECOND SERVE! " + fName(foeActive) + " survives at 1 life!"); } }
   else if (id === "headstart") { CL.log.push("🎯 " + (mine ? "Your" : "CPU") + " HEAD START — 2 free marks!"); clashArena(); for (var k = 0; k < 2; k++) { if (CL !== B) return; if (CL.grid.indexOf("") < 0) break; await placeOne(side, B); if (CL !== B) return; } }
   clashArena();
 }
@@ -5568,7 +5568,7 @@ function applyItem(side, id){
   else if (id === "switch") { if (mine) { CL.cpuActive = 1 - CL.cpuActive; CL.lastTag = "cpu"; } else { CL.myActive = 1 - CL.myActive; CL.lastTag = "me"; } sfx("tag"); CL.log.push("🔄 FORCED TAG — " + fName(mine ? CL.cpu[CL.cpuActive] : CL.mine[CL.myActive]) + " is forced in from the bench!"); }
   else if (id === "eraser") { var fm = mine ? "O" : "X", cellIx = -1; for (var li = 0; li < TT_LINES.length && cellIx < 0; li++) { var L = TT_LINES[li], mk = L.filter(function(c){ return CL.grid[c] === fm; }); if (mk.length === 2) cellIx = mk[0]; } if (cellIx < 0) cellIx = CL.grid.indexOf(fm); if (cellIx >= 0) { CL.grid[cellIx] = ""; CL.log.push("🎯 Erased the enemy mark on the " + TT_POS[cellIx] + " square!"); } }
   else if (id === "patch") { var pair = mine ? CL.mine : CL.cpu, hurt = null; pair.forEach(function(f){ if (fAlive(f) && f.hits > 0 && (!hurt || f.hits > hurt.hits)) hurt = f; }); if (hurt) { hurt.hits = Math.max(0, hurt.hits - 2); sfx("heal"); CL.log.push("❤️ " + fName(hurt) + " heals 2 damage!"); } }
-  else if (id === "sneak") { var foeA = mine ? CL.cpu[CL.cpuActive] : CL.mine[CL.myActive]; var gk = mine ? "cpuGuard" : "myGuard"; if ((CL[gk] || 0) > 0) { CL[gk]--; CL.log.push("🛡️ Sneak Hit BLOCKED by a guard!"); } else if (fAlive(foeA)) { var sd2 = dmgOf(mine ? CL.mine[CL.myActive] : CL.cpu[CL.cpuActive]); foeA.hits = Math.min(lifeOf(foeA), foeA.hits + sd2); sfx(foeA.hits >= lifeOf(foeA) ? "ko" : "hit"); CL.lastHit = mine ? "cpu" : "me"; CL.lastWin = mine ? "me" : "cpu"; if (foeA.hits >= lifeOf(foeA)) CL.lastKO = foeA; CL.log.push("💥 SNEAK HIT — " + fName(foeA) + " takes " + sd2 + " damage!" + (foeA.hits >= lifeOf(foeA) ? " ELIMINATED!" : "")); } clashCheckEnd(); }
+  else if (id === "sneak") { var foeA = mine ? CL.cpu[CL.cpuActive] : CL.mine[CL.myActive]; var gk = mine ? "cpuGuard" : "myGuard"; if ((CL[gk] || 0) > 0) { CL[gk]--; CL.log.push("🛡️ Sneak Hit BLOCKED by a guard!"); } else if (fAlive(foeA)) { var myA2 = mine ? CL.mine[CL.myActive] : CL.cpu[CL.cpuActive]; var sd2 = dmgOf(myA2); foeA.hits = Math.min(lifeOf(foeA), foeA.hits + sd2); var snkSaved = aceSecondServe(foeA, myA2); sfx(foeA.hits >= lifeOf(foeA) ? "ko" : "hit"); CL.lastHit = mine ? "cpu" : "me"; CL.lastWin = mine ? "me" : "cpu"; if (foeA.hits >= lifeOf(foeA)) CL.lastKO = foeA; CL.log.push("💥 SNEAK HIT — " + fName(foeA) + " takes " + sd2 + " damage!" + (foeA.hits >= lifeOf(foeA) ? " ELIMINATED!" : "")); if (snkSaved) CL.log.push("🎾 SECOND SERVE! " + fName(foeA) + " survives at 1 life!"); } clashCheckEnd(); }
   else if (id === "tag") { if (mine) CL.myActive = 1 - CL.myActive; else CL.cpuActive = 1 - CL.cpuActive; CL.lastTag = mine ? "me" : "cpu"; sfx("tag"); CL.log.push("🧲 Free Tag — " + fName(mine ? CL.mine[CL.myActive] : CL.cpu[CL.cpuActive]) + " swaps in free!"); }
   else if (id === "supply") { drawItems(side, 2); CL.log.push("📦 Drew 2 cards."); }
   else if (id === "reset") { CL.grid = ["", "", "", "", "", "", "", "", ""]; CL.log.push("⏪ GRID RESET — the board is wiped clean!"); }
@@ -5747,15 +5747,23 @@ function cpuPlan(){
   CL.plan = plan; CL.cpuStance = plan.stance; CL.cpuTagged = plan.tag;
 }
 function clashSleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
+/* Brandon 2026-11-20: SECOND SERVE -- The Ace's power. A HIT (attack, Sneak Hit item, Sneak Strike) that would KO her instead leaves her at 1 life, once per game; the hit still counts as landed. Sudden Death ticks and other non-hit damage never call this. Suppressed while the attacker's Boss AUTHORITY is unspent -- the same rule as the other defensive powers, and the power is NOT spent. Returns true when the save fired. */
+function aceSecondServe(target, foe){
+  if (!target || target.ci !== 11 || target.used.pwr) return false;
+  if (foe && foe.ci === 2 && !foe.used.pwr) return false;
+  if (target.hits < lifeOf(target)) return false;
+  target.hits = lifeOf(target) - 1; target.used.pwr = 1;
+  return true;
+}
 function applyHit(side, dmg, target, targetStance, foe){
   if (targetStance === "def") { sfx("block"); CL.log.push("\uD83D\uDEE1\uFE0F BLOCKED! " + fName(target) + " defended \u2014 no hit."); return "def"; }
   var gk = side === "me" ? "myGuard" : "cpuGuard";
   if ((CL[gk] || 0) > 0) { CL[gk]--; sfx("block"); CL.log.push("\uD83D\uDEE1\uFE0F IRON GUARD! " + fName(target) + "'s team blocks the hit! (" + CL[gk] + " left)"); return "save"; }
   var bossBlock = foe.ci === 2 && !foe.used.pwr;
-  if (target.ci === 11 && CL.round === 1 && targetStance === "atk" && !bossBlock) { target.used.pwr = 1; CL.log.push("\uD83C\uDFBE ACE SERVE! " + fName(target) + " is untouchable in round 1 \u2014 no hit!"); sfx("block"); return "save"; }
   if (target.ci === 12 && !target.used.island && targetStance === "atk" && !bossBlock) { target.used.island = 1; target.used.pwr = 1; CL.log.push("\uD83C\uDF34 ISLAND CALM! " + fName(target) + " blocks the hit."); sfx("block"); return "save"; }
-  target.hits = Math.min(lifeOf(target), target.hits + dmg); CL.lastDmg = dmg; if (target.hits >= lifeOf(target)) CL.lastKO = target; sfx(target.hits >= lifeOf(target) ? "ko" : "hit");
+  target.hits = Math.min(lifeOf(target), target.hits + dmg); CL.lastDmg = dmg; var aceSaved = aceSecondServe(target, foe); if (target.hits >= lifeOf(target)) CL.lastKO = target; sfx(target.hits >= lifeOf(target) ? "ko" : "hit");
   CL.log.push((side === "me" ? "\uD83D\uDCA5 Your " : "\uD83D\uDCA5 CPU's ") + fName(target) + " takes " + dmg + " DAMAGE!" + (target.hits >= lifeOf(target) ? " ELIMINATED!" : ""));
+  if (aceSaved) CL.log.push("🎾 SECOND SERVE! " + fName(target) + " survives at 1 life!");
   return "hit";
 }
 function tryFire(f, foe){
@@ -5862,7 +5870,7 @@ function beginTurn(side, B){
   CL.itemUsedRound = 0; CL.cpuItemRound = 0; CL.tagged = false;
   if (side === CL.firstPlayer && CL.turnNo > 1) {
     CL.round++;
-    if (CL.round === 2) CL.mine.concat(CL.cpu).forEach(function(f){ if (f.ci === 8 || f.ci === 11) f.used.pwr = 1; });
+    if (CL.round === 2) CL.mine.concat(CL.cpu).forEach(function(f){ if (f.ci === 8) f.used.pwr = 1; });
     if (CL.round >= 60) {
       CL.log.push(CL.round === 60 ? "⏰⏰ SUDDEN DEATH! From now on BOTH active fighters take 1 damage at the start of every round — finish them before the clock finishes you!" : "⏰ SUDDEN DEATH — both active fighters take 1 damage.");
       var sdm = CL.mine[CL.myActive], sdc = CL.cpu[CL.cpuActive];
