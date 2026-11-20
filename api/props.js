@@ -301,11 +301,27 @@ async function serveStaleOrFallback(res, sport, hit, sbRow) {
         return;
       }
     }
+    const fStale = await partialFill(sport, sbRow.props);
+    if (fStale.filled) {
+      stampSeen(sport, fStale.props);
+      cache[sport] = { ts: Date.now(), props: fStale.props, pregameRefreshed: false, espnFallback: true, filled: true };
+      res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300");
+      res.status(200).json({ ok: true, configured: true, cached: true, shared: true, stale: true, partialFill: true, props: fStale.props });
+      return;
+    }
     cache[sport] = { ts: new Date(sbRow.fetched_at).getTime(), props: sbRow.props, pregameRefreshed: true };
     res.status(200).json({ ok: true, configured: true, cached: true, shared: true, stale: true, props: sbRow.props });
     return;
   }
   if (hit && hit.props.length) {
+    const fHitStale = await partialFill(sport, hit.props);
+    if (fHitStale.filled) {
+      stampSeen(sport, fHitStale.props);
+      cache[sport] = { ts: Date.now(), props: fHitStale.props, pregameRefreshed: false, espnFallback: true, filled: true };
+      res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300");
+      res.status(200).json({ ok: true, configured: true, cached: true, stale: true, partialFill: true, props: fHitStale.props });
+      return;
+    }
     res.status(200).json({ ok: true, configured: true, cached: true, stale: true, props: hit.props });
     return;
   }
@@ -690,16 +706,88 @@ async function espnFallback(sport, mode) {
       return /HALFTIME|END_PERIOD|INTERMISSION/i.test(t.name || "") || /halftime|intermission|end of (1st|2nd|3rd|4th)/i.test(s);
     }).slice(0, 3);
   } else {
+    // "fill" mode (partial-board fill, below) covers a wider slate and
+    // keeps more rows than the empty-board "pre" fill: the players
+    // missing from a multi-game slate do not fit in the first 4 games /
+    // 400 rows.
+    const cap = mode === "fill" ? 8 : 4;
     targets = evs.filter((ev) => {
       const t = ev.status && ev.status.type;
       return t && t.state === "pre" && new Date(ev.date || 0).getTime() > now - 10 * 60 * 1000;
-    }).slice(0, 4);
+    }).slice(0, cap);
   }
   let out = [];
   for (const ev of targets) {
     try { out = out.concat(await espnGameProps(sport, ev)); } catch (e) {}
   }
-  return out.slice(0, 400);
+  return out.slice(0, mode === "fill" ? 1200 : 400);
+}
+
+// ---- Partial-board fill (Brandon 2026-11-19): Parlay sometimes posts a
+// PARTIAL board -- a handful of players for a multi-game slate (tonight's
+// NBA board sat at 7 players for 4 games all day) -- and the empty-board
+// ESPN fallback above never fires because the board is not empty. When a
+// Parlay board's player coverage is clearly partial for today's upcoming
+// slate, top it up from the same ESPN DraftKings feed: Parlay rows are
+// kept verbatim and win every conflict; ESPN rows are added only for
+// player+stat pairs the Parlay board lacks. The merged board is served
+// (and held in the in-memory cache under the espnFallback flag, so it
+// stays fresh 30 min max) but is NEVER written into the shared
+// props_cache -- the shared board stays the pure Parlay board, so
+// PrizePicks retakes the board the moment Parlay posts the full slate.
+// Pro sports with a working ESPN odds feed only; tennis and college are
+// untouched. Zero Parlay credits: the fill is ESPN-only.
+const FILL_SPORTS = ["basketball_nba", "basketball_wnba", "americanfootball_nfl", "icehockey_nhl", "baseball_mlb"];
+function fillNameKey(s) { return String(s || "").normalize("NFD").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+function fillStatKey(s) {
+  const tok = String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean)
+    .map((w) => ({ pts: "pt", rebs: "reb", asts: "ast", blocked: "block", blocks: "block", blks: "block", stls: "steal", steals: "steal" }[w] || w));
+  let key = tok.join(" ");
+  if (key === "3 pt made" || key === "3 pointers made" || key === "3 point field goals") key = "3pt made";
+  else if (key === "block shots") key = "block";
+  else if (tok.length > 1 && tok.every((w) => w === "pt" || w === "reb" || w === "ast")) key = tok.slice().sort().join("+");
+  return key;
+}
+function mergeEspnFill(parlayProps, espnRows) {
+  const have = new Set();
+  for (const p of parlayProps) if (p && p.player) have.add(fillNameKey(p.player) + "|" + fillStatKey(p.stat));
+  const out = parlayProps.slice();
+  for (const r of espnRows) {
+    if (!r || !r.player) continue;
+    const k = fillNameKey(r.player) + "|" + fillStatKey(r.stat);
+    if (have.has(k)) continue; // Parlay's line wins on conflict
+    have.add(k);
+    out.push(r);
+  }
+  return out;
+}
+async function partialFill(sport, props) {
+  const board = Array.isArray(props) ? props : [];
+  try {
+    if (FILL_SPORTS.indexOf(sport) === -1 || !board.length) return { props: board, filled: false };
+    const evs = await scoreboardEvents(sport);
+    const now = Date.now();
+    const upcoming = (Array.isArray(evs) ? evs : []).filter((ev) => {
+      const t = ev && ev.status && ev.status.type;
+      return t && t.state === "pre" && new Date(ev.date || 0).getTime() > now - 10 * 60 * 1000;
+    });
+    if (!upcoming.length) return { props: board, filled: false };
+    const players = new Set();
+    for (const p of board) {
+      if (!p || p.retained || !p.player) continue;
+      const st = p.starts ? new Date(p.starts).getTime() : NaN;
+      if (isFinite(st) && st < now - 10 * 60 * 1000) continue;
+      players.add(p.player);
+    }
+    // Coverage trigger: a healthy PrizePicks board carries well over 6
+    // players per game, so fewer than max(15, 6 per upcoming game)
+    // distinct players means the feed posted a partial slate.
+    if (players.size >= Math.max(15, upcoming.length * 6)) return { props: board, filled: false };
+    const fb = await espnFallback(sport, "fill").catch(() => []);
+    if (!fb.length) return { props: board, filled: false };
+    const merged = mergeEspnFill(board, fb);
+    return { props: merged, filled: merged.length > board.length };
+  } catch (e) { return { props: board, filled: false }; }
 }
 
 module.exports = async (req, res) => {
@@ -792,7 +880,21 @@ module.exports = async (req, res) => {
     }
     return;
   }
-  if (cacheFresh(hit)) { if (!hit.props.length) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300"); res.status(200).json({ ok: true, configured: true, cached: true, props: hit.props }); return; }
+  if (cacheFresh(hit)) {
+    if (hit.props.length && !hit.filled && !hit.espnFallback) {
+      const fHit = await partialFill(sport, hit.props);
+      if (fHit.filled) {
+        stampSeen(sport, fHit.props);
+        cache[sport] = { ts: Date.now(), props: fHit.props, pregameRefreshed: false, espnFallback: true, filled: true };
+        res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300");
+        res.status(200).json({ ok: true, configured: true, cached: true, partialFill: true, props: fHit.props });
+        return;
+      }
+    }
+    if (!hit.props.length) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300");
+    res.status(200).json({ ok: true, configured: true, cached: true, props: hit.props });
+    return;
+  }
   // Schedule gate (Brandon 2026-11-17, ALL sports): gamesToday() is
   // state-aware -- it counts only games still upcoming ("pre") or live
   // ("in") today. If there are none, NO Parlay pull happens for this
@@ -822,6 +924,16 @@ module.exports = async (req, res) => {
   if (sbRow !== undefined) {
     if (sbRow && sbFresh(sbRow)) {
       const sp = Array.isArray(sbRow.props) ? sbRow.props : [];
+      if (sp.length) {
+        const fShared = await partialFill(sport, sp);
+        if (fShared.filled) {
+          stampSeen(sport, fShared.props);
+          cache[sport] = { ts: Date.now(), props: fShared.props, pregameRefreshed: false, espnFallback: true, filled: true };
+          res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300");
+          res.status(200).json({ ok: true, configured: true, cached: true, shared: true, partialFill: true, props: fShared.props });
+          return;
+        }
+      }
       cache[sport] = { ts: new Date(sbRow.fetched_at).getTime(), props: sp, pregameRefreshed: true };
       if (!sp.length) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300");
       res.status(200).json({ ok: true, configured: true, cached: true, shared: true, props: sp });
@@ -869,6 +981,14 @@ module.exports = async (req, res) => {
       const fb = await espnFallback(sport, "pre").catch(() => []);
       if (fb.length) { props = fb; espnFb = true; }
     }
+    // Partial-board fill: a non-empty pull can still be a partial slate
+    // (see partialFill). The shared cache below still stores parlayProps
+    // (the pure Parlay board); only the served/cached board is merged.
+    let filled = false;
+    if (props.length && !espnFb) {
+      const fFresh = await partialFill(sport, props);
+      if (fFresh.filled) { props = fFresh.props; filled = true; }
+    }
     prevFetch[sport] = { ts: Date.now(), keys: new Set(normalize(rows, true).map(rowKey)) };
     // Retention: the feed has already dropped started games, so carry
     // their props forward from the previous board (shared row when the
@@ -877,9 +997,9 @@ module.exports = async (req, res) => {
     props = mergeRetained(prevBoard, props);
     stampSeen(sport, props);
     const wasPregame = !!(hit && Date.now() - hit.ts < DAY_TTL);
-    cache[sport] = { ts: Date.now(), props, pregameRefreshed: wasPregame, espnFallback: espnFb };
+    cache[sport] = { ts: Date.now(), props, pregameRefreshed: wasPregame, espnFallback: espnFb || filled, filled };
     if (sbClaimed) { await sbCachePut(sport, parlayProps, ((rows.pagesUsed || 1) * 3), sbClaimed.reserved); sbClaimed = null; }
-    if (!props.length || espnFb) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300"); res.status(200).json({ ok: true, configured: true, cached: false, fallback: espnFb ? "espn" : undefined, props });
+    if (!props.length || espnFb || filled) res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=300"); res.status(200).json({ ok: true, configured: true, cached: false, fallback: espnFb ? "espn" : undefined, partialFill: filled ? true : undefined, props });
   } catch (err) {
     if (sbClaimed) { await sbRefund(sport, sbClaimed.reserved); sbClaimed = null; }
     if (!hit || !hit.props.length) {
