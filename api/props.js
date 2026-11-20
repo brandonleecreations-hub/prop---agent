@@ -1184,7 +1184,6 @@ async function espCs2AttrCompute(rows) {
       const key = nickKey(r.player) + "|" + (r.starts || "");
       out[key] = { team: teamName, slug: det ? det.slug : "", state: det ? det.state : "", starts: det ? det.starts : "", matchup: det ? (det.teams || []).map((t) => t.name).join(" vs ") : "", img: img || "", via };
       done.add(key);
-      stats[via === "roster" ? "roster" : via === "sweep" ? "sweep" : "teamOnly"]++;
     };
     // 3a. match rosters first (they catch stale profiles), then profile
     // teamId inside a found match
@@ -1232,8 +1231,15 @@ async function espCs2AttrCompute(rows) {
       const pr = profs[nickKey(r.player)];
       if (pr && pr.team) put(r, pr.team, null, pr.img, "team");
     });
-    brows.forEach((r) => { if (!done.has(nickKey(r.player) + "|" + (r.starts || ""))) stats.other++; });
   }
+  // Row-accurate stats (put() is per player; Brandon's numbers are rows)
+  cs2.forEach((r) => {
+    const e = out[nickKey(r.player) + "|" + (r.starts || "")];
+    if (!e) stats.other++;
+    else if (e.via === "roster") stats.roster++;
+    else if (e.via === "sweep") stats.sweep++;
+    else stats.teamOnly++;
+  });
   // player-only fallback keys for players in exactly one bucket, so a row
   // whose starts string shifted (post-attach) still finds its attribution
   const bucketCount = {};
