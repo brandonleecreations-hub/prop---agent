@@ -1023,11 +1023,19 @@ async function bo3List(sort) {
   const d = await espGet(BO3_API + "/matches?sort=" + encodeURIComponent(sort));
   return (d && Array.isArray(d.results)) ? d.results : [];
 }
+// Live matches carry status "current" on bo3 and sit in NEITHER top-10
+// discovery list above (created earlier, not yet ended — proven live
+// 2026-11-20: NT vs BAKS was mid-map-1 while the lane showed 0 live).
+// Ask bo3 for the in-progress matches directly so live always surfaces.
+async function bo3LiveList() {
+  const d = await espGet(BO3_API + "/matches?filter%5Bmatches.status%5D%5Beq%5D=current&sort=-start_date&page%5Blimit%5D=50");
+  return (d && Array.isArray(d.results)) ? d.results : [];
+}
 async function espCs2Schedule() {
   return espCached("esp_sched_cs2", 60000, 600000, async () => {
-    const lists = await Promise.all([bo3List("-id"), bo3List("-end_date")]);
+    const lists = await Promise.all([bo3List("-id"), bo3List("-end_date"), bo3LiveList()]);
     const seen = {}, rows = [];
-    lists[0].concat(lists[1]).forEach((r) => { if (r && r.id && !seen[r.id]) { seen[r.id] = 1; rows.push(r); } });
+    lists[0].concat(lists[1], lists[2]).forEach((r) => { if (r && r.id && !seen[r.id]) { seen[r.id] = 1; rows.push(r); } });
     const now = Date.now();
     const picked = rows.filter((r) => {
       const startMs = r.start_date ? new Date(r.start_date).getTime() : 0;
@@ -1036,7 +1044,20 @@ async function espCs2Schedule() {
       if (fin) return !!(endMs && now - endMs < 48 * 3600 * 1000);
       return !!(startMs && startMs > now - 6 * 3600 * 1000 && startMs < now + 72 * 3600 * 1000);
     });
-    picked.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+    // Detail slots are capped at 24, so spend them live-first: a match
+    // that is on right now must never be crowded out of the detail fetch
+    // by older finished matches with earlier start times.
+    function prio(r) {
+      if (r.status === "finished" || r.status === "defwin") return 2;
+      const s = r.start_date ? new Date(r.start_date).getTime() : 0;
+      return (r.status === "current" || (s && s <= now)) ? 0 : 1;
+    }
+    picked.sort((a, b) => {
+      const pa = prio(a), pb = prio(b);
+      if (pa !== pb) return pa - pb;
+      if (pa === 2) return new Date(b.end_date || b.start_date) - new Date(a.end_date || a.start_date);
+      return new Date(a.start_date) - new Date(b.start_date);
+    });
     const top = picked.slice(0, 24);
     const dets = [];
     for (let i = 0; i < top.length; i += 6) {
