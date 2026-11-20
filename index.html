@@ -4405,7 +4405,7 @@ var POWERS = [
   {name:"FINE PRINT", style:"CONTROL", desc:"Once per game: an enemy hit on her deals 1 less damage."},
   {name:"HOME RUN", style:"ATTACK", desc:"Once per game: his attack deals DOUBLE damage to a fighter at full life."},
   {name:"FAST BREAK", style:"ATTACK", desc:"Once per game: her attack in round 1 deals +1 damage."},
-  {name:"RALLY", style:"COMEBACK", desc:"Once per game: +1 damage on his attack when his team is behind on health."},
+  {name:"RALLY", style:"COMEBACK", desc:"Once per game: +2 damage on his attack when his team is behind on health."},
   {name:"STAR POWER", style:"ATTACK", desc:"Once per game: his attack deals +2 damage."},
   {name:"SECOND SERVE", style:"DEFENSE", desc:"Once per game: a hit that would KO her leaves her at 1 life."},
   {name:"ISLAND CALM", style:"DEFENSE", desc:"Once per game: a hit against him is blocked."}
@@ -5053,7 +5053,7 @@ function effStar(f, foe, myPair, foePair, stance, foeStance){
     if (f.ci === 10) { wf = true; wamt = 1; wnote = "\u2B50 STAR POWER +1\u2605 (" + fName(f) + ")"; }
     else if (f.ci === 8 && CL.round === 1) { wf = true; wamt = 1; wnote = "\uD83D\uDCA8 FAST BREAK +1\u2605 (" + fName(f) + ")"; }
     else if (f.ci === 1 && CL.mine.concat(CL.cpu).some(function(x){ return fAlive(x) && x.hits === lifeOf(x) - 1; })) { wf = true; wamt = 1; wnote = "\uD83C\uDFAF CLUTCH TIME +1\u2605 (" + fName(f) + ")"; }
-    else if (f.ci === 9) { var behind = teamHits(myPair) - teamHits(foePair); if (behind > 0) { wf = true; wamt = behind; wnote = "\uD83D\uDCE3 RALLY +" + behind + "\u2605 (" + fName(f) + ")"; } }
+    else if (f.ci === 9) { var behind = teamHits(myPair) - teamHits(foePair); if (behind > 0) { wf = true; wamt = 2; wnote = "\uD83D\uDCE3 RALLY +2\u2605 (" + fName(f) + ")"; } }
   }
   if (wf) {
     if (foe.ci === 2 && !foe.used.pwr) { foe._fired = true; notes.push("\uD83D\uDC51 AUTHORITY \u2014 " + fName(foe) + " shuts down " + fName(f) + "'s power!"); }
@@ -5785,7 +5785,7 @@ async function resolveAttack(atkSide, B){
     if (A.ci === 7 && D.hits === 0) { if (tryFire(A, D)) { dmg *= 2; marks = 2; CL.log.push("⚾ HOME RUN! " + fName(A) + " deals DOUBLE damage to a full-life fighter!"); } }
     else if (A.ci === 10) { if (tryFire(A, D)) { dmg += 2; CL.log.push("🌟 STAR POWER! " + fName(A) + " deals +2 damage!"); } }
     else if (A.ci === 1 && CL.mine.concat(CL.cpu).some(function(f){ return fAlive(f) && f.hits === lifeOf(f) - 1; })) { if (tryFire(A, D)) { dmg += 1; CL.log.push("⏰ CLUTCH TIME! " + fName(A) + " deals +1 damage!"); } }
-    else if (A.ci === 9) { var aLife = (atkSide === "me" ? CL.mine : CL.cpu).reduce(function(s2, f){ return s2 + lifeOf(f) - f.hits; }, 0), dLife = (defSide === "me" ? CL.mine : CL.cpu).reduce(function(s2, f){ return s2 + lifeOf(f) - f.hits; }, 0); if (aLife < dLife && tryFire(A, D)) { dmg += 1; CL.log.push("📣 RALLY! " + fName(A) + " deals +1 damage!"); } }
+    else if (A.ci === 9) { var aLife = (atkSide === "me" ? CL.mine : CL.cpu).reduce(function(s2, f){ return s2 + lifeOf(f) - f.hits; }, 0), dLife = (defSide === "me" ? CL.mine : CL.cpu).reduce(function(s2, f){ return s2 + lifeOf(f) - f.hits; }, 0); if (aLife < dLife && tryFire(A, D)) { dmg += 2; CL.log.push("📣 RALLY! " + fName(A) + " deals +2 damage!"); } }
     else if (A.ci === 8 && CL.round === 1) { if (tryFire(A, D)) { dmg += 1; CL.log.push("⚡ FAST BREAK! " + fName(A) + " deals +1 damage!"); } }
   }
   if (defStance === "def") {
