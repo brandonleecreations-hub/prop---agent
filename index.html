@@ -1203,7 +1203,6 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <section class="view" id="view-home">
     <div id="liveHero"></div>
     <p class="note" id="heroStatus"></p>
-    <div id="pickemHome" class="pickemBox"></div>
     <div id="topTicket"></div>
     <div id="tickerWrap" style="display:none"><h2>Your Players Ticker</h2><p class="sub">Your picks, live — follows the players on your slip and tickets, updated with the scores every 30 seconds.</p><div class="tickwrap" id="yourTicker"></div></div>
     <div id="secAgents"><h2>Top Agents</h2>
@@ -6687,7 +6686,6 @@ document.addEventListener("click", function(e){
   }
 });
 loadPickemEvent();
-renderPickem();
 /* ---------- social: follows, public picks, ticket likes ---------- */
 var myFollows = lsGet("pa_follows", []);
 var followCounts = {};
@@ -6977,7 +6975,7 @@ var wStageEl = $("wStage"); if (wStageEl) wStageEl.addEventListener("click", fun
 var wReplayB = $("wReplay"); if (wReplayB) wReplayB.addEventListener("click", function(){ showWelcome(); });
 if (!lsGet("pa_welcomed", 0)) setTimeout(function(){ showWelcome(); }, 600);
 
-setInterval(function(){ loadPickemEvent(); renderPickem(); }, 30000);
+setInterval(function(){ loadPickemEvent(); }, 30000);
 
 /* ---------- profile + push ---------- */
 function refreshAgentBtn(){
