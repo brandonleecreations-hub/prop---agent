@@ -662,8 +662,6 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .tickchip span{display:block;color:var(--mut)}
 .tickchip .tickfrom{color:var(--gold);font-weight:700}
 .yours-tag{display:inline-block;background:rgba(245,197,24,.16);color:var(--gold);border:1px solid rgba(245,197,24,.4);font-size:10px;font-weight:800;border-radius:999px;padding:1px 7px;letter-spacing:.4px}
-#news,#hlNba,#hlNfl,#hlYours{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-#news::-webkit-scrollbar,#hlNba::-webkit-scrollbar,#hlNfl::-webkit-scrollbar,#hlYours::-webkit-scrollbar{display:none}
 .newsrail{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .newsrail::-webkit-scrollbar{display:none}
 .newsitem{flex:0 0 78%;max-width:300px;scroll-snap-align:start;display:flex;gap:9px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px;text-decoration:none;color:var(--ink)}
@@ -671,12 +669,6 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .newsitem .nbody{display:flex;flex-direction:column;gap:3px;min-width:0}
 .newsitem .nhead{font-size:13px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .newsitem .nsrc{color:var(--mut);font-size:11px;font-weight:400}
-/* Home Sports News — compact (Brandon 2026-11-20: smaller + hideable); scoped to #news so the Live-tab highlight rails keep their size */
-#news{gap:6px;padding:2px 2px 5px}
-#news .newsitem{flex-basis:64%;max-width:235px;padding:6px;gap:7px;border-radius:10px}
-#news .newsitem .nimg{width:40px;height:40px;border-radius:7px}
-#news .newsitem .nhead{font-size:12px;-webkit-line-clamp:2}
-#news .newsitem .nsrc{font-size:10px}
 .pctchip{display:inline-block;background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.45);border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:800;letter-spacing:.4px}
 .closed .pickrow{display:none}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(106px,1fr));gap:10px}
@@ -1303,11 +1295,6 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <div id="topAgents"><p class="empty">Loading Top Agents…</p></div></div>
     <div id="secUpcoming"><h2>Upcoming Games</h2>
     <div id="upcoming"><p class="empty">Loading upcoming games from ESPN…</p></div></div>
-    <h2>Sports News <button type="button" class="csbtn" id="newsToggle" style="float:right">▸ SHOW</button></h2>
-    <div id="newsBody" style="display:none">
-    <p class="sub" id="newsNote">Latest headlines from ESPN · refreshes automatically</p>
-    <div class="card news" id="news"><p class="empty">Loading the top headlines…</p></div>
-    </div>
     <div class="homeclash posterad" id="clashHomeAd"><img src="/api/banners?s=clashposter&v=2" alt="Agent Clash Card Game — tap to play"></div>
     <div id="dlPop" class="dlpop" style="display:none">
       <button class="dlpopx" id="dlPopX" type="button" aria-label="Close">✕</button>
@@ -1582,7 +1569,6 @@ var LEAGUES = [
 ];
 function leagueByKey(k){ for (var i=0;i<LEAGUES.length;i++) if (LEAGUES[i].key===k) return LEAGUES[i]; return LEAGUES[0]; }
 var PROP_LEAGUES = ["nba","nfl","cfb","cbb","wbb","nhl"];
-var NEWS_LEAGUES = [["basketball","nba"],["football","nfl"],["football","college-football"],["hockey","nhl"],["basketball","mens-college-basketball"]];
 
 /* ---------- storage ---------- */
 function lsGet(k, d){ try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }
@@ -1915,7 +1901,7 @@ function renderSlip(el){
     lsSet("pa_tickets", tickets);
     slip = []; lsSet("pa_slip", slip);
     playStamp(el);
-    renderNews(); renderTicker();
+    renderTicker();
     setTimeout(function(){ renderAllSlips(); renderBoards(); renderTickets(); renderBoard(); cloudSave(); if (el.id === "slipDlg") { var pd5 = $("playerDlg"); if (pd5 && pd5.open) pd5.close(); } showView("tickets"); }, 1000);
   });
 }
@@ -2853,54 +2839,6 @@ function renderYourVideos(){
       return head + vids + yt;
     }).join("");
     setHtml(box, html || '<p class="empty">No clips found for your players yet.</p>');
-  });
-}
-/* ---------- Home Sports News show/hide (Brandon 2026-11-20) ----------
-   Smaller + hideable like the Board sections: state lives in
-   pa_cardsecs["news"], toggled by the csbtn pill in the section header.
-   Default CLOSED: the boot wiring forces it closed on every fresh launch
-   (the pa_sess signal), so an "open" left over from a previous session
-   never survives a fresh start; in-session, the toggle state persists
-   across refreshes, and applyNewsToggle() runs on every render so the
-   30s refresh path respects it too. */
-function newsOpen(){ var st = lsGet("pa_cardsecs", {}); return ("news" in st) ? !!st["news"] : false; }
-function applyNewsToggle(){
-  var open = newsOpen();
-  var body = $("newsBody"), btn = $("newsToggle");
-  if (body) body.style.display = open ? "" : "none";
-  if (btn) btn.textContent = open ? "▾ HIDE" : "▸ SHOW";
-}
-function renderNews(){
-  applyNewsToggle();
-  var picks = pickedPlayers();
-  Promise.all(NEWS_LEAGUES.map(function(sl){ return fetchJson(ESPN+sl[0]+"/"+sl[1]+"/news?limit=4").catch(function(){ return {articles:[]}; }); }))
-  .then(function(rs){
-    var nbaArts = ((rs[0]||{}).articles||[]).slice();
-    var arts = [];
-    rs.forEach(function(r){ (r.articles||[]).forEach(function(a){ arts.push(a); }); });
-    arts.sort(function(a,b){ return new Date(b.published||0)-new Date(a.published||0); });
-    if (picks.length) arts.sort(function(a,b){ return (mentionsPicks(b,picks)?1:0)-(mentionsPicks(a,picks)?1:0); });
-    arts = arts.slice(0,10);
-    var note = $("newsNote");
-    if (note) note.textContent = picks.length ? "Leading with news about your picked players — then the top ESPN headlines. Refreshed every 30 seconds." : "Latest headlines from ESPN · Updated " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}) + " · refreshes automatically";
-    setHtml($("news"), arts.length ? arts.map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">Headlines unavailable right now.</p>');
-    if (picks.length) nbaArts.sort(function(a,b){ return (mentionsPicks(b,picks)?1:0)-(mentionsPicks(a,picks)?1:0); });
-    setHtml($("hlNba"), nbaArts.length ? nbaArts.slice(0,6).map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">Loading latest plays…</p>');
-    fetchJson(ESPN+"football/nfl/news?limit=6").catch(function(){ return {articles:[]}; }).then(function(r){
-      var list = (r.articles||[]).slice(0,6);
-      if (picks.length) list.sort(function(a,b){ return (mentionsPicks(b,picks)?1:0)-(mentionsPicks(a,picks)?1:0); });
-      setHtml($("hlNfl"), list.length ? list.map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">Big plays feed unavailable right now.</p>');
-      var wrap = $("hlYoursWrap"), yb = $("hlYours");
-      if (wrap && yb){
-        if (!picks.length){ wrap.style.display = "none"; }
-        else {
-          wrap.style.display = "";
-          var seen = {}, yours = [];
-          arts.concat(list).forEach(function(a){ var h = a.headline||""; if (h && !seen[h] && mentionsPicks(a, picks)) { seen[h]=1; yours.push(a); } });
-          setHtml(yb, yours.length ? yours.slice(0,6).map(function(a){ return articleHtml(a, picks); }).join("") : '<p class="empty">No headlines about your players right now — stories about '+esc(picks.slice(0,3).join(", "))+' land here the moment they break.</p>');
-        }
-      }
-    });
   });
 }
 function matchName(ts){
@@ -8074,7 +8012,7 @@ function setSport(key){
 })();
 
 /* ---------- init + refresh ---------- */
-function refreshHome(){ renderTopAgents(); renderUpcoming(); renderNews(); renderTicker(); renderTopTicket(); }
+function refreshHome(){ renderTopAgents(); renderUpcoming(); renderTicker(); renderTopTicket(); }
 var _rb = $("refreshBtn"); if (_rb) _rb.addEventListener("click", function(){ boardCache = {}; propsCache = {}; refreshHome(); if ($("view-live").classList.contains("on")) renderLive(); if (currentSport!=="all") renderBoards(); });
 var _cc = $("coinChip"); if (_cc) _cc.addEventListener("click", function(){ showView("board"); });
 coinChipUpdate();
@@ -8091,17 +8029,6 @@ var tkR = $("tkRefresh"); if (tkR) tkR.addEventListener("click", function(){ ren
 attributePoints();
 refreshAgentBtn();
 renderAllSlips();
-/* Sports News starts CLOSED on every fresh launch (Brandon 2026-11-20):
-   read the same pa_sess marker bootTab uses — this block runs BEFORE
-   bootTab, so a missing marker here means a fresh launch; force
-   pa_cardsecs["news"] closed (without setting the marker, so bootTab
-   still detects the fresh launch itself). In-session (marker present)
-   the stored toggle state stands. sessionStorage failure fails open. */
-(function(){
-  try { if (!window.sessionStorage.getItem("pa_sess")) { var nst = lsGet("pa_cardsecs", {}); nst["news"] = false; lsSet("pa_cardsecs", nst); } } catch (e) {}
-  var nb = $("newsToggle"); if (nb) nb.addEventListener("click", function(){ var st = lsGet("pa_cardsecs", {}); st["news"] = !newsOpen(); lsSet("pa_cardsecs", st); applyNewsToggle(); sfx("click"); });
-  applyNewsToggle();
-})();
 refreshHome();
 renderBoard();
 espEnsure();
