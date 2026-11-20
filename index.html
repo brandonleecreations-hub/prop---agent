@@ -4397,14 +4397,14 @@ async function downloadCard(kind, idx, btn){
 function charArt(){ var c = (profile && profile.char) || ""; return /^(\/api\/(avatars|battle)\?s=|https?:)/.test(c) ? c : ""; }
 var CHARNAMES = ["THE CLOSER","THE BOSS","THE OPERATOR","ALL-AMERICAN","THE DEALMAKER","THE EXECUTIVE","THE SLUGGER","THE PLAYMAKER","THE CAPTAIN","THE FRANCHISE","THE ACE","THE ISLANDER"];
 var POWERS = [
-  {name:"CLUTCH TIME", style:"ATTACK", desc:"Once per game: +1 damage on his attack when any fighter is one hit from elimination."},
+  {name:"WALK-OFF", style:"ATTACK", desc:"Once per game: when his attack knocks out a fighter, he gains 2 Energy and places an extra grid mark."},
   {name:"AUTHORITY", style:"CONTROL", desc:"Once per game: shuts down the enemy card's power the first round it would fire against her."},
-  {name:"INTEL", style:"TRICK", desc:"INTEL: reads the grid — shows the square the CPU wants next."},
+  {name:"JAMMER", style:"CONTROL", desc:"Once per game: the first item the enemy plays is jammed — discarded with no effect."},
   {name:"HAIL MARY", style:"LUCK", desc:"Once per game: his attack breaks through a block and lands anyway."},
   {name:"NEGOTIATOR", style:"TRICK", desc:"Once per game: when he would take a hit, he takes no damage and places the grid mark himself."},
   {name:"FINE PRINT", style:"CONTROL", desc:"Once per game: an enemy hit on her deals 1 less damage."},
   {name:"HOME RUN", style:"ATTACK", desc:"Once per game: his attack deals DOUBLE damage to a fighter at full life."},
-  {name:"FAST BREAK", style:"ATTACK", desc:"Once per game: her attack in round 1 deals +1 damage."},
+  {name:"AND-ONE", style:"ATTACK", desc:"Once per game: her attack deals +1 damage and she pulls an extra card."},
   {name:"RALLY", style:"COMEBACK", desc:"Once per game: +2 damage on his attack when his team is behind on health."},
   {name:"STAR POWER", style:"ATTACK", desc:"Once per game: his attack deals +2 damage."},
   {name:"SECOND SERVE", style:"DEFENSE", desc:"Once per game: a hit that would KO her leaves her at 1 life."},
@@ -5051,8 +5051,6 @@ function effStar(f, foe, myPair, foePair, stance, foeStance){
   var wf = false, wamt = 0, wnote = "";
   if (stance === "atk" && !f.used.pwr) {
     if (f.ci === 10) { wf = true; wamt = 1; wnote = "\u2B50 STAR POWER +1\u2605 (" + fName(f) + ")"; }
-    else if (f.ci === 8 && CL.round === 1) { wf = true; wamt = 1; wnote = "\uD83D\uDCA8 FAST BREAK +1\u2605 (" + fName(f) + ")"; }
-    else if (f.ci === 1 && CL.mine.concat(CL.cpu).some(function(x){ return fAlive(x) && x.hits === lifeOf(x) - 1; })) { wf = true; wamt = 1; wnote = "\uD83C\uDFAF CLUTCH TIME +1\u2605 (" + fName(f) + ")"; }
     else if (f.ci === 9) { var behind = teamHits(myPair) - teamHits(foePair); if (behind > 0) { wf = true; wamt = 2; wnote = "\uD83D\uDCE3 RALLY +2\u2605 (" + fName(f) + ")"; } }
   }
   if (wf) {
@@ -5561,6 +5559,10 @@ function itemPlayable(side, id){
 }
 function applyItem(side, id){
   var mine = side === "me", it = ITEM_MAP[id];
+  /* Brandon 2026-11-20: JAMMER -- The Operator's power. The first item the enemy plays is jammed: useItem/cpuUseItem already moved the card to the discard, so returning here = discarded with NO effect, once per game. Reactive-power rule (same as SECOND SERVE / ISLAND CALM): it does not fire while the item player's active fighter is The Boss with AUTHORITY unspent -- and is not spent then. The Operator must be alive; active or benched both count as fielded. PvP: this runs on the item player's phone against the shared pair objects, and the used flag rides pvpSerialize, so both phones agree. */
+  var foePairJ = mine ? CL.cpu : CL.mine, opJ = null;
+  foePairJ.forEach(function(f){ if (!opJ && f.ci === 3 && !f.used.pwr && fAlive(f)) opJ = f; });
+  if (opJ) { var actorJ = mine ? CL.mine[CL.myActive] : CL.cpu[CL.cpuActive]; if (!(actorJ.ci === 2 && !actorJ.used.pwr)) { opJ.used.pwr = 1; CL.log.push("\uD83D\uDCE1 JAMMER! " + fName(opJ) + " jams " + (mine ? "your" : "the CPU's") + " " + it.icon + " " + it.name + " \u2014 discarded, no effect!"); sfx("block"); return; } }
   CL.log.push("🎴 " + (mine ? "You play" : "CPU plays") + " " + it.icon + " " + it.name + "!");
   if (id === "surge") { var sh = mine ? CL.myHand : CL.cpuHand; sh.push("energy", "energy"); CL.statSurge++; CL.log.push("⚡ +2 \uD83D\uDD2E Energy cards for " + (mine ? "you" : "CPU") + "!"); }
   else if (id === "drain") { var fh = mine ? CL.cpuHand : CL.myHand, mh2 = mine ? CL.myHand : CL.cpuHand, ei = fh.indexOf("energy"); if (ei >= 0) { fh.splice(ei, 1); mh2.push("energy"); CL.log.push("🔋 Drained 1 \uD83D\uDD2E Energy from the enemy!"); } else { drawItems(side, 1); CL.log.push("🔋 No Energy to drain \u2014 drew 1 card instead."); } }
@@ -5684,10 +5686,6 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
   var cpuFly = (CL.cpuDrawn && CL.cpuDrawn.length) ? '<div class="cpuflywrap">' + CL.cpuDrawn.map(function(id){ var it3 = id === "energy" ? { icon: "🔮", name: "ENERGY" } : ITEM_MAP[id]; return it3 ? '<span class="cpufly"><i>' + it3.icon + '</i><span>' + it3.name + '</span></span>' : ""; }).join("") + '</div>' : '';
   CL.cpuDrawn = null;
   var intel = "";
-  if (!CL.busy && !CL.over && me.ci === 3 && !me.used.pwr && !(cp.ci === 2 && !cp.used.pwr) && CL.grid.indexOf("") >= 0) {
-    var want = ttPick(CL.grid, "O");
-    if (want >= 0) { CL._intelOp = me; intel = '<div class="intel">🛰️ INTEL — The Operator reads it: if the CPU places a mark, it wants the <b>' + TT_POS[want] + '</b> square</div>'; }
-  }
   var scoutHtml = CL.scoutText ? '<div class="intel">' + CL.scoutText + '</div>' : "";
   var meExtra = CL.lastHit === "me" ? " hitshake" : (CL.lastWin === "me" ? " lunge" : "");
   var cpExtra = CL.lastHit === "cpu" ? " hitshake" : (CL.lastWin === "cpu" ? " lunge" : "");
@@ -5784,9 +5782,8 @@ async function resolveAttack(atkSide, B){
   if (!A.used.pwr) {
     if (A.ci === 7 && D.hits === 0) { if (tryFire(A, D)) { dmg *= 2; marks = 2; CL.log.push("⚾ HOME RUN! " + fName(A) + " deals DOUBLE damage to a full-life fighter!"); } }
     else if (A.ci === 10) { if (tryFire(A, D)) { dmg += 2; CL.log.push("🌟 STAR POWER! " + fName(A) + " deals +2 damage!"); } }
-    else if (A.ci === 1 && CL.mine.concat(CL.cpu).some(function(f){ return fAlive(f) && f.hits === lifeOf(f) - 1; })) { if (tryFire(A, D)) { dmg += 1; CL.log.push("⏰ CLUTCH TIME! " + fName(A) + " deals +1 damage!"); } }
     else if (A.ci === 9) { var aLife = (atkSide === "me" ? CL.mine : CL.cpu).reduce(function(s2, f){ return s2 + lifeOf(f) - f.hits; }, 0), dLife = (defSide === "me" ? CL.mine : CL.cpu).reduce(function(s2, f){ return s2 + lifeOf(f) - f.hits; }, 0); if (aLife < dLife && tryFire(A, D)) { dmg += 2; CL.log.push("📣 RALLY! " + fName(A) + " deals +2 damage!"); } }
-    else if (A.ci === 8 && CL.round === 1) { if (tryFire(A, D)) { dmg += 1; CL.log.push("⚡ FAST BREAK! " + fName(A) + " deals +1 damage!"); } }
+    else if (A.ci === 8) { if (tryFire(A, D)) { dmg += 1; drawItems(atkSide, 1); CL.log.push("🏀 AND-ONE! " + fName(A) + " deals +1 damage and pulls an extra card!"); } }
   }
   if (defStance === "def") {
     var hail = A.ci === 4 && tryFire(A, D);
@@ -5806,6 +5803,10 @@ async function resolveAttack(atkSide, B){
   if (res === "hit") {
     if (execCut) { D.used.pwr = 1; CL.log.push("📋 FINE PRINT — the hit deals 1 less damage."); }
     CL.lastHit = defSide;
+    if (A.ci === 1 && CL.lastKO === D && (defSide === "me" ? CL.mine : CL.cpu).some(function(f){ return fAlive(f); }) && tryFire(A, D)) {
+      var wsh = atkSide === "me" ? CL.myHand : CL.cpuHand; wsh.push("energy", "energy"); marks += 1;
+      CL.log.push("⚾ WALK-OFF! " + fName(A) + " knocks out " + fName(D) + " \u2014 +2 \uD83D\uDD2E Energy and an extra grid mark!");
+    }
     clashArena();
     await clashSleep(600); if (CL !== B) return;
     await doMarks(atkSide, marks, B);
