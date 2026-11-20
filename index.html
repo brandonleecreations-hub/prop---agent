@@ -6714,6 +6714,61 @@ cloudInit();
   if (["home", "tickets", "live", "build", "board"].indexOf(t) < 0) t = "home";
   showView(t);
 })();
+/* ---------- Android Back button: in-app navigation (Brandon 2026-11-19) ----------
+   One invariant history "trap" entry sits above the boot entry. A Back press
+   pops it and fires popstate here instead of leaving the page; the handler
+   unwinds exactly ONE level (topmost layer first) and re-arms the trap, so
+   Back never quits the app from inside it. Layer opens push no extra entries:
+   one Back press always equals one unwind step, even when a layer was closed
+   with its own button in between. Tab restore on boot starts a fresh stack. */
+var paViewStack = [window._view || "home"];
+var paBackNav = false;
+var _paOrigShowView = showView;
+showView = function(name){
+  var prev = window._view;
+  _paOrigShowView(name);
+  if (!paBackNav && name && name !== prev && paViewStack[paViewStack.length - 1] !== name) {
+    paViewStack.push(name);
+    if (paViewStack.length > 12) paViewStack.shift();
+  }
+};
+function paTopLayerClose(){
+  var el;
+  el = document.getElementById("pullView"); if (el && el.classList.contains("open")) { el.classList.remove("open"); return true; }
+  el = $("welcomePop"); if (el && el.style.display === "block") { closeWelcome(); return true; }
+  el = $("vaTkPop"); var vaD = $("viewAgentDlg"); if (el && vaD && vaD.open && el.style.display !== "none") { closeVaTicket(); return true; }
+  var dlgs = ["playerDlg", "viewAgentDlg", "agentDlg", "pushPromptDlg"];
+  for (var i = 0; i < dlgs.length; i++) { var d = $(dlgs[i]); if (d && d.open) { d.close(); return true; } }
+  el = $("clashZoom"); if (el && el.classList.contains("open")) { closeZoom(); return true; }
+  el = document.getElementById("itemPop"); if (el && el.style.display !== "none" && el.innerHTML) { closeItemView(); return true; }
+  el = $("clashPop"); if (el && el.classList.contains("open")) { closeClash(); return true; }
+  el = document.getElementById("packPop"); if (el && el.classList.contains("open")) { el.classList.remove("open"); renderBoard(); return true; }
+  el = document.getElementById("cardPop"); if (el && el.classList.contains("open")) { el.classList.remove("open"); return true; }
+  el = $("cardZoom"); if (el && el.classList.contains("open")) { closeCardZoom(); return true; }
+  if (window._openGame) { closeGame(false); return true; }
+  el = $("dlPop"); if (el && el.style.display !== "none") { el.style.display = "none"; return true; }
+  return false;
+}
+function paBackStep(){
+  if (paTopLayerClose()) return;
+  if (paViewStack.length > 1) paViewStack.pop();
+  else if (paViewStack[0] !== window._view) paViewStack = [window._view || "home"];
+  var dest = paViewStack[paViewStack.length - 1];
+  paBackNav = true;
+  if (dest && dest !== window._view) {
+    if (dest === "sport" && currentSport !== "all") setSport(currentSport); else showView(dest);
+  } else if (window._view && window._view !== "home") {
+    paViewStack = ["home"]; showView("home");
+  }
+  paBackNav = false;
+}
+(function paBackInit(){
+  try { history.replaceState({ pa: "seed" }, ""); history.pushState({ pa: "trap" }, ""); } catch (e) {}
+  window.addEventListener("popstate", function(){
+    paBackStep();
+    try { history.pushState({ pa: "trap" }, ""); } catch (e) {}
+  });
+})();
 if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").catch(function(){}); }
 setInterval(function(){ boardCache = {}; refreshHome(); if (window._view === "tickets") renderTickets(); if ($("view-live").classList.contains("on")){ renderLive(); if (window._openGame) openGame(window._openGame.key, window._openGame.eventId, true); }
   if (window._view === "live") renderLiveHighlights();
