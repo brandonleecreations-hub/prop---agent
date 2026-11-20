@@ -311,7 +311,23 @@ async function sbCachePut(sport, props, actualCredits, reserved) {
     body.credits_today = Math.max(0, cur - Math.max(0, (reserved | 0) - (actualCredits | 0)));
     body.count_day = today;
   }
-  await sbReq("props_cache?sport=eq." + encodeURIComponent(sport), { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify(body) });
+  const patched = await sbReq("props_cache?sport=eq." + encodeURIComponent(sport), { method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify(body) });
+  if (!Array.isArray(patched) || !patched.length) {
+    // No row exists for this sport yet: a PATCH matches nothing and the
+    // write would silently vanish. That is exactly how the esports
+    // boards were lost (Brandon 2026-11-19): esports_cs2/esports_lol
+    // were added after the day's last window with the hard stop already
+    // tripped, so no window claim ever created their rows, and every
+    // brk-lane sbCachePut (195 CS2 rows, three times) no-opped — the
+    // board never persisted and every phone read an empty shared board.
+    // Create the row (same shape sbClaim's insert and espSbPut use);
+    // if a concurrent claim created it first, the POST conflicts and
+    // one more PATCH lands the board on it.
+    const ins = await sbReq("props_cache", { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify({ sport, props: body.props, fetched_at: new Date().toISOString(), credits_today: 0, count_day: etToday(), last_slot: 0 }) });
+    if (!Array.isArray(ins) || !ins.length) {
+      await sbReq("props_cache?sport=eq." + encodeURIComponent(sport), { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify(body) });
+    }
+  }
 }
 async function sbRefund(sport, reserved) {
   const row = await sbCacheRow(sport);
