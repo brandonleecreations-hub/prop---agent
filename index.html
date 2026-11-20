@@ -117,6 +117,11 @@ input[type=number]{width:110px}
 .espslider::-webkit-scrollbar{display:none}
 .espslider .ptile{flex:0 0 148px;scroll-snap-align:center;transform:scale(.955);opacity:.88;transition:transform .25s ease,opacity .25s ease;background:linear-gradient(165deg,rgba(139,92,246,.20),rgba(255,255,255,.045) 45%,rgba(0,0,0,.22));border:1px solid rgba(167,139,250,.35);box-shadow:0 10px 20px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.09)}
 .espslider .ptile.uppop{transform:scale(1);opacity:1;box-shadow:0 18px 34px rgba(0,0,0,.55),0 0 0 2px rgba(167,139,250,.6),0 0 22px rgba(124,58,237,.35)}
+.espmslider{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:10px 2px 14px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.espmslider::-webkit-scrollbar{display:none}
+.espmslider .card.game{flex:0 0 84%;scroll-snap-align:center;margin:0;transform:scale(.965);opacity:.88;transition:transform .25s ease,opacity .25s ease,box-shadow .25s ease;background-image:linear-gradient(165deg,rgba(255,255,255,.08),rgba(255,255,255,0) 45%);box-shadow:0 10px 20px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.09)}
+.espmslider .card.game.uppop{transform:scale(1);opacity:1;box-shadow:0 18px 34px rgba(0,0,0,.55),0 0 0 2px rgba(167,139,250,.6),0 0 22px rgba(124,58,237,.35)}
+.espstate{display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 0;font-size:12.5px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;color:var(--purp-lt)}
 .espgrp{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 0;font-weight:900;font-size:14.5px;cursor:pointer}
 .espteams{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
 .espteam{display:flex;align-items:center;gap:2px;min-width:0;font-size:14.5px}
@@ -5762,11 +5767,38 @@ function espWireSliders(scope){
     espSliderN++;
     popSliderInit(tr, "esp" + espSliderN, ".esptile", "0px -30% 0px -30%");
   });
+  scope.querySelectorAll(".espmslider").forEach(function(tr){
+    espSliderN++;
+    popSliderInit(tr, "esp" + espSliderN, ".card.game", "0px -30% 0px -30%");
+  });
+}
+/* The Esports Game Center lives in the Live view, so a tap that starts on
+   the sport tab or the Build page hops views first (same pattern as the
+   sport tab's regular game list) — otherwise the detail would render
+   into a hidden panel and the tap would look dead. */
+function espHopToLive(fromView){
+  showView("live");
+  window._gameFrom = fromView === "sport" ? "sport" : "live";
 }
 function espWireGcLinks(scope){
   if (!scope) return;
   scope.querySelectorAll("[data-espgc]").forEach(function(el){
-    el.addEventListener("click", function(){ openEspGame(el.getAttribute("data-espgc")); });
+    el.addEventListener("click", function(){
+      var ref = el.getAttribute("data-espgc");
+      if (!ref) return;
+      if (window._view !== "live") espHopToLive(window._view);
+      openEspGame(ref);
+    });
+  });
+}
+function espWireGameLinks(scope){
+  if (!scope) return;
+  scope.querySelectorAll("[data-game]").forEach(function(el){
+    el.addEventListener("click", function(){
+      var p = el.getAttribute("data-game").split("|");
+      if (window._view !== "live") espHopToLive(window._view);
+      openGame(p[0], p[1]);
+    });
   });
 }
 function espGroupTitle(mg){
@@ -5788,31 +5820,54 @@ function renderEspBoardPage(lg){
     if (currentSport !== "esports" || !$("sportProps")) return;
     espAttachProps(ps);
     var pill = $("propCountPill");
-    if (!ps.length) {
-      if (pill) pill.textContent = "";
-      box.innerHTML = '<p class="empty">No esports props on the board right now — CS2 props post before matches, and League of Legends is between splits right now. Matches:</p>' + espSchedMatchesHtml();
-      return;
-    }
-    if (pill) pill.textContent = ps.length + " props · tap a player for all their props";
-    var groups = espMatchGroups(ps.filter(espFreshRow));
-    box.innerHTML = groups.map(function(mg){
-      var vo = mg.state === "in" ? "live" : (mg.state === "post" ? "final" : "");
-      return '<div class="espgrp" data-espgc="' + esc(mg.ref) + '">' + espGroupTitle(mg) + '</div>'
-        + '<div class="espslider">' + espPlayerGroups(mg.rows).map(function(g){ return espTileHtml(g, vo); }).join("") + '</div>';
-    }).join("");
-    espWireSliders(box); bindTiles(box); espWireGcLinks(box);
+    if (pill) pill.textContent = ps.length ? (ps.length + " props · tap a player for all their props") : "";
+    /* Finished matches stay on the board (Brandon 2026-11-19): their props
+       render view-only like the regular sports' finished Game Centers,
+       and every match card below opens the Esports Game Center. */
+    var rows = ps.filter(function(p){ return p.espState === "in" || p.espState === "post" || espFreshRow(p); });
+    box.innerHTML = espBoardHtml(espMatchGroups(rows));
+    espWireSliders(box); bindTiles(box); espWireGcLinks(box); espWireGameLinks(box);
   }).catch(function(){});
 }
-function espSchedMatchesHtml(){
-  if (!espSched) return '<p class="empty">Loading the esports schedule…</p>';
+/* The tab, organized like the rest of the app (Brandon 2026-11-19): by
+   game first (Counter-Strike 2, then League of Legends), inside each game
+   by state in the app's standard order — Live, Upcoming, Finished — with
+   the props board grouped by match under its game. Every group rides its
+   own 3D-pop slider: the matches in an .espmslider, each match's props
+   in an .espslider. */
+function espBoardHtml(groups){
+  if (!espSched && !groups.length) return '<p class="empty">Loading the esports schedule\u2026</p>';
+  var GAMES = [["cs2", "Counter-Strike 2", "\uD83C\uDFAF"], ["lol", "League of Legends", "\uD83D\uDC09"]];
+  var STATES = [["live", "in", "\uD83D\uDD34 Live"], ["upcoming", "pre", "Upcoming"], ["finished", "post", "\uD83C\uDFC1 Finished"]];
   var h = "";
-  [["cs2", "Counter-Strike 2"], ["lol", "League of Legends"]].forEach(function(pair){
-    var g = pair[0], items = [].concat((espSched[g] || {}).live || [], (espSched[g] || {}).upcoming || []);
-    if (!items.length) return;
-    h += '<div class="fsport"><span>' + (g === "cs2" ? "🎯" : "🐉") + ' ' + pair[1] + '</span><span class="fcount">' + items.length + ' matches</span></div>'
-      + items.map(function(it){ return espMatchCard(g, it); }).join("");
+  GAMES.forEach(function(gd){
+    var g = gd[0];
+    var gGroups = groups.filter(function(mg){ return mg.game === g; });
+    var gProps = gGroups.reduce(function(n, mg){ return n + mg.rows.length; }, 0);
+    var gMatches = 0;
+    STATES.forEach(function(sd){ gMatches += espSched && espSched[g] ? (espSched[g][sd[0]] || []).length : 0; });
+    h += '<div class="fsport"><span>' + gd[2] + " " + gd[1] + '</span><span class="fcount">' + (gMatches ? gMatches + " match" + (gMatches === 1 ? "" : "es") + " \u00B7 " : "") + gProps + " props</span></div>";
+    var any = false;
+    STATES.forEach(function(sd){
+      var items = espSched && espSched[g] ? (espSched[g][sd[0]] || []) : [];
+      var mgs = gGroups.filter(function(mg){ return mg.state === sd[1]; });
+      if (!items.length && !mgs.length) return;
+      any = true;
+      var mProps = mgs.reduce(function(n, mg){ return n + mg.rows.length; }, 0);
+      h += '<div class="espstate"><span>' + sd[2] + '</span><span class="fcount">' + (items.length ? items.length + " match" + (items.length === 1 ? "" : "es") : mProps + " props") + "</span></div>";
+      if (items.length) h += '<div class="espmslider">' + items.map(function(it){ return espMatchCard(g, it); }).join("") + "</div>";
+      h += mgs.map(function(mg){ return espBoardGroupHtml(mg); }).join("");
+    });
+    var plain = gGroups.filter(function(mg){ return !mg.state; });
+    if (plain.length) { any = true; h += plain.map(function(mg){ return espBoardGroupHtml(mg); }).join(""); }
+    if (!any) h += '<p class="empty">' + (g === "lol" ? "League of Legends is between splits right now — no matches or props." : "No CS2 matches or props right now.") + "</p>";
   });
-  return h || '<p class="empty">No esports matches on the schedule right now.</p>';
+  return h;
+}
+function espBoardGroupHtml(mg){
+  var vo = mg.state === "in" ? "live" : (mg.state === "post" ? "final" : "");
+  return '<div class="espgrp" data-espgc="' + esc(mg.ref) + '">' + espGroupTitle(mg) + "</div>"
+    + '<div class="espslider">' + espPlayerGroups(mg.rows).map(function(g){ return espTileHtml(g, vo); }).join("") + "</div>";
 }
 /* ---------- Build page section ---------- */
 function espBuildSectionHtml(){ return '<div id="buildEsp"></div>'; }
@@ -5859,11 +5914,11 @@ function espLiveHtml(){
     var items = (espSched[pair[0]] || {}).live || [];
     if (!items.length) return;
     n += items.length;
-    h += items.map(function(it){ return espMatchCard(pair[0], it); }).join("");
+    h += '<div class="fsport"><span>\uD83C\uDFAE ' + pair[1] + '</span><span class="fcount">' + items.length + ' live</span></div>' + items.map(function(it){ return espMatchCard(pair[0], it); }).join("");
   });
   if (!n) return "";
   window.__espShownLive = n;
-  return '<div class="fsport"><span>🎮 Esports</span><span class="fcount">' + n + ' live</span></div>' + h;
+  return h;
 }
 function espFutHtml(){
   window.__espShownFut = 0;
@@ -5885,10 +5940,15 @@ function renderEspFinished(){
   [["cs2", "Counter-Strike 2"], ["lol", "League of Legends"]].forEach(function(pair){
     var items = (espSched[pair[0]] || {}).finished || [];
     if (!items.length) return;
-    h += '<div class="fsport"><span>🎮 ' + pair[1] + '</span><span class="fcount">' + items.length + ' finished</span></div>'
+    h += '<div class="fsport"><span>\uD83C\uDFAE ' + pair[1] + '</span><span class="fcount">' + items.length + ' finished</span></div>'
       + items.map(function(it){ return espMatchCard(pair[0], it); }).join("");
   });
-  setHtml(box, h ? '<h2 style="margin:16px 0 4px">🏁 Esports Results</h2>' + h : "");
+  /* These cards carry data-game like every other game card; bind them the
+     same way #liveCenter/#liveFinished are bound after setHtml — without
+     this the finished esports cards were dead to taps (Brandon 2026-11-19). */
+  if (setHtml(box, h ? '<h2 style="margin:16px 0 4px">\uD83C\uDFC1 Esports Results</h2>' + h : "")) {
+    box.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
+  }
 }
 /* ---------- Esports Game Center ---------- */
 function openEspGame(ref){
