@@ -683,6 +683,15 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #searchResults .bslider .ptile{flex:0 0 118px;scroll-snap-align:center;transform:scale(.955);opacity:.86;background-image:linear-gradient(165deg,rgba(255,255,255,.10),rgba(255,255,255,0) 45%);box-shadow:0 8px 18px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.13),0 0 12px rgba(139,92,246,.28);transition:transform .25s ease,opacity .25s ease,box-shadow .25s ease,border-color .15s ease}
 #searchResults .bslider .ptile.uppop{transform:scale(1);opacity:1;box-shadow:0 20px 36px rgba(0,0,0,.62),0 6px 14px rgba(0,0,0,.5),0 0 0 1px rgba(178,107,255,.30),inset 0 1px 0 rgba(255,255,255,.22)}
 #searchResults .bslider .ptile:active{transform:scale(.93)}
+/* Build a Ticket LIGHT glow (Brandon 2026-11-20): player props in Build get a lighter,
+   clearly visible lavender halo - stronger than the subtle board glow. Scoped to
+   #view-build only; boards, Game Center and the player dialog keep v1.0.115's glow.
+   Pop-state rules restate their rings so the 3D-pop ring still reads on top. */
+#view-build .ptile{box-shadow:0 8px 18px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.05), 0 0 18px rgba(196,168,255,.55), 0 0 6px rgba(196,168,255,.45)}
+#view-build #searchResults .bslider .ptile{box-shadow:0 8px 18px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.13),0 0 18px rgba(196,168,255,.55),0 0 6px rgba(196,168,255,.45)}
+#view-build #searchResults .bslider .ptile.uppop{box-shadow:0 20px 36px rgba(0,0,0,.62),0 6px 14px rgba(0,0,0,.5),0 0 0 1px rgba(178,107,255,.30),inset 0 1px 0 rgba(255,255,255,.22),0 0 22px rgba(196,168,255,.6)}
+#view-build .espslider .ptile{box-shadow:0 10px 20px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.09),0 0 18px rgba(196,168,255,.55),0 0 6px rgba(196,168,255,.45)}
+#view-build .espslider .ptile.uppop{box-shadow:0 18px 34px rgba(0,0,0,.55),0 0 0 2px rgba(167,139,250,.6),0 0 22px rgba(124,58,237,.35),0 0 22px rgba(196,168,255,.55)}
 #searchResults .bteamhead{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:800;color:#efe9ff;letter-spacing:.3px;margin:13px 2px 1px}
 #searchResults .bteamhead .bcount{font-size:11px;font-weight:700;color:#b7a8e8}
 @media (prefers-reduced-motion: reduce){#searchResults .bslider .ptile{transition:none}}
