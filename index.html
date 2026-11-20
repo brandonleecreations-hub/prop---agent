@@ -7544,11 +7544,22 @@ espEnsure();
 lbResetMigrate();
 cloudInit();
 (function bootTab(){
-  /* Brandon 2026-11-19: refresh/reopen stays on the tab you were on
-     (supersedes the 2026-11-18 always-Home rule). showView saves pa_tab on
-     every navigation; restore it here when valid. New users have no saved
-     tab, so they land on Home (the welcome overlays first). A saved sport
-     tab restores through setSport so its board actually renders. */
+  /* Brandon 2026-11-19: refresh stays on the tab you were on. showView saves
+     pa_tab on every navigation; restore it here when valid. New users have
+     no saved tab, so they land on Home (the welcome overlays first). A saved
+     sport tab restores through setSport so its board actually renders.
+     Brandon 2026-11-20: closing out of the app and reopening starts on HOME.
+     sessionStorage survives in-session reloads but is cleared when the
+     app/browser session ends, so its marker separates the two cases: no
+     marker = fresh launch -> Home (the marker is set immediately, so a
+     refresh right after still counts as in-session); marker present =
+     in-session reload -> restore pa_tab as before. If sessionStorage is
+     unavailable, fail open to the restore behavior. */
+  var freshLaunch = false;
+  try {
+    if (!window.sessionStorage.getItem("pa_sess")) { window.sessionStorage.setItem("pa_sess", "1"); freshLaunch = true; }
+  } catch (e) { freshLaunch = false; }
+  if (freshLaunch) { showView("home"); return; }
   var t = lsGet("pa_tab", "");
   if (t === "sport") {
     var sk = lsGet("pa_sport", "");
