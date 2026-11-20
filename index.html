@@ -653,6 +653,10 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 
 
 .pickem{border:2px solid #f5c518;border-radius:12px;padding:8px 10px;background:radial-gradient(120% 140% at 20% 0%,#3b2f0b 0%,#17130a 55%,#101018 100%);box-shadow:0 0 24px #f5c51833;margin:8px 0}
+.pkcd{display:flex;gap:6px;justify-content:center;margin:9px 0 2px}
+.pkcdseg{background:rgba(124,58,237,.18);border:1.5px solid rgba(245,197,24,.55);border-radius:9px;padding:4px 2px 3px;min-width:52px;flex:0 1 64px;text-align:center}
+.pkcdseg b{display:block;font-size:20px;line-height:1.05;color:#f5c518;font-weight:900}
+.pkcdseg span{display:block;font-size:8px;letter-spacing:1.2px;color:#cbb7f2;font-weight:800;margin-top:1px}
 .pk-kick{color:#f5c518;font-weight:900;letter-spacing:1.5px;font-size:11px}
 .pk-title{font-size:16px;font-weight:900;margin:3px 0 1px}
 .pickbtn{display:flex;align-items:center;gap:7px;width:100%;text-align:left;background:#17171f;border:1.5px solid #33333f;color:#fff;border-radius:10px;padding:6px 9px;font-weight:800;font-size:12.5px;margin-top:5px;cursor:pointer}
@@ -4097,6 +4101,39 @@ function renderBoard(){
 var WEEKLY_PICKEM = { week: "2026-W47", lgKey: "nfl", eventId: "401873066", starts: "2026-11-20T01:15Z", away: "Indianapolis Colts", home: "Houston Texans", awayShort: "Colts", homeShort: "Texans", note: "Thursday Night Football", cardName: "PROP AGENT", art: "/api/avatars?s=13&v=2", bannerArt: "/api/banners?s=pickem" };
 function specialUnlocked(){ return (lsGet("pa_special", []) || []).indexOf(WEEKLY_PICKEM.week) >= 0; }
 function pickemWhen(){ try { return new Date(WEEKLY_PICKEM.starts).toLocaleString("en-US", { timeZone: "America/Denver", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); } catch(e){ return ""; } }
+/* Weekly Pick'em countdown (Brandon 2026-11-19): medium segmented timer in the
+   pick'em box, ticking once a second with text-only updates; at kickoff the box
+   flips to its existing LIVE/closed render and the timer stops. Never negative:
+   pickemCdParts returns null at/past the start instant. */
+var _pkCdTimer = null;
+function pkPad(n){ return ("0" + n).slice(-2); }
+function pickemCdParts(nowMs){
+  var rem = new Date(WEEKLY_PICKEM.starts).getTime() - nowMs;
+  if (!(rem > 0)) return null;
+  var s = Math.floor(rem / 1000);
+  return { d: Math.floor(s / 86400), h: Math.floor(s % 86400 / 3600), m: Math.floor(s % 3600 / 60), s: s % 60 };
+}
+function pickemCdHTML(){
+  var p = pickemCdParts(Date.now());
+  if (!p) return "";
+  var seg = function(v, lab, attr){ return '<div class="pkcdseg"><b data-' + attr + '>' + v + '</b><span>' + lab + '</span></div>'; };
+  return '<div class="pkcd" data-pkcd>' + seg(p.d, "DAYS", "cd-d") + seg(pkPad(p.h), "HRS", "cd-h") + seg(pkPad(p.m), "MIN", "cd-m") + seg(pkPad(p.s), "SEC", "cd-s") + '</div>';
+}
+function pickemCdTick(){
+  var els = document.querySelectorAll("[data-pkcd]");
+  if (!els.length){ pickemCdStop(); return; }
+  var p = pickemCdParts(Date.now());
+  if (!p){ pickemCdStop(); renderPickem(); return; }
+  var vals = { "data-cd-d": String(p.d), "data-cd-h": pkPad(p.h), "data-cd-m": pkPad(p.m), "data-cd-s": pkPad(p.s) };
+  els.forEach(function(el){
+    Object.keys(vals).forEach(function(attr){
+      var n = el.querySelector("[" + attr + "]");
+      if (n && n.textContent !== vals[attr]) n.textContent = vals[attr];
+    });
+  });
+}
+function pickemCdStart(){ if (_pkCdTimer) return; _pkCdTimer = setInterval(pickemCdTick, 1000); }
+function pickemCdStop(){ if (_pkCdTimer){ clearInterval(_pkCdTimer); _pkCdTimer = null; } }
 function loadPickemEvent(){
   var now = Date.now(); if (window._pkFetch && now - window._pkFetch < 25000) return; window._pkFetch = now;
   var cfg = WEEKLY_PICKEM;
@@ -4149,9 +4186,10 @@ function renderPickem(){
       + '<div class="note" style="margin-top:7px">' + (mine ? 'Pick saved — you can change it until kickoff. It locks the second the game starts.' : 'Tap a team to make your pick. It locks the second the game starts.') + '</div>';
   }
   var h = (state === "pre" && !started)
-    ? '<div class="pickem"><img class="pkart" src="' + cfg.bannerArt + '" alt="" style="width:100%;height:54px;object-fit:cover;border-radius:8px;display:block"><div class="pk-title" style="margin-top:6px">' + cfg.awayShort + ' @ ' + cfg.homeShort + '</div><div class="note">' + pickemWhen() + ' MST · ' + cfg.note + '</div>' + body + '</div>'
+    ? '<div class="pickem"><img class="pkart" src="' + cfg.bannerArt + '" alt="" style="width:100%;height:54px;object-fit:cover;border-radius:8px;display:block"><div class="pk-title" style="margin-top:6px">' + cfg.awayShort + ' @ ' + cfg.homeShort + '</div><div class="note">' + pickemWhen() + ' MST · ' + cfg.note + '</div>' + pickemCdHTML() + body + '</div>'
     : '<div class="pickem">' + head + body + '</div>';
   boxes.forEach(function(b){ b.innerHTML = h; });
+  if (state === "pre" && !started) pickemCdStart(); else pickemCdStop();
 }
 /* ---------- packs: daily / share / ticket wins -> foil cards + THE RING ---------- */
 function packsGet(){ var p = lsGet("pa_packs", { n: 0, g: 0 }); if (p.g) { p.n = (p.n || 0) + p.g; p.g = 0; lsSet("pa_packs", p); } return p; }
