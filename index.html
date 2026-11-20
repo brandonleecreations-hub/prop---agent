@@ -4426,7 +4426,7 @@ function diamondArt(ci, ti){ return !!diamondArtKey(ci, ti); }
 /* Tier-bar mini face framing for the Diamond workout art: object-position Y% per
    character, measured from the face position in each 512x512 D image (the mini
    frame is a wide 46px-tall cover crop, so faces lower in the art need a lower window). */
-var DIA_MINI_POS = { "1": 0, "2": 0, "3": 0, "4": 3, "5": 3, "6": 26, "7": 62, "8": 3, "9": 0, "10": 0, "11": 3, "12": 14 };
+var DIA_MINI_POS = { "1": 0, "2": 0, "3": 0, "4": 3, "5": 3, "6": 26, "7": 62, "8": 3, "9": 0, "10": 0, "11": 3, "12": 18 };
 function cardArtUrl(ci, ti){ var k = legendArtKey(ci, ti) || diamondArtKey(ci, ti); return k ? "/api/battle?v=6&s=" + k : "/api/battle?v=6&s=" + ci; }
 function tierCardHTML(t, wins, withBtns, ci){
   var ti = TIERS.indexOf(t);
