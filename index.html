@@ -1567,14 +1567,14 @@ body.aion [data-ai]{display:block}
     </div>
     <div class="wbeat" id="wBeat2">
       <div class="wcard" style="padding:14px 16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#9a9ab0;letter-spacing:2px"><span>NBA</span><span style="color:#f5c518;font-weight:900">FINAL</span></div>
-        <div style="display:flex;align-items:center;gap:9px;margin-top:9px;text-align:left"><img src="https://a.espncdn.com/i/teamlogos/nba/500/phi.png" alt="" style="width:30px;height:30px;object-fit:contain" onerror="this.remove()"><b style="flex:1">Philadelphia 76ers</b><b>132</b></div>
-        <div style="display:flex;align-items:center;gap:9px;margin-top:6px;text-align:left"><img src="https://a.espncdn.com/i/teamlogos/nba/500/mil.png" alt="" style="width:30px;height:30px;object-fit:contain" onerror="this.remove()"><b style="flex:1">Milwaukee Bucks</b><b>129</b></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#9a9ab0;letter-spacing:2px"><span>NBA</span><span id="wGameState" style="color:#f5c518;font-weight:900">FINAL</span></div>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:9px;text-align:left"><img id="wGameLogoA" src="https://a.espncdn.com/i/teamlogos/nba/500/phi.png" alt="" style="width:30px;height:30px;object-fit:contain" onerror="this.remove()"><b id="wGameNameA" style="flex:1">Philadelphia 76ers</b><b id="wGameScoreA">132</b></div>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:6px;text-align:left"><img id="wGameLogoB" src="https://a.espncdn.com/i/teamlogos/nba/500/mil.png" alt="" style="width:30px;height:30px;object-fit:contain" onerror="this.remove()"><b id="wGameNameB" style="flex:1">Milwaukee Bucks</b><b id="wGameScoreB">129</b></div>
       </div>
       <div class="wcard" style="padding:14px 16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#9a9ab0;letter-spacing:2px"><span>UFC · DEC 5</span><span style="color:#f5c518;font-weight:900">MAIN EVENT</span></div>
-        <div style="display:flex;align-items:center;gap:9px;margin-top:9px;text-align:left"><img src="https://a.espncdn.com/i/headshots/mma/players/full/4285679.png" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover" onerror="this.remove()"><b style="flex:1">Israel Adesanya</b></div>
-        <div style="display:flex;align-items:center;gap:9px;margin-top:6px;text-align:left"><img src="https://a.espncdn.com/i/headshots/mma/players/full/4421784.png" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover" onerror="this.remove()"><b style="flex:1">Shara Magomedov</b></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#9a9ab0;letter-spacing:2px"><span id="wUfcWhen">UFC · DEC 5</span><span style="color:#f5c518;font-weight:900">MAIN EVENT</span></div>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:9px;text-align:left"><img id="wUfcImgA" src="https://a.espncdn.com/i/headshots/mma/players/full/4285679.png" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover" onerror="this.remove()"><b id="wUfcNameA" style="flex:1">Israel Adesanya</b></div>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:6px;text-align:left"><img id="wUfcImgB" src="https://a.espncdn.com/i/headshots/mma/players/full/4421784.png" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover" onerror="this.remove()"><b id="wUfcNameB" style="flex:1">Shara Magomedov</b></div>
       </div>
       <div class="wsub">Every sport. Every game.<br>NBA, NFL, college, NHL, tennis, UFC &amp; esports — live scores, starters, rosters &amp; full player pages.</div>
     </div>
@@ -7631,9 +7631,45 @@ function closeWelcome(){
   w.classList.add("fade");
   setTimeout(function(){ w.style.display = "none"; w.classList.remove("fade"); }, 320);
 }
+function wSetImg(el, url){ if (!el) return; if (url){ el.src = url; el.style.display = ""; } else el.style.display = "none"; }
+function wFillLive(){
+  getScoreboard(leagueByKey("nba"), 1).then(function(evs){
+    if (!evs || !evs.length) return;
+    var pick = null, kind = "";
+    evs.forEach(function(e){ var st = e.status && e.status.type && e.status.type.state; if (st === "in" && !pick){ pick = e; kind = "in"; } });
+    if (!pick) evs.forEach(function(e){ var st = e.status && e.status.type && e.status.type.state; if (st === "post"){ pick = e; kind = "post"; } });
+    if (!pick){ pick = evs[0]; kind = "pre"; }
+    var comp = (pick.competitions || [])[0] || {};
+    var cs = comp.competitors || []; if (cs.length < 2) return;
+    var aw = cs.filter(function(c){ return c.homeAway === "away"; })[0] || cs[0];
+    var hm = cs.filter(function(c){ return c.homeAway === "home"; })[0] || cs[1];
+    var stEl = $("wGameState");
+    if (stEl){ stEl.textContent = kind === "in" ? "\u25CF LIVE" : kind === "post" ? "FINAL" : pfTnWhen(pick.date); stEl.style.color = kind === "in" ? "#ff5d7a" : "#f5c518"; }
+    var nmA = $("wGameNameA"), nmB = $("wGameNameB"), scA = $("wGameScoreA"), scB = $("wGameScoreB");
+    if (nmA) nmA.textContent = (aw.team && aw.team.displayName) || "";
+    if (nmB) nmB.textContent = (hm.team && hm.team.displayName) || "";
+    if (scA) scA.textContent = kind === "pre" ? "" : (aw.score != null ? String(aw.score) : "");
+    if (scB) scB.textContent = kind === "pre" ? "" : (hm.score != null ? String(hm.score) : "");
+    wSetImg($("wGameLogoA"), logoUrl(aw)); wSetImg($("wGameLogoB"), logoUrl(hm));
+  }).catch(function(){});
+  mmaFetchCards().then(function(evs){
+    if (!evs || !evs.length) return;
+    var e = evs.slice().sort(function(a, b){ return String(a.date).localeCompare(String(b.date)); })[0];
+    var comps = e.competitions || []; var main = comps[comps.length - 1]; if (!main) return;
+    var cs = main.competitors || []; if (cs.length < 2) return;
+    var d = new Date(e.date);
+    var wEl = $("wUfcWhen"); if (wEl) wEl.textContent = "UFC \u00B7 " + d.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
+    var nA = $("wUfcNameA"), nB = $("wUfcNameB");
+    if (nA) nA.textContent = (cs[0].athlete && cs[0].athlete.displayName) || "";
+    if (nB) nB.textContent = (cs[1].athlete && cs[1].athlete.displayName) || "";
+    wSetImg($("wUfcImgA"), cs[0].id ? "https://a.espncdn.com/i/headshots/mma/players/full/" + cs[0].id + ".png" : "");
+    wSetImg($("wUfcImgB"), cs[1].id ? "https://a.espncdn.com/i/headshots/mma/players/full/" + cs[1].id + ".png" : "");
+  }).catch(function(){});
+}
 function showWelcome(){
   var w = $("welcomePop"); if (!w || w.style.display === "block") return;
   w.style.display = "block"; w.classList.remove("fade");
+  try { wFillLive(); } catch (e) {}
   var bar = w.querySelector(".wprog i"); if (bar) { bar.classList.remove("go"); void bar.offsetWidth; bar.classList.add("go"); }
   wSetBeat(1); wSchedule();
 }
