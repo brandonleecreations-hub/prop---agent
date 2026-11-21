@@ -347,6 +347,22 @@ async function aiLane(req, res) {
   res.setHeader("Cache-Control", "no-store");
   const key = aiProvider() ? "set" : "";
   if (req.query.ai === "ping") { res.status(200).json({ ok: true, on: !!key }); return; }
+  if (req.query.ai === "probe") {
+    const prov = aiProvider();
+    if (!prov || prov.kind !== "gemini") { res.status(200).json({ ok: false }); return; }
+    try {
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": prov.key },
+        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: "Say hi in one word." }] }] }),
+      });
+      const j = await r.json().catch(() => null);
+      const errMsg = j && j.error ? String(j.error.message || "").slice(0, 220) : "";
+      const parts = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts;
+      res.status(200).json({ ok: r.ok, st: r.status, err: errMsg, text: parts ? parts.map((p) => p.text || "").join("").slice(0, 80) : "" });
+    } catch (e) { res.status(200).json({ ok: false, st: 0, err: String((e && e.message) || e).slice(0, 120) }); }
+    return;
+  }
   if (req.query.ai === "models") {
     const prov = aiProvider();
     if (!prov || prov.kind !== "gemini") { res.status(200).json({ ok: false }); return; }
