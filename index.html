@@ -9185,7 +9185,11 @@ function aiAskSendText(q){
 /* ---- The Dealmaker's Takes (Daily Pick'em) ---- */
 function aiTakesRender(){
   var box = $("pkTakes"); if (!box || !AI_ON || box.getAttribute("data-done")) return;
-  if (window._pkTakeRetry && Date.now() < window._pkTakeRetry) return;
+  // renderPickem2 rebuilds #pkTakes from scratch on every Board render, so
+  // the last takes/note are kept in memory and re-applied instantly —
+  // otherwise a rebuild during the retry cooldown left the box blank.
+  if (window._pkTakesHtml) { box.innerHTML = window._pkTakesHtml; box.setAttribute("data-done", "1"); return; }
+  if (window._pkTakeRetry && Date.now() < window._pkTakeRetry) { if (window._pkTakesNote) box.innerHTML = window._pkTakesNote; return; }
   box.innerHTML = '<div class="note" style="margin-top:8px">\uD83D\uDDE3\uFE0F The Dealmaker is sizing up his 3 players\u2026</div>';
   var jobs = PICKEM2.legs.map(function(l, i){
     return pfFetch(ESPN_V3 + l.sport + "/" + l.league + "/athletes/" + l.athleteId + "/gamelog").then(function(gl){
@@ -9200,8 +9204,8 @@ function aiTakesRender(){
   Promise.all(jobs).then(function(parts){
     var b2 = $("pkTakes"); if (!b2) return;
     var html = parts.join("");
-    if (html) { b2.innerHTML = html; b2.setAttribute("data-done", "1"); }
-    else { window._pkTakeRetry = Date.now() + 60000; b2.innerHTML = '<div class="note" style="margin-top:8px">\uD83D\uDDE3\uFE0F The Dealmaker stepped out for a minute \u2014 his takes will pop in shortly.</div>'; }
+    if (html) { window._pkTakesHtml = html; b2.innerHTML = html; b2.setAttribute("data-done", "1"); }
+    else { window._pkTakeRetry = Date.now() + 60000; window._pkTakesNote = '<div class="note" style="margin-top:8px">\uD83D\uDDE3\uFE0F The Dealmaker stepped out for a minute \u2014 his takes will pop in shortly.</div>'; b2.innerHTML = window._pkTakesNote; }
   });
 }
 /* ---- Player insight (player pages) ---- */
