@@ -1502,7 +1502,7 @@ module.exports = async (req, res) => {
     const pft = String(req.query.pfteams);
     if (!/^[a-z]+\/[\w.-]+$/.test(pft)) { res.status(400).json({ ok: false }); return; }
     try {
-      const r = await fetch("https://site.api.espn.com/apis/site/v2/sports/" + pft + "/teams");
+      const r = await fetch("https://site.api.espn.com/apis/site/v2/sports/" + pft + "/teams" + (pft.indexOf("college") >= 0 ? "?limit=1000" : ""));
       if (!r.ok) { res.status(200).json({ sports: [] }); return; }
       const j = await r.json();
       res.setHeader("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=604800");

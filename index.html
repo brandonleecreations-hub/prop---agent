@@ -782,7 +782,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 @keyframes slippopshine{0%{background-position:120% 0}55%,100%{background-position:-120% 0}}
 @media (prefers-reduced-motion: reduce){ #view-build .card.slip::after{animation:none} }
 .teamhead{font-size:15px;font-weight:900;margin:18px 0 8px;color:var(--purp-lt);letter-spacing:.4px}
-#playerDlg{max-width:520px;width:96vw;height:auto;max-height:100dvh;padding:12px 12px 10px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none}
+#playerDlg{max-width:520px;width:96vw;height:100dvh;max-height:100dvh;padding:12px 12px 10px;overflow:hidden}
 #playerDlg::-webkit-scrollbar{display:none}
 #playerDlgBody{display:block;min-height:0}
 /* In-dialog slip bar (Brandon 2026-11-20: "prop ticket maker visible in
@@ -793,8 +793,9 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
    flexes, and the bar docks at the dialog's bottom in flow - same
    slipHtml/renderAllSlips source as every other slip surface, with the
    sport bar's compact treatment. Hidden while the slip is empty. */
-#playerDlg[open]{display:block}
-#playerDlg #playerDlgBody{overflow:visible}
+#playerDlg[open]{display:flex;flex-direction:column}
+#playerDlg #playerDlgBody{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none}
+#playerDlgBody::-webkit-scrollbar{display:none}
 #playerDlg #slipDlg{flex:0 0 auto;margin-top:10px;max-height:36dvh;overflow-y:auto;padding:10px 12px;box-shadow:0 -10px 28px rgba(0,0,0,.5),0 12px 26px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.05)}
 #playerDlg #slipDlg h3{font-size:15px;margin:0 0 2px}
 #playerDlg #slipDlg .leg{padding:4px 0;font-size:13px}
@@ -8045,6 +8046,7 @@ var pfTeamSel = null;
 var pfCache = {};
 var pfResolveCache = {};
 var pfCurLabels = [], pfCurNames = [], pfCurRows = [], pfCurOpp = null, pfCurPageId = "";
+var pfCurFights = [], pfCurFighter = null;
 function pfLeagueByKey(k){ for (var i = 0; i < PF_LEAGUES.length; i++) if (PF_LEAGUES[i].key === k) return PF_LEAGUES[i]; return null; }
 function pfFetch(url){
   if (!pfCache[url]){
@@ -8088,7 +8090,7 @@ function pfDoSearch(q){
     (j.results || []).forEach(function(r){ if (r.type === "player") (r.contents || []).forEach(function(c){ players.push(c); }); });
     if (pfSport !== "all"){ var L = pfLeagueByKey(pfSport); players = players.filter(function(c){ return pfEntryMatches(c, L); }); }
     if (!players.length){ box.innerHTML = '<p class="empty">No players found for "' + esc(q) + '".</p>'; return; }
-    box.innerHTML = players.slice(0, 24).map(function(c, i){ var pl = pfEntryPlayer(c); return '<div class="pfrow" data-pfidx="' + i + '">' + (pl.img ? '<img src="' + esc(pl.img) + '" alt="" onerror="this.remove()">' : '') + '<div style="flex:1;min-width:0"><b>' + esc(pl.name) + '</b><div class="note">' + esc(pl.teamName || "") + '</div></div><span class="note" style="font-weight:800">' + esc(pl.leagueLabel || "") + '</span></div>'; }).join("");
+    box.innerHTML = players.slice(0, 24).map(function(c, i){ var pl = pfEntryPlayer(c); return '<div class="pfrow" data-pfidx="' + i + '">' + pfImgTag(pl.img, pl.name, pl.sport, pl.id) + '<div style="flex:1;min-width:0"><b>' + esc(pl.name) + '</b><div class="note">' + esc(pl.teamName || "") + '</div></div><span class="note" style="font-weight:800">' + esc(pl.leagueLabel || "") + '</span></div>'; }).join("");
     box.querySelectorAll("[data-pfidx]").forEach(function(el){ el.addEventListener("click", function(){ openPlayerPage(pfEntryPlayer(players[parseInt(el.getAttribute("data-pfidx"), 10)])); }); });
   }).catch(function(){ if (seq === pfSeq) box.innerHTML = '<p class="empty">Search could not load — check your connection.</p>'; });
 }
@@ -8114,7 +8116,7 @@ function pfRenderBrowse(){
     try { teams = j.sports[0].leagues[0].teams.map(function(t){ return t.team; }); } catch (e) {}
     teams = teams.filter(function(t){ return t && t.displayName; }).sort(function(a, b){ return (a.displayName || "").localeCompare(b.displayName || ""); });
     if (!teams.length){ box.innerHTML = '<p class="empty">Teams could not load for ' + esc(L.label) + '.</p>'; return; }
-    box.innerHTML = '<h3 style="margin:12px 0 6px;font-size:16px">' + esc(L.label) + ' teams</h3><div class="pfslider">' + teams.map(function(t, i){ var logo = (t.logos && t.logos[0] && t.logos[0].href) || ""; return '<div class="pfteam" data-pfteam="' + i + '">' + (logo ? '<img src="' + esc(logo) + '" alt="" style="width:44px;height:44px;object-fit:contain" onerror="this.remove()">' : '') + '<span>' + esc(t.shortDisplayName || t.displayName || "") + '</span></div>'; }).join("") + '</div>';
+    box.innerHTML = '<h3 style="margin:12px 0 6px;font-size:16px">' + esc(L.label) + ' teams</h3><div class="pfslider">' + teams.map(function(t, i){ var logo = (t.logos && t.logos[0] && t.logos[0].href) || ""; return '<div class="pfteam" data-pfteam="' + i + '">' + (logo ? '<img src="' + esc(logo) + '" alt="" loading="lazy" style="width:44px;height:44px;object-fit:contain" onerror="this.remove()">' : '') + '<span>' + esc(t.shortDisplayName || t.displayName || "") + '</span></div>'; }).join("") + '</div>';
     box.querySelectorAll("[data-pfteam]").forEach(function(el){ el.addEventListener("click", function(){ pfTeamSel = { lgKey: L.key, team: teams[parseInt(el.getAttribute("data-pfteam"), 10)] }; pfRenderBrowse(); }); });
     box.querySelectorAll(".pfslider").forEach(function(tr, i){ try { popSliderInit(tr, "pft" + i, ".pfteam"); } catch (e) {} });
   }).catch(function(){ if (pfSport === L.key && !pfTeamSel) box.innerHTML = '<p class="empty">Teams could not load — check your connection.</p>'; });
@@ -8129,7 +8131,7 @@ function pfRenderRoster(L, team){
     var players = [];
     (j.athletes || []).forEach(function(g){ if (g && g.items) g.items.forEach(function(pl){ players.push(pl); }); else if (g && g.displayName) players.push(g); });
     if (!players.length){ box.innerHTML = back + '<p class="empty">No roster listed for this team right now.</p>'; pfWireBack(box); return; }
-    box.innerHTML = back + '<h3 style="margin:2px 0 6px;font-size:16px">' + esc(team.displayName || "") + ' roster</h3><div class="pfslider">' + players.map(function(pl, i){ var hs = (pl.headshot && pl.headshot.href) || ""; return '<div class="pfpcard" data-pfplayer="' + i + '">' + (hs ? '<img src="' + esc(hs) + '" alt="" onerror="this.remove()">' : '') + '<b>' + esc(pl.displayName || "") + '</b><span>' + esc(((pl.position && pl.position.abbreviation) || "") + (pl.jersey ? " · #" + pl.jersey : "")) + '</span></div>'; }).join("") + '</div>';
+    box.innerHTML = back + '<h3 style="margin:2px 0 6px;font-size:16px">' + esc(team.displayName || "") + ' roster</h3><div class="pfslider">' + players.map(function(pl, i){ var hs = (pl.headshot && pl.headshot.href) || ""; return '<div class="pfpcard" data-pfplayer="' + i + '">' + pfImgTag(hs, pl.displayName, L.sport, pl.id) + '<b>' + esc(pl.displayName || "") + '</b><span>' + esc(((pl.position && pl.position.abbreviation) || "") + (pl.jersey ? " · #" + pl.jersey : "")) + '</span></div>'; }).join("") + '</div>';
     pfWireBack(box);
     box.querySelectorAll("[data-pfplayer]").forEach(function(el){ el.addEventListener("click", function(){ var pl = players[parseInt(el.getAttribute("data-pfplayer"), 10)]; openPlayerPage({ id: String(pl.id), name: pl.displayName || "", sport: L.sport, league: L.league, img: (pl.headshot && pl.headshot.href) || "", teamName: team.displayName || "" }); }); });
     box.querySelectorAll(".pfslider").forEach(function(tr, i){ try { popSliderInit(tr, "pfr" + i, ".pfpcard"); } catch (e) {} });
@@ -8219,7 +8221,7 @@ function pfTennisPage(p){
 function pfMmaCard(rk, isChamp){
   var a = rk.athlete || {};
   var badge = isChamp ? "👑 CHAMPION" : ("#" + (rk.current || ""));
-  return '<div class="pfpcard' + (isChamp ? " pfchamp" : "") + '" data-pfplayer="' + esc(String(a.id || "")) + '" data-pfname="' + esc(a.displayName || "") + '" data-pfimg="' + esc(a.headshot || "") + '">' + (a.headshot ? '<img src="' + esc(a.headshot) + '" alt="" onerror="this.remove()">' : '') + '<b>' + esc(a.displayName || "") + '</b><span>' + esc(badge + (rk.recordSummary ? " · " + rk.recordSummary : "")) + '</span></div>';
+  return '<div class="pfpcard' + (isChamp ? " pfchamp" : "") + '" data-pfplayer="' + esc(String(a.id || "")) + '" data-pfname="' + esc(a.displayName || "") + '" data-pfimg="' + esc(a.headshot || "") + '">' + pfImgTag(a.headshot, a.displayName, "mma", a.id) + '<b>' + esc(a.displayName || "") + '</b><span>' + esc(badge + (rk.recordSummary ? " · " + rk.recordSummary : "")) + '</span></div>';
 }
 function pfRenderMma(box){
   box.innerHTML = '<h3 style="margin:12px 0 6px;font-size:16px">UFC — by weight class</h3><p class="empty">Loading fighters…</p>';
@@ -8241,8 +8243,9 @@ function pfRenderMma(box){
       var wm = /\(([^)]+)\)/.exec(d.name || "");
       var cards = "";
       var ch = champs[base];
-      if (ch && (ch.ranks || []).length) cards += pfMmaCard(ch.ranks[0], true);
-      (d.ranks || []).forEach(function(rk){ cards += pfMmaCard(rk, false); });
+      var champId = "";
+      if (ch && (ch.ranks || []).length){ champId = String((ch.ranks[0].athlete || {}).id || ""); cards += pfMmaCard(ch.ranks[0], true); }
+      (d.ranks || []).forEach(function(rk){ if (String((rk.athlete || {}).id || "") === champId) return; cards += pfMmaCard(rk, false); });
       h += '<div class="pfsec" style="margin-top:14px">' + esc(title) + (wm ? ' <span class="note">' + esc(wm[1].replace("pounds", "lbs")) + '</span>' : '') + '</div><div class="pfslider">' + cards + '</div>';
     });
     if (!any){ box.innerHTML = '<p class="empty">Rankings could not load — check your connection.</p>'; return; }
@@ -8262,7 +8265,7 @@ function pfRenderTennis(box){
       any = true;
       var cards = (r0.ranks || []).slice(0, 25).map(function(rk){
         var a = rk.athlete || {};
-        return '<div class="pfpcard" data-pfplayer="' + esc(String(a.id || "")) + '" data-pfname="' + esc(a.displayName || "") + '" data-pfimg="' + esc(a.headshot || "") + '" data-pftour="' + t[2] + '">' + (a.headshot ? '<img src="' + esc(a.headshot) + '" alt="" onerror="this.remove()">' : '') + '<b>' + esc(a.displayName || "") + '</b><span>#' + esc(String(rk.current || "")) + (rk.points ? " · " + esc(String(Math.round(rk.points))) + " pts" : "") + '</span></div>';
+        return '<div class="pfpcard" data-pfplayer="' + esc(String(a.id || "")) + '" data-pfname="' + esc(a.displayName || "") + '" data-pfimg="' + esc(a.headshot || "") + '" data-pftour="' + t[2] + '">' + pfImgTag(a.headshot, a.displayName, "tennis", a.id) + '<b>' + esc(a.displayName || "") + '</b><span>#' + esc(String(rk.current || "")) + (rk.points ? " · " + esc(String(Math.round(rk.points))) + " pts" : "") + '</span></div>';
       }).join("");
       h += '<div class="pfsec" style="margin-top:14px">' + t[0] + '</div><div class="pfslider">' + cards + '</div>';
     });
@@ -8279,15 +8282,176 @@ function pfWireRankCards(box, sport, league){
   });
   box.querySelectorAll(".pfslider").forEach(function(tr, i){ try { popSliderInit(tr, "pfrk" + i, ".pfpcard"); } catch (e) {} });
 }
+function pfImgErr(el){
+  var fbs = (el.getAttribute("data-fb") || "").split("|").filter(function(x){ return x; });
+  if (fbs.length){ var nx = fbs.shift(); el.setAttribute("data-fb", fbs.join("|")); el.src = nx; return; }
+  el.onerror = null;
+  var nm = el.getAttribute("data-nm") || "?";
+  var ini = nm.split(/\s+/).map(function(w){ return w.charAt(0); }).filter(Boolean).slice(0, 2).join("").toUpperCase() || "?";
+  el.src = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b1470"/><stop offset="1" stop-color="#1b1030"/></linearGradient></defs><rect width="200" height="200" fill="url(#g)"/><text x="100" y="118" font-family="Arial,sans-serif" font-size="72" font-weight="900" fill="#cdbcf5" text-anchor="middle">' + ini + '</text></svg>');
+}
+function pfCdnImg(sport, id){ if (sport === "mma") return "https://a.espncdn.com/i/headshots/mma/players/full/" + id + ".png"; if (sport === "tennis") return "https://a.espncdn.com/i/headshots/tennis/players/full/" + id + ".png"; return ""; }
+function pfImgTag(url, name, sport, id, style){
+  var cdn = pfCdnImg(sport, id);
+  var src = url || cdn;
+  if (!src) return "";
+  var fb = (cdn && cdn !== src) ? cdn : "";
+  return '<img src="' + esc(src) + '" alt="" loading="lazy" data-nm="' + esc(name || "") + '"' + (fb ? ' data-fb="' + esc(fb) + '"' : '') + ' onerror="pfImgErr(this)"' + (style ? ' style="' + style + '"' : '') + '>';
+}
+function pfRefHttps(u){ return String(u || "").replace(/^http:\/\//, "https://"); }
+function pfLoadFights(p){
+  var box = $("pfFights"); if (!box) return;
+  var head = '<h3 style="margin:16px 0 6px;font-size:16px">Fight Results</h3>';
+  pfFetch("https://sports.core.api.espn.com/v2/sports/mma/athletes/" + p.id + "/eventlog").then(function(j){
+    var items = ((j && j.events && j.events.items) || []).slice(0, 8);
+    if (!items.length){ if (pfCurPageId === String(p.id)) box.innerHTML = head + '<p class="empty">No fight results listed for this fighter yet.</p>'; return; }
+    return Promise.all(items.map(function(it){
+      var evRef = pfRefHttps(it.event && it.event.$ref);
+      var compRef = pfRefHttps(it.competition && it.competition.$ref);
+      return pfFetch(evRef).catch(function(){ return null; }).then(function(ev){
+        if (!ev) return null;
+        var comp = null;
+        (ev.competitions || []).forEach(function(c){ if (compRef && compRef.indexOf("/competitions/" + c.id) >= 0) comp = c; });
+        if (!comp) (ev.competitions || []).forEach(function(c){ (c.competitors || []).forEach(function(x){ if (String(x.id) === String(p.id)) comp = c; }); });
+        if (!comp) return null;
+        var mine = null, opp = null;
+        (comp.competitors || []).forEach(function(x){ if (String(x.id) === String(p.id)) mine = x; else opp = x; });
+        if (!mine || !opp) return null;
+        var lgm = /\/leagues\/([\w-]+)\//.exec(compRef) || /\/leagues\/([\w-]+)\//.exec(evRef) || [];
+        var f = { date: ev.date || comp.date || "", eventName: ev.name || "", compRef: compRef, league: lgm[1] || "ufc", won: !!mine.winner, oppId: String(opp.id || ""), oppName: "", method: "", weightClass: (comp.type && comp.type.text) || "" };
+        var jobs = [];
+        var oppRef = pfRefHttps(opp.athlete && opp.athlete.$ref);
+        if (oppRef) jobs.push(pfFetch(oppRef).then(function(oa){ f.oppName = (oa && oa.displayName) || ""; }).catch(function(){}));
+        var stEmb = comp.status && comp.status.result ? comp.status : null;
+        var stRef = pfRefHttps(comp.status && comp.status.$ref);
+        if (stEmb) f.method = pfMethodText(stEmb);
+        else if (stRef) jobs.push(pfFetch(stRef).then(function(st){ f.method = pfMethodText(st); }).catch(function(){}));
+        return Promise.all(jobs).then(function(){ return f; });
+      });
+    })).then(function(fights){
+      if (pfCurPageId !== String(p.id)) return;
+      var dlg = $("playerDlg"); if (!dlg || !dlg.open) return;
+      pfCurFights = (fights || []).filter(Boolean);
+      if (!pfCurFights.length){ box.innerHTML = head + '<p class="empty">No fight results listed for this fighter yet.</p>'; return; }
+      box.innerHTML = head + pfCurFights.map(function(f, i){
+        return '<div class="pfvrow" data-pffight="' + i + '" style="cursor:pointer"><span style="flex:1;min-width:0"><b style="color:' + (f.won ? "#4fe3c1" : "#ff5d7a") + '">' + (f.won ? "W" : "L") + '</b> vs ' + esc(f.oppName || "TBD") + '<div class="note">' + esc(f.eventName || "") + ' · ' + esc(pfDstr(f.date)) + (f.method ? ' · ' + esc(f.method) : '') + '</div></span><span style="color:var(--mut);font-size:16px">›</span></div>';
+      }).join("") + '<p class="note" style="margin-top:6px">Tap a fight to see the stats for both fighters from that night.</p>';
+      box.querySelectorAll("[data-pffight]").forEach(function(el){ el.addEventListener("click", function(){ pfFightView(parseInt(el.getAttribute("data-pffight"), 10)); }); });
+    });
+  }).catch(function(){ if (pfCurPageId === String(p.id)) box.innerHTML = head + '<p class="empty">Fight results could not load — check your connection.</p>'; });
+}
+function pfMethodText(st){
+  if (!st) return "";
+  var parts = [];
+  if (st.result && st.result.displayName) parts.push(st.result.displayName);
+  if (st.period) parts.push("R" + st.period);
+  if (st.displayClock) parts.push(st.displayClock);
+  return parts.join(" · ");
+}
+function pfFighterSide(bioJ, fallbackName, fallbackImg){
+  var a = (bioJ && bioJ.athlete) || {};
+  var ss = {};
+  ((a.statsSummary && a.statsSummary.statistics) || []).forEach(function(sx){ ss[sx.name] = sx.displayValue; });
+  return { name: a.displayName || fallbackName || "", img: (a.headshot && a.headshot.href) || fallbackImg || "", record: ss["wins-losses-draws"] || "", ko: ss["tkos-tkoLosses"] || "", sub: ss["submissions-submissionLosses"] || "", h: a.displayHeight || "—", w: a.displayWeight || "—", reach: a.displayReach || "—", stance: (a.stance && a.stance.text) || "—", age: a.age ? String(a.age) : "—" };
+}
+function pfFightStatMap(stJ){
+  var m = {};
+  var cats = (stJ && stJ.splits && stJ.splits.categories) || [];
+  cats.forEach(function(c){ (c.stats || []).forEach(function(sx){ m[sx.name] = sx.displayValue != null ? String(sx.displayValue) : (sx.value != null ? String(sx.value) : ""); }); });
+  return m;
+}
+function pfStatNum(v){
+  if (v == null) return null;
+  var str = String(v);
+  var mm = /^(\d+):(\d+)$/.exec(str);
+  if (mm) return parseInt(mm[1], 10) * 60 + parseInt(mm[2], 10);
+  var n = parseFloat(str);
+  return isNaN(n) ? null : n;
+}
+function pfFightView(ix){
+  var f = pfCurFights[ix];
+  var dlg = $("playerDlg"), body = $("playerDlgBody");
+  if (!f || !dlg || !body || !pfCurFighter) return;
+  var me = pfCurFighter;
+  var backHtml = '<div style="display:flex;justify-content:space-between;margin-bottom:6px"><button type="button" class="ghostbtn" data-pfbackfight="1">← ' + esc(me.name || "Fighter") + '</button><button type="button" class="ghostbtn" data-pfclose="1">✕ Close</button></div>';
+  var wireTop = function(){
+    pfWireClose(body);
+    var bk = body.querySelector("[data-pfbackfight]");
+    if (bk) bk.addEventListener("click", function(){ openPlayerPage(me); });
+  };
+  body.innerHTML = backHtml + '<p class="empty" style="margin-top:14px">Loading fight stats…</p>';
+  wireTop();
+  body.scrollTop = 0;
+  var v3 = ESPN_V3 + "mma/" + f.league + "/athletes/";
+  var bioFor = function(id){ return pfFetch(v3 + id).catch(function(){ return null; }).then(function(b){ if (b) return b; if (f.league !== "ufc") return pfFetch(ESPN_V3 + "mma/ufc/athletes/" + id).catch(function(){ return null; }); return null; }); };
+  Promise.all([pfFetch(f.compRef).catch(function(){ return null; }), bioFor(me.id), bioFor(f.oppId)]).then(function(rs){
+    if (!dlg.open) return;
+    var comp = rs[0] || {};
+    var cA = null, cB = null;
+    (comp.competitors || []).forEach(function(x){ if (String(x.id) === String(me.id)) cA = x; else if (String(x.id) === String(f.oppId)) cB = x; });
+    if (!cA || !cB){ body.innerHTML = backHtml + '<p class="empty" style="margin-top:14px">Fight details are not available for this one.</p>'; wireTop(); return; }
+    var A = pfFighterSide(rs[1], me.name, me.img);
+    var B = pfFighterSide(rs[2], f.oppName, "");
+    var statJobs = [cA, cB].map(function(c){ var r = pfRefHttps(c.statistics && c.statistics.$ref); return r ? pfFetch(r).catch(function(){ return null; }) : Promise.resolve(null); });
+    var stEmb = comp.status && comp.status.result ? comp.status : null;
+    var stRef = pfRefHttps(comp.status && comp.status.$ref);
+    statJobs.push(stEmb ? Promise.resolve(stEmb) : (stRef ? pfFetch(stRef).catch(function(){ return null; }) : Promise.resolve(null)));
+    Promise.all(statJobs).then(function(srs){
+      if (!dlg.open) return;
+      var mA = pfFightStatMap(srs[0]), mB = pfFightStatMap(srs[1]);
+      var method = pfMethodText(srs[2]) || f.method || "";
+      var winnerName = cA.winner ? A.name : (cB.winner ? B.name : "");
+      var loserName = cA.winner ? B.name : (cB.winner ? A.name : "");
+      var h = backHtml;
+      h += '<div style="font-size:17px;font-weight:900">' + esc(f.eventName || "Fight") + '</div><div class="note">' + esc(pfDstr(f.date)) + (f.weightClass ? ' · ' + esc(f.weightClass) : '') + '</div>';
+      if (winnerName) h += '<div class="pfpopbox" style="text-align:center;font-weight:900;font-size:14.5px">' + esc(winnerName) + ' def. ' + esc(loserName) + (method ? '<div style="color:var(--gold);margin-top:2px">' + esc(method) + '</div>' : '') + '</div>';
+      var sideCol = function(S, id, won){
+        return '<div style="flex:1;min-width:0;text-align:center"><div style="display:flex;justify-content:center">' + pfImgTag(S.img, S.name, "mma", id, "width:64px;height:64px;border-radius:50%;object-fit:cover;background:#1b1030") + '</div><button type="button" data-fvfighter="' + esc(String(id)) + '" data-fvname="' + esc(S.name) + '" style="background:none;border:none;color:#fff;font-weight:900;font-size:14.5px;cursor:pointer;padding:4px 2px 0;font-family:inherit">' + esc(S.name) + '</button><div class="note">' + (won ? '<b style="color:#4fe3c1">WINNER</b> · ' : '') + esc(S.record || "") + (S.record ? ' W-L-D' : '') + '</div></div>';
+      };
+      h += '<div style="display:flex;gap:8px;margin-top:12px;align-items:flex-start">' + sideCol(A, me.id, !!cA.winner) + '<div style="font-weight:900;color:var(--mut);padding-top:26px">VS</div>' + sideCol(B, f.oppId, !!cB.winner) + '</div>';
+      var tape = [["Height", A.h, B.h], ["Weight", A.w, B.w], ["Reach", A.reach, B.reach], ["Stance", A.stance, B.stance], ["Age", A.age, B.age], ["KO wins", A.ko || "—", B.ko || "—"], ["Sub wins", A.sub || "—", B.sub || "—"]];
+      h += '<h3 style="margin:16px 0 6px;font-size:16px">Tale of the Tape</h3><table class="tstats"><colgroup><col style="width:24%"><col style="width:52%"><col style="width:24%"></colgroup>' + tape.map(function(r){ return '<tr><td class="tsA">' + esc(r[1]) + '</td><td class="tsL">' + esc(r[0]) + '</td><td class="tsB">' + esc(r[2]) + '</td></tr>'; }).join("") + '</table>';
+      var pair = function(m, l, a){ var x = m[l], y = m[a]; return (x != null && x !== "" && y != null && y !== "") ? x + "/" + y : ""; };
+      var pct = function(m, l, a){ var x = parseFloat(m[l]), y = parseFloat(m[a]); if (isNaN(x) || isNaN(y) || !y) return ""; return Math.round(100 * x / y) + "%"; };
+      var acc = function(m){ var v = parseFloat(m.takedownAccuracy); return isNaN(v) ? "" : (v <= 1 ? Math.round(v * 100) + "%" : String(m.takedownAccuracy)); };
+      var rows = [
+        ["Knockdowns", mA.knockDowns || "", mB.knockDowns || ""],
+        ["Sig. strikes", pair(mA, "sigStrikesLanded", "sigStrikesAttempted"), pair(mB, "sigStrikesLanded", "sigStrikesAttempted")],
+        ["Sig. strike %", pct(mA, "sigStrikesLanded", "sigStrikesAttempted"), pct(mB, "sigStrikesLanded", "sigStrikesAttempted")],
+        ["Total strikes", pair(mA, "totalStrikesLanded", "totalStrikesAttempted"), pair(mB, "totalStrikesLanded", "totalStrikesAttempted")],
+        ["Takedowns", pair(mA, "takedownsLanded", "takedownsAttempted"), pair(mB, "takedownsLanded", "takedownsAttempted")],
+        ["Takedown acc.", acc(mA), acc(mB)],
+        ["Sub. attempts", mA.submissions || "", mB.submissions || ""],
+        ["Reversals", mA.reversals || "", mB.reversals || ""],
+        ["Control time", mA.timeInControl || "", mB.timeInControl || ""]
+      ].filter(function(r){ return r[1] !== "" || r[2] !== ""; });
+      if (rows.length){
+        h += '<h3 style="margin:16px 0 6px;font-size:16px">Fight Stats</h3><table class="tstats"><colgroup><col style="width:24%"><col style="width:52%"><col style="width:24%"></colgroup>' + rows.map(function(r){
+          var na = pfStatNum(r[1]), nb = pfStatNum(r[2]);
+          var aw = na != null && nb != null && na > nb, bw = na != null && nb != null && nb > na;
+          return '<tr><td class="tsA"' + (aw ? ' style="color:var(--gold);font-weight:900"' : '') + '>' + esc(r[1] || "—") + '</td><td class="tsL">' + esc(r[0]) + '</td><td class="tsB"' + (bw ? ' style="color:var(--gold);font-weight:900"' : '') + '>' + esc(r[2] || "—") + '</td></tr>';
+        }).join("") + '</table>';
+      } else {
+        h += '<p class="empty" style="margin-top:14px">ESPN did not publish strike stats for this fight.</p>';
+      }
+      body.innerHTML = h;
+      wireTop();
+      body.querySelectorAll("[data-fvfighter]").forEach(function(el){ el.addEventListener("click", function(){ openPlayerPage({ id: el.getAttribute("data-fvfighter"), name: el.getAttribute("data-fvname") || "", sport: "mma", league: f.league, img: "", teamName: "" }); }); });
+      body.scrollTop = 0;
+    });
+  });
+}
 function pfWireClose(body){ var b = body.querySelector("[data-pfclose]"); if (b) b.addEventListener("click", function(){ var d = $("playerDlg"); if (d && d.open) d.close(); }); }
 function pfHeadHtml(p, img, name, team, meta){
-  return '<div style="text-align:right;margin-bottom:6px"><button type="button" class="ghostbtn" data-pfclose="1">✕ Close</button></div><div class="pfhead">' + (img ? '<img src="' + esc(img) + '" alt="" onerror="this.remove()">' : '') + '<div style="min-width:0"><div style="font-size:19px;font-weight:900">' + esc(name || "Player") + '</div><div class="note">' + esc(team || "") + (meta && meta.length ? ' · ' + esc(meta.join(" · ")) : '') + '</div></div></div>';
+  return '<div style="text-align:right;margin-bottom:6px"><button type="button" class="ghostbtn" data-pfclose="1">✕ Close</button></div><div class="pfhead">' + pfImgTag(img, name, p.sport, p.id) + '<div style="min-width:0"><div style="font-size:19px;font-weight:900">' + esc(name || "Player") + '</div><div class="note">' + esc(team || "") + (meta && meta.length ? ' · ' + esc(meta.join(" · ")) : '') + '</div></div></div>';
 }
 function openPlayerPage(p, oppCtx){
   var dlg = $("playerDlg"), body = $("playerDlgBody");
   if (!dlg || !body || !p || !p.id) return;
   pfCurOpp = oppCtx || null;
   pfCurPageId = String(p.id);
+  pfCurFighter = p.sport === "mma" ? p : null;
+  pfCurFights = [];
   if (p.sport === "tennis"){ pfTennisPage(p); return; }
   body.innerHTML = pfHeadHtml(p, p.img, p.name, p.teamName, []) + '<p class="empty" style="margin-top:14px">Loading stats…</p>';
   pfWireClose(body);
@@ -8304,6 +8468,7 @@ function openPlayerPage(p, oppCtx){
       pfWireClose(body);
       pfWirePlayerBody(body);
       pfAutoMatchup(p, rs[0]);
+      if (p.sport === "mma") pfLoadFights(p);
     });
   };
   attempt(0);
@@ -8332,7 +8497,8 @@ function pfPlayerHtml(p, bio, stats, gamelog){
     else statsHtml = p.sport === "mma" ? "" : pfStatsHtml(stats);
   }
   var vsHtml = pfCurOpp ? pfVsSectionHtml(pfCurOpp) : "";
-  return pfHeadHtml(p, img, name, team, meta) + statsHtml + '<div id="pfStatPop"></div>' + vsHtml + '<div id="pfL5Wrap">' + pfLast5Html(parsed) + '</div>';
+  var fightsHtml = p.sport === "mma" ? '<div id="pfFights"><h3 style="margin:16px 0 6px;font-size:16px">Fight Results</h3><p class="empty">Loading fight results…</p></div>' : "";
+  return pfHeadHtml(p, img, name, team, meta) + statsHtml + '<div id="pfStatPop"></div>' + vsHtml + '<div id="pfL5Wrap">' + pfLast5Html(parsed) + '</div>' + fightsHtml;
 }
 function pfWirePlayerBody(body){
   body.querySelectorAll(".l5slider").forEach(function(sl, i){ try { popSliderInit(sl, "l5s" + i, ".l5card"); } catch (e) {} });
