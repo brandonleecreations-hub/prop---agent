@@ -8079,7 +8079,7 @@ function pfRenderBrowse(){
   }
   if (pfTeamSel && pfTeamSel.lgKey === L.key){ pfRenderRoster(L, pfTeamSel.team); return; }
   box.innerHTML = '<h3 style="margin:12px 0 6px;font-size:16px">' + esc(L.label) + ' teams</h3><p class="empty">Loading teams…</p>';
-  pfFetch(ESPN + L.sport + "/" + L.league + "/teams").then(function(j){
+  pfFetch("/api/props?pfteams=" + L.sport + "/" + L.league).then(function(j){
     if (pfSport !== L.key || pfTeamSel || pfQuery) return;
     var teams = [];
     try { teams = j.sports[0].leagues[0].teams.map(function(t){ return t.team; }); } catch (e) {}

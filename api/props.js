@@ -1494,6 +1494,22 @@ async function espLane(req, res) {
 module.exports = async (req, res) => {
   res.setHeader("Content-Type", "application/json");
   res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=39600");
+  // Score Agent Player Finder (2026-11-21): ESPN's teams-list endpoint
+  // sends no CORS header, so the app cannot fetch it from the browser —
+  // pass it through here. Rosters/bio/stats endpoints have CORS and the
+  // client fetches those directly; only the teams list needs this lane.
+  if (req.query && req.query.pfteams) {
+    const pft = String(req.query.pfteams);
+    if (!/^[a-z]+\/[\w.]+$/.test(pft)) { res.status(400).json({ ok: false }); return; }
+    try {
+      const r = await fetch("https://site.api.espn.com/apis/site/v2/sports/" + pft + "/teams");
+      if (!r.ok) { res.status(200).json({ sports: [] }); return; }
+      const j = await r.json();
+      res.setHeader("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=604800");
+      res.status(200).json(j);
+    } catch (e) { res.status(200).json({ sports: [] }); }
+    return;
+  }
   // Esports lane first: it runs on free sources (bo3.gg / Riot feeds) and
   // the shared cache — it must answer even when no Parlay key is present.
   if (req.query && req.query.esports) { await espLane(req, res); return; }
