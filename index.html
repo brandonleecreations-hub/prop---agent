@@ -1639,6 +1639,7 @@ var LEAGUES = [
   {key:"wbb",   label:"Women's College Basketball",sport:"basketball",  league:"womens-college-basketball", cats:[["Points","pointsPerGame","point"],["Rebounds","reboundsPerGame","rebound"],["Assists","assistsPerGame","assist"]]},
   {key:"tennis",label:"Tennis",            sport:"tennis",      league:"atp",              cats:[]},
   {key:"nhl",   label:"NHL",               sport:"hockey",      league:"nhl",              cats:[["Points","points","point"],["Goals","goals","goal"],["Assists","assists","assist"]]},
+  {key:"mma",   label:"UFC / MMA",         sport:"mma",         league:"ufc",              cats:[]},
   {key:"mlb",   label:"MLB",               sport:"baseball",    league:"mlb",              cats:[]},
   {key:"esports",label:"Esports",           sport:"esports",     league:"esports",          cats:[]}
 ];
@@ -3213,7 +3214,14 @@ function renderFinBlock(){
   }
 }
 function renderLive(){
-  var leagues = LEAGUES.slice(1).filter(function(lg){ return lg.key!=="esports" && !sportHidden(lg.key) && (liveFilter==="all" || lg.key===liveFilter); });
+  if (liveFilter === "mma"){
+    var ls0 = $("liveStatus"); if (ls0) ls0.textContent = "UFC / MMA \u00B7 fresh from ESPN \u00B7 auto-refreshes every 30s";
+    var lf0 = $("liveFinished"); if (lf0) lf0.innerHTML = "";
+    var lc0 = $("liveCenter"); if (lc0 && !window._mmaData) setHtml(lc0, '<p class="empty">Loading fights\u2026</p>');
+    mmaLoad().then(function(){ if (liveFilter === "mma" && window._view === "live"){ var lc = $("liveCenter"); if (lc){ mmaRenderInto(lc); lc._lastHtml = "__mma__"; } } });
+    return;
+  }
+  var leagues = LEAGUES.slice(1).filter(function(lg){ return lg.key!=="esports" && lg.key!=="mma" && !sportHidden(lg.key) && (liveFilter==="all" || lg.key===liveFilter); });
   var jobs = leagues.map(function(lg){
     if (lg.key==="tennis"){
       var wtaLg = {key:"tennisw", label:"Tennis", sport:"tennis", league:"wta"};
@@ -3224,10 +3232,11 @@ function renderLive(){
     }
     return getScoreboard(lg, 2).then(function(ev){ return {lg:lg, ev:ev}; }).catch(function(){ return {lg:lg, ev:[]}; });
   });
+  if (liveFilter === "all") jobs.push(mmaFetchFights().then(function(raw){ return { lg: leagueByKey("mma"), ev: [], _fights: mmaFlatten(raw) }; }).catch(function(){ return { lg: leagueByKey("mma"), ev: [], _fights: [] }; }));
   Promise.all(jobs).then(function(rs){
     var live = [], fut = [], finNew = [], finSeen = {};
     var finDay = ymd(new Date());
-    rs.forEach(function(r){ r.ev.forEach(function(ev){
+    rs.forEach(function(r){ if (r._fights){ r._fights.forEach(function(f){ var fst = f.status && f.status.type && f.status.type.state; if (fst === "in") live.push({ lg: r.lg, ev: f }); }); } r.ev.forEach(function(ev){
       var st = ev.status && ev.status.type && ev.status.type.state;
       if (st==="in") live.push({lg:r.lg, ev:ev});
       else if (st==="pre") fut.push({lg:r.lg, ev:ev});
@@ -3245,7 +3254,7 @@ function renderLive(){
     live.forEach(function(g){ var k2 = g.lg.key; if (!lgroups[k2]){ lgroups[k2] = { lg: g.lg, items: [] }; lorder.push(k2); } lgroups[k2].items.push(g); });
     var PRIO_LIVE = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
     lorder.sort(function(a, b){ var ai = PRIO_LIVE.indexOf(a), bi = PRIO_LIVE.indexOf(b); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; });
-    var liveHtml = lorder.map(function(k2){ var gr = lgroups[k2]; return '<div class="fsport"><span>' + esc(gr.lg.key === "tennis" ? "Tennis" : gr.lg.label) + '</span><span class="fcount">' + gr.items.length + ' live</span></div><div class="lvslider' + (gr.items.length === 1 ? ' few1' : '') + '">' + gr.items.map(function(g){ return gameCard(g.lg, g.ev); }).join("") + '</div>'; }).join("");
+    var liveHtml = lorder.map(function(k2){ var gr = lgroups[k2]; return '<div class="fsport"><span>' + esc(gr.lg.key === "tennis" ? "Tennis" : gr.lg.label) + '</span><span class="fcount">' + gr.items.length + ' live</span></div><div class="lvslider' + (gr.items.length === 1 ? ' few1' : '') + '">' + gr.items.map(function(g){ return g.ev._mma ? mmaCard(g.ev) : gameCard(g.lg, g.ev); }).join("") + '</div>'; }).join("");
     var finAll = finEntriesFor(leagues.map(function(l){ return l.key; }));
     var forder = [], fgroups = {};
     finAll.forEach(function(en){ var k3 = en.lg; if (!fgroups[k3]){ fgroups[k3] = { label: en.label, items: [] }; forder.push(k3); } fgroups[k3].items.push(en); });
@@ -8071,6 +8080,7 @@ function setSport(key){
      sport's Live / Upcoming / Finished sections up ON THE HOME PAGE.
      Everything else on Home stays — only the games area changes. */
   window._homeSport = key;
+  if (key === "mma") window._mmaPill = "all";
   if (key === "all") document.querySelectorAll("#sportTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-sport")===key); });
   showView("home");
   homeSportChrome();
@@ -8101,6 +8111,7 @@ function renderHomeSport(){
   var box = $("homeSportGames"); if (!box) return;
   if (!box.innerHTML) box.innerHTML = '<p class="empty">Loading games\u2026</p>';
   var seq = (window._hsgSeq = (window._hsgSeq || 0) + 1);
+  if (lg.key === "mma"){ mmaLoad().then(function(){ if (window._hsgSeq === seq && window._view === "home" && window._homeSport === "mma") mmaRenderInto(box); }); return; }
   var jobs = [getScoreboard(lg, 3).catch(function(){ return []; })];
   if (lg.key === "tennis") jobs.push(getScoreboard({ key: "tennisw", label: "Tennis", sport: "tennis", league: "wta" }, 3).then(function(ev){ (ev || []).forEach(function(e){ e._tour = "WTA"; }); return ev || []; }).catch(function(){ return []; }));
   Promise.all(jobs).then(function(rs){
@@ -8284,6 +8295,94 @@ function tnCard(ev){
   }).join("");
   var when = st.state === "in" ? '<span style="color:#ff5d7a;font-weight:800">LIVE</span>' : (st.state === "post" ? "Final" : esc(pfTnWhen(ev.date)));
   return '<div class="tnm"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--mut);margin-bottom:4px"><span>' + esc(ev._tname || "") + (ev._tour ? " · " + esc(ev._tour) : "") + '</span><span>' + when + '</span></div>' + rows + '</div>';
+}
+/* ===== UFC / MMA: fights flattened from event cards, organized by
+   weight-class pills, plus a Next Fight Cards section (Brandon 2026-11-21) ===== */
+var MMA_WC_ORDER = ["Heavyweight","Light Heavyweight","Middleweight","Welterweight","Lightweight","Featherweight","Bantamweight","Flyweight","Women's Featherweight","Women's Bantamweight","Women's Flyweight","Women's Strawweight"];
+function mmaMethod(c){
+  var d = ((c && c.details) || []).filter(function(x){ return x.type && /Unofficial Winner/.test(x.type.text || ""); })[0];
+  if (!d) return "";
+  var t = String(d.type.text || "").replace(/^Unofficial Winner\s*/i, "").trim();
+  return /^kotko$/i.test(t) ? "KO/TKO" : t;
+}
+function mmaFlatten(evs){
+  var out = [];
+  (evs || []).forEach(function(e){
+    var comps = (e.competitions || []).slice().reverse(); /* ESPN lists prelims first — flip so the main event leads */
+    comps.forEach(function(c){
+      out.push({ _mma: 1, id: e.id + "_" + c.id, evId: e.id, date: c.date || e.date, status: c.status || e.status, competitions: [c], _ename: e.name || "", _wc: (c.type && c.type.abbreviation) || "" });
+    });
+  });
+  return out;
+}
+function mmaCard(f){
+  var c = (f.competitions || [])[0] || {};
+  var st = (f.status && f.status.type) || {};
+  var rows = (c.competitors || []).map(function(x){
+    var a = x.athlete || {};
+    var nm = esc(a.displayName || "");
+    if (a.displayName) nm = '<span data-player="' + esc(a.displayName) + '" data-league="mma" style="cursor:pointer;text-decoration:underline dotted">' + nm + '</span>';
+    var img = x.id ? '<img src="https://a.espncdn.com/i/headshots/mma/players/full/' + esc(String(x.id)) + '.png" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex:none" loading="lazy" onerror="this.remove()">' : "";
+    return '<div class="tnrow"><span style="display:flex;align-items:center;gap:7px;' + (x.winner ? "font-weight:800;color:#fff" : "color:#c9c9d6") + '">' + img + nm + (x.winner && st.state === "post" ? ' <span style="color:#f5c518;font-size:11px;font-weight:900">\u2605 WINNER</span>' : "") + '</span></div>';
+  }).join("");
+  var when;
+  if (st.state === "in") when = '<span style="color:#ff5d7a;font-weight:800">LIVE' + (f.status.period ? " \u00B7 R" + f.status.period : "") + (f.status.displayClock ? " " + esc(f.status.displayClock) : "") + '</span>';
+  else if (st.state === "post"){ var m = mmaMethod(c); when = "Final" + (m ? " \u00B7 " + esc(m) : "") + (f.status.period ? " \u00B7 R" + f.status.period : ""); }
+  else when = esc(pfTnWhen(f.date));
+  return '<div class="tnm mmam"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--mut);margin-bottom:4px"><span>' + esc(f._ename || "") + (f._wc ? " \u00B7 " + esc(f._wc) : "") + '</span><span>' + when + '</span></div>' + rows + '</div>';
+}
+function mmaFetchRange(ck, fromDays, toDays){
+  if (boardCache[ck] && Date.now() - boardCache[ck].ts < 25000) return Promise.resolve(boardCache[ck].events);
+  var now = new Date(); var a = new Date(now); a.setDate(a.getDate() + fromDays); var b = new Date(now); b.setDate(b.getDate() + toDays);
+  return fetchJson(ESPN + "mma/ufc/scoreboard?dates=" + ymd(a) + "-" + ymd(b) + "&limit=200").then(function(r){
+    var ev = (r && r.events) || []; boardCache[ck] = { events: ev, ts: Date.now() }; return ev;
+  }).catch(function(){ return []; });
+}
+function mmaFetchFights(){ return mmaFetchRange("mma_fights", -7, 3); }
+function mmaFetchCards(){ return mmaFetchRange("mma_cards", 4, 42); }
+function mmaLoad(){
+  return Promise.all([mmaFetchFights(), mmaFetchCards()]).then(function(rs){
+    var cards = (rs[1] || []).slice().sort(function(a, b){ return String(a.date).localeCompare(String(b.date)); }).slice(0, 6);
+    window._mmaData = { fights: mmaFlatten(rs[0]), cards: cards };
+    return window._mmaData;
+  });
+}
+function mmaSectionsHtml(fights, cards){
+  var pill = window._mmaPill || "all";
+  var present = {};
+  fights.forEach(function(f){ if (f._wc) present[f._wc] = 1; });
+  var wcs = MMA_WC_ORDER.filter(function(w){ return present[w]; }).concat(Object.keys(present).filter(function(w){ return MMA_WC_ORDER.indexOf(w) < 0; }).sort());
+  var pillDefs = [{ k: "all", l: "All Classes" }].concat(wcs.map(function(w){ return { k: w, l: w.replace(/^Women's /, "W. ") }; }));
+  var html = '<div class="tabs" style="margin:2px 0 10px">' + pillDefs.map(function(p){ return '<button type="button" class="tab' + (pill === p.k ? " on" : "") + '" data-mmawc="' + esc(p.k) + '">' + esc(p.l) + '</button>'; }).join("") + '</div>';
+  var list = pill === "all" ? fights : fights.filter(function(f){ return f._wc === pill; });
+  var live = [], up = [], fin = [];
+  list.forEach(function(f){ var st = f.status && f.status.type && f.status.type.state; if (st === "in") live.push(f); else if (st === "post") fin.push(f); else up.push(f); });
+  var slider = function(l){ return '<div class="lvslider">' + l.map(mmaCard).join("") + '</div>'; };
+  if (live.length) html += '<h3 class="sgh">\uD83D\uDD34 Live Now</h3>' + slider(live);
+  if (up.length) html += '<h3 class="sgh">Upcoming Fights</h3>' + slider(up);
+  if (fin.length) html += '<h3 class="sgh">Finished</h3>' + slider(fin);
+  if (!live.length && !up.length && !fin.length) html += '<p class="empty">No fights in this class right now.</p>';
+  if (cards && cards.length){
+    html += '<h3 class="sgh">\uD83E\uDD4A Next Fight Cards</h3><div class="lvslider">' + cards.map(function(e){
+      var comps = e.competitions || []; var main = comps[comps.length - 1];
+      var names = main ? (main.competitors || []).map(function(x){ return esc((x.athlete && x.athlete.displayName) || ""); }).join(" vs ") : "";
+      var wc = main && main.type ? main.type.abbreviation : "";
+      return '<div class="tnm mmam"><div style="font-size:11px;color:var(--mut);margin-bottom:4px">' + esc(pfTnWhen(e.date)) + (wc ? " \u00B7 " + esc(wc) : "") + '</div><div style="font-weight:800;color:#fff;font-size:14px;line-height:1.25">' + esc(e.name || "UFC Event") + '</div>' + (names ? '<div class="note" style="margin-top:3px">Main event: ' + names + '</div>' : "") + '<div class="note">' + comps.length + ' fights on the card</div></div>';
+    }).join("") + '</div>';
+  }
+  return html;
+}
+function mmaRenderInto(box){
+  if (!box) return;
+  var d = window._mmaData || { fights: [], cards: [] };
+  box.innerHTML = mmaSectionsHtml(d.fights, d.cards);
+  box.querySelectorAll("[data-mmawc]").forEach(function(b){ b.addEventListener("click", function(){ window._mmaPill = b.getAttribute("data-mmawc"); mmaRerender(); }); });
+  bindTiles(box);
+  box.querySelectorAll(".lvslider").forEach(function(tr, i){ try { popSliderInit(tr, "mma" + i, ".tnm"); } catch (e) {} });
+}
+function mmaRerender(){
+  if (window._homeSport === "mma" && window._view === "home"){ var b = $("homeSportGames"); if (b) mmaRenderInto(b); }
+  if (liveFilter === "mma" && window._view === "live"){ var lc = $("liveCenter"); if (lc) mmaRenderInto(lc); }
 }
 function pfTnWhen(ds){ var d = new Date(ds); if (isNaN(d)) return ""; return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) + " · " + d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
 function tnCompName(x){ if (!x) return ""; if (x.athlete && x.athlete.displayName) return x.athlete.displayName; if (x.roster && x.roster.displayName) return x.roster.displayName; return ""; }
