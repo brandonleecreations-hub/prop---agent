@@ -802,6 +802,10 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #playerDlg[open]{display:flex;flex-direction:column}
 #playerDlg #playerDlgBody{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none}
 #playerDlgBody::-webkit-scrollbar{display:none}
+#teamDlg{max-width:520px;width:96vw;height:100dvh;max-height:100dvh;padding:12px 12px 10px;overflow:hidden}
+#teamDlg[open]{display:flex;flex-direction:column}
+#teamDlg #teamDlgBody{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none}
+#teamDlgBody::-webkit-scrollbar{display:none}
 #playerDlg #slipDlg{flex:0 0 auto;margin-top:10px;max-height:36dvh;overflow-y:auto;padding:10px 12px;box-shadow:0 -10px 28px rgba(0,0,0,.5),0 12px 26px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.05)}
 #playerDlg #slipDlg h3{font-size:15px;margin:0 0 2px}
 #playerDlg #slipDlg .leg{padding:4px 0;font-size:13px}
@@ -1504,6 +1508,9 @@ body.aion [data-ai]{display:block}
 <dialog id="askDlg"><div style="padding:14px"><div class="row" style="justify-content:space-between;align-items:center"><b style="font-size:16px">💬 Ask the Agent</b><span style="display:flex;gap:7px;align-items:center"><button type="button" class="csbtn" id="askVoiceBtn" title="Hear the answers out loud">🔇</button><button type="button" class="csbtn" id="askClose">✕ CLOSE</button></span></div><div id="askMsgs"></div><div class="askchips" id="askChips"><button type="button" class="askchip" data-q="What games are on tonight?">🏀 Games tonight</button><button type="button" class="askchip" data-q="Who won last night? Give me the big results.">🏆 Who won last night?</button><button type="button" class="askchip" data-q="Who is playing the best right now?">🔥 Who's hot?</button><button type="button" class="askchip" data-q="Help me with today's Daily Pick'em — what do you think of the 3 players?">🎯 Pick'em help</button></div><div style="display:flex;gap:8px;margin-top:10px"><input id="askInput" type="text" placeholder="Ask about a player, game or stat…" autocomplete="off" style="flex:1;min-width:0;background:#101018;border:1px solid #2c2c3a;border-radius:10px;color:#fff;padding:10px 12px;font-size:14px;box-sizing:border-box"><button id="askMicBtn" class="csbtn" type="button" style="display:none;font-size:16px;padding:0 12px" title="Ask by voice">🎤</button><button id="askSend" class="openbtn" type="button">Ask</button></div><p class="note" style="margin-top:8px">Answers come from the app's live ESPN data · 40 questions a day</p></div></dialog>
 <dialog id="playerDlg">
   <div id="playerDlgBody"></div>
+</dialog>
+<dialog id="teamDlg">
+  <div id="teamDlgBody"></div>
 </dialog>
 <dialog id="viewAgentDlg">
   <div id="viewAgentBody"></div>
@@ -3493,6 +3500,50 @@ function closeGame(silent){
   ["liveCenter","liveTabs","liveStatus","liveFinished"].forEach(function(id){ var el = $(id); if (el) el.style.display = ""; });
   if (!silent){ if (dest === "home") showView("home"); else if (dest === "sport") { showView("sport"); renderBoards(); } else { renderLive(); if (window._liveScrollY != null) window.scrollTo(0, window._liveScrollY); } }
 }
+/* ===== Game Center: tap a team logo -> starters + full roster
+   (Brandon 2026-11-21; goes for all sports) ===== */
+function openTeamRoster(teamId, teamName){
+  var ctx = window._gcCtx; if (!ctx || !teamId) return;
+  var lg = ctx.lg, s = ctx.s;
+  var dlg = $("teamDlg"), body = $("teamDlgBody"); if (!dlg || !body) return;
+  var tid = String(teamId);
+  var starters = [], played = [];
+  ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){
+    if (!tp.team || String(tp.team.id) !== tid) return;
+    var g = (tp.statistics || [])[0]; if (!g) return;
+    (g.athletes || []).forEach(function(a){
+      var at = a.athlete || {}; if (!at.displayName) return;
+      var rec = { name: at.displayName, img: (at.headshot && at.headshot.href) || "" };
+      if (a.starter) starters.push(rec); else if (!a.didNotPlay) played.push(rec);
+    });
+  });
+  var row = function(p, extra){
+    var img = p.img ? '<img src="' + esc(p.img) + '" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex:none" loading="lazy" onerror="this.remove()">' : "";
+    return '<div class="row" data-player="' + esc(p.name) + '" data-league="' + lg.key + '" style="gap:9px;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer;justify-content:flex-start;align-items:center">' + img + '<b style="flex:1;min-width:0">' + esc(p.name) + '</b>' + (extra || "") + '</div>';
+  };
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div style="font-size:19px;font-weight:900">' + esc(teamName || "Team") + '</div><button type="button" class="ghostbtn" id="teamDlgClose">\u2715 CLOSE</button></div>';
+  if (starters.length) html += '<div style="font-size:16px;margin:14px 0 4px"><b>Starters</b> <span class="note">\u2014 this game</span></div>' + starters.map(function(p){ return row(p); }).join("");
+  else if (played.length) html += '<div style="font-size:16px;margin:14px 0 4px"><b>Played</b> <span class="note">\u2014 this game</span></div>' + played.map(function(p){ return row(p); }).join("");
+  else html += '<p class="note" style="margin-top:12px">Starters post once the game is underway.</p>';
+  html += '<div style="font-size:16px;margin:16px 0 4px"><b>Full Roster</b></div><div id="teamRosterList"><p class="empty">Loading roster\u2026</p></div>';
+  body.innerHTML = html;
+  var cb = $("teamDlgClose"); if (cb) cb.addEventListener("click", function(){ dlg.close(); });
+  bindTiles(body);
+  if (!dlg._wired){ dlg._wired = 1; dlg.addEventListener("click", function(e){ if (e.target === dlg) dlg.close(); }); }
+  if (!dlg.open) dlg.showModal();
+  fetchJson(ESPN + lg.sport + "/" + ctx.tourLg + "/teams/" + tid + "/roster").then(function(r){
+    var list = $("teamRosterList"); if (!list || !dlg.open) return;
+    var ath = [];
+    ((r && r.athletes) || []).forEach(function(e){ if (e && e.items) ath = ath.concat(e.items); else if (e) ath.push(e); });
+    if (!ath.length){ list.innerHTML = '<p class="empty">Roster not available for this team right now.</p>'; return; }
+    list.innerHTML = ath.map(function(a){
+      var pos = a.position && a.position.abbreviation ? a.position.abbreviation : "";
+      var extra = '<span style="color:var(--cyan);font-weight:700;font-size:12.5px">' + (a.jersey ? "#" + esc(a.jersey) + " " : "") + esc(pos) + '</span>';
+      return row({ name: a.displayName || "", img: (a.headshot && a.headshot.href) || "" }, extra);
+    }).join("");
+    bindTiles(list);
+  }).catch(function(){ var list = $("teamRosterList"); if (list) list.innerHTML = '<p class="empty">Roster not available for this team right now.</p>'; });
+}
 function openGame(key, eventId, isRefresh){
   if (key === "esports") { openEspGame(eventId); return; }
   window._openGame = {key: key, eventId: eventId};
@@ -3524,7 +3575,7 @@ function openGame(key, eventId, isRefresh){
     var html = '<div class="card" style="border-top:3px solid var(--purp2)"><div style="font-size:24px;font-weight:900;line-height:1.15">' + esc(title) + ' <span style="color:var(--purp-lt);font-size:15px;font-weight:800">' + esc(lg.label) + '</span></div>'
       + '<div class="note" style="margin:4px 0 8px">' + esc(detail) + (venue ? ' · ' + esc(venue) : '') + '</div>'
       + (live ? '<div><span style="background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.45);border-radius:999px;padding:4px 11px;font-weight:800;font-size:12px">● LIVE' + (detail ? ' · ' + esc(detail) : '') + '</span></div>' : '')
-      + ((cs.length===2 && (logoUrl(cs[0]) || logoUrl(cs[1]))) ? '<div style="display:flex;justify-content:space-around;align-items:center;margin:14px 0 2px">' + cs.map(function(c){ return '<div style="text-align:center;width:42%">' + tlogoImg(logoUrl(c),54) + '<div style="font-weight:800;font-size:13px;margin-top:5px">' + esc((c.team && (c.team.shortDisplayName || c.team.displayName)) || "") + '</div><div style="font-size:23px;font-weight:900;color:var(--purp-lt)">' + esc(c.score!=null ? c.score : "") + '</div></div>'; }).join('<div style="font-weight:900;color:var(--mut);font-size:15px">VS</div>') + '</div>' : '');
+      + ((cs.length===2 && (logoUrl(cs[0]) || logoUrl(cs[1]))) ? '<div style="display:flex;justify-content:space-around;align-items:center;margin:14px 0 2px">' + cs.map(function(c){ var gt = (c.team && c.team.id != null) ? ' data-gcteam="' + esc(String(c.team.id)) + '" data-gcname="' + esc(c.team.displayName || "") + '"' : ""; return '<div' + gt + ' style="text-align:center;width:42%' + (gt ? ';cursor:pointer' : '') + '">' + tlogoImg(logoUrl(c),54) + '<div style="font-weight:800;font-size:13px;margin-top:5px">' + esc((c.team && (c.team.shortDisplayName || c.team.displayName)) || "") + '</div><div style="font-size:23px;font-weight:900;color:var(--purp-lt)">' + esc(c.score!=null ? c.score : "") + '</div></div>'; }).join('<div style="font-weight:900;color:var(--mut);font-size:15px">VS</div>') + '</div><div class="note" style="text-align:center;margin-top:2px">Tap a team logo for starters &amp; roster</div>' : '');
     var nper = 0; cs.forEach(function(c){ nper = Math.max(nper, (c.linescores||[]).length); });
     if (cs.length && nper){
       html += '<table class="lb" style="margin-top:12px"><tr><th>Team</th>';
@@ -3617,6 +3668,8 @@ function openGame(key, eventId, isRefresh){
     $("gameDetail").innerHTML = '<button class="gcBack" type="button">← All games</button>' + html;
     aiGameRender(key, s, comp);
     bindTiles($("gameDetail"));
+    window._gcCtx = { lg: lg, tourLg: tourLg, s: s };
+    $("gameDetail").querySelectorAll("[data-gcteam]").forEach(function(el){ el.addEventListener("click", function(){ openTeamRoster(el.getAttribute("data-gcteam"), el.getAttribute("data-gcname")); }); });
     if (isRefresh && keepY) window.scrollTo(0, keepY);
     var pbpBtn = $("pbpBtn");
     if (pbpBtn) pbpBtn.addEventListener("click", function(){ var all = $("pbpAll"); if (!all) return; var open = all.style.display !== "none"; if (!open && !all.innerHTML) all.innerHTML = plays.slice(15).map(fmtPlay).join(""); all.style.display = open ? "none" : ""; window._pbpOpen = !open; pbpBtn.textContent = open ? "Show all plays" : "Show fewer plays"; });
@@ -9193,7 +9246,7 @@ function paTopLayerClose(){
   el = document.getElementById("pullView"); if (el && el.classList.contains("open")) { el.classList.remove("open"); return true; }
   el = $("welcomePop"); if (el && el.style.display === "block") { closeWelcome(); return true; }
   el = $("vaTkPop"); var vaD = $("viewAgentDlg"); if (el && vaD && vaD.open && el.style.display !== "none") { closeVaTicket(); return true; }
-  var dlgs = ["playerDlg", "viewAgentDlg", "agentDlg", "pushPromptDlg"];
+  var dlgs = ["playerDlg", "teamDlg", "viewAgentDlg", "agentDlg", "pushPromptDlg"];
   for (var i = 0; i < dlgs.length; i++) { var d = $(dlgs[i]); if (d && d.open) { d.close(); return true; } }
   el = $("clashZoom"); if (el && el.classList.contains("open")) { closeZoom(); return true; }
   el = document.getElementById("itemPop"); if (el && el.style.display !== "none" && el.innerHTML) { closeItemView(); return true; }
