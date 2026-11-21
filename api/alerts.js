@@ -265,7 +265,7 @@ async function sportsPush(req, res, dry) {
       const startMs = new Date(ev.date || comp.date || 0).getTime();
       const aw = cs.find((c) => c.homeAway === "away") || cs[0];
       const hm = cs.find((c) => c.homeAway === "home") || cs[1];
-      const g = { id: String(ev.id), label, emoji, a: spTeam(aw), h: spTeam(hm), startMs };
+      const g = { id: String(ev.id), key, label, emoji, a: spTeam(aw), h: spTeam(hm), startMs };
       if (st.state === "pre" && startMs > now - 5 * 60000 && startMs < now + 35 * 60000 && !sent["s:" + ev.id]) startGames.push(g);
       if (st.state === "post" && !sent["f:" + ev.id]) finalGames.push(g);
     });
@@ -275,16 +275,16 @@ async function sportsPush(req, res, dry) {
   // the duo banner composites them into the push's single image slot.
   const duoImg = (g) => (g.a.logo && g.h.logo) ? "https://prop-agent-bre.vercel.app/api/banners?duo=" + encodeURIComponent(g.a.logo) + "|" + encodeURIComponent(g.h.logo) : (g.a.logo || g.h.logo || "");
   const pushes = [];
-  if (startGames.length === 1) { const g = startGames[0]; pushes.push({ title: g.emoji + " " + g.label + " starting soon", body: g.a.name + " @ " + g.h.name + " \u2014 starts in about " + Math.max(1, Math.round((g.startMs - now) / 60000)) + " min. Tap to follow it live.", image: duoImg(g), type: "sports-start" }); }
-  else if (startGames.length > 1) pushes.push({ title: "\uD83C\uDFC0\uD83C\uDFC8 Big games starting soon", body: startGames.slice(0, 3).map((g) => g.a.abbr + " @ " + g.h.abbr).join(" \u00B7 ") + (startGames.length > 3 ? " +" + (startGames.length - 3) + " more" : "") + " \u2014 all inside 35 minutes.", image: duoImg(startGames[0]), type: "sports-start" });
+  if (startGames.length === 1) { const g = startGames[0]; pushes.push({ title: g.emoji + " " + g.label + " starting soon", body: g.a.name + " @ " + g.h.name + " \u2014 starts in about " + Math.max(1, Math.round((g.startMs - now) / 60000)) + " min. Tap to follow it live.", image: duoImg(g), type: "sports-start", url: "/?game=" + g.key + ":" + g.id, game: { key: g.key, id: g.id } }); }
+  else if (startGames.length > 1) pushes.push({ title: "\uD83C\uDFC0\uD83C\uDFC8 Big games starting soon", body: startGames.slice(0, 3).map((g) => g.a.abbr + " @ " + g.h.abbr).join(" \u00B7 ") + (startGames.length > 3 ? " +" + (startGames.length - 3) + " more" : "") + " \u2014 all inside 35 minutes.", image: duoImg(startGames[0]), type: "sports-start", url: "/?game=" + startGames[0].key + ":" + startGames[0].id, game: { key: startGames[0].key, id: startGames[0].id } });
   const finalsToPush = firstRun ? [] : finalGames;
   if (firstRun) report.seededFinals = finalGames.length;
-  if (finalsToPush.length === 1) { const g = finalsToPush[0]; pushes.push({ title: g.emoji + " Final \u2014 " + g.label, body: g.a.name + " " + g.a.score + " @ " + g.h.name + " " + g.h.score + ". " + winnerOf(g).name + " take it.", image: duoImg(g), type: "sports-final" }); }
-  else if (finalsToPush.length > 1) pushes.push({ title: "\uD83C\uDFC1 Final scores", body: finalsToPush.slice(0, 3).map((g) => g.a.abbr + " " + g.a.score + " @ " + g.h.abbr + " " + g.h.score).join(" \u00B7 ") + (finalsToPush.length > 3 ? " +" + (finalsToPush.length - 3) + " more finals" : ""), image: duoImg(finalsToPush[0]), type: "sports-final" });
+  if (finalsToPush.length === 1) { const g = finalsToPush[0]; pushes.push({ title: g.emoji + " Final \u2014 " + g.label, body: g.a.name + " " + g.a.score + " @ " + g.h.name + " " + g.h.score + ". " + winnerOf(g).name + " take it.", image: duoImg(g), type: "sports-final", url: "/?game=" + g.key + ":" + g.id, game: { key: g.key, id: g.id } }); }
+  else if (finalsToPush.length > 1) pushes.push({ title: "\uD83C\uDFC1 Final scores", body: finalsToPush.slice(0, 3).map((g) => g.a.abbr + " " + g.a.score + " @ " + g.h.abbr + " " + g.h.score).join(" \u00B7 ") + (finalsToPush.length > 3 ? " +" + (finalsToPush.length - 3) + " more finals" : ""), image: duoImg(finalsToPush[0]), type: "sports-final", url: "/?game=" + finalsToPush[0].key + ":" + finalsToPush[0].id, game: { key: finalsToPush[0].key, id: finalsToPush[0].id } });
   const dp = denverParts(), dToday = denverYmd();
   if (dp && dp.hour === 10 && dp.minute < 15 && state.pickemDay !== dToday) {
     report.pickem = true;
-    pushes.push({ title: "\uD83C\uDFC6 Daily Pick'em \u2014 The Dealmaker's 3 Players", body: "Today's 3 players are waiting on the Board. Pick MORE or LESS on each \u2014 go 3-for-3 and win a FREE PACK \uD83C\uDF81", image: "https://prop-agent-bre.vercel.app/api/battle?v=14&s=5", type: "pickem" });
+    pushes.push({ title: "\uD83C\uDFC6 Daily Pick'em \u2014 The Dealmaker's 3 Players", body: "Today's 3 players are waiting on the Board. Pick MORE or LESS on each \u2014 go 3-for-3 and win a FREE PACK \uD83C\uDF81", image: "https://prop-agent-bre.vercel.app/api/battle?v=14&s=5", type: "pickem" , url: "/?tab=board", tab: "board" });
     state.pickemDay = dToday;
   }
   report.starts = startGames.map((g) => g.label + " " + g.a.abbr + "@" + g.h.abbr);
@@ -292,7 +292,7 @@ async function sportsPush(req, res, dry) {
   report.pushes = pushes;
   if (!dry && webpush && subs.length) {
     for (const p of pushes) {
-      const payload = JSON.stringify({ title: p.title, body: p.body, url: "/", type: p.type, image: p.image || "" });
+      const payload = JSON.stringify({ title: p.title, body: p.body, url: p.url || "/", type: p.type, image: p.image || "", game: p.game || null, tab: p.tab || null });
       for (const sm of subs) {
         try { await webpush.sendNotification({ endpoint: sm.endpoint, keys: { p256dh: sm.p256dh, auth: sm.auth } }, payload); report.pushed++; }
         catch (e) {

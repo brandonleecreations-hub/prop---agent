@@ -15,7 +15,7 @@ self.addEventListener("push", function(event) {
     icon: "/api/icons?s=192&v=5",
     badge: "/api/icons?s=192&v=5",
     image: (data && data.image) || undefined,
-    data: { url: (data && data.url) || "/" },
+    data: { url: (data && data.url) || "/", game: (data && data.game) || null, tab: (data && data.tab) || null },
     tag: (data && data.type) || "score-agent"
   };
   event.waitUntil(self.registration.showNotification(title, options));
@@ -23,11 +23,15 @@ self.addEventListener("push", function(event) {
 
 self.addEventListener("notificationclick", function(event) {
   event.notification.close();
-  var url = (event.notification.data && event.notification.data.url) || "/";
+  var nd = (event.notification && event.notification.data) || {};
+  var url = nd.url || "/";
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function(list) {
       for (var i = 0; i < list.length; i++) {
-        if ("focus" in list[i]) return list[i].focus();
+        if ("focus" in list[i]) {
+          try { list[i].postMessage({ saGame: nd.game || null, saTab: nd.tab || null }); } catch (e) {}
+          return list[i].focus();
+        }
       }
       if (self.clients.openWindow) return self.clients.openWindow(url);
     })

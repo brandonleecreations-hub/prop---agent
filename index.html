@@ -7116,6 +7116,30 @@ function pvpToPicker(){
     }, 300);
   } catch (e) {}
 })();
+/* Push-notification deep links (Brandon 2026-11-21: tapping a game push
+   opens that game). ?game=<leagueKey>:<eventId> lands in the game's Game
+   Center; ?tab=board lands on the Board (Daily Pick'em reminder). When the
+   app is already open, the service worker posts the same target instead. */
+function saOpenGame(key, eid){ try { showView("live"); } catch (e) {} try { openGame(key, String(eid)); } catch (e) {} }
+(function pushBootLink(){
+  try {
+    var m = /[?&]game=([a-z0-9]+):([0-9]+)/.exec(location.search || "");
+    var tb = /[?&]tab=(board)/.exec(location.search || "");
+    if (!m && !tb) return;
+    history.replaceState(null, "", location.pathname);
+    setTimeout(function(){
+      if (m) saOpenGame(m[1], m[2]);
+      else if (tb) { try { showView("board"); } catch (e) {} }
+    }, 700);
+  } catch (e) {}
+})();
+if (navigator.serviceWorker) navigator.serviceWorker.addEventListener("message", function(ev){
+  var d = ev && ev.data; if (!d) return;
+  try {
+    if (d.saGame && d.saGame.key && d.saGame.id) saOpenGame(d.saGame.key, d.saGame.id);
+    else if (d.saTab === "board") showView("board");
+  } catch (e) {}
+});
 
 function clashBuyPack(){
   if (coinsGet() < CLASH_PACK_COST) return;
