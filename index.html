@@ -1338,6 +1338,12 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
 .pk2btn{background:#1b1b28;color:#fff;border:1px solid #3a3a52;border-radius:9px;padding:8px 10px;font-weight:900;font-size:12.5px}
 .pk2btn.on{background:linear-gradient(135deg,#7C3AED,#6d28d9);border-color:#a78bfa}
 .pk2btn:disabled{opacity:.55}
+#pickemHome .pickem{padding:7px 9px}
+#pickemHome .pk-title{font-size:14.5px;margin:1px 0}
+#pickemHome .pk-kick{font-size:10px}
+#pickemHome .pk2leg{gap:7px;padding:5px 7px;margin-top:6px;border-radius:10px}
+#pickemHome .pk2leg img{width:34px;height:34px}
+#pickemHome .pk2btn{padding:6px 8px;font-size:11.5px;border-radius:8px}
 .pfhead{display:flex;gap:12px;align-items:center}
 .pfhead img{width:76px;height:76px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#7C3AED,#3b1470);border:2px solid rgba(245,197,24,.6)}
 .psrow[data-player]{cursor:pointer}
@@ -1363,7 +1369,6 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
   <section class="view" id="view-home">
     <div id="liveHero"></div>
     <p class="note" id="heroStatus"></p>
-    <div id="pickemHome"></div>
     <div id="secUpcoming"><h2>Upcoming Games</h2>
     <div id="upcoming"><p class="empty">Loading upcoming games from ESPN…</p></div></div>
     <div class="homeclash posterad" id="clashHomeAd"><img src="/api/banners?s=clashposter&v=2" alt="Agent Clash Card Game — tap to play"></div>
@@ -1432,6 +1437,7 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
 
   <!-- LEADERBOARD -->
   <section class="view" id="view-board">
+    <div id="pickemHome"></div>
     <div class="card row" style="justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;margin-bottom:10px">
       <div><b>Your Agent</b></div>
       <button class="agentbtn" id="agentBtn">👤 Guest Agent</button>
@@ -8781,7 +8787,7 @@ function renderPickem2(){
   var box = $("pickemHome"); if (!box) return;
   var st = pk2State();
   var started = Date.now() >= pk2FirstStart();
-  var head = '<div class="pk-kick">🏆 WEEKLY PICK\'EM</div><div class="pk-title">The Dealmaker\'s 3 Players</div><div class="note">Pick MORE or LESS on all 3. Get every one right and win a <b style="color:#f5c518">FREE PACK</b>. Free to play — picks lock at the first tip-off.</div>';
+  var head = '<div style="display:flex;gap:9px;align-items:center"><img src="/api/battle?v=14&s=5" alt="" style="width:44px;height:44px;border-radius:10px;object-fit:cover;object-position:top;border:1px solid #f5c518;flex:0 0 auto"><div style="min-width:0"><div class="pk-kick">🏆 DAILY PICK\'EM</div><div class="pk-title">The Dealmaker\'s 3 Players</div></div></div><div class="note" style="margin-top:4px">Pick MORE or LESS on all 3. Get every one right and win a <b style="color:#f5c518">FREE PACK</b>. Free to play — picks lock at the first tip-off.</div>';
   var legsHtml = PICKEM2.legs.map(function(l, i){
     var pick = st.picks[i];
     var act = st.actuals[i];
@@ -8791,10 +8797,10 @@ function renderPickem2(){
     return '<div class="pk2leg"><img src="' + esc(l.img) + '" alt="" onerror="this.remove()"><div style="min-width:0;flex:1"><b>' + esc(l.name) + '</b><div class="note">' + esc(l.team) + ' vs ' + esc(l.opp) + ' · ' + esc(l.statLabel) + ' <b style="color:#fff">' + l.line + '</b></div>' + res + '</div><div class="pk2btns"><button type="button" class="pk2btn' + (pick === "MORE" ? " on" : "") + '" data-pk2="' + i + ':MORE"' + dis + '>MORE</button><button type="button" class="pk2btn' + (pick === "LESS" ? " on" : "") + '" data-pk2="' + i + ':LESS"' + dis + '>LESS</button></div></div>';
   }).join("");
   var foot = "";
-  if (st.graded === "win") foot = '<div style="margin-top:10px;font-weight:900;color:#4fe3c1">🎉 PERFECT — 3 for 3! Your free pack is waiting on the Board tab.</div>';
-  else if (st.graded === "loss") foot = '<div style="margin-top:10px;font-weight:800;color:#ff8fa3">Not a perfect 3 this week — new players drop next week.</div>';
+  if (st.graded === "win") foot = '<div style="margin-top:10px;font-weight:900;color:#4fe3c1">🎉 PERFECT — 3 for 3! Your free pack is waiting in My Packs below.</div>';
+  else if (st.graded === "loss") foot = '<div style="margin-top:10px;font-weight:800;color:#ff8fa3">Not a perfect 3 — new players drop with the next round.</div>';
   else if (st.locked) foot = '<div style="margin-top:10px;font-weight:800;color:#cdbcf5">🔒 Picks locked — good luck! Results land here when the games finish.</div>';
-  else if (started) foot = '<div style="margin-top:10px" class="note">This week\'s games have started — picks are closed. New players drop next week.</div>';
+  else if (started) foot = '<div style="margin-top:10px" class="note">These games have started — picks are closed. New players drop with the next round.</div>';
   else { var n = Object.keys(st.picks).length; foot = '<button type="button" class="bigbtn" id="pk2Lock" style="width:100%;margin-top:10px"' + (n < 3 ? " disabled" : "") + '>🔒 Lock my picks (' + n + '/3)</button>'; }
   box.innerHTML = '<div class="pickem">' + head + legsHtml + foot + '</div>';
   box.querySelectorAll("[data-pk2]").forEach(function(b){ b.addEventListener("click", function(){ var parts = b.getAttribute("data-pk2").split(":"); var s2 = pk2State(); if (s2.locked || Date.now() >= pk2FirstStart()) return; s2.picks[parts[0]] = parts[1]; pk2Save(s2); renderPickem2(); }); });
