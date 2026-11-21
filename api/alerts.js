@@ -30,11 +30,21 @@ async function fetchTimeout(url, opts, ms) {
   finally { clearTimeout(to); }
 }
 async function rest(path, opts) {
-  const r = await fetchTimeout(SB_URL + "/rest/v1/" + path, opts);
-  const txt = await r.text();
-  let j = null;
-  try { j = txt ? JSON.parse(txt) : null; } catch (e) {}
-  return { status: r.status, json: j, text: txt };
+  // Supabase reads from Vercel are stalling intermittently (12s+ on
+  // 2026-11-21 while the same host answers in <1s from elsewhere) — one
+  // retry after a short pause gets through most stalls instead of killing
+  // the whole push run.
+  let lastErr = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const r = await fetchTimeout(SB_URL + "/rest/v1/" + path, opts);
+      const txt = await r.text();
+      let j = null;
+      try { j = txt ? JSON.parse(txt) : null; } catch (e) {}
+      return { status: r.status, json: j, text: txt };
+    } catch (e) { lastErr = e; await new Promise((r) => setTimeout(r, 1000)); }
+  }
+  throw lastErr;
 }
 async function getJson(url) {
   const r = await fetchTimeout(url);
