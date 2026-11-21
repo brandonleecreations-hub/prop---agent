@@ -8189,7 +8189,9 @@ function pfLast5Html(gl){
   var cards = rows.map(function(r){
     var dstr = "";
     if (r.date){ var d = new Date(r.date); if (!isNaN(d)) dstr = d.toLocaleDateString([], { month: "short", day: "numeric" }); }
-    var line = pick.map(function(i){ return esc(labels[i] || "") + ' <b style="color:#fff">' + esc(r.stats[i] != null ? String(r.stats[i]) : "–") + '</b>'; }).join(" · ");
+    var dupL = {}; pick.forEach(function(i){ dupL[labels[i]] = (dupL[labels[i]] || 0) + 1; });
+    var friendly = { passingYards: "PASS YDS", rushingYards: "RUSH YDS", receivingYards: "REC YDS", passingTouchdowns: "PASS TD", rushingTouchdowns: "RUSH TD", receivingTouchdowns: "REC TD" };
+    var line = pick.map(function(i){ var L = labels[i] || ""; if (dupL[L] > 1 && friendly[names[i]]) L = friendly[names[i]]; return esc(L) + ' <b style="color:#fff">' + esc(r.stats[i] != null ? String(r.stats[i]) : "–") + '</b>'; }).join(" · ");
     return '<div class="l5card"><div class="l5opp">' + esc((r.atVs === "at" ? "@ " : "vs ") + (r.opp || "Game")) + (r.result ? ' <span style="color:' + (r.result === "W" ? "#4fe3c1" : "#ff5d7a") + '">' + esc(r.result) + '</span>' : '') + '</div><div class="note">' + esc(dstr) + (r.score ? ' · ' + esc(r.score) : '') + '</div><div class="l5line">' + line + '</div></div>';
   }).join("");
   return '<h3 style="margin:16px 0 6px;font-size:16px">Last 5 Games</h3><div class="l5slider">' + cards + '</div>';
