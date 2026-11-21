@@ -2822,8 +2822,8 @@ function renderUpcoming(){
             return '<div class="card game heroslide" data-hero="' + g.lg.key + '|' + g.ev.id + '">'
               + '<div style="flex:1;min-width:0">'
               + '<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px"><span class="hlg">' + esc(g.lg.label.toUpperCase()) + '</span><span class="herolive" style="margin:0;padding:3px 9px;font-size:11px">\uD83D\uDD34 ' + esc(st.shortDetail || st.detail || "LIVE") + '</span></div>'
-              + '<div class="hrow"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(a.logo, 19) + esc(a.name || "") + '</span><b>' + esc(a.score != null ? a.score : "0") + '</b></div>'
-              + '<div class="hrow"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(b.logo, 19) + esc(b.name || "") + '</span><b>' + esc(b.score != null ? b.score : "0") + '</b></div>'
+              + '<div class="hrow"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(a.logo, 42) + esc(a.name || "") + '</span><b>' + esc(a.score != null ? a.score : "0") + '</b></div>'
+              + '<div class="hrow"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(b.logo, 42) + esc(b.name || "") + '</span><b>' + esc(b.score != null ? b.score : "0") + '</b></div>'
               + '<p class="herotap" style="font-size:11.5px">Tap for game center \u2192</p></div></div>';
           };
           hero.innerHTML = '<div class="upslider heroslider' + (picks.length === 1 ? ' few1' : picks.length === 2 ? ' few2' : '') + '">' + picks.map(heroSlide).join("") + '</div>';
