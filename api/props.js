@@ -1500,7 +1500,7 @@ module.exports = async (req, res) => {
   // client fetches those directly; only the teams list needs this lane.
   if (req.query && req.query.pfteams) {
     const pft = String(req.query.pfteams);
-    if (!/^[a-z]+\/[\w.]+$/.test(pft)) { res.status(400).json({ ok: false }); return; }
+    if (!/^[a-z]+\/[\w.-]+$/.test(pft)) { res.status(400).json({ ok: false }); return; }
     try {
       const r = await fetch("https://site.api.espn.com/apis/site/v2/sports/" + pft + "/teams");
       if (!r.ok) { res.status(200).json({ sports: [] }); return; }

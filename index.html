@@ -782,8 +782,9 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 @keyframes slippopshine{0%{background-position:120% 0}55%,100%{background-position:-120% 0}}
 @media (prefers-reduced-motion: reduce){ #view-build .card.slip::after{animation:none} }
 .teamhead{font-size:15px;font-weight:900;margin:18px 0 8px;color:var(--purp-lt);letter-spacing:.4px}
-#playerDlg{max-width:520px;width:96vw;height:auto;max-height:100dvh;padding:12px 12px 10px;overflow:hidden}
-#playerDlgBody{display:flex;flex-direction:column;min-height:0}
+#playerDlg{max-width:520px;width:96vw;height:auto;max-height:100dvh;padding:12px 12px 10px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none}
+#playerDlg::-webkit-scrollbar{display:none}
+#playerDlgBody{display:block;min-height:0}
 /* In-dialog slip bar (Brandon 2026-11-20: "prop ticket maker visible in
    front of the player's prop at bottom - not hiding behind", all pages):
    #slipDlg is a child of the modal #playerDlg, so it renders IN FRONT of
@@ -792,9 +793,8 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
    flexes, and the bar docks at the dialog's bottom in flow - same
    slipHtml/renderAllSlips source as every other slip surface, with the
    sport bar's compact treatment. Hidden while the slip is empty. */
-#playerDlg[open]{display:flex;flex-direction:column}
-#playerDlg #playerDlgBody{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none}
-#playerDlg #playerDlgBody::-webkit-scrollbar{display:none}
+#playerDlg[open]{display:block}
+#playerDlg #playerDlgBody{overflow:visible}
 #playerDlg #slipDlg{flex:0 0 auto;margin-top:10px;max-height:36dvh;overflow-y:auto;padding:10px 12px;box-shadow:0 -10px 28px rgba(0,0,0,.5),0 12px 26px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.05)}
 #playerDlg #slipDlg h3{font-size:15px;margin:0 0 2px}
 #playerDlg #slipDlg .leg{padding:4px 0;font-size:13px}
@@ -1297,6 +1297,24 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .sgcell{background:#12121e;border:1px solid #26263a;border-radius:10px;padding:7px 4px;text-align:center}
 .sgcell b{display:block;font-size:15.5px;color:#fff}
 .sgcell span{font-size:9.5px;letter-spacing:.6px;color:#9a9ab0;text-transform:uppercase}
+.sgcell{min-width:0}
+.sgcell b{overflow-wrap:anywhere}
+.sgcell[data-pfstat]{cursor:pointer}
+.sgcell.pfOn{box-shadow:0 0 0 2px var(--gold),0 0 16px rgba(245,185,66,.45);background:rgba(245,185,66,.10)}
+#pfStatPop:empty{display:none}
+.pfpopbox{margin-top:12px;border:1px solid rgba(245,185,66,.45);border-radius:12px;padding:10px 12px;background:linear-gradient(180deg,rgba(245,185,66,.08),rgba(124,58,237,.05));animation:pfpop .18s ease-out}
+@keyframes pfpop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.pfvrow{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12.5px}
+.pfvrow:last-child{border-bottom:none}
+.pfchamp{border:1px solid var(--gold)!important;box-shadow:0 0 14px rgba(245,185,66,.35)}
+nav button[data-nav="live"].liveglow{color:#ff5d7a;text-shadow:0 0 10px rgba(255,45,85,.85);box-shadow:0 0 16px rgba(255,45,85,.40),inset 0 0 10px rgba(255,45,85,.16)}
+nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255,45,85,.95))}
+.cdtick{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(245,185,66,.14);border:1px solid rgba(245,185,66,.55);color:#ffb340;font-size:11px;font-weight:800;letter-spacing:.4px;white-space:nowrap}
+.tnm{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.tnrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:2.5px 0;font-size:13px}
+.tnsets{color:var(--cyan);font-weight:800;white-space:nowrap}
+.lvslider .tnm{flex:0 0 78%;min-width:0;scroll-snap-align:center;margin:0;transform:scale(.955);opacity:.85;transition:transform .25s ease,opacity .25s ease,box-shadow .25s ease}
+.lvslider .tnm.uppop{transform:scale(1);opacity:1;box-shadow:0 0 0 1px rgba(178,107,255,.30),0 0 18px rgba(196,168,255,.45)}
 .pfslider{display:flex;gap:9px;overflow-x:auto;padding:8px 2px 12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
 .pfslider>*{scroll-snap-align:center}
 .pfteam{display:flex;flex-direction:column;align-items:center;gap:6px;background:#12121e;border:1px solid #26263a;border-radius:14px;padding:12px 8px;min-width:106px;max-width:106px;cursor:pointer;color:#fff;font-weight:700;font-size:12px;text-align:center}
@@ -2011,7 +2029,7 @@ function tileHtml(g){
     + '<span class="pc">'+g.props.length+' prop'+(g.props.length===1?"":"s")+(g.starts ? ' · '+esc(fmtClock(g.starts)) : '')+'</span>' + cdChipHtml(g.starts)
     + (g.brk ? '<br><span class="plive" style="background:rgba(245,197,24,.16);color:var(--gold)">⏸ '+esc(g.brkDetail || "AT THE BREAK")+'</span>' : (lt ? '<br><span class="plive">LIVE · '+esc(lt.detail)+'</span>' : '')) + '</div>';
 }
-function bindTiles(scope){ if (!scope) return; scope.querySelectorAll("[data-player]").forEach(function(t){ t.addEventListener("click", function(){ openPlayer(t.getAttribute("data-player"), t.getAttribute("data-league"), t.getAttribute("data-viewonly")==="1", t.getAttribute("data-final")==="1"); }); }); }
+function bindTiles(scope){ if (!scope) return; scope.querySelectorAll("[data-player]").forEach(function(t){ t.addEventListener("click", function(){ var on = t.getAttribute("data-opp"); window._pfOppCtx = on ? { name: on, abbr: t.getAttribute("data-oppabbr") || "" } : null; openPlayer(t.getAttribute("data-player"), t.getAttribute("data-league"), t.getAttribute("data-viewonly")==="1", t.getAttribute("data-final")==="1"); }); }); }
 var dlgPlayer = null;
 function openPlayerLegacy(name, leagueKey, viewOnly, finalView){
   dlgPlayer = {name:name, league:leagueKey, viewOnly:!!viewOnly, finalView:!!finalView};
@@ -2467,10 +2485,11 @@ function renderBoards(){
     if (window._sgSeq !== seq || window._view !== "sport" || currentSport !== lg.key) return;
     var events = (rs[0] || []).slice();
     if (rs.length > 1){ events.forEach(function(e){ if (!e._tour) e._tour = "ATP"; }); events = events.concat(rs[1] || []); events.sort(function(a, b){ return String(a.date || "").localeCompare(String(b.date || "")); }); }
+    if (lg.key === "tennis") events = tnFlatten(events);
     var live = [], up = [], fin = [];
     events.forEach(function(ev){ var st = ev.status && ev.status.type && ev.status.type.state; if (st === "in") live.push(ev); else if (st === "post") fin.push(ev); else up.push(ev); });
     fin.reverse();
-    var slider = function(list){ return '<div class="lvslider">' + list.map(function(ev){ return gameCard(lg, ev); }).join("") + '</div>'; };
+    var slider = function(list){ return '<div class="lvslider">' + list.map(function(ev){ return ev._tn ? tnCard(ev) : gameCard(lg, ev); }).join("") + '</div>'; };
     var html = "";
     if (live.length) html += '<h3 class="sgh">🔴 Live Now</h3>' + slider(live);
     if (up.length) html += '<h3 class="sgh">Upcoming</h3>' + slider(up.slice(0, 16));
@@ -2478,7 +2497,8 @@ function renderBoards(){
     if (!html) html = '<p class="empty">No ' + esc(lg.label) + ' games on the board right now — check the Live tab for other sports.</p>';
     gw.innerHTML = html;
     gw.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var pp = el.getAttribute("data-game").split("|"); showView("live"); window._gameFrom = "sport"; openGame(pp[0], pp[1]); }); });
-    gw.querySelectorAll(".lvslider").forEach(function(tr, i){ try { popSliderInit(tr, "sg" + i, ".card.game"); } catch (e) {} });
+    bindTiles(gw);
+    gw.querySelectorAll(".lvslider").forEach(function(tr, i){ try { popSliderInit(tr, "sg" + i, lg.key === "tennis" ? ".tnm" : ".card.game"); } catch (e) {} });
     hydratePbpMinis();
   });
 }
@@ -2763,6 +2783,7 @@ function renderUpcoming(){
         if (st==="in") liveAll.push({lg:r.lg, ev:ev});
       }); });
       var lp = $("livePill"); if (lp) lp.innerHTML = '<span class="dot"></span>LIVE · ' + liveAll.length;
+      var lnb = document.querySelector('nav button[data-nav="live"]'); if (lnb) lnb.classList.toggle("liveglow", liveAll.length > 0);
       var hs = $("heroStatus");
       if (hs) hs.textContent = "Updated " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}) + " · auto-refresh 30s · ESPN · " + total + " games on the board · " + liveAll.length + " live now";
       window._liveNow = liveAll.length;
@@ -2823,10 +2844,13 @@ function renderUpcoming(){
       var ts = eventTeams(u.ev);
       var aU = ts.filter(function(t){ return t.homeAway==="away"; })[0], hU = ts.filter(function(t){ return t.homeAway==="home"; })[0];
       var mHtml = (aU && hU) ? tlogoImg(aU.logo,17)+esc(aU.name)+' @ '+tlogoImg(hU.logo,17)+esc(hU.name) : ts.map(function(t){ return tlogoImg(t.logo,17)+esc(t.name); }).join(' @ ');
-      return '<div class="card game" data-game="'+u.lg.key+'|'+u.ev.id+'" style="cursor:pointer"><div><div class="gteam">'+mHtml+'</div><div style="color:var(--purp-lt);font-size:11.5px;font-weight:800;letter-spacing:1.2px;margin-top:2px">'+esc(u.lg.label.toUpperCase())+'</div></div><div class="gstat">'+esc(fmtDay(u.ev.date))+' '+esc(new Date(u.ev.date).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}))+'</div></div>';
+      var cdMs = new Date(u.ev.date).getTime() - Date.now();
+      var cdHtml = (cdMs > 0 && cdMs <= 1800000) ? '<div style="margin-top:5px"><span class="cdtick" data-cd="' + esc(u.ev.date || "") + '"></span></div>' : '';
+      return '<div class="card game" data-game="'+u.lg.key+'|'+u.ev.id+'" style="cursor:pointer"><div><div class="gteam">'+mHtml+'</div><div style="color:var(--purp-lt);font-size:11.5px;font-weight:800;letter-spacing:1.2px;margin-top:2px">'+esc(u.lg.label.toUpperCase())+'</div>' + cdHtml + '</div><div class="gstat">'+esc(fmtDay(u.ev.date))+' '+esc(new Date(u.ev.date).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}))+'</div></div>';
     }).join("") + '</div>' : '<p class="empty">No upcoming games found right now.</p>');
     if (upChanged) $("upcoming").querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); showView("live"); window._gameFrom = "home"; openGame(p[0], p[1]); }); });
     if (upChanged) upSliderInit();
+    cdTickUpdate();
   });
 }
 function articleHtml(a, picks){
@@ -3527,6 +3551,7 @@ function openGame(key, eventId, isRefresh){
           }).filter(function(b){ return b.rows; });
           var awId = aw && aw.team ? String(aw.team.id) : "", hmId = hm && hm.team ? String(hm.team.id) : "";
           teamBlocks.sort(function(x, y){ var xi = String(x.team.id) === awId ? 0 : (String(x.team.id) === hmId ? 1 : 2), yi = String(y.team.id) === awId ? 0 : (String(y.team.id) === hmId ? 1 : 2); return xi - yi; });
+          if (teamBlocks.length === 2){ teamBlocks.forEach(function(b, bi){ var o = teamBlocks[1 - bi].team || {}; var on2 = o.displayName || o.shortDisplayName || ""; if (on2) b.rows = b.rows.split("data-league=").join('data-opp="' + esc(on2) + '" data-oppabbr="' + esc(o.abbreviation || "") + '" data-league='); }); }
           if (teamBlocks.length) psHtml = '<div id="gamePstats"><div style="font-size:14px;margin-top:12px"><b>Player Stats</b></div>' + teamBlocks.map(function(b){ return '<div class="gphdr">' + esc((b.team.displayName || b.team.shortDisplayName || "").toUpperCase()) + "</div>" + b.rows; }).join("") + "</div>";
         }
       } catch(e){ psHtml = ""; }
@@ -8009,9 +8034,9 @@ var PF_LEAGUES = [
   { key: "laliga", label: "La Liga", sport: "soccer", league: "esp.1" },
   { key: "mls", label: "MLS", sport: "soccer", league: "usa.1" },
   { key: "ucl", label: "Champions Lg", sport: "soccer", league: "uefa.champions" },
-  { key: "tennis", label: "Tennis", sport: "tennis", league: "atp", noteam: 1 },
+  { key: "tennis", label: "Tennis", sport: "tennis", league: "atp", rank: 1 },
   { key: "golf", label: "Golf", sport: "golf", league: "pga", noteam: 1 },
-  { key: "mma", label: "UFC / MMA", sport: "mma", league: "ufc", noteam: 1 }
+  { key: "mma", label: "UFC / MMA", sport: "mma", league: "ufc", rank: 1 }
 ];
 var pfSport = "all";
 var pfQuery = "";
@@ -8019,6 +8044,7 @@ var pfSeq = 0;
 var pfTeamSel = null;
 var pfCache = {};
 var pfResolveCache = {};
+var pfCurLabels = [], pfCurNames = [], pfCurRows = [], pfCurOpp = null, pfCurPageId = "";
 function pfLeagueByKey(k){ for (var i = 0; i < PF_LEAGUES.length; i++) if (PF_LEAGUES[i].key === k) return PF_LEAGUES[i]; return null; }
 function pfFetch(url){
   if (!pfCache[url]){
@@ -8074,6 +8100,8 @@ function pfRenderBrowse(){
   }
   var L = pfLeagueByKey(pfSport);
   if (!L){ box.innerHTML = ""; return; }
+  if (L.key === "mma"){ pfRenderMma(box); return; }
+  if (L.key === "tennis"){ pfRenderTennis(box); return; }
   if (L.noteam){
     box.innerHTML = '<div class="card"><b>' + esc(L.label) + '</b><p class="sub" style="margin-top:6px">' + esc(L.label) + ' has no team rosters — search any player by name above and their full stats page opens: season, career and last 5 events.</p></div>';
     return;
@@ -8108,13 +8136,159 @@ function pfRenderRoster(L, team){
   }).catch(function(){ box.innerHTML = back + '<p class="empty">Roster could not load — check your connection.</p>'; pfWireBack(box); });
 }
 function pfWireBack(box){ var b = box.querySelector("[data-pfback]"); if (b) b.addEventListener("click", function(){ pfTeamSel = null; pfRenderBrowse(); }); }
+function tnFlatten(evs){
+  var out = [];
+  (evs || []).forEach(function(e){
+    (e.groupings || []).forEach(function(g){ (g.competitions || []).forEach(function(c){
+      out.push({ _tn: 1, id: e.id, date: c.date || e.date, status: c.status || e.status, competitions: [c], _tname: e.name || "", _tour: e._tour || "" });
+    }); });
+  });
+  return out;
+}
+function tnCard(ev){
+  var c = (ev.competitions || [])[0] || {};
+  var st = (c.status && c.status.type) || {};
+  var rows = (c.competitors || []).map(function(x){
+    var sets = (x.linescores || []).map(function(l){ return l.value != null ? String(l.value) : "–"; }).join(" ");
+    var nm = esc(tnCompName(x));
+    if (x.athlete && x.athlete.displayName) nm = '<span data-player="' + esc(x.athlete.displayName) + '" data-league="tennis" style="cursor:pointer;text-decoration:underline dotted">' + nm + '</span>';
+    return '<div class="tnrow"><span style="' + (x.winner ? "font-weight:800;color:#fff" : "color:#c9c9d6") + '">' + nm + '</span><span class="tnsets">' + esc(sets) + '</span></div>';
+  }).join("");
+  var when = st.state === "in" ? '<span style="color:#ff5d7a;font-weight:800">LIVE</span>' : (st.state === "post" ? "Final" : esc(pfTnWhen(ev.date)));
+  return '<div class="tnm"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--mut);margin-bottom:4px"><span>' + esc(ev._tname || "") + (ev._tour ? " · " + esc(ev._tour) : "") + '</span><span>' + when + '</span></div>' + rows + '</div>';
+}
+function pfTnWhen(ds){ var d = new Date(ds); if (isNaN(d)) return ""; return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) + " · " + d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
+function tnCompName(x){ if (!x) return ""; if (x.athlete && x.athlete.displayName) return x.athlete.displayName; if (x.roster && x.roster.displayName) return x.roster.displayName; return ""; }
+function tnPlayerMatches(sb, pid){
+  var out = [];
+  ((sb && sb.events) || []).forEach(function(e){
+    (e.groupings || []).forEach(function(g){ (g.competitions || []).forEach(function(c){
+      var cs = c.competitors || [];
+      var mine = -1;
+      cs.forEach(function(x, xi){ if (String(x.id || "").split("-").indexOf(String(pid)) >= 0) mine = xi; });
+      if (mine < 0) return;
+      var me = cs[mine], op = cs[1 - mine] || {};
+      var sets = (me.linescores || []).map(function(l, si){ var ov = (op.linescores || [])[si]; return (l.value != null ? String(l.value) : "–") + "-" + (ov && ov.value != null ? String(ov.value) : "–"); }).join("  ");
+      out.push({ date: c.date || e.date, tournament: e.name || "", opp: tnCompName(op), won: !!me.winner, sets: sets, state: (c.status && c.status.type && c.status.type.state) || "" });
+    }); });
+  });
+  return out;
+}
+function pfTennisPage(p){
+  var dlg = $("playerDlg"), body = $("playerDlgBody");
+  if (!dlg || !body) return;
+  var tour = p.league === "wta" ? "wta" : "atp";
+  var tourLabel = tour.toUpperCase();
+  body.innerHTML = pfHeadHtml(p, p.img, p.name, tourLabel + " · Tennis", []) + '<p class="empty" style="margin-top:14px">Loading…</p>';
+  pfWireClose(body);
+  if (!dlg.open) dlg.showModal();
+  var base = ESPN_V3 + "tennis/" + tour + "/athletes/" + p.id;
+  var now = new Date();
+  var past = new Date(now.getTime() - 75 * 864e5), fut = new Date(now.getTime() + 21 * 864e5);
+  var sbUrl = ESPN + "tennis/" + tour + "/scoreboard?dates=";
+  Promise.all([pfFetch(base).catch(function(){ return null; }), pfFetch(sbUrl + ymd(past) + "-" + ymd(now) + "&limit=200").catch(function(){ return null; }), pfFetch(sbUrl + ymd(now) + "-" + ymd(fut) + "&limit=200").catch(function(){ return null; })]).then(function(rs){
+    if (!dlg.open || pfCurPageId !== String(p.id)) return;
+    var a = (rs[0] && rs[0].athlete) || {};
+    var meta = [];
+    var hand = typeof a.hand === "string" ? a.hand : (a.hand && a.hand.text) || "";
+    if (hand) meta.push(hand);
+    if (a.displayHeight) meta.push(a.displayHeight);
+    if (a.displayWeight) meta.push(a.displayWeight);
+    if (a.age) meta.push("Age " + a.age);
+    if (a.debutYear) meta.push("Pro since " + a.debutYear);
+    var pastM = tnPlayerMatches(rs[1], p.id).filter(function(m){ return m.state === "post"; });
+    var futM = tnPlayerMatches(rs[2], p.id).filter(function(m){ return m.state !== "post"; });
+    futM.sort(function(x, y){ return String(x.date).localeCompare(String(y.date)); });
+    pastM.sort(function(x, y){ return String(y.date).localeCompare(String(x.date)); });
+    var h = pfHeadHtml(p, p.img || "", a.displayName || p.name, tourLabel + " · Tennis", meta);
+    var nx = futM[0];
+    if (nx){
+      var live = nx.state === "in";
+      h += '<div class="pfpopbox" style="border-color:rgba(124,58,237,.55)"><div style="font-weight:900;font-size:13.5px">' + (live ? "🔴 LIVE NOW" : "🎾 NEXT MATCH") + ' — ' + esc(nx.tournament || "") + '</div><div style="font-size:14.5px;margin-top:4px">vs <b>' + esc(nx.opp || "TBD") + '</b></div><div class="note">' + esc(pfTnWhen(nx.date)) + (nx.sets ? ' · Sets ' + esc(nx.sets) : '') + '</div></div>';
+    }
+    if (pastM.length){
+      h += '<h3 style="margin:16px 0 6px;font-size:16px">Last 5 Matches</h3>' + pastM.slice(0, 5).map(function(m){
+        return '<div class="pfvrow"><span style="flex:1;min-width:0"><b style="color:' + (m.won ? "#4fe3c1" : "#ff5d7a") + '">' + (m.won ? "W" : "L") + '</b> vs ' + esc(m.opp || "") + '<div class="note">' + esc(m.tournament || "") + ' · ' + esc(pfDstr(m.date)) + '</div></span>' + (m.sets ? '<span class="tnsets">' + esc(m.sets) + '</span>' : '') + '</div>';
+      }).join("");
+    }
+    if (!nx && !pastM.length) h += '<p class="empty" style="margin-top:12px">No matches on the board for this player right now — tennis runs in tournament weeks.</p>';
+    body.innerHTML = h;
+    pfWireClose(body);
+  });
+}
+function pfMmaCard(rk, isChamp){
+  var a = rk.athlete || {};
+  var badge = isChamp ? "👑 CHAMPION" : ("#" + (rk.current || ""));
+  return '<div class="pfpcard' + (isChamp ? " pfchamp" : "") + '" data-pfplayer="' + esc(String(a.id || "")) + '" data-pfname="' + esc(a.displayName || "") + '" data-pfimg="' + esc(a.headshot || "") + '">' + (a.headshot ? '<img src="' + esc(a.headshot) + '" alt="" onerror="this.remove()">' : '') + '<b>' + esc(a.displayName || "") + '</b><span>' + esc(badge + (rk.recordSummary ? " · " + rk.recordSummary : "")) + '</span></div>';
+}
+function pfRenderMma(box){
+  box.innerHTML = '<h3 style="margin:12px 0 6px;font-size:16px">UFC — by weight class</h3><p class="empty">Loading fighters…</p>';
+  pfFetch("https://site.api.espn.com/apis/site/v2/sports/mma/ufc/rankings").then(function(j){
+    if (pfSport !== "mma" || pfQuery) return;
+    var champs = {}, divs = {};
+    ((j && j.rankings) || []).forEach(function(r){
+      var t = r.type || "";
+      if (/-champions$/.test(t)) champs[t.replace(/-champions$/, "")] = r;
+      else if (t.indexOf("pound-for-pound") < 0) divs[t] = r;
+    });
+    var order = ["heavyweight", "light-heavyweight", "middleweight", "welterweight", "lightweight", "featherweight", "bantamweight", "flyweight", "womens-bantamweight", "womens-flyweight", "womens-strawweight"];
+    var h = '<h3 style="margin:12px 0 6px;font-size:16px">UFC — by weight class</h3><p class="sub">The champion sits on top of every class, then the top contenders. Tap any fighter for their record.</p>';
+    var any = false;
+    order.forEach(function(base){
+      var d = divs[base]; if (!d) return;
+      any = true;
+      var title = (d.name || base).replace(/ Division Rankings.*$/, "").replace(/ Rankings.*$/, "");
+      var wm = /\(([^)]+)\)/.exec(d.name || "");
+      var cards = "";
+      var ch = champs[base];
+      if (ch && (ch.ranks || []).length) cards += pfMmaCard(ch.ranks[0], true);
+      (d.ranks || []).forEach(function(rk){ cards += pfMmaCard(rk, false); });
+      h += '<div class="pfsec" style="margin-top:14px">' + esc(title) + (wm ? ' <span class="note">' + esc(wm[1].replace("pounds", "lbs")) + '</span>' : '') + '</div><div class="pfslider">' + cards + '</div>';
+    });
+    if (!any){ box.innerHTML = '<p class="empty">Rankings could not load — check your connection.</p>'; return; }
+    box.innerHTML = h;
+    pfWireRankCards(box, "mma", "ufc");
+  }).catch(function(){ if (pfSport === "mma") box.innerHTML = '<p class="empty">Rankings could not load — check your connection.</p>'; });
+}
+function pfRenderTennis(box){
+  box.innerHTML = '<h3 style="margin:12px 0 6px;font-size:16px">Tennis — Top 25</h3><p class="empty">Loading rankings…</p>';
+  Promise.all([pfFetch("https://site.api.espn.com/apis/site/v2/sports/tennis/atp/rankings").catch(function(){ return null; }), pfFetch("https://site.api.espn.com/apis/site/v2/sports/tennis/wta/rankings").catch(function(){ return null; })]).then(function(rs){
+    if (pfSport !== "tennis" || pfQuery) return;
+    var h = '<h3 style="margin:12px 0 6px;font-size:16px">Tennis — Top 25</h3><p class="sub">The best in the world, by ranking. Tap a player for their next match and last 5 matches.</p>';
+    var any = false;
+    [["ATP", rs[0], "atp"], ["WTA", rs[1], "wta"]].forEach(function(t){
+      var r0 = t[1] && (t[1].rankings || [])[0];
+      if (!r0) return;
+      any = true;
+      var cards = (r0.ranks || []).slice(0, 25).map(function(rk){
+        var a = rk.athlete || {};
+        return '<div class="pfpcard" data-pfplayer="' + esc(String(a.id || "")) + '" data-pfname="' + esc(a.displayName || "") + '" data-pfimg="' + esc(a.headshot || "") + '" data-pftour="' + t[2] + '">' + (a.headshot ? '<img src="' + esc(a.headshot) + '" alt="" onerror="this.remove()">' : '') + '<b>' + esc(a.displayName || "") + '</b><span>#' + esc(String(rk.current || "")) + (rk.points ? " · " + esc(String(Math.round(rk.points))) + " pts" : "") + '</span></div>';
+      }).join("");
+      h += '<div class="pfsec" style="margin-top:14px">' + t[0] + '</div><div class="pfslider">' + cards + '</div>';
+    });
+    if (!any){ box.innerHTML = '<p class="empty">Rankings could not load — check your connection.</p>'; return; }
+    box.innerHTML = h;
+    pfWireRankCards(box, "tennis", null);
+  }).catch(function(){ if (pfSport === "tennis") box.innerHTML = '<p class="empty">Rankings could not load — check your connection.</p>'; });
+}
+function pfWireRankCards(box, sport, league){
+  box.querySelectorAll("[data-pfplayer]").forEach(function(el){
+    el.addEventListener("click", function(){
+      openPlayerPage({ id: el.getAttribute("data-pfplayer"), name: el.getAttribute("data-pfname") || "", sport: sport, league: el.getAttribute("data-pftour") || league || "", img: el.getAttribute("data-pfimg") || "", teamName: "" });
+    });
+  });
+  box.querySelectorAll(".pfslider").forEach(function(tr, i){ try { popSliderInit(tr, "pfrk" + i, ".pfpcard"); } catch (e) {} });
+}
 function pfWireClose(body){ var b = body.querySelector("[data-pfclose]"); if (b) b.addEventListener("click", function(){ var d = $("playerDlg"); if (d && d.open) d.close(); }); }
 function pfHeadHtml(p, img, name, team, meta){
   return '<div style="text-align:right;margin-bottom:6px"><button type="button" class="ghostbtn" data-pfclose="1">✕ Close</button></div><div class="pfhead">' + (img ? '<img src="' + esc(img) + '" alt="" onerror="this.remove()">' : '') + '<div style="min-width:0"><div style="font-size:19px;font-weight:900">' + esc(name || "Player") + '</div><div class="note">' + esc(team || "") + (meta && meta.length ? ' · ' + esc(meta.join(" · ")) : '') + '</div></div></div>';
 }
-function openPlayerPage(p){
+function openPlayerPage(p, oppCtx){
   var dlg = $("playerDlg"), body = $("playerDlgBody");
   if (!dlg || !body || !p || !p.id) return;
+  pfCurOpp = oppCtx || null;
+  pfCurPageId = String(p.id);
+  if (p.sport === "tennis"){ pfTennisPage(p); return; }
   body.innerHTML = pfHeadHtml(p, p.img, p.name, p.teamName, []) + '<p class="empty" style="margin-top:14px">Loading stats…</p>';
   pfWireClose(body);
   if (!dlg.open) dlg.showModal();
@@ -8128,30 +8302,114 @@ function openPlayerPage(p){
       if (!rs[0] && !rs[1]){ attempt(ix + 1); return; }
       body.innerHTML = pfPlayerHtml(p, rs[0], rs[1], rs[2]);
       pfWireClose(body);
-      var l5 = body.querySelector(".l5slider");
-      if (l5){ try { popSliderInit(l5, "l5s", ".l5card"); } catch (e) {} }
+      pfWirePlayerBody(body);
+      pfAutoMatchup(p, rs[0]);
     });
   };
   attempt(0);
 }
 function pfPlayerHtml(p, bio, stats, gamelog){
   var a = (bio && bio.athlete) || bio || {};
+  var parsed = pfLogRows(gamelog);
+  pfCurLabels = parsed.labels; pfCurNames = parsed.names; pfCurRows = parsed.rows;
   var name = a.displayName || p.name || "Player";
   var img = (a.headshot && a.headshot.href) || p.img || "";
   var team = (a.team && a.team.displayName) || p.teamName || "";
   var meta = [];
   if (a.position && a.position.abbreviation) meta.push(a.position.abbreviation);
   if (a.jersey) meta.push("#" + a.jersey);
+  if (a.nickname) meta.push('"' + a.nickname + '"');
+  if (a.weightClass && a.weightClass.text) meta.push(a.weightClass.text);
+  if (a.stance && a.stance.text) meta.push(a.stance.text);
   if (a.displayHeight) meta.push(a.displayHeight);
   if (a.displayWeight) meta.push(a.displayWeight);
   if (a.age) meta.push("Age " + a.age);
-  return pfHeadHtml(p, img, name, team, meta) + pfStatsHtml(stats) + pfLast5Html(gamelog);
+  var statsHtml;
+  if (stats && (stats.categories || []).length) statsHtml = pfStatsHtml(stats);
+  else {
+    var ss = (a.statsSummary && a.statsSummary.statistics) || [];
+    if (ss.length) statsHtml = '<h3 style="margin:16px 0 6px;font-size:16px">Record</h3><div class="statgrid">' + ss.map(function(sx){ return '<div class="sgcell"><b>' + esc(sx.displayValue || "") + '</b><span>' + esc(sx.abbreviation || sx.shortDisplayName || "") + '</span></div>'; }).join("") + '</div>';
+    else statsHtml = p.sport === "mma" ? "" : pfStatsHtml(stats);
+  }
+  var vsHtml = pfCurOpp ? pfVsSectionHtml(pfCurOpp) : "";
+  return pfHeadHtml(p, img, name, team, meta) + statsHtml + '<div id="pfStatPop"></div>' + vsHtml + '<div id="pfL5Wrap">' + pfLast5Html(parsed) + '</div>';
 }
-function pfStatGrid(labels, vals){
+function pfWirePlayerBody(body){
+  body.querySelectorAll(".l5slider").forEach(function(sl, i){ try { popSliderInit(sl, "l5s" + i, ".l5card"); } catch (e) {} });
+  body.querySelectorAll("[data-pfstat]").forEach(function(cell){ cell.addEventListener("click", function(){ pfStatTap(cell); }); });
+}
+function pfStatTap(cell){
+  var pop = $("pfStatPop"); if (!pop) return;
+  var wasOn = cell.classList.contains("pfOn");
+  var body = $("playerDlgBody");
+  if (body) body.querySelectorAll(".sgcell.pfOn").forEach(function(c){ c.classList.remove("pfOn"); });
+  if (wasOn){ pop.innerHTML = ""; return; }
+  cell.classList.add("pfOn");
+  pop.innerHTML = pfStatPopHtml(cell.getAttribute("data-pfstat"), cell.getAttribute("data-pflabel"));
+  try { pop.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {}
+}
+function pfStatPopHtml(logName, label){
+  var ix = pfCurNames.indexOf(logName);
+  if (ix < 0 || !pfCurRows.length) return "";
+  var fmt = function(r){ var v = r.stats[ix]; return '<div class="pfvrow"><span style="flex:1;min-width:0">' + esc(pfDstr(r.date)) + ' · ' + esc((r.atVs === "at" ? "@ " : "vs ") + (r.opp || "")) + (r.result ? ' <span style="color:' + (r.result === "W" ? "#4fe3c1" : "#ff5d7a") + ';font-weight:800">' + esc(r.result) + '</span>' : '') + (r.score ? ' <span class="note">' + esc(r.score) + '</span>' : '') + '</span><b style="font-size:16px;color:var(--gold)">' + esc(v != null && v !== "" ? String(v) : "–") + '</b></div>'; };
+  var h = '<div class="pfpopbox"><div style="font-weight:900;font-size:13.5px;margin-bottom:4px">' + esc(label || logName) + ' — LAST 5 GAMES</div>' + pfCurRows.slice(0, 5).map(fmt).join("");
+  if (pfCurOpp){ var vr = pfVsRows(pfCurOpp); if (vr.length) h += '<div style="font-weight:900;font-size:12.5px;margin:8px 0 2px;color:var(--cyan)">VS ' + esc((pfCurOpp.abbr || pfCurOpp.name || "").toUpperCase()) + ' — THIS SEASON</div>' + vr.slice(0, 5).map(fmt).join(""); }
+  return h + '</div>';
+}
+function pfVsRows(opp){
+  if (!opp) return [];
+  var nm = (opp.name || "").toLowerCase(), ab = (opp.abbr || "").toLowerCase();
+  return pfCurRows.filter(function(r){ return (ab && (r.oppAbbr || "").toLowerCase() === ab) || (nm && (r.oppName || "").toLowerCase() === nm) || (nm && (r.opp || "").toLowerCase() === nm); });
+}
+function pfVsSectionHtml(opp){
+  var rows = pfVsRows(opp).slice(0, 5);
+  if (!rows.length) return "";
+  return '<h3 style="margin:16px 0 6px;font-size:16px">Last ' + rows.length + ' vs ' + esc(opp.abbr || opp.name || "Opponent") + '</h3><div class="l5slider vs">' + pfL5Cards(rows) + '</div>';
+}
+function pfAutoMatchup(p, bio){
+  if (pfCurOpp) return;
+  var a = (bio && bio.athlete) || {};
+  var tid = a.team && a.team.id != null ? String(a.team.id) : "";
+  if (!tid) return;
+  var lg2 = null;
+  LEAGUES.forEach(function(l){ if (l.sport === p.sport && l.league === p.league) lg2 = l; });
+  if (!lg2) return;
+  getScoreboard(lg2, 4).then(function(evs){
+    var dlg = $("playerDlg");
+    if (!dlg || !dlg.open || pfCurPageId !== String(p.id) || pfCurOpp) return;
+    var list = (evs || []).slice().sort(function(x, y){ return String(x.date || "").localeCompare(String(y.date || "")); });
+    for (var i = 0; i < list.length; i++){
+      var st = list[i].status && list[i].status.type && list[i].status.type.state;
+      if (st !== "pre" && st !== "in") continue;
+      var ts = eventTeams(list[i]);
+      var mine = null, opp = null;
+      ts.forEach(function(t){ if (String(t.id) === tid) mine = t; else opp = t; });
+      if (mine && opp && opp.name){ pfCurOpp = { name: opp.name, abbr: opp.abbr || "" }; break; }
+    }
+    if (!pfCurOpp) return;
+    var sec = pfVsSectionHtml(pfCurOpp);
+    if (!sec) return;
+    var wrap = $("pfL5Wrap"); if (!wrap || !wrap.parentNode) return;
+    var div = document.createElement("div");
+    div.innerHTML = sec;
+    wrap.parentNode.insertBefore(div, wrap);
+    var sl = div.querySelector(".l5slider");
+    if (sl){ try { popSliderInit(sl, "l5vs", ".l5card"); } catch (e) {} }
+  }).catch(function(){});
+}
+function pfStatGrid(labels, vals, names){
   if (!labels || !vals) return "";
   var cells = "";
-  labels.forEach(function(L, i){ var v = vals[i]; if (v === "" || v == null) return; cells += '<div class="sgcell"><b>' + esc(String(v)) + '</b><span>' + esc(L) + '</span></div>'; });
+  labels.forEach(function(L, i){ var v = vals[i]; if (v === "" || v == null) return; var ln = names ? pfLogNameFor(names[i]) : ""; cells += '<div class="sgcell"' + (ln ? ' data-pfstat="' + esc(ln) + '" data-pflabel="' + esc(L) + '"' : '') + '><b>' + esc(String(v)) + '</b><span>' + esc(L) + '</span></div>'; });
   return cells ? '<div class="statgrid">' + cells + '</div>' : "";
+}
+var PF_STAT_ALIAS = { threepointfieldgoalpct: "threepointpct", rebounds: "totalrebounds" };
+function pfLogNameFor(statsName){
+  if (!statsName || !pfCurNames.length) return "";
+  var cand = String(statsName).split("-").map(function(seg){ if (seg.indexOf("avg") === 0) seg = seg.slice(3); return seg; }).join("-").toLowerCase();
+  if (PF_STAT_ALIAS[cand]) cand = PF_STAT_ALIAS[cand];
+  for (var i = 0; i < pfCurNames.length; i++) if (pfCurNames[i].toLowerCase() === cand) return pfCurNames[i];
+  return "";
 }
 function pfStatsHtml(stats){
   var cats = (stats && stats.categories) || [];
@@ -8162,46 +8420,54 @@ function pfStatsHtml(stats){
   if (avg){
     var rows = avg.statistics || [];
     var cur = rows[rows.length - 1];
-    if (cur) h += '<h3 style="margin:16px 0 6px;font-size:16px">This Season <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span></h3>' + pfStatGrid(avg.labels, cur.stats);
-    if (avg.totals) h += '<h3 style="margin:16px 0 6px;font-size:16px">Career Averages</h3>' + pfStatGrid(avg.labels, avg.totals);
-    if (tot && tot.totals) h += '<h3 style="margin:16px 0 6px;font-size:16px">Career Totals</h3>' + pfStatGrid(tot.labels, tot.totals);
+    if (cur) h += '<h3 style="margin:16px 0 6px;font-size:16px">This Season <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span></h3>' + pfStatGrid(avg.labels, cur.stats, avg.names);
+    if (avg.totals) h += '<h3 style="margin:16px 0 6px;font-size:16px">Career Averages</h3>' + pfStatGrid(avg.labels, avg.totals, avg.names);
+    if (tot && tot.totals) h += '<h3 style="margin:16px 0 6px;font-size:16px">Career Totals</h3>' + pfStatGrid(tot.labels, tot.totals, tot.names);
     return h || '<p class="empty" style="margin-top:12px">Season stats not available for this player.</p>';
   }
   cats.forEach(function(c){
     var rows = c.statistics || [];
     var cur = rows[rows.length - 1];
-    if (cur) h += '<h3 style="margin:16px 0 6px;font-size:16px">' + esc(c.displayName || c.name || "Stats") + ' <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span></h3>' + pfStatGrid(c.labels, cur.stats);
-    if (c.totals) h += '<div class="note" style="margin:10px 0 4px;font-weight:800">Career — ' + esc(c.displayName || c.name || "") + '</div>' + pfStatGrid(c.labels, c.totals);
+    if (cur) h += '<h3 style="margin:16px 0 6px;font-size:16px">' + esc(c.displayName || c.name || "Stats") + ' <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span></h3>' + pfStatGrid(c.labels, cur.stats, c.names);
+    if (c.totals) h += '<div class="note" style="margin:10px 0 4px;font-weight:800">Career — ' + esc(c.displayName || c.name || "") + '</div>' + pfStatGrid(c.labels, c.totals, c.names);
   });
   return h || '<p class="empty" style="margin-top:12px">Season stats not available for this player.</p>';
 }
-function pfLast5Html(gl){
-  if (!gl || !gl.seasonTypes || !gl.seasonTypes.length) return "";
-  var labels = gl.labels || [], names = gl.names || [], events = gl.events || {};
-  var rows = [];
-  (gl.seasonTypes[0].categories || []).forEach(function(cat){ (cat.events || []).forEach(function(ev){ var meta = events[ev.eventId] || {}; rows.push({ stats: ev.stats || [], date: meta.gameDate || "", opp: (meta.opponent && (meta.opponent.abbreviation || meta.opponent.displayName)) || "", atVs: meta.atVs || "", result: meta.gameResult || "", score: meta.score || "" }); }); });
-  if (!rows.length) return "";
-  rows.sort(function(x, y){ return String(y.date).localeCompare(String(x.date)); });
-  rows = rows.slice(0, 5);
+function pfDstr(ds){ if (!ds) return ""; var d = new Date(ds); return isNaN(d) ? "" : d.toLocaleDateString([], { month: "short", day: "numeric" }); }
+function pfLogRows(gl){
+  var out = { labels: (gl && gl.labels) || [], names: (gl && gl.names) || [], rows: [] };
+  if (!gl || !gl.seasonTypes || !gl.seasonTypes.length) return out;
+  var events = gl.events || {};
+  (gl.seasonTypes[0].categories || []).forEach(function(cat){ (cat.events || []).forEach(function(ev){ var meta = events[ev.eventId] || {}; var op = meta.opponent || {}; out.rows.push({ stats: ev.stats || [], date: meta.gameDate || "", opp: op.abbreviation || op.displayName || "", oppName: op.displayName || "", oppAbbr: op.abbreviation || "", atVs: meta.atVs || "", result: meta.gameResult || "", score: meta.score || "" }); }); });
+  out.rows.sort(function(x, y){ return String(y.date).localeCompare(String(x.date)); });
+  return out;
+}
+function pfLast5Html(parsed){
+  if (!parsed || !parsed.rows.length) return "";
+  var rows = parsed.rows.slice(0, 5);
+  var labels = pfCurLabels, names = pfCurNames;
+  return '<h3 style="margin:16px 0 6px;font-size:16px">Last 5 Games</h3><div class="l5slider">' + pfL5Cards(rows) + '</div>';
+}
+function pfL5Cards(rows){
+  var labels = pfCurLabels, names = pfCurNames;
   var want = ["points", "totalRebounds", "assists", "steals", "blocks", "passingYards", "passingTouchdowns", "rushingYards", "receivingYards", "receptions", "goals", "shotsOnGoal", "saves", "strikeouts", "hits", "homeRuns", "runsBattedIn", "wins", "gamesStarted"];
   var pick = [];
   want.forEach(function(w){ var ix = names.indexOf(w); if (ix >= 0 && pick.length < 4) pick.push(ix); });
   if (!pick.length){ for (var i = 0; i < Math.min(4, labels.length); i++) pick.push(i); }
-  var cards = rows.map(function(r){
-    var dstr = "";
-    if (r.date){ var d = new Date(r.date); if (!isNaN(d)) dstr = d.toLocaleDateString([], { month: "short", day: "numeric" }); }
+  return rows.map(function(r){
+    var dstr = pfDstr(r.date);
     var dupL = {}; pick.forEach(function(i){ dupL[labels[i]] = (dupL[labels[i]] || 0) + 1; });
     var friendly = { passingYards: "PASS YDS", rushingYards: "RUSH YDS", receivingYards: "REC YDS", passingTouchdowns: "PASS TD", rushingTouchdowns: "RUSH TD", receivingTouchdowns: "REC TD" };
     var line = pick.map(function(i){ var L = labels[i] || ""; if (dupL[L] > 1 && friendly[names[i]]) L = friendly[names[i]]; return esc(L) + ' <b style="color:#fff">' + esc(r.stats[i] != null ? String(r.stats[i]) : "–") + '</b>'; }).join(" · ");
     return '<div class="l5card"><div class="l5opp">' + esc((r.atVs === "at" ? "@ " : "vs ") + (r.opp || "Game")) + (r.result ? ' <span style="color:' + (r.result === "W" ? "#4fe3c1" : "#ff5d7a") + '">' + esc(r.result) + '</span>' : '') + '</div><div class="note">' + esc(dstr) + (r.score ? ' · ' + esc(r.score) : '') + '</div><div class="l5line">' + line + '</div></div>';
   }).join("");
-  return '<h3 style="margin:16px 0 6px;font-size:16px">Last 5 Games</h3><div class="l5slider">' + cards + '</div>';
 }
 function openPlayer(name, leagueKey, viewOnly, finalView){
   if (leagueKey === "esports"){ openPlayerLegacy(name, leagueKey, true, finalView); return; }
+  var oppCtx = window._pfOppCtx || null; window._pfOppCtx = null;
   var lg = leagueByKey(leagueKey || currentSport || "nba");
   var ck = (name || "") + "|" + lg.key;
-  if (pfResolveCache[ck]){ openPlayerPage(pfResolveCache[ck]); return; }
+  if (pfResolveCache[ck]){ openPlayerPage(pfResolveCache[ck], oppCtx); return; }
   fetchJson("https://site.api.espn.com/apis/search/v2?query=" + encodeURIComponent(name || "")).then(function(j){
     var players = [];
     (j.results || []).forEach(function(r){ if (r.type === "player") (r.contents || []).forEach(function(c){ players.push(c); }); });
@@ -8215,7 +8481,7 @@ function openPlayer(name, leagueKey, viewOnly, finalView){
     if (!pl.sport) pl.sport = lg.sport;
     if (!pl.league) pl.league = lg.league;
     pfResolveCache[ck] = pl;
-    openPlayerPage(pl);
+    openPlayerPage(pl, oppCtx);
   }).catch(function(){ openPlayerLegacy(name, leagueKey, true, finalView); });
 }
 
@@ -8315,6 +8581,8 @@ function pk2MaybeGrade(){
 
 /* ---------- init + refresh ---------- */
 function refreshHome(){ renderUpcoming(); renderPickem2(); }
+function cdTickUpdate(){ document.querySelectorAll(".cdtick").forEach(function(el){ var t = new Date(el.getAttribute("data-cd")).getTime() - Date.now(); if (isNaN(t)) return; if (t <= 0){ el.textContent = "⏳ Starting now"; return; } var m = Math.floor(t / 60000), sec = Math.floor((t % 60000) / 1000); el.textContent = "⏳ Starts in " + m + "m " + (sec < 10 ? "0" : "") + sec + "s"; }); }
+setInterval(cdTickUpdate, 1000);
 var _rb = $("refreshBtn"); if (_rb) _rb.addEventListener("click", function(){ boardCache = {}; propsCache = {}; refreshHome(); if ($("view-live").classList.contains("on")) renderLive(); if (currentSport!=="all") renderBoards(); });
 var _cc = $("coinChip"); if (_cc) _cc.addEventListener("click", function(){ showView("board"); });
 coinChipUpdate();
