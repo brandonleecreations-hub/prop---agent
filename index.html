@@ -1578,6 +1578,15 @@ var LEAGUES = [
   {key:"esports",label:"Esports",           sport:"esports",     league:"esports",          cats:[]}
 ];
 function leagueByKey(k){ for (var i=0;i<LEAGUES.length;i++) if (LEAGUES[i].key===k) return LEAGUES[i]; return LEAGUES[0]; }
+/* Out-of-season hide (Brandon 2026-11-20): MLB is out of season, so it
+   is hidden EVERYWHERE — no header pill, no board, no Build pill or
+   section, no Live pill or games, no Home games, and no props or
+   scoreboard pulls for it. HIDE ONLY: every MLB code/data path stays
+   in place behind this one switch. To bring MLB back when the season
+   returns, just empty the set:  var HIDDEN_SPORTS = {};  */
+var HIDDEN_SPORTS = { mlb: 1 };
+function sportHidden(k){ return !!HIDDEN_SPORTS[k]; }
+function visibleLeagueKeys(keys){ return keys.filter(function(k){ return !sportHidden(k); }); }
 var PROP_LEAGUES = ["nba","nfl","cfb","cbb","wbb","nhl"];
 
 /* ---------- storage ---------- */
@@ -1809,7 +1818,7 @@ function refreshPropsBrk(lg){
   }).catch(function(){ return null; });
 }
 function allProps(){
-  return Promise.all(PROP_LEAGUES.concat(["tennis","mlb"]).map(function(k){ return buildProps(leagueByKey(k)); }))
+  return Promise.all(visibleLeagueKeys(PROP_LEAGUES.concat(["tennis","mlb"])).map(function(k){ return buildProps(leagueByKey(k)); }))
     .then(function(rs){ var all=[]; rs.forEach(function(r){ all = all.concat(r); }); return all; });
 }
 
@@ -2713,7 +2722,7 @@ function heroSliderInit(){
   popSliderInit(hero.querySelector(".upslider"), "hero");
 }
 function renderUpcoming(){
-  var jobs = PROP_LEAGUES.concat(["tennis","mlb"]).map(function(k){ var lg = leagueByKey(k); return getScoreboard(lg, 3).then(function(ev){ return {lg:lg, ev:ev}; }); });
+  var jobs = visibleLeagueKeys(PROP_LEAGUES.concat(["tennis","mlb"])).map(function(k){ var lg = leagueByKey(k); return getScoreboard(lg, 3).then(function(ev){ return {lg:lg, ev:ev}; }); });
   Promise.all(jobs).then(function(rs){
     /* Live hero (original Home top card) + header LIVE pill + status line.
        First live game across all leagues; hidden when nothing is live. */
@@ -3108,7 +3117,7 @@ function renderFinBlock(){
   }
 }
 function renderLive(){
-  var leagues = LEAGUES.slice(1).filter(function(lg){ return lg.key!=="esports" && (liveFilter==="all" || lg.key===liveFilter); });
+  var leagues = LEAGUES.slice(1).filter(function(lg){ return lg.key!=="esports" && !sportHidden(lg.key) && (liveFilter==="all" || lg.key===liveFilter); });
   var jobs = leagues.map(function(lg){
     if (lg.key==="tennis"){
       var wtaLg = {key:"tennisw", label:"Tennis", sport:"tennis", league:"wta"};
@@ -3810,7 +3819,7 @@ function buildSlidersInit(box){
    loads the Esports section on demand, props or not. */
 function renderBuildSportPills(){
   var el = $("buildSports"); if (!el) return;
-  var keys = buildSportList.slice();
+  var keys = buildSportList.slice().filter(function(k){ return !sportHidden(k); });
   if (keys.indexOf("esports") === -1) keys.push("esports");
   if (!keys.length){ setHtml(el, ""); return; }
   var h = '<button type="button" class="tab' + (buildSport === "all" ? " on" : "") + '" data-bsport="all">All sports</button>';
@@ -3828,7 +3837,7 @@ function renderBuild(){
   var inp = $("searchInput");
   var q = ((inp && inp.value) || "").trim().toLowerCase();
   allProps().then(function(ps){
-    var gs = playerGroups(ps);
+    var gs = playerGroups(ps).filter(function(g){ return !sportHidden(g.league); });
     if (q) gs = gs.filter(function(g){ return (g.player+" "+g.team+" "+g.props.map(function(p){ return p.stat; }).join(" ")).toLowerCase().indexOf(q)>-1; });
     /* Sort pills removed entirely (Brandon 2026-11-20): Build keeps its
        one fixed arrangement (Best % order) — no UI, no state. */
@@ -3846,7 +3855,7 @@ function renderBuild(){
     buildSportList = lorder.slice();
     buildSportLabels = {};
     lorder.forEach(function(L){ buildSportLabels[L] = (byLeague[L][0] && byLeague[L][0].leagueLabel) || String(L).toUpperCase(); });
-    if (buildSport !== "all" && buildSport !== "esports" && !byLeague[buildSport]) buildSport = "all";
+    if (buildSport !== "all" && buildSport !== "esports" && (sportHidden(buildSport) || !byLeague[buildSport])) buildSport = "all";
     renderBuildSportPills();
     if (!gs.length && buildSport !== "esports"){ box.innerHTML = '<p class="empty">No matching players \u2014 try another name or team.</p>'; buildSlidersInit(box); renderAllSlips(); return; }
     var showLeagues = buildSport === "all" ? lorder : (buildSport === "esports" ? [] : [buildSport]);
@@ -3876,7 +3885,7 @@ $("searchInput").addEventListener("input", function(e){ renderSearch(e.target.va
 var bsEl = $("boardSearch"); if (bsEl) bsEl.addEventListener("input", function(e){ boardQuery = e.target.value.trim().toLowerCase(); renderBoards(); });
 document.querySelectorAll(".hlopen").forEach(function(b){ b.addEventListener("click", function(){ showView("live"); }); });
 /* #slipChip is wired inside updateSlipChip(): the button element sits after this script in the DOM, so it does not exist at this point in the boot. */
-(function(){ var sel = $("cSport"); LEAGUES.slice(1).forEach(function(l){ var o=document.createElement("option"); o.value=l.key; o.textContent=l.label; sel.appendChild(o); }); })();
+(function(){ var sel = $("cSport"); LEAGUES.slice(1).filter(function(l){ return !sportHidden(l.key); }).forEach(function(l){ var o=document.createElement("option"); o.value=l.key; o.textContent=l.label; sel.appendChild(o); }); })();
 $("cAdd").addEventListener("click", function(){
   var player = $("cPlayer").value.trim(), stat = $("cStat").value.trim(), line = parseFloat($("cLine").value);
   var err = $("cErr");
@@ -7988,6 +7997,7 @@ document.querySelectorAll("nav.bottom button").forEach(function(b){
   });
 });
 function setSport(key){
+  if (sportHidden(key)) key = "all";   /* hidden (out-of-season) sport: fall back to Home */
   currentSport = key; lsSet("pa_sport", key);
   boardStat = "all"; boardGame = "all"; boardQuery = ""; var bq = $("boardSearch"); if (bq) bq.value = "";
   document.querySelectorAll("#sportTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-sport")===key); });
@@ -7995,7 +8005,7 @@ function setSport(key){
 }
 (function buildTabs(){
   var wrap = $("sportTabs");
-  LEAGUES.slice(1).forEach(function(l){
+  LEAGUES.slice(1).filter(function(l){ return !sportHidden(l.key); }).forEach(function(l){
     var b = document.createElement("button");
     b.className = "tab"; b.textContent = l.label; b.setAttribute("data-sport", l.key);
     b.addEventListener("click", function(){ setSport(l.key); });
@@ -8006,7 +8016,7 @@ function setSport(key){
   var wrap = $("liveTabs"); if (!wrap) return;
   /* CS2 / LoL pills close the row (Brandon 2026-11-20): they filter the
      Live view to that game's dedicated esports section (see renderLive). */
-  [{key:"all", label:"All Sports"}].concat(LEAGUES.slice(1).filter(function(l){ return l.key!=="esports"; }).slice().sort(function(a, b){ var P = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"]; var ai = P.indexOf(a.key), bi = P.indexOf(b.key); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; })).concat([{key:"cs2", label:"CS2"}, {key:"lol", label:"LoL"}]).forEach(function(l){
+  [{key:"all", label:"All Sports"}].concat(LEAGUES.slice(1).filter(function(l){ return l.key!=="esports" && !sportHidden(l.key); }).slice().sort(function(a, b){ var P = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"]; var ai = P.indexOf(a.key), bi = P.indexOf(b.key); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; })).concat([{key:"cs2", label:"CS2"}, {key:"lol", label:"LoL"}]).forEach(function(l){
     var b = document.createElement("button");
     b.className = "tab" + (l.key==="all" ? " on" : ""); b.textContent = l.label; b.setAttribute("data-lsport", l.key);
     b.addEventListener("click", function(){ liveFilter = l.key; wrap.querySelectorAll(".tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-lsport")===liveFilter); }); renderLive(); });
