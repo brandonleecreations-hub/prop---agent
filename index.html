@@ -9197,7 +9197,7 @@ function aiTakesRender(){
   // Watchdog: if a load started over 90s ago and never landed (a hung
   // gamelog/AI call), clear the marker so this call starts it fresh.
   if (window._pkTakeStarted && !window._pkTakesHtml && !window._pkTakesNote && Date.now() - window._pkTakeStarted > 90000) window._pkTakeStarted = 0;
-  if (window._pkTakeStarted) return;
+  if (window._pkTakeStarted) { box.innerHTML = '<div class="note" style="margin-top:8px">\uD83D\uDDE3\uFE0F The Dealmaker is sizing up his 3 players\u2026</div>'; return; }
   // renderPickem2 rebuilds #pkTakes from scratch on every Board render, so
   // the last takes/note are kept in memory and re-applied instantly —
   // otherwise a rebuild during the retry cooldown left the box blank.
