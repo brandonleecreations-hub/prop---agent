@@ -25,8 +25,7 @@ header{position:sticky;top:0;z-index:50;background:radial-gradient(620px 130px a
 .hwrap{max-width:1060px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:10px}
 .logo{width:52px;height:52px;border-radius:13px;object-fit:cover;flex:0 0 auto;cursor:pointer;box-shadow:0 0 18px rgba(124,58,237,.35)}
 h1{font-size:28px;margin:0;letter-spacing:.5px;font-weight:900;text-transform:uppercase;line-height:1.02;white-space:nowrap;text-shadow:0 3px 16px rgba(147,51,234,.55)}
-.ttlpop{display:inline-block;transform-origin:left center;text-shadow:0 0 6px rgba(196,168,255,.9),0 0 16px rgba(147,51,234,.65),0 0 30px rgba(147,51,234,.4);animation:ttlpop 3.2s ease-in-out infinite}
-@keyframes ttlpop{0%,100%{transform:scale(1)}50%{transform:scale(1.035);text-shadow:0 0 8px rgba(206,186,255,.95),0 0 22px rgba(147,51,234,.8),0 0 40px rgba(147,51,234,.5)}}
+.ttlpop{display:inline-block;text-shadow:0 0 8px rgba(206,186,255,.95),0 0 22px rgba(147,51,234,.8),0 0 40px rgba(147,51,234,.5)}
 h1 small{display:block;font-size:11.5px;color:#a7adb8;font-weight:600;letter-spacing:2.2px;text-transform:uppercase;margin-top:3px;white-space:nowrap;overflow:hidden;max-width:46vw;position:relative;height:12px}
 .hticktrack{position:absolute;left:0;top:0;display:flex;white-space:nowrap;line-height:12px;animation:htickmove 20s linear infinite;will-change:transform}
 .htickseg{flex:0 0 auto}
@@ -1313,6 +1312,8 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 nav button[data-nav="live"].liveglow{color:#ff5d7a;text-shadow:0 0 10px rgba(255,45,85,.85);box-shadow:0 0 16px rgba(255,45,85,.40),inset 0 0 10px rgba(255,45,85,.16)}
 nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255,45,85,.95))}
 .cdtick{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(245,185,66,.14);border:1px solid rgba(245,185,66,.55);color:#ffb340;font-size:11px;font-weight:800;letter-spacing:.4px;white-space:nowrap}
+.pfvrow[data-pffight]{transition:box-shadow .15s ease,background .15s ease,transform .15s ease}
+.pfvrow.pfOn{box-shadow:0 0 0 2px var(--gold),0 0 16px rgba(245,185,66,.45);background:rgba(245,185,66,.10);animation:pfpop .22s ease}
 .tnm{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
 .tnrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:2.5px 0;font-size:13px}
 .tnsets{color:var(--cyan);font-weight:800;white-space:nowrap}
@@ -8225,8 +8226,122 @@ function pfMmaCard(rk, isChamp){
   var badge = isChamp ? "👑 CHAMPION" : ("#" + (rk.current || ""));
   return '<div class="pfpcard' + (isChamp ? " pfchamp" : "") + '" data-pfplayer="' + esc(String(a.id || "")) + '" data-pfname="' + esc(a.displayName || "") + '" data-pfimg="' + esc(a.headshot || "") + '">' + pfImgTag(a.headshot, a.displayName, "mma", a.id) + '<b>' + esc(a.displayName || "") + '</b><span>' + esc(badge + (rk.recordSummary ? " · " + rk.recordSummary : "")) + '</span></div>';
 }
+
+function pfInitials(nm){ return String(nm || "?").split(/\s+/).map(function(w){ return w.charAt(0); }).filter(Boolean).slice(0, 2).join("").toUpperCase() || "?"; }
+var pfWikiUfc = null;
+function pfCleanRec(t){
+  return String(t || "").replace(/<ref[^>]*>[\s\S]*?<\/ref>/g, "").replace(/\{\{(?:nowrap|small)\|([^}]*)\}\}/gi, "$1").replace(/<[^>]+>/g, " ").replace(/\{\{[^}]*\}\}/g, "").replace(/\[\[|\]\]/g, "").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+}
+function pfParseUfcRankings(wt){
+  if (!wt) return null;
+  var map = { "Heavyweight": "heavyweight", "Light Heavyweight": "light-heavyweight", "Middleweight": "middleweight", "Welterweight": "welterweight", "Lightweight": "lightweight", "Featherweight": "featherweight", "Bantamweight": "bantamweight", "Flyweight": "flyweight", "Women's Bantamweight": "womens-bantamweight", "Women's Flyweight": "womens-flyweight", "Women's Strawweight": "womens-strawweight" };
+  var rel = /Rankings released on ([A-Z][a-z]+ \d{1,2}, \d{4})/.exec(wt);
+  var out = [], seen = {};
+  var re = /===\s*([^=]+?)\s*===\n([\s\S]*?)(?=\n===|\n==[^=]|$)/g, m;
+  while ((m = re.exec(wt))){
+    var title = m[1].trim(), key = map[title], body = m[2];
+    if (!key || seen[key] || body.indexOf("wikitable") < 0) continue;
+    seen[key] = 1;
+    var wm = /Weight limit:\s*([^•<]+)/.exec(body);
+    var fighters = [];
+    body.split(/\n\|-\n/).forEach(function(row){
+      if (fighters.length >= 11) return;
+      var cells = row.split("\n"), rank = null, name = "", record = "";
+      for (var i = 0; i < cells.length; i++){
+        var c = cells[i];
+        if (c.charAt(0) === "!"){
+          if (/Tooltip\|IC\|/.test(c) || (/background:gold/.test(c) && /\bIC\b/.test(c))) rank = -1;
+          else if (/Tooltip\|C\|/.test(c) || (/background:gold/.test(c) && /\|\s*C\s*$/.test(c))) rank = 0;
+          else { var rn = /^\!\s*(\d+)/.exec(c); if (rn && rank == null) rank = parseInt(rn[1], 10); }
+        }
+        if (!name && c.charAt(0) === "|" && c.indexOf("[[") >= 0 && c.indexOf("flagicon") < 0){
+          var lm = /\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/.exec(c);
+          if (lm){
+            name = (lm[2] || lm[1]).trim();
+            for (var k = i + 1; k < cells.length; k++){ if (cells[k].charAt(0) === "|"){ record = pfCleanRec(cells[k].replace(/^\|[^|]*\|/, "").replace(/^\|/, "")); break; } }
+          }
+        }
+      }
+      if (name && rank != null) fighters.push({ rank: rank, name: name, record: record.replace(/–/g, "-") });
+    });
+    if (fighters.length) out.push({ key: key, title: title, weight: wm ? pfCleanRec(wm[1]) : "", fighters: fighters, released: rel ? rel[1] : "" });
+  }
+  return out.length ? out : null;
+}
+function pfWikiRankings(){
+  if (pfWikiUfc) return Promise.resolve(pfWikiUfc);
+  return pfFetch("https://en.wikipedia.org/w/api.php?action=parse&page=UFC_rankings&prop=wikitext&format=json&formatversion=2&origin=*").then(function(j){
+    var divs = pfParseUfcRankings((j && j.parse && j.parse.wikitext) || "");
+    if (divs && divs.length >= 8) pfWikiUfc = divs;
+    return divs;
+  }).catch(function(){ return null; });
+}
+function pfResolveFighterByName(name){
+  return pfFetch("https://site.api.espn.com/apis/search/v2?query=" + encodeURIComponent(name)).then(function(j){
+    var players = [];
+    (j.results || []).forEach(function(r){ if (r.type === "player") (r.contents || []).forEach(function(c){ players.push(c); }); });
+    var nk = nameKeyOf(name), exact = null, mmaExact = null;
+    players.forEach(function(c){
+      if (nameKeyOf(c.displayName || "") !== nk) return;
+      if (/^s:3301/.test(c.uid || "")){ if (!mmaExact) mmaExact = c; }
+      else if (!exact) exact = c;
+    });
+    var hit = mmaExact || exact;
+    if (!hit) return null;
+    var pl = pfEntryPlayer(hit);
+    if (pl){ pl.sport = "mma"; if (!pl.league) pl.league = "ufc"; }
+    return pl;
+  }).catch(function(){ return null; });
+}
+function pfWikiCard(f){
+  var badge = f.rank === 0 ? "👑 CHAMPION" : (f.rank === -1 ? "👑 INTERIM CHAMP" : "#" + f.rank);
+  return '<div class="pfpcard' + (f.rank <= 0 ? " pfchamp" : "") + '" data-pfwiki="1" data-pfwrank="' + f.rank + '" data-pfname="' + esc(f.name) + '"><span class="pfini" style="display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#3b1470,#1b1030);color:#cdbcf5;font-weight:900;font-size:17px;margin:0 auto">' + esc(pfInitials(f.name)) + '</span><b>' + esc(f.name) + '</b><span>' + esc(badge + (f.record ? " · " + f.record : "")) + '</span></div>';
+}
+function pfResolveWikiCard(card){
+  if (card.getAttribute("data-pfplayer")) return;
+  pfResolveFighterByName(card.getAttribute("data-pfname") || "").then(function(pl){
+    if (!pl || !pl.id) return;
+    card.setAttribute("data-pfplayer", String(pl.id));
+    if (pl.img) card.setAttribute("data-pfimg", pl.img);
+    var ini = card.querySelector(".pfini");
+    if (ini && pl.img){
+      var d = document.createElement("div");
+      d.innerHTML = pfImgTag(pl.img, pl.name || "", "mma", pl.id, "width:52px;height:52px;border-radius:50%;object-fit:cover;background:#1b1030;display:block;margin:0 auto");
+      if (d.firstChild) ini.replaceWith(d.firstChild);
+    }
+  });
+}
+function pfResolveWikiCards(box){
+  var cards = Array.prototype.slice.call(box.querySelectorAll("[data-pfwiki]"));
+  cards.forEach(function(card){ var r = parseInt(card.getAttribute("data-pfwrank"), 10); if (r <= 5) pfResolveWikiCard(card); });
+  setTimeout(function(){ cards.forEach(function(card){ pfResolveWikiCard(card); }); }, 1600);
+}
+function pfWireWikiCards(box){
+  box.querySelectorAll("[data-pfwiki]").forEach(function(card){
+    card.addEventListener("click", function(){
+      var id = card.getAttribute("data-pfplayer");
+      var nm = card.getAttribute("data-pfname") || "";
+      if (id){ openPlayerPage({ id: id, name: nm, sport: "mma", league: "ufc", img: card.getAttribute("data-pfimg") || "", teamName: "" }); return; }
+      pfResolveFighterByName(nm).then(function(pl){ if (pl) openPlayerPage(pl); });
+    });
+  });
+}
 function pfRenderMma(box){
   box.innerHTML = '<h3 style="margin:12px 0 6px;font-size:16px">UFC — by weight class</h3><p class="empty">Loading fighters…</p>';
+  pfWikiRankings().then(function(divs){
+    if (pfSport !== "mma" || pfQuery) return;
+    if (!divs){ pfRenderMmaEspn(box); return; }
+    var rel = divs[0].released || "";
+    var h = '<h3 style="margin:12px 0 6px;font-size:16px">UFC — by weight class</h3><p class="sub">Current UFC champions and rankings' + (rel ? " · released " + esc(rel) : "") + ". Tap any fighter for their record and fight results.</p>";
+    divs.forEach(function(d){
+      h += '<div class="pfsec" style="margin-top:14px">' + esc(d.title) + (d.weight ? ' <span class="note">' + esc(d.weight) + '</span>' : '') + '</div><div class="pfslider">' + d.fighters.map(function(f){ return pfWikiCard(f); }).join("") + '</div>';
+    });
+    box.innerHTML = h;
+    pfWireWikiCards(box);
+    pfResolveWikiCards(box);
+  }).catch(function(){ if (pfSport === "mma" && !pfQuery) pfRenderMmaEspn(box); });
+}
+function pfRenderMmaEspn(box){
   pfFetch("https://site.api.espn.com/apis/site/v2/sports/mma/ufc/rankings").then(function(j){
     if (pfSport !== "mma" || pfQuery) return;
     var champs = {}, divs = {};
@@ -8338,7 +8453,7 @@ function pfLoadFights(p){
       box.innerHTML = head + pfCurFights.map(function(f, i){
         return '<div class="pfvrow" data-pffight="' + i + '" style="cursor:pointer"><span style="flex:1;min-width:0"><b style="color:' + (f.won ? "#4fe3c1" : "#ff5d7a") + '">' + (f.won ? "W" : "L") + '</b> vs ' + esc(f.oppName || "TBD") + '<div class="note">' + esc(f.eventName || "") + ' · ' + esc(pfDstr(f.date)) + (f.method ? ' · ' + esc(f.method) : '') + '</div></span><span style="color:var(--mut);font-size:16px">›</span></div>';
       }).join("") + '<p class="note" style="margin-top:6px">Tap a fight to see the stats for both fighters from that night.</p>';
-      box.querySelectorAll("[data-pffight]").forEach(function(el){ el.addEventListener("click", function(){ pfFightView(parseInt(el.getAttribute("data-pffight"), 10)); }); });
+      box.querySelectorAll("[data-pffight]").forEach(function(el){ el.addEventListener("click", function(){ box.querySelectorAll(".pfvrow.pfOn").forEach(function(x){ x.classList.remove("pfOn"); }); el.classList.add("pfOn"); var ix = parseInt(el.getAttribute("data-pffight"), 10); setTimeout(function(){ pfFightView(ix); }, 190); }); });
     });
   }).catch(function(){ if (pfCurPageId === String(p.id)) box.innerHTML = head + '<p class="empty">Fight results could not load — check your connection.</p>'; });
 }
@@ -8500,7 +8615,7 @@ function pfPlayerHtml(p, bio, stats, gamelog){
   }
   var vsHtml = pfCurOpp ? pfVsSectionHtml(pfCurOpp) : "";
   var fightsHtml = p.sport === "mma" ? '<div id="pfFights"><h3 style="margin:16px 0 6px;font-size:16px">Fight Results</h3><p class="empty">Loading fight results…</p></div>' : "";
-  return pfHeadHtml(p, img, name, team, meta) + statsHtml + '<div id="pfStatPop"></div>' + vsHtml + '<div id="pfL5Wrap">' + pfLast5Html(parsed) + '</div>' + fightsHtml;
+  return pfHeadHtml(p, img, name, team, meta) + '<div id="pfL5Wrap">' + pfLast5Html(parsed) + '</div>' + vsHtml + statsHtml + '<div id="pfStatPop"></div>' + fightsHtml;
 }
 function pfWirePlayerBody(body){
   body.querySelectorAll(".l5slider").forEach(function(sl, i){ try { popSliderInit(sl, "l5s" + i, ".l5card"); } catch (e) {} });
