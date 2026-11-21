@@ -901,6 +901,10 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .coinpill{background:linear-gradient(145deg,#f5b942,#d97706);color:#1a1405;font-weight:900;border-radius:999px;padding:7px 13px;font-size:14px}
 #clashPop{position:fixed;inset:0;z-index:320;display:none;align-items:stretch;justify-content:center;overflow:hidden;padding:0}
 #clashPop.open{display:flex}
+#clashIntro{position:fixed;inset:0;z-index:600;background:#000;display:none;align-items:center;justify-content:center}
+#clashIntro.open{display:flex}
+#clashIntroVid{width:100%;height:100%;object-fit:contain;background:#000}
+#clashIntroSkip{position:absolute;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2;background:rgba(20,16,34,.85);color:#fff;border:1px solid rgba(196,168,255,.7);border-radius:999px;padding:10px 20px;font-weight:800;font-size:14px;letter-spacing:.4px}
 .clashpanel{width:min(100vw,430px);height:100dvh;max-height:100dvh;display:flex;flex-direction:column;overflow-y:auto;margin:0 auto;background:radial-gradient(130% 100% at 50% 0%, #2a1650 0%, #0d0b16 55%);border:2px solid #f5b942;border-radius:0;padding:10px;box-shadow:0 24px 60px rgba(0,0,0,.65),0 0 34px rgba(124,58,237,.35);animation:cardpopA .45s cubic-bezier(.2,.9,.3,1.2) both}
 .clashpanel.startbg{background:#0a0618 url("/api/banners?s=clashmenu&v=1") top center/contain no-repeat}
 .clashpanel>*{flex-shrink:0}
@@ -5378,7 +5382,7 @@ function openCardZoom(cardEl){
 }
 function closeCardZoom(){ var z = $("cardZoom"); if (z) { z.classList.remove("open"); z.innerHTML = ""; } zoomList = []; zoomIdx = 0; }
 /* ---------- smooth beats — 3 synthesized chill songs ---------- */
-var MUS = { on: false, timer: null, track: 0, beat: 0, bus: null };
+var MUS = { on: false, timer: null, track: 0, beat: 0, bus: null, el: null, mode: "menu" };
 var SONGS = [
   { bpm: 76, chords: [[174.61, 220.00, 261.63, 329.63], [164.81, 196.00, 246.94, 293.66], [146.83, 174.61, 220.00, 261.63], [130.81, 164.81, 196.00, 246.94]], roots: [87.31, 82.41, 73.42, 65.41], mel: [523.25, 0, 0, 493.88, 0, 440.00, 0, 0, 392.00, 0, 440.00, 0, 329.63, 0, 0, 0] },
   { bpm: 84, chords: [[116.54, 146.83, 174.61, 220.00], [110.00, 130.81, 164.81, 196.00], [98.00, 116.54, 146.83, 174.61], [87.31, 110.00, 130.81, 164.81]], roots: [116.54, 110.00, 98.00, 87.31], mel: [587.33, 0, 523.25, 0, 0, 440.00, 0, 392.00, 0, 0, 349.23, 0, 440.00, 0, 0, 0] },
@@ -5403,19 +5407,38 @@ function musicTick(){
   MUS.beat++;
   if (MUS.beat >= 64) { MUS.beat = 0; MUS.track++; if (MUS.timer) { clearInterval(MUS.timer); MUS.timer = setInterval(musicTick, Math.round(60000 / SONGS[MUS.track % SONGS.length].bpm / 2)); } }
 }
+function clashMusicEl(){
+  if (!MUS.el) { try { var a = document.createElement("audio"); a.src = "/api/banners?s=clashmusic"; a.loop = true; a.preload = "auto"; a.volume = 0.5; MUS.el = a; } catch(e){} }
+  return MUS.el;
+}
 function musicStart(){
   try {
     if (lsGet("pa_music", 1) === 0) return;
-    if (!window.AudioContext && !window.webkitAudioContext) return;
-    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
-    if (AC.state === "suspended") AC.resume();
-    if (MUS.on) return;
-    MUS.on = true; MUS.beat = 0;
-    MUS.timer = setInterval(musicTick, Math.round(60000 / SONGS[MUS.track % SONGS.length].bpm / 2));
-    musicTick();
+    if (window.AudioContext || window.webkitAudioContext) { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === "suspended") AC.resume(); }
+    if (MUS.mode === "battle") {
+      if (!AC) return;
+      if (MUS.on) return;
+      MUS.on = true; MUS.beat = 0;
+      MUS.timer = setInterval(musicTick, Math.round(60000 / SONGS[MUS.track % SONGS.length].bpm / 2));
+      musicTick();
+      return;
+    }
+    var a = clashMusicEl();
+    if (MUS.on) { if (a && a.paused) { var p2 = a.play(); if (p2 && p2.catch) p2.catch(function(){}); } return; }
+    MUS.on = true;
+    if (a) { var p = a.play(); if (p && p.catch) p.catch(function(){}); }
   } catch(e){}
 }
-function musicStop(){ MUS.on = false; if (MUS.timer) { clearInterval(MUS.timer); MUS.timer = null; } }
+function musicSetMode(m){
+  if (MUS.mode === m) { if (MUS.on) musicStart(); return; }
+  MUS.mode = m;
+  var wasOn = MUS.on;
+  if (MUS.timer) { clearInterval(MUS.timer); MUS.timer = null; }
+  if (MUS.el) { try { MUS.el.pause(); } catch(e){} }
+  MUS.on = false;
+  if (wasOn) musicStart();
+}
+function musicStop(){ MUS.on = false; if (MUS.timer) { clearInterval(MUS.timer); MUS.timer = null; } if (MUS.el) { try { MUS.el.pause(); } catch(e){} } }
 function musicToggle(){ var on = lsGet("pa_music", 1) !== 0; lsSet("pa_music", on ? 0 : 1); if (on) musicStop(); else musicStart(); var b = $("musBtn"); if (b) b.textContent = on ? "\uD83D\uDD07" : "\uD83C\uDFB5"; }
 
 var CL = null;
@@ -5432,11 +5455,44 @@ function ensureClashPop(){
   el.querySelector("#clashZoom").addEventListener("click", function(e){ var card = e.target.closest ? e.target.closest(".tiercard") : null; if (card) card.classList.toggle("flipped"); else closeZoom(); });
   el.querySelector("#itemPop").addEventListener("click", function(e){ if (e.target === el.querySelector("#itemPop")) closeItemView(); });
 }
-function openClash(){ ensureClashPop(); $("clashPop").classList.add("open"); musicStart(); clashMenu(); }
+function openClashMenu(){ ensureClashPop(); MUS.mode = "menu"; $("clashPop").classList.add("open"); musicStart(); clashMenu(); }
+var _clashIntroOn = false;
+function ensureClashIntro(){
+  if (document.getElementById("clashIntro")) return;
+  var el = document.createElement("div");
+  el.id = "clashIntro";
+  el.innerHTML = '<video id="clashIntroVid" src="/api/banners?s=clashintro" playsinline preload="none"></video><button id="clashIntroSkip" type="button">SKIP \u25B8</button>';
+  document.body.appendChild(el);
+  el.querySelector("#clashIntroVid").addEventListener("ended", function(){ finishClashIntro(true); });
+  el.querySelector("#clashIntroVid").addEventListener("error", function(){ finishClashIntro(true); });
+  el.querySelector("#clashIntroSkip").addEventListener("click", function(){ sfx("click"); finishClashIntro(true); });
+}
+function openClash(){
+  try {
+    ensureClashIntro();
+    var ov = $("clashIntro"), v = $("clashIntroVid");
+    if (!ov || !v) { openClashMenu(); return; }
+    _clashIntroOn = true;
+    ov.classList.add("open");
+    try { v.currentTime = 0; } catch (e) {}
+    var p = null;
+    try { p = v.play(); } catch (e) {}
+    if (p && p.catch) p.catch(function(){ finishClashIntro(true); });
+  } catch (e) { openClashMenu(); }
+}
+function finishClashIntro(toMenu){
+  if (!_clashIntroOn) return;
+  _clashIntroOn = false;
+  var ov = $("clashIntro"), v = $("clashIntroVid");
+  if (v) { try { v.pause(); } catch (e) {} }
+  if (ov) ov.classList.remove("open");
+  if (toMenu) openClashMenu();
+}
 function closeClash(){ if (LOB) pvpLobbyCleanup(); if (CL && CL.mode === "pvp") { pvpPollStop(); if (CL.pvp.stage === "battle" && !CL.over) { CL.pvp.finSent = true; pvpSendFinal(false); var bb = battlesGet(); bb.l = (bb.l || 0) + 1; lsSet("pa_battles", bb); lsSet("pa_clash_last", Date.now()); cloudSave(); } } var p = $("clashPop"); if (p) p.classList.remove("open"); if (CL && CL.ttResolve) CL.ttResolve(-1); if (CL && CL.abResolve) CL.abResolve(""); musicStop(); closeZoom(); closeItemView(); closePickPop(); CL = null; renderClash(); renderPacks(); }
 function clashPanel(html){ var p = $("clashPanel"); if (p) { p.classList.remove("startbg"); p.classList.remove("menufit"); p.innerHTML = html; p.scrollTop = 0; } }
 function clashMenu(){
   CL = null;
+  musicSetMode("menu");
   var b = battlesGet(), lad = ladderGet();
   clashPanel('<div class="clashbgspace"></div>'
     + '<div class="clashsub" style="text-align:center">Pick your fighters, flip the coin, land hits, own the grid.<br>New here? Open <b>How to play</b> at the bottom — rules plus a gameplay video of a round.</div>'
@@ -5531,6 +5587,7 @@ function openPickPop(ci){
   sfx("click");
 }
 function clashPickRender(){
+  musicSetMode("menu");
   closePickPop();
   var maxTi = maxTierIdx();
   var slots = "";
@@ -5733,6 +5790,7 @@ async function flipResolve(call){
   if (CL.flip.winner === "me") { CL.log.push("🪙 " + result.toUpperCase() + "! You picked " + call.toUpperCase() + " — YOU go first. Opening pull: everyone draws a card. On Turn 1 you can play an item or defend — no strike. The CPU can strike."); }
   else { CL.log.push("🪙 " + result.toUpperCase() + "! You picked " + call.toUpperCase() + " — CPU goes first. Opening pull: everyone draws a card. CPU can't strike on Turn 1 — YOU can."); }
   CL.phase = "arena";
+  musicSetMode("battle");
   sfx("charge"); sfx("shuffle");
   beginTurn(CL.firstPlayer, B);
   if (CL.mode === "pvp" && CL.firstPlayer === "me") pvpUploadFor(CL.pvp.role);
@@ -6963,7 +7021,7 @@ function pvpShare(){
   else if (navigator.clipboard) { navigator.clipboard.writeText(link).then(function(){ var s = document.querySelector("[data-pvpshare] span"); if (s) s.textContent = "✓ Link copied — send it to your friend!"; }).catch(function(){}); }
 }
 function pvpJoinFlow(code){
-  openClash();
+  openClashMenu();
   clashPanel('<div class="clashttl">👥 HEAD-TO-HEAD</div><div class="clashsub">Joining match room <b>' + code + '</b>…</div>');
   socialPost({ uid: cloudUid, action: "room_join", code: code, name: pvpMyName() }).then(function(j){
     if (!j || !j.ok) { clashPanel('<div class="clashttl">👥 HEAD-TO-HEAD</div><div class="clashsub">⚠️ ' + ((j && j.error) || "Could not join that room.") + ' — the link may have expired (rooms last 45 minutes) or the room is full.</div><button class="openbtn" data-clashmenu="1" style="width:100%;margin-top:8px">← Clash menu</button>'); return; }
@@ -7003,6 +7061,7 @@ function pvpOnRoom(state){
     if (!b || b.seq <= P.seq) return;
     P.seq = b.seq;
     P.stage = "battle";
+    musicSetMode("battle");
     var o = b.nextRole === P.role ? b.cl : pvpMirror(b.cl);
     pvpInstall(o);
     if (state.phase === "done" || (b.cl && b.cl.over)) {
@@ -8160,6 +8219,7 @@ showView = function(name){
 };
 function paTopLayerClose(){
   var el;
+  el = $("clashIntro"); if (el && el.classList.contains("open")) { finishClashIntro(false); return true; }
   el = $("pickPop"); if (el && el.classList.contains("open")) { closePickPop(); return true; }
   el = document.getElementById("pullView"); if (el && el.classList.contains("open")) { el.classList.remove("open"); return true; }
   el = $("welcomePop"); if (el && el.style.display === "block") { closeWelcome(); return true; }
