@@ -332,7 +332,7 @@ async function aiCall(messages, maxTokens) {
       });
       clearTimeout(to);
       AI_LAST_STATUS = r.status;
-      if (r.status === 404) continue;
+      if (r.status === 404 || r.status === 429 || r.status === 503) continue;
       if (!r.ok) return null;
       const j = await r.json();
       const parts = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts;
