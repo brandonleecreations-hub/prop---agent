@@ -8,8 +8,8 @@
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-title" content="Score Agent">
 <link rel="manifest" href="/manifest.json?v=2">
-<link rel="icon" type="image/png" sizes="192x192" href="/api/icons?s=192&v=4">
-<link rel="apple-touch-icon" href="/api/icons?s=192&v=4">
+<link rel="icon" type="image/png" sizes="192x192" href="/api/icons?s=192&v=5">
+<link rel="apple-touch-icon" href="/api/icons?s=192&v=5">
 <style>
 :root{
   --bg:#000; --panel:#121212; --panel2:#1a1a1a; --line:#262626; --txt:#f2f2f2; --mut:#9a9a9a;
@@ -1352,7 +1352,7 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
 <body>
 <header>
   <div class="hwrap">
-    <img class="logo" id="logoImg" src="/api/icons?s=192&v=4" alt="Score Agent" title="Your agent profile">
+    <img class="logo" id="logoImg" src="/api/icons?s=192&v=5" alt="Score Agent" title="Your agent profile">
     <div style="min-width:0">
       <h1><span class="ttlpop">Score Agent</span> <small class="htick"><span class="hticktrack"><span class="htickseg">Live Scores · Player Stats ·&nbsp;</span><span class="htickseg">Live Scores · Player Stats ·&nbsp;</span><span class="htickseg">Live Scores · Player Stats ·&nbsp;</span><span class="htickseg">Live Scores · Player Stats ·&nbsp;</span></span></small></h1>
       <div class="hbars"><i></i><i></i></div>
@@ -1383,7 +1383,7 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
     </div>
     <div class="card" id="installCard" style="display:none;margin-top:14px;padding:0;overflow:hidden;border:2px solid #f5b942;background:radial-gradient(130% 150% at 15% 0%, #4c1d95 0%, #2a1650 46%, #12082b 100%);box-shadow:0 14px 44px rgba(124,58,237,.5)">
       <div style="display:flex;gap:10px;align-items:center;padding:12px 12px 4px">
-        <img src="/api/icons?s=512&v=4" alt="" style="width:52px;height:52px;border-radius:14px;box-shadow:0 8px 26px rgba(0,0,0,.55);flex:0 0 auto">
+        <img src="/api/icons?s=512&v=5" alt="" style="width:52px;height:52px;border-radius:14px;box-shadow:0 8px 26px rgba(0,0,0,.55);flex:0 0 auto">
         <div style="min-width:0">
           <div style="font-size:10px;font-weight:900;letter-spacing:2px;color:#f5b942">FREE · NO DOWNLOAD NEEDED</div>
           <div style="font-size:20px;font-weight:900;line-height:1.08;color:#fff;text-shadow:0 2px 16px rgba(167,139,250,.65)">SCORE AGENT</div>
@@ -1522,7 +1522,7 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
   <div class="wstage" id="wStage">
     <button type="button" class="wskip" id="wSkip">Skip ✕</button>
     <div class="wbeat on" id="wBeat1">
-      <img src="/api/icons?s=512&v=4" alt="" class="wlogo">
+      <img src="/api/icons?s=512&v=5" alt="" class="wlogo">
       <div class="wtitle">SCORE AGENT</div>
       <div class="wsub">Live scores &amp; every player's stats.<br>Plus the Agent Clash card game.</div>
     </div>
@@ -4352,7 +4352,7 @@ async function downloadCard(kind, idx, btn){
   for (var i=-2;i<6;i++){ ctx.save(); ctx.translate(i*180,0); ctx.rotate(.5); ctx.fillRect(0,-100,60,H+300); ctx.restore(); }
   ctx.globalAlpha=1; ctx.restore();
   ctx.textAlign="center"; ctx.fillStyle="#fff";
-  var icon=await loadImgC("/api/icons?s=512&v=4", false);
+  var icon=await loadImgC("/api/icons?s=512&v=5", false);
   if (icon) ctx.drawImage(icon, W/2-52, 44, 104, 104);
   ctx.font="800 30px system-ui, sans-serif"; ctx.fillText("SCORE AGENT", W/2, 198);
   ctx.font="700 15px system-ui, sans-serif"; ctx.fillStyle="#b9a8e8"; ctx.fillText("P R O P S   T I C K E R", W/2, 226);
@@ -4404,7 +4404,7 @@ var POWERS = [
 function charIdxOf(){ var m = /[?&]s=(\d+)/.exec((profile && profile.char) || ""); return m ? parseInt(m[1], 10) : 0; }
 function cardCharIdx(){ var v = parseInt(localStorage.getItem("pa_cardchar") || "0", 10); if (v >= 1 && v <= 12) return v; return charIdxOf() || 1; }
 function cardBackHTML(title, sub){
-  return '<div class="flipback"><img src="/api/icons?s=512&v=4" alt=""><div class="bkname">SCORE AGENT</div><div class="bksub"><b style="color:#fff">' + title + '</b><br>' + sub + '</div></div>';
+  return '<div class="flipback"><img src="/api/icons?s=512&v=5" alt=""><div class="bkname">SCORE AGENT</div><div class="bksub"><b style="color:#fff">' + title + '</b><br>' + sub + '</div></div>';
 }
 /* Brandon 2026-11-19: LEGEND cards carrying his ultimate-form art (battle s=<ci>L), shown whole. */
 var LEGEND_ART = { "1": "1L", "2": "2L", "3": "3L", "4": "4L", "5": "5L", "6": "6L", "7": "7L", "8": "8L", "9": "9L", "10": "10L", "11": "11L", "12": "12L" };
@@ -4747,7 +4747,7 @@ function renderPacks(){
     + '</div>';
 }
 function ringBackHTML(){
-  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512&v=4" alt=""></div><div class="bkname" style="color:#f5c518">SCORE AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">THE RING · CHAMPIONSHIP EDITION</div><div class="bksub">Signed · One of a Kind<br>The rarest pull in the game — about 1 pack in 200</div><div class="holo" style="--hc:#f5c51859"></div></div>';
+  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512&v=5" alt=""></div><div class="bkname" style="color:#f5c518">SCORE AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">THE RING · CHAMPIONSHIP EDITION</div><div class="bksub">Signed · One of a Kind<br>The rarest pull in the game — about 1 pack in 200</div><div class="holo" style="--hc:#f5c51859"></div></div>';
 }
 function stampsGet(){ return lsGet("pa_stamps", []); }
 function ringCardHTML(){
@@ -4808,7 +4808,7 @@ function specialCardHTML(){
 }
 function specialBackHTML(){
   var cfg = WEEKLY_PICKEM;
-  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512&v=4" alt=""></div><div class="bkname" style="color:#f5c518">SCORE AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">WEEKLY PICK\'EM · SPECIAL EDITION</div><div class="bksub">' + cfg.awayShort + ' @ ' + cfg.homeShort + ' · ' + pickemWhen() + ' MST<br>Won in the Weekly Pick\'em</div><div class="holo" style="--hc:#f5c51859"></div></div>';
+  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512&v=5" alt=""></div><div class="bkname" style="color:#f5c518">SCORE AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">WEEKLY PICK\'EM · SPECIAL EDITION</div><div class="bksub">' + cfg.awayShort + ' @ ' + cfg.homeShort + ' · ' + pickemWhen() + ' MST<br>Won in the Weekly Pick\'em</div><div class="holo" style="--hc:#f5c51859"></div></div>';
 }
 function downloadSpecialCard(btn){
   var cfg = WEEKLY_PICKEM;
@@ -4849,7 +4849,7 @@ function ensureCardPop(){
   if (document.getElementById("cardPop")) return;
   var cfg = WEEKLY_PICKEM;
   var sparks = [[-120,-160],[110,-140],[-150,40],[150,60],[-90,150],[100,160],[0,-190],[30,190]].map(function(p){ return '<span class="spark" style="--tx:' + p[0] + 'px;--ty:' + p[1] + 'px"></span>'; }).join("");
-  var back = '<div class="sbring"><img src="/api/icons?s=512&v=4" alt=""></div><div class="bkname" style="color:#f5c518">SCORE AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">WEEKLY PICK\'EM · SPECIAL EDITION</div><div class="bksub">' + cfg.awayShort + ' @ ' + cfg.homeShort + ' · ' + pickemWhen() + ' MST<br>Won in the Weekly Pick\'em</div><div class="holo" style="--hc:#f5c51859"></div>';
+  var back = '<div class="sbring"><img src="/api/icons?s=512&v=5" alt=""></div><div class="bkname" style="color:#f5c518">SCORE AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">WEEKLY PICK\'EM · SPECIAL EDITION</div><div class="bksub">' + cfg.awayShort + ' @ ' + cfg.homeShort + ' · ' + pickemWhen() + ' MST<br>Won in the Weekly Pick\'em</div><div class="holo" style="--hc:#f5c51859"></div>';
   var el = document.createElement("div");
   el.className = "cardpop"; el.id = "cardPop";
   el.innerHTML = '<div class="burst"></div>'
@@ -4960,12 +4960,12 @@ function viewPulledCard(i){
   if (pu.ring) {
     front.style.borderColor = "#f5c518";
     front.innerHTML = '<img src="/api/avatars?s=14" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">THE RING</b><span class="rarpill" style="background:#f5c518;color:#1a1405">🏆 CHASE</span></div>';
-    back.innerHTML = '<img src="/api/icons?s=512&v=4" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">SCORE AGENT</b><div style="color:#f5c518;letter-spacing:1.5px;font-weight:800;font-size:12px">THE RING · CHAMPIONSHIP EDITION</div><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">Signed · One of a Kind<br>The rarest pull in the game</div>';
+    back.innerHTML = '<img src="/api/icons?s=512&v=5" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">SCORE AGENT</b><div style="color:#f5c518;letter-spacing:1.5px;font-weight:800;font-size:12px">THE RING · CHAMPIONSHIP EDITION</div><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">Signed · One of a Kind<br>The rarest pull in the game</div>';
   } else {
     var t = TIERS[pu.ti], cname = CHARNAMES[pu.ci - 1];
     front.style.borderColor = t.color;
     front.innerHTML = '<img src="' + esc(cardArtUrl(pu.ci, pu.ti)) + '" alt="" style="width:100%;height:100%;' + (legendArt(pu.ci, pu.ti) ? 'object-fit:contain;background:#120a26' : 'object-fit:cover') + ';display:block">' + (pu.ti === 2 ? '<div class="glitterfx"></div>' : pu.ti === 3 ? '<div class="glitterfx pglit"></div>' : '') + '<div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + cname + '</b>' + (pu.unlock ? '<span class="rarpill" style="background:' + t.color + '">' + t.name.toUpperCase() + ' · UNLOCKED</span>' : '<span class="rarpill" style="background:#f5c518;color:#1a1405">✨ ' + t.name.toUpperCase() + ' FOIL</span>') + '<span style="display:none"></span></div>';
-    back.innerHTML = '<img src="/api/icons?s=512&v=4" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">SCORE AGENT</b><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">' + (pu.unlock ? cname + ' · ' + t.name.toUpperCase() + ' BATTLE CARD<br>' + (pu.bumped ? 'Unlocked from a pack — ' + cname + ' jumped to ' + t.name.toUpperCase() + ' tier!' : 'Unlocked from a pack — it is on your tier list now.') + '<br>Battle with it in Grid Clash!' : cname + ' · FOIL<br>' + t.name + ' tier gold foil edition<br>Pulled from a Score Agent pack.') + '</div>';
+    back.innerHTML = '<img src="/api/icons?s=512&v=5" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">SCORE AGENT</b><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">' + (pu.unlock ? cname + ' · ' + t.name.toUpperCase() + ' BATTLE CARD<br>' + (pu.bumped ? 'Unlocked from a pack — ' + cname + ' jumped to ' + t.name.toUpperCase() + ' tier!' : 'Unlocked from a pack — it is on your tier list now.') + '<br>Battle with it in Grid Clash!' : cname + ' · FOIL<br>' + t.name + ' tier gold foil edition<br>Pulled from a Score Agent pack.') + '</div>';
   }
   document.getElementById("pullView").classList.add("open");
 }
@@ -7348,7 +7348,7 @@ function openAgent(id, refresh){
     if (!j || !j.ok || !j.profile) { body.innerHTML = '<p class="empty">Could not load this agent.</p>'; return; }
     var p = j.profile, t = tierFor(p.wins || 0), mine = id === cloudUid;
     var st = j.stats || { tickets: 0, wins: p.wins || 0, recordW: 0, recordL: 0, winPct: null, streak: 0, best: 0 };
-    var head = '<div class="row" style="gap:12px;align-items:center"><img src="' + esc(p.avatar_url || "/api/icons?s=192&v=4") + '" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)' + frameCss(p.featured_card, 3, p.avatar_url) + '" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:19px;font-weight:900">' + esc(fmtUser(p.display_name || "Agent")) + streakBadge(st.streak) + '</div><div class="note">' + t.name + ' · ' + (p.wins || 0) + ' wins · ' + (followCounts[id] || 0) + ' followers' + (p.featured_card ? ' · ' + esc(p.featured_card) : '') + '</div></div><button class="ghostbtn" id="vaClose">Close</button></div>'
+    var head = '<div class="row" style="gap:12px;align-items:center"><img src="' + esc(p.avatar_url || "/api/icons?s=192&v=5") + '" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#3b1470,#1b1030)' + frameCss(p.featured_card, 3, p.avatar_url) + '" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div style="font-size:19px;font-weight:900">' + esc(fmtUser(p.display_name || "Agent")) + streakBadge(st.streak) + '</div><div class="note">' + t.name + ' · ' + (p.wins || 0) + ' wins · ' + (followCounts[id] || 0) + ' followers' + (p.featured_card ? ' · ' + esc(p.featured_card) : '') + '</div></div><button class="ghostbtn" id="vaClose">Close</button></div>'
       + (mine ? '<p class="sub" style="margin-top:8px">This is you — exactly what other agents see on your public profile.</p>' : '<div style="margin-top:10px"><button type="button" class="ghostbtn" id="vaFollow" style="font-weight:800;padding:9px 16px;' + (isFollowing(id) ? '' : 'background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none') + '">' + (isFollowing(id) ? '✓ Following — tap to unfollow' : '+ Follow') + '</button></div>');
     var statsRow = '<div class="row" style="gap:7px;flex-wrap:wrap;margin-top:12px">'
       + '<span class="badge">🏆 ' + (st.wins || 0) + ' wins</span>'
