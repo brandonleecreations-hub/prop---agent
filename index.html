@@ -9184,12 +9184,26 @@ function aiAskSendText(q){
 }
 /* ---- The Dealmaker's Takes (Daily Pick'em) ---- */
 function aiTakesRender(){
-  var box = $("pkTakes"); if (!box || !AI_ON || box.getAttribute("data-done")) return;
+  var box = $("pkTakes"); if (!box) return;
+  if (!AI_ON) {
+    // The Board can render before the AI ping returns (v1.1.27 checks saw a
+    // permanently blank box from exactly this race) — wait and retry
+    // instead of dying silently.
+    var wn = window._pkTakeWait || 0;
+    if (wn < 12) { window._pkTakeWait = wn + 1; setTimeout(aiTakesRender, 2500); }
+    return;
+  }
+  if (box.getAttribute("data-done")) return;
+  // Watchdog: if a load started over 90s ago and never landed (a hung
+  // gamelog/AI call), clear the marker so this call starts it fresh.
+  if (window._pkTakeStarted && !window._pkTakesHtml && !window._pkTakesNote && Date.now() - window._pkTakeStarted > 90000) window._pkTakeStarted = 0;
+  if (window._pkTakeStarted) return;
   // renderPickem2 rebuilds #pkTakes from scratch on every Board render, so
   // the last takes/note are kept in memory and re-applied instantly —
   // otherwise a rebuild during the retry cooldown left the box blank.
   if (window._pkTakesHtml) { box.innerHTML = window._pkTakesHtml; box.setAttribute("data-done", "1"); return; }
   if (window._pkTakeRetry && Date.now() < window._pkTakeRetry) { if (window._pkTakesNote) box.innerHTML = window._pkTakesNote; return; }
+  window._pkTakeStarted = Date.now();
   box.innerHTML = '<div class="note" style="margin-top:8px">\uD83D\uDDE3\uFE0F The Dealmaker is sizing up his 3 players\u2026</div>';
   var jobs = PICKEM2.legs.map(function(l, i){
     return pfFetch(ESPN_V3 + l.sport + "/" + l.league + "/athletes/" + l.athleteId + "/gamelog").then(function(gl){
@@ -9204,6 +9218,7 @@ function aiTakesRender(){
   Promise.all(jobs).then(function(parts){
     var b2 = $("pkTakes"); if (!b2) return;
     var html = parts.join("");
+    window._pkTakeStarted = 0;
     if (html) { window._pkTakesHtml = html; b2.innerHTML = html; b2.setAttribute("data-done", "1"); }
     else { window._pkTakeRetry = Date.now() + 60000; window._pkTakesNote = '<div class="note" style="margin-top:8px">\uD83D\uDDE3\uFE0F The Dealmaker stepped out for a minute \u2014 his takes will pop in shortly.</div>'; b2.innerHTML = window._pkTakesNote; }
   });
