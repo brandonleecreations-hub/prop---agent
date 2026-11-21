@@ -351,7 +351,8 @@ async function aiLane(req, res) {
     const prov = aiProvider();
     if (!prov || prov.kind !== "gemini") { res.status(200).json({ ok: false }); return; }
     try {
-      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
+      const pm = String(req.query.m || "gemini-3.8-flash").replace(/[^a-zA-Z0-9.-]/g, "");
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + pm + ":generateContent", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": prov.key },
         body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: "Say hi in one word." }] }] }),
