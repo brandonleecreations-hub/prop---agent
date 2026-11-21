@@ -274,37 +274,70 @@ async function aiChatBump(uid, n) {
 }
 function aiProvider() {
   // Free first: Google Gemini's free tier (AI Studio key, no billing) via
-  // its OpenAI-compatible endpoint. OpenAI stays as an optional fallback.
-  if (process.env.GEMINI_API_KEY) return { url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", key: process.env.GEMINI_API_KEY, model: "gemini-2.5-flash" };
-  if (process.env.GOOGLE_API_KEY) return { url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", key: process.env.GOOGLE_API_KEY, model: "gemini-2.5-flash" };
-  if (process.env.OPENAI_API_KEY) return { url: "https://api.openai.com/v1/chat/completions", key: process.env.OPENAI_API_KEY, model: "gpt-4o-mini" };
+  // its NATIVE API \u2014 the OpenAI-compatible endpoint 404s for current
+  // AI Studio keys. OpenAI stays as an optional fallback.
+  if (process.env.GEMINI_API_KEY) return { kind: "gemini", key: process.env.GEMINI_API_KEY };
+  if (process.env.GOOGLE_API_KEY) return { kind: "gemini", key: process.env.GOOGLE_API_KEY };
+  if (process.env.OPENAI_API_KEY) return { kind: "openai", url: "https://api.openai.com/v1/chat/completions", key: process.env.OPENAI_API_KEY, model: "gpt-4o-mini" };
   return null;
 }
 let AI_LAST_STATUS = 0;
-// Gemini model names rotate over time (a retired name 404s on the
-// OpenAI-compatible endpoint), so walk the chain and remember what worked.
+// Gemini model names rotate over time (a retired name 404s), so walk the
+// chain and remember what worked.
 const AI_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest", "gemini-2.5-flash-lite", "gemini-1.5-flash"];
 let AI_MODEL_OK = "";
 async function aiCall(messages, maxTokens) {
   const prov = aiProvider();
   if (!prov) return null;
-  const models = prov.model === "gpt-4o-mini" ? [prov.model] : (AI_MODEL_OK ? [AI_MODEL_OK] : AI_MODELS);
-  for (const m of models) {
+  if (prov.kind === "openai") {
     const ctl = new AbortController();
     const to = setTimeout(() => ctl.abort(), 20000);
     try {
       const r = await fetch(prov.url, {
         method: "POST", signal: ctl.signal,
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + prov.key },
-        body: JSON.stringify({ model: m, messages: messages, max_tokens: maxTokens || 240, temperature: 0.75 }),
+        body: JSON.stringify({ model: prov.model, messages: messages, max_tokens: maxTokens || 240, temperature: 0.75 }),
+      });
+      clearTimeout(to);
+      AI_LAST_STATUS = r.status;
+      if (!r.ok) return null;
+      const j = await r.json();
+      const t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+      return t ? String(t).trim() : null;
+    } catch (e) { clearTimeout(to); return null; }
+  }
+  // Native Gemini: system text rides in system_instruction; turns map
+  // user -> user, assistant -> model.
+  let sysText = "";
+  const contents = [];
+  (messages || []).forEach((m) => {
+    if (!m || !m.content) return;
+    if (m.role === "system") { sysText += (sysText ? "\n" : "") + m.content; return; }
+    contents.push({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: String(m.content) }] });
+  });
+  if (!contents.length) return null;
+  const models = AI_MODEL_OK ? [AI_MODEL_OK] : AI_MODELS;
+  for (const m of models) {
+    const ctl = new AbortController();
+    const to = setTimeout(() => ctl.abort(), 20000);
+    try {
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", {
+        method: "POST", signal: ctl.signal,
+        headers: { "Content-Type": "application/json", "x-goog-api-key": prov.key },
+        body: JSON.stringify({
+          system_instruction: sysText ? { parts: [{ text: sysText }] } : undefined,
+          contents: contents,
+          generationConfig: { maxOutputTokens: maxTokens || 240, temperature: 0.75 },
+        }),
       });
       clearTimeout(to);
       AI_LAST_STATUS = r.status;
       if (r.status === 404) continue;
       if (!r.ok) return null;
       const j = await r.json();
-      const t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
-      if (t) { AI_MODEL_OK = m; return String(t).trim(); }
+      const parts = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts;
+      const t = parts ? parts.map((p) => p.text || "").join("") : "";
+      if (t) { AI_MODEL_OK = m; return t.trim(); }
       return null;
     } catch (e) { clearTimeout(to); return null; }
   }
