@@ -25,7 +25,7 @@ function sbHeaders(extra) {
 // healthy run). 8s covers normal latency with room to spare.
 async function fetchTimeout(url, opts, ms) {
   const ctl = new AbortController();
-  const to = setTimeout(() => ctl.abort(), ms || 8000);
+  const to = setTimeout(() => ctl.abort(), ms || 12000);
   try { return await fetch(url, Object.assign({}, opts, { signal: ctl.signal })); }
   finally { clearTimeout(to); }
 }
@@ -253,10 +253,13 @@ async function sportsPush(req, res, dry) {
   const pub = process.env.VAPID_PUBLIC_KEY, priv = process.env.VAPID_PRIVATE_KEY, subj = process.env.VAPID_SUBJECT;
   let webpush = null;
   if (pub && priv && subj) { try { webpush = require("web-push"); webpush.setVapidDetails(subj, pub, priv); } catch (e) { webpush = null; } }
-  const subsRes = await rest("push_subscriptions?select=id,endpoint,p256dh,auth&limit=500", { headers: sbHeaders() });
+  const [subsRes, state] = await Promise.all([
+    rest("push_subscriptions?select=id,endpoint,p256dh,auth&limit=500", { headers: sbHeaders() }),
+    spStateGet(),
+  ]);
+  if (subsRes.status >= 400) throw new Error("subs fetch " + subsRes.status);
   const subs = Array.isArray(subsRes.json) ? subsRes.json : [];
   report.subs = subs.length;
-  const state = await spStateGet();
   const sent = state.sent || {};
   const now = Date.now();
   Object.keys(sent).forEach((k) => { if (now - (sent[k] || 0) > 3 * 86400000) delete sent[k]; });
