@@ -271,13 +271,16 @@ async function sportsPush(req, res, dry) {
     });
   }
   const winnerOf = (g) => (parseInt(g.a.score, 10) > parseInt(g.h.score, 10) ? g.a : g.h);
+  // Brandon 2026-11-21: BOTH teams' logos on every game push, always \u2014
+  // the duo banner composites them into the push's single image slot.
+  const duoImg = (g) => (g.a.logo && g.h.logo) ? "https://prop-agent-bre.vercel.app/api/banners?duo=" + encodeURIComponent(g.a.logo) + "|" + encodeURIComponent(g.h.logo) : (g.a.logo || g.h.logo || "");
   const pushes = [];
-  if (startGames.length === 1) { const g = startGames[0]; pushes.push({ title: g.emoji + " " + g.label + " starting soon", body: g.a.name + " @ " + g.h.name + " \u2014 starts in about " + Math.max(1, Math.round((g.startMs - now) / 60000)) + " min. Tap to follow it live.", image: g.h.logo || g.a.logo, type: "sports-start" }); }
-  else if (startGames.length > 1) pushes.push({ title: "\uD83C\uDFC0\uD83C\uDFC8 Big games starting soon", body: startGames.slice(0, 3).map((g) => g.a.abbr + " @ " + g.h.abbr).join(" \u00B7 ") + (startGames.length > 3 ? " +" + (startGames.length - 3) + " more" : "") + " \u2014 all inside 35 minutes.", image: startGames[0].h.logo || startGames[0].a.logo, type: "sports-start" });
+  if (startGames.length === 1) { const g = startGames[0]; pushes.push({ title: g.emoji + " " + g.label + " starting soon", body: g.a.name + " @ " + g.h.name + " \u2014 starts in about " + Math.max(1, Math.round((g.startMs - now) / 60000)) + " min. Tap to follow it live.", image: duoImg(g), type: "sports-start" }); }
+  else if (startGames.length > 1) pushes.push({ title: "\uD83C\uDFC0\uD83C\uDFC8 Big games starting soon", body: startGames.slice(0, 3).map((g) => g.a.abbr + " @ " + g.h.abbr).join(" \u00B7 ") + (startGames.length > 3 ? " +" + (startGames.length - 3) + " more" : "") + " \u2014 all inside 35 minutes.", image: duoImg(startGames[0]), type: "sports-start" });
   const finalsToPush = firstRun ? [] : finalGames;
   if (firstRun) report.seededFinals = finalGames.length;
-  if (finalsToPush.length === 1) { const g = finalsToPush[0]; pushes.push({ title: g.emoji + " Final \u2014 " + g.label, body: g.a.name + " " + g.a.score + " @ " + g.h.name + " " + g.h.score + ". " + winnerOf(g).name + " take it.", image: winnerOf(g).logo, type: "sports-final" }); }
-  else if (finalsToPush.length > 1) pushes.push({ title: "\uD83C\uDFC1 Final scores", body: finalsToPush.slice(0, 3).map((g) => g.a.abbr + " " + g.a.score + " @ " + g.h.abbr + " " + g.h.score).join(" \u00B7 ") + (finalsToPush.length > 3 ? " +" + (finalsToPush.length - 3) + " more finals" : ""), image: winnerOf(finalsToPush[0]).logo, type: "sports-final" });
+  if (finalsToPush.length === 1) { const g = finalsToPush[0]; pushes.push({ title: g.emoji + " Final \u2014 " + g.label, body: g.a.name + " " + g.a.score + " @ " + g.h.name + " " + g.h.score + ". " + winnerOf(g).name + " take it.", image: duoImg(g), type: "sports-final" }); }
+  else if (finalsToPush.length > 1) pushes.push({ title: "\uD83C\uDFC1 Final scores", body: finalsToPush.slice(0, 3).map((g) => g.a.abbr + " " + g.a.score + " @ " + g.h.abbr + " " + g.h.score).join(" \u00B7 ") + (finalsToPush.length > 3 ? " +" + (finalsToPush.length - 3) + " more finals" : ""), image: duoImg(finalsToPush[0]), type: "sports-final" });
   const dp = denverParts(), dToday = denverYmd();
   if (dp && dp.hour === 10 && dp.minute < 15 && state.pickemDay !== dToday) {
     report.pickem = true;

@@ -9065,11 +9065,22 @@ function aiAskSeed(){ if (ASK_MSGS.length) return; ASK_MSGS.push({ role: "assist
 function aiAskDraw(){ var box = $("askMsgs"); if (!box) return; box.innerHTML = ASK_MSGS.map(function(m){ return '<div class="askmsg ' + (m.role === "user" ? "me" : "bot") + '">' + esc(m.content) + '</div>'; }).join(""); box.scrollTop = box.scrollHeight; }
 function aiAskCtx(){
   var jobs = visibleLeagueKeys(PROP_LEAGUES).slice(0, 8).map(function(k){ var lg = leagueByKey(k); return getScoreboard(lg, 1).then(function(ev){ return { lg: lg, ev: ev }; }).catch(function(){ return null; }); });
-  return Promise.all(jobs).then(function(rs){
+  function ymdOf(off){ var y = new Date(Date.now() - off * 86400000); return "" + y.getFullYear() + String(y.getMonth() + 1).padStart(2, "0") + String(y.getDate()).padStart(2, "0"); }
+  var finJobs = [["basketball", "nba", "NBA"], ["football", "nfl", "NFL"], ["football", "college-football", "CFB"], ["basketball", "mens-college-basketball", "CBB"]].map(function(t){
+    return Promise.all([1, 2].map(function(off){ return fetch("https://site.api.espn.com/apis/site/v2/sports/" + t[0] + "/" + t[1] + "/scoreboard?dates=" + ymdOf(off)).then(function(r){ return r.json(); }).catch(function(){ return null; }); })).then(function(js){
+      var lines = [];
+      js.forEach(function(j){ if (!j) return; (j.events || []).forEach(function(ev){ var st = (ev.status && ev.status.type) || {}; if (st.state !== "post") return; var c = (ev.competitions || [])[0]; if (!c) return; var cs = c.competitors || []; if (cs.length < 2) return; var nm = function(x){ return (x.team && (x.team.displayName || x.team.shortDisplayName)) || ""; }; lines.push(t[2] + " FINAL: " + nm(cs[0]) + " " + (cs[0].score != null ? cs[0].score : "") + " vs " + nm(cs[1]) + " " + (cs[1].score != null ? cs[1].score : "")); }); });
+      return lines;
+    }).catch(function(){ return []; });
+  });
+  return Promise.all([Promise.all(jobs), Promise.all(finJobs)]).then(function(both){
     var lines = [];
-    rs.forEach(function(r){ if (!r) return; (r.ev || []).slice(0, 10).forEach(function(ev){ var ts = eventTeams(ev); if (ts.length < 2) return; var st = (ev.status && ev.status.type) || {}; lines.push(r.lg.label + ": " + (ts[0].name || "") + " " + (ts[0].score != null ? ts[0].score : "") + " vs " + (ts[1].name || "") + " " + (ts[1].score != null ? ts[1].score : "") + " (" + (st.shortDetail || st.state || "") + ")"); }); });
+    both[0].forEach(function(r){ if (!r) return; (r.ev || []).slice(0, 10).forEach(function(ev){ var ts = eventTeams(ev); if (ts.length < 2) return; var st = (ev.status && ev.status.type) || {}; lines.push(r.lg.label + ": " + (ts[0].name || "") + " " + (ts[0].score != null ? ts[0].score : "") + " vs " + (ts[1].name || "") + " " + (ts[1].score != null ? ts[1].score : "") + " (" + (st.shortDetail || st.state || "") + ")"); }); });
+    var finLines = [];
+    both[1].forEach(function(r){ finLines = finLines.concat(r); });
+    finLines = finLines.slice(0, 14);
     var pk = "Daily Pick'em \u2014 The Dealmaker's 3 Players: " + PICKEM2.legs.map(function(l){ return l.name + " " + l.statLabel + " line " + l.line + " (" + l.team + " vs " + l.opp + ")"; }).join("; ");
-    return lines.join("\n") + "\n" + pk;
+    return "RECENT FINALS (last 2 days):\n" + finLines.join("\n") + "\nTODAY / UPCOMING:\n" + lines.join("\n") + "\n" + pk;
   });
 }
 function aiAskSend(){
@@ -9134,20 +9145,38 @@ function aiGameRender(key2, s, comp){
 /* ---- The Player Report (Players tab) ---- */
 function aiReportRender(){
   var box = $("agentReport"); if (!box || !AI_ON || box.getAttribute("data-done")) return;
-  box.setAttribute("data-done", "1");
-  var y = new Date(Date.now() - 86400000);
-  var ymd = "" + y.getFullYear() + String(y.getMonth() + 1).padStart(2, "0") + String(y.getDate()).padStart(2, "0");
   var leagues = [["basketball", "nba"], ["football", "nfl"], ["football", "college-football"], ["basketball", "mens-college-basketball"]];
-  var jobs = leagues.map(function(pr){ return fetch("https://site.api.espn.com/apis/site/v2/sports/" + pr[0] + "/" + pr[1] + "/scoreboard?dates=" + ymd).then(function(r){ return r.json(); }).catch(function(){ return null; }); });
-  Promise.all(jobs).then(function(rs){
-    var perf = [];
-    rs.forEach(function(j){ if (!j) return; (j.events || []).forEach(function(ev){ var c = (ev.competitions || [])[0]; if (!c) return; (c.leaders || []).forEach(function(ld){ if (ld.name !== "points") return; var top = (ld.leaders || [])[0]; if (top) perf.push({ n: (top.athlete && top.athlete.displayName) || "", v: parseFloat(top.displayValue) || 0, g: ev.shortName || ev.name || "" }); }); }); });
-    perf.sort(function(a, b){ return b.v - a.v; });
-    var top = perf.slice(0, 6);
+  function ymdOf(off){ var y = new Date(Date.now() - off * 86400000); return "" + y.getFullYear() + String(y.getMonth() + 1).padStart(2, "0") + String(y.getDate()).padStart(2, "0"); }
+  function dayEvents(off){
+    var ymd = ymdOf(off);
+    return Promise.all(leagues.map(function(pr){ return fetch("https://site.api.espn.com/apis/site/v2/sports/" + pr[0] + "/" + pr[1] + "/scoreboard?dates=" + ymd).then(function(r){ return r.json(); }).then(function(j){ return (j.events || []).map(function(ev){ return { sport: pr[0], league: pr[1], ev: ev }; }); }).catch(function(){ return []; }); })).then(function(rs){ var all = []; rs.forEach(function(r){ all = all.concat(r); }); return all; });
+  }
+  function topFromSummary(x){
+    return fetch("https://site.api.espn.com/apis/site/v2/sports/" + x.sport + "/" + x.league + "/summary?event=" + x.ev.id).then(function(r){ return r.json(); }).then(function(sm){
+      var out = [];
+      ((sm && sm.leaders) || []).forEach(function(tl){ (tl.leaders || []).forEach(function(cat){ var top = (cat.leaders || [])[0]; if (top && top.athlete) out.push({ n: top.athlete.displayName || "", v: parseFloat(top.displayValue) || 0, stat: cat.name || "", g: x.ev.shortName || x.ev.name || "" }); }); });
+      return out;
+    }).catch(function(){ return []; });
+  }
+  function attempt(off){
+    return dayEvents(off).then(function(evs){
+      var fin = evs.filter(function(x){ return x.ev.status && x.ev.status.type && x.ev.status.type.state === "post"; }).slice(0, 10);
+      if (!fin.length) return [];
+      return Promise.all(fin.map(topFromSummary)).then(function(rs){ var all = []; rs.forEach(function(r){ all = all.concat(r); }); return all; });
+    });
+  }
+  attempt(1).then(function(perf){
+    if (perf.length < 3) return attempt(2).then(function(p2){ return perf.concat(p2); });
+    return perf;
+  }).then(function(perf){
+    var pts = perf.filter(function(p){ return p.stat === "points" && p.v > 0; }).sort(function(a, b){ return b.v - a.v; });
+    var rest = perf.filter(function(p){ return p.stat !== "points" && p.v >= 50; }).sort(function(a, b){ return b.v - a.v; });
+    var top = pts.slice(0, 5).concat(rest.slice(0, 2));
     if (!top.length) return;
-    var facts = "Yesterday's top scoring performances: " + top.map(function(p){ return p.n + " \u2014 " + p.v + " pts (" + p.g + ")"; }).join("; ") + ".";
-    aiGen("report_" + ymd, "You are the Agent in the Score Agent app. Write THE PLAYER REPORT: 3-4 punchy sentences covering yesterday's biggest player performances, like a sharp morning sports briefing. No betting talk.", facts, 260).then(function(t){ var b2 = $("agentReport"); if (t && b2) b2.innerHTML = aiBoxHtml("\uD83D\uDCF0 THE PLAYER REPORT \u2014 YESTERDAY'S STARS", t); });
-  });
+    box.setAttribute("data-done", "1");
+    var facts = "Top recent player performances: " + top.map(function(p){ return p.n + " \u2014 " + p.v + " " + p.stat + " (" + p.g + ")"; }).join("; ") + ".";
+    aiGen("report_" + ymdOf(1), "You are the Agent in the Score Agent app. Write THE PLAYER REPORT: 3-4 punchy sentences covering the biggest recent player performances, like a sharp morning sports briefing. No betting talk.", facts, 260).then(function(t){ var b2 = $("agentReport"); if (t && b2) b2.innerHTML = aiBoxHtml("\uD83D\uDCF0 THE PLAYER REPORT \u2014 TOP PERFORMERS", t); });
+  }).catch(function(){});
 }
 /* ---- Agent Clash hype + recap ---- */
 function aiClashHype(){
