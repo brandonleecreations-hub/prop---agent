@@ -347,6 +347,17 @@ async function aiLane(req, res) {
   res.setHeader("Cache-Control", "no-store");
   const key = aiProvider() ? "set" : "";
   if (req.query.ai === "ping") { res.status(200).json({ ok: true, on: !!key }); return; }
+  if (req.query.ai === "models") {
+    const prov = aiProvider();
+    if (!prov || prov.kind !== "gemini") { res.status(200).json({ ok: false }); return; }
+    try {
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models", { headers: { "x-goog-api-key": prov.key } });
+      const j = await r.json().catch(() => null);
+      const names = j && Array.isArray(j.models) ? j.models.map((m) => String(m.name || "").replace("models/", "")).filter((n) => n.indexOf("gemini") === 0) : [];
+      res.status(200).json({ ok: r.ok, st: r.status, models: names.slice(0, 40) });
+    } catch (e) { res.status(200).json({ ok: false, st: 0 }); }
+    return;
+  }
   if (!key) { res.status(200).json({ ok: false, off: true }); return; }
   let body = req.body;
   if (typeof body === "string") { try { body = JSON.parse(body); } catch (e) { body = null; } }
