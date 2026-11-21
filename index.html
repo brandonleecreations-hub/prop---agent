@@ -3794,12 +3794,12 @@ function renderBuild(){
   }).catch(function(){ box.innerHTML = '<p class="empty">Players could not load — check your connection and tap Refresh.</p>'; });
 }
 
-$("searchInput").addEventListener("input", function(e){ renderSearch(e.target.value); });
+var siEl = $("searchInput"); if (siEl) siEl.addEventListener("input", function(e){ renderSearch(e.target.value); });
 var bsEl = $("boardSearch"); if (bsEl) bsEl.addEventListener("input", function(e){ boardQuery = e.target.value.trim().toLowerCase(); renderBoards(); });
 document.querySelectorAll(".hlopen").forEach(function(b){ b.addEventListener("click", function(){ showView("live"); }); });
 /* #slipChip is wired inside updateSlipChip(): the button element sits after this script in the DOM, so it does not exist at this point in the boot. */
-(function(){ var sel = $("cSport"); LEAGUES.slice(1).filter(function(l){ return !sportHidden(l.key); }).forEach(function(l){ var o=document.createElement("option"); o.value=l.key; o.textContent=l.label; sel.appendChild(o); }); })();
-$("cAdd").addEventListener("click", function(){
+(function(){ var sel = $("cSport"); if (!sel) return; LEAGUES.slice(1).filter(function(l){ return !sportHidden(l.key); }).forEach(function(l){ var o=document.createElement("option"); o.value=l.key; o.textContent=l.label; sel.appendChild(o); }); })();
+var caEl = $("cAdd"); if (caEl) caEl.addEventListener("click", function(){
   var player = $("cPlayer").value.trim(), stat = $("cStat").value.trim(), line = parseFloat($("cLine").value);
   var err = $("cErr");
   if (!player || !stat || !isFinite(line)) { err.textContent = "Fill in player, stat and a numeric line first."; return; }
