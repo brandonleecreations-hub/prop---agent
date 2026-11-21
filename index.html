@@ -1356,7 +1356,6 @@ body.aion [data-ai]{display:block}
 .aitext{font-size:13.5px;line-height:1.45;margin-top:3px;color:#f1edff}
 .pk2take{font-size:12.5px;color:#e9e4ff;background:rgba(124,58,237,.14);border:1px solid rgba(124,58,237,.4);border-radius:9px;padding:6px 8px;margin-top:6px;line-height:1.4;text-align:left}
 #askBar{display:none;position:fixed;left:10px;right:10px;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:45;align-items:center;gap:11px;padding:11px 13px;border-radius:16px;background:linear-gradient(135deg,#4c1d95,#1b1030 72%);border:1px solid #a78bfa;box-shadow:0 0 18px rgba(124,58,237,.55),0 8px 22px rgba(0,0,0,.5);cursor:pointer;overflow:hidden}
-body.aion.onhome #askBar{display:flex}
 #askBar::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.20),transparent);transform:skewX(-18deg);animation:askShine 3.4s ease-in-out infinite;pointer-events:none}
 @keyframes askShine{0%,55%{left:-70%}90%,100%{left:130%}}
 #askBar img{width:42px;height:42px;border-radius:12px;flex:none;position:relative;z-index:1}
@@ -1364,7 +1363,6 @@ body.aion.onhome #askBar{display:flex}
 #askBar .abt b{display:block;font-size:15.5px;font-weight:900;letter-spacing:.4px;color:#fff}
 #askBar .abt span{display:block;font-size:11.5px;color:#d6c9ff;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #askBar .ago{flex:none;position:relative;z-index:1;background:linear-gradient(135deg,#f5c518,#f59e0b);color:#1b1030;font-weight:900;font-size:12.5px;border-radius:999px;padding:8px 13px}
-body.onhome #view-home{padding-bottom:96px}
 .askchips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
 .askchip{border:1px solid #4c3480;background:#221a3d;color:#e9e4ff;border-radius:999px;padding:7px 11px;font-size:12.5px;font-weight:700;cursor:pointer}
 .askchip:active{background:#7C3AED}
@@ -1402,7 +1400,6 @@ body.onhome #view-home{padding-bottom:96px}
     <p class="note" id="heroStatus"></p>
     <div id="secUpcoming"><h2>Upcoming Games</h2>
     <div id="upcoming"><p class="empty">Loading upcoming games from ESPN…</p></div></div>
-    <div data-ai id="askBar"><img src="/api/icons?s=192&v=5" alt=""><div class="abt"><b>💬 ASK THE AGENT</b><span>Scores, players &amp; Pick'em — tap to ask, or 🎤 talk to it</span></div><div class="ago">ASK →</div></div>
     <div class="homeclash posterad" id="clashHomeAd"><img src="/api/banners?s=clashposter&v=2" alt="Agent Clash Card Game — tap to play"></div>
     <div id="dlPop" class="dlpop" style="display:none">
       <button class="dlpopx" id="dlPopX" type="button" aria-label="Close">✕</button>
