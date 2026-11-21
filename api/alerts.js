@@ -19,15 +19,25 @@ const LEAGUES = {
 function sbHeaders(extra) {
   return Object.assign({ apikey: SRK, Authorization: "Bearer " + SRK, "Content-Type": "application/json" }, extra || {});
 }
+// All outbound calls time out fast: a stalled Supabase/ESPN call must fail
+// loudly with JSON, never hang the endpoint (the sports checker and its
+// cron saw a >60s hang on 2026-11-21 and could not tell a hang from a
+// healthy run). 8s covers normal latency with room to spare.
+async function fetchTimeout(url, opts, ms) {
+  const ctl = new AbortController();
+  const to = setTimeout(() => ctl.abort(), ms || 8000);
+  try { return await fetch(url, Object.assign({}, opts, { signal: ctl.signal })); }
+  finally { clearTimeout(to); }
+}
 async function rest(path, opts) {
-  const r = await fetch(SB_URL + "/rest/v1/" + path, opts);
+  const r = await fetchTimeout(SB_URL + "/rest/v1/" + path, opts);
   const txt = await r.text();
   let j = null;
   try { j = txt ? JSON.parse(txt) : null; } catch (e) {}
   return { status: r.status, json: j, text: txt };
 }
 async function getJson(url) {
-  const r = await fetch(url);
+  const r = await fetchTimeout(url);
   if (!r.ok) throw new Error("fetch " + r.status);
   return r.json();
 }
