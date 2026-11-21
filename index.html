@@ -1341,9 +1341,6 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 
   <!-- SPORT PROPS -->
   <section class="view" id="view-sport">
-    <h2 id="sportTitle">Props</h2>
-    <div class="row" style="justify-content:space-between;margin:0 0 12px"><h3 style="margin:0;font-size:17px">Future Games</h3><span class="badge" id="propCountPill"></span></div>
-    <p class="sub">Every card is a real PrizePicks line — player, team, matchup, stat and the big line, labeled with its source. A prop is on this board <b>only</b> before its game starts — the moment a game tips off, its props come off the board.</p>
     <div class="searchbar"><input type="text" id="boardSearch" placeholder="Find a player — tap their tile and all their props pop up"></div>
     <div class="tabs" id="gameFilters" style="margin:0 0 8px"></div>
     <div class="tabs" id="propFilters" style="margin:0 0 12px"></div>
@@ -2447,8 +2444,8 @@ function renderBoards(){
   var lg = leagueByKey(currentSport);
   if (!lg){ currentSport = "nba"; lg = leagueByKey("nba"); }
   if (lg.key === "esports") { renderEspBoardPage(lg); return; }
-  $("sportTitle").textContent = lg.label + " Props — Today";
-  $("propCountPill").textContent = "";
+  // Board header block (title / Future Games / count caption / explainer)
+  // removed — board starts at the search box (Brandon 2026-11-20).
   $("sportProps").innerHTML = '<p class="empty">Loading props…</p>';
   var pf0 = $("propFilters"); if (pf0) setHtml(pf0, "");
   var gf0 = $("gameFilters"); if (gf0) setHtml(gf0, "");
@@ -2618,7 +2615,7 @@ function renderBoardTiles(lg, ps){
   } else {
     box.innerHTML = brkHtml + (gs.length ? gs.map(tileHtml).join("") : (brkGroups.length ? "" : '<p class="empty">No players match — try another name, team or stat.</p>'));
   }
-  var pill2 = $("propCountPill"); if (pill2) pill2.textContent = boardEmpty ? "" : gs.length + " players · tap a player for all their props";
+  var pill2 = $("propCountPill"); if (pill2) pill2.textContent = ""; // top caption removed (Brandon 2026-11-20)
   bindTiles(box);
 }
 
@@ -6252,7 +6249,7 @@ function renderEspBoardPage(lg){
     if (currentSport !== "esports" || !$("sportProps")) return;
     espAttachProps(ps);
     var pill = $("propCountPill");
-    if (pill) pill.textContent = ps.length ? (ps.length + " props · tap a player for all their props") : "";
+    if (pill) pill.textContent = ""; // top caption removed (Brandon 2026-11-20)
     /* Finished matches stay on the board (Brandon 2026-11-19): their props
        render view-only like the regular sports' finished Game Centers,
        and every match card below opens the Esports Game Center. */
