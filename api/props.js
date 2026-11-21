@@ -284,7 +284,7 @@ function aiProvider() {
 let AI_LAST_STATUS = 0;
 // Gemini model names rotate over time (a retired name 404s), so walk the
 // chain and remember what worked.
-const AI_MODELS = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-3-flash-preview", "gemini-3.8-flash", "gemini-flash-latest"];
+const AI_MODELS = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-3-flash-preview", "gemini-flash-latest"]; // 3.8-flash removed 2026-11-21: it hangs >20s and stalled every Ask answer behind it
 let AI_MODEL_OK = "";
 async function aiCall(messages, maxTokens) {
   const prov = aiProvider();
@@ -316,10 +316,10 @@ async function aiCall(messages, maxTokens) {
     contents.push({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: String(m.content) }] });
   });
   if (!contents.length) return null;
-  const models = AI_MODEL_OK ? [AI_MODEL_OK] : AI_MODELS;
+  const models = AI_MODEL_OK ? [AI_MODEL_OK].concat(AI_MODELS.filter((x) => x !== AI_MODEL_OK)) : AI_MODELS;
   for (const m of models) {
     const ctl = new AbortController();
-    const to = setTimeout(() => ctl.abort(), 20000);
+    const to = setTimeout(() => ctl.abort(), 11000);
     try {
       const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", {
         method: "POST", signal: ctl.signal,
@@ -385,7 +385,8 @@ async function aiLane(req, res) {
     if (!ck || !usr) { res.status(200).json({ ok: false }); return; }
     const hit = await aiCacheGet(ck);
     if (hit && hit.text) { res.status(200).json({ ok: true, text: hit.text, cached: true }); return; }
-    const text = await aiCall([{ role: "system", content: sys || "You write short, punchy sports blurbs." }, { role: "user", content: usr }], Math.max(body.maxTokens || 240, 600));
+    let text = await aiCall([{ role: "system", content: sys || "You write short, punchy sports blurbs." }, { role: "user", content: usr }], Math.max(body.maxTokens || 240, 600));
+    if (!text && AI_LAST_STATUS === 429) { await new Promise((r) => setTimeout(r, 2500)); text = await aiCall([{ role: "system", content: sys || "You write short, punchy sports blurbs." }, { role: "user", content: usr }], Math.max(body.maxTokens || 240, 600)); }
     if (!text) { res.status(200).json({ ok: false, st: AI_LAST_STATUS }); return; }
     await aiCacheSet(ck, { text: text, ts: Date.now() });
     res.status(200).json({ ok: true, text: text });
@@ -400,7 +401,8 @@ async function aiLane(req, res) {
     const sys = String(body.sys || "").slice(0, 700);
     const ctx = String(body.ctx || "").slice(0, 3500);
     const full = [{ role: "system", content: sys + (ctx ? "\n\nLIVE APP DATA:\n" + ctx : "") }].concat(msgs);
-    const text = await aiCall(full, 700);
+    let text = await aiCall(full, 700);
+    if (!text && AI_LAST_STATUS === 429) { await new Promise((r) => setTimeout(r, 2500)); text = await aiCall(full, 700); }
     if (!text) { res.status(200).json({ ok: false, st: AI_LAST_STATUS }); return; }
     await aiChatBump(uid, 1);
     res.status(200).json({ ok: true, text: text });

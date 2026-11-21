@@ -1355,7 +1355,21 @@ body.aion [data-ai]{display:block}
 .aikick{color:#c4b5fd;font-weight:900;font-size:10.5px;letter-spacing:1.2px}
 .aitext{font-size:13.5px;line-height:1.45;margin-top:3px;color:#f1edff}
 .pk2take{font-size:12.5px;color:#e9e4ff;background:rgba(124,58,237,.14);border:1px solid rgba(124,58,237,.4);border-radius:9px;padding:6px 8px;margin-top:6px;line-height:1.4;text-align:left}
-.askpromo{background:linear-gradient(135deg,#3b1470,#1b1030);border:1px solid #7C3AED;border-radius:14px;padding:12px;margin:10px 0;text-align:left}
+#askBar{display:none;position:fixed;left:10px;right:10px;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:45;align-items:center;gap:11px;padding:11px 13px;border-radius:16px;background:linear-gradient(135deg,#4c1d95,#1b1030 72%);border:1px solid #a78bfa;box-shadow:0 0 18px rgba(124,58,237,.55),0 8px 22px rgba(0,0,0,.5);cursor:pointer;overflow:hidden}
+body.aion.onhome #askBar{display:flex}
+#askBar::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.20),transparent);transform:skewX(-18deg);animation:askShine 3.4s ease-in-out infinite;pointer-events:none}
+@keyframes askShine{0%,55%{left:-70%}90%,100%{left:130%}}
+#askBar img{width:42px;height:42px;border-radius:12px;flex:none;position:relative;z-index:1}
+#askBar .abt{flex:1;min-width:0;position:relative;z-index:1}
+#askBar .abt b{display:block;font-size:15.5px;font-weight:900;letter-spacing:.4px;color:#fff}
+#askBar .abt span{display:block;font-size:11.5px;color:#d6c9ff;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#askBar .ago{flex:none;position:relative;z-index:1;background:linear-gradient(135deg,#f5c518,#f59e0b);color:#1b1030;font-weight:900;font-size:12.5px;border-radius:999px;padding:8px 13px}
+body.onhome #view-home{padding-bottom:96px}
+.askchips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.askchip{border:1px solid #4c3480;background:#221a3d;color:#e9e4ff;border-radius:999px;padding:7px 11px;font-size:12.5px;font-weight:700;cursor:pointer}
+.askchip:active{background:#7C3AED}
+#askMicBtn.listening{background:#dc2645!important;border-color:#ff8fa5!important;animation:micPulse 1s ease-in-out infinite}
+@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,69,.55)}50%{box-shadow:0 0 0 9px rgba(220,38,69,0)}}
 #askDlg{border:1px solid #7C3AED;border-radius:16px;background:#14101f;color:#fff;width:min(94vw,540px);max-height:88dvh;padding:0}
 #askMsgs{max-height:52dvh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-top:10px;padding-right:2px}
 .askmsg{max-width:86%;padding:8px 11px;border-radius:13px;font-size:14px;line-height:1.4;white-space:pre-wrap}
@@ -1388,7 +1402,7 @@ body.aion [data-ai]{display:block}
     <p class="note" id="heroStatus"></p>
     <div id="secUpcoming"><h2>Upcoming Games</h2>
     <div id="upcoming"><p class="empty">Loading upcoming games from ESPN…</p></div></div>
-    <div data-ai class="askpromo" id="askPromo"><div style="font-weight:900;font-size:15.5px">💬 ASK THE AGENT</div><p class="note" style="margin:4px 0 9px">Ask anything about players, games, stats and matchups — the Agent answers from live data.</p><button type="button" class="bigbtn" id="askOpenBtn" style="width:100%">💬 Start asking</button></div>
+    <div data-ai id="askBar"><img src="/api/icons?s=192&v=5" alt=""><div class="abt"><b>💬 ASK THE AGENT</b><span>Scores, players &amp; Pick'em — tap to ask, or 🎤 talk to it</span></div><div class="ago">ASK →</div></div>
     <div class="homeclash posterad" id="clashHomeAd"><img src="/api/banners?s=clashposter&v=2" alt="Agent Clash Card Game — tap to play"></div>
     <div id="dlPop" class="dlpop" style="display:none">
       <button class="dlpopx" id="dlPopX" type="button" aria-label="Close">✕</button>
@@ -1489,7 +1503,7 @@ body.aion [data-ai]{display:block}
   </div>
 </nav>
 
-<dialog id="askDlg"><div style="padding:14px"><div class="row" style="justify-content:space-between;align-items:center"><b style="font-size:16px">💬 Ask the Agent</b><button type="button" class="csbtn" id="askClose">✕ CLOSE</button></div><div id="askMsgs"></div><div style="display:flex;gap:8px;margin-top:10px"><input id="askInput" type="text" placeholder="Ask about a player, game or stat…" autocomplete="off" style="flex:1;min-width:0;background:#101018;border:1px solid #2c2c3a;border-radius:10px;color:#fff;padding:10px 12px;font-size:14px;box-sizing:border-box"><button id="askSend" class="openbtn" type="button">Ask</button></div><p class="note" style="margin-top:8px">Answers come from the app's live ESPN data · 40 questions a day</p></div></dialog>
+<dialog id="askDlg"><div style="padding:14px"><div class="row" style="justify-content:space-between;align-items:center"><b style="font-size:16px">💬 Ask the Agent</b><span style="display:flex;gap:7px;align-items:center"><button type="button" class="csbtn" id="askVoiceBtn" title="Hear the answers out loud">🔇</button><button type="button" class="csbtn" id="askClose">✕ CLOSE</button></span></div><div id="askMsgs"></div><div class="askchips" id="askChips"><button type="button" class="askchip" data-q="What games are on tonight?">🏀 Games tonight</button><button type="button" class="askchip" data-q="Who won last night? Give me the big results.">🏆 Who won last night?</button><button type="button" class="askchip" data-q="Who is playing the best right now?">🔥 Who's hot?</button><button type="button" class="askchip" data-q="Help me with today's Daily Pick'em — what do you think of the 3 players?">🎯 Pick'em help</button></div><div style="display:flex;gap:8px;margin-top:10px"><input id="askInput" type="text" placeholder="Ask about a player, game or stat…" autocomplete="off" style="flex:1;min-width:0;background:#101018;border:1px solid #2c2c3a;border-radius:10px;color:#fff;padding:10px 12px;font-size:14px;box-sizing:border-box"><button id="askMicBtn" class="csbtn" type="button" style="display:none;font-size:16px;padding:0 12px" title="Ask by voice">🎤</button><button id="askSend" class="openbtn" type="button">Ask</button></div><p class="note" style="margin-top:8px">Answers come from the app's live ESPN data · 40 questions a day</p></div></dialog>
 <dialog id="playerDlg">
   <div id="playerDlgBody"></div>
 </dialog>
@@ -8038,6 +8052,7 @@ function showView(name){
   if (name==="live") renderLive();
   if (name==="board") renderBoard();
   if (name==="players") renderFinder();
+  try { document.body.classList.toggle("onhome", name === "home"); } catch (e) {}
   window._view = name; lsSet("pa_tab", name); updateSlipChip();
   if (name === "home") setTimeout(maybeShowDlPop, 400); else { var dp0 = $("dlPop"); if (dp0) dp0.style.display = "none"; }
   window.scrollTo(0,0);
@@ -9064,7 +9079,7 @@ function paBackStep(){
    CSS-hidden until body.aion. Generated blurbs are cached server-side
    per key, so each is written once and served to every user. */
 var AI_ON = false;
-function aiPost(body){ return fetch("/api/props?ai=1", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(function(r){ return r.json(); }).catch(function(){ return null; }); }
+function aiPost(body){ var ctl = ("AbortController" in window) ? new AbortController() : null; var to = ctl ? setTimeout(function(){ ctl.abort(); }, 65000) : 0; return fetch("/api/props?ai=1", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined }).then(function(r){ if (to) clearTimeout(to); return r.json(); }).catch(function(){ if (to) clearTimeout(to); return null; }); }
 function aiGen(cacheKey, sys, user, maxTokens){ if (!AI_ON) return Promise.resolve(null); return aiPost({ mode: "gen", cacheKey: cacheKey, sys: sys, user: user, maxTokens: maxTokens || 220 }).then(function(j){ return (j && j.ok && j.text) ? j.text : null; }); }
 function aiBoxHtml(kick, text){ return '<div class="aibox"><div class="aikick">' + kick + '</div><div class="aitext">' + esc(text) + '</div></div>'; }
 function aiBoot(){
@@ -9077,13 +9092,54 @@ function aiBoot(){
 }
 /* ---- Ask the Agent (promoted on Home) ---- */
 var ASK_MSGS = [];
+function aiSpeak(t){
+  try {
+    if (lsGet("pa_askvoice", "") !== "1" || !window.speechSynthesis) return;
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(String(t).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, ""));
+    u.rate = 1.03;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
 function aiWireAsk(){
   var open = $("askOpenBtn"), dlg = $("askDlg"), close = $("askClose"), send = $("askSend"), input = $("askInput");
   if (!dlg) return;
-  if (open) open.addEventListener("click", function(){ try { dlg.showModal(); } catch (e) {} aiAskSeed(); });
-  if (close) close.addEventListener("click", function(){ dlg.close(); });
+  try { if (!window._view || window._view === "home") document.body.classList.add("onhome"); } catch (e) {}
+  var openDlg = function(){ try { dlg.showModal(); } catch (e) {} aiAskSeed(); };
+  if (open) open.addEventListener("click", openDlg);
+  var bar = $("askBar"); if (bar) bar.addEventListener("click", openDlg);
+  if (close) close.addEventListener("click", function(){ try { speechSynthesis.cancel(); } catch (e) {} dlg.close(); });
   if (send) send.addEventListener("click", function(){ aiAskSend(); });
   if (input) input.addEventListener("keydown", function(e){ if (e.key === "Enter") aiAskSend(); });
+  var vb = $("askVoiceBtn");
+  if (vb) {
+    var syncVb = function(){ vb.textContent = lsGet("pa_askvoice", "") === "1" ? "\uD83D\uDD0A" : "\uD83D\uDD07"; };
+    syncVb();
+    vb.addEventListener("click", function(){
+      var on = lsGet("pa_askvoice", "") === "1";
+      lsSet("pa_askvoice", on ? "" : "1"); syncVb();
+      if (!on) aiSpeak("Voice on. Ask me anything.");
+      else { try { speechSynthesis.cancel(); } catch (e) {} }
+    });
+  }
+  var chips = $("askChips");
+  if (chips) chips.addEventListener("click", function(e){ var b = e.target && e.target.closest ? e.target.closest("[data-q]") : null; if (b) aiAskSendText(b.getAttribute("data-q")); });
+  var mic = $("askMicBtn");
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (mic && SR && input) {
+    mic.style.display = "";
+    mic.addEventListener("click", function(){
+      var rec;
+      try { rec = new SR(); } catch (e) { return; }
+      rec.lang = "en-US"; rec.interimResults = false; rec.maxAlternatives = 1;
+      mic.classList.add("listening");
+      var oldPh = input.placeholder; input.placeholder = "Listening\u2026 speak now";
+      rec.onresult = function(ev){ var t = ev.results && ev.results[0] && ev.results[0][0] ? ev.results[0][0].transcript : ""; if (t) { input.value = t; aiAskSend(); } };
+      var done = function(){ mic.classList.remove("listening"); input.placeholder = oldPh; };
+      rec.onend = done; rec.onerror = done;
+      try { rec.start(); } catch (e) { done(); }
+    });
+  }
 }
 function aiAskSeed(){ if (ASK_MSGS.length) return; ASK_MSGS.push({ role: "assistant", content: "I'm the Agent. Ask me about any player, game, stat or matchup \u2014 I answer from the app's live data." }); aiAskDraw(); }
 function aiAskDraw(){ var box = $("askMsgs"); if (!box) return; box.innerHTML = ASK_MSGS.map(function(m){ return '<div class="askmsg ' + (m.role === "user" ? "me" : "bot") + '">' + esc(m.content) + '</div>'; }).join(""); box.scrollTop = box.scrollHeight; }
@@ -9099,34 +9155,37 @@ function aiAskCtx(){
   });
   return Promise.all([Promise.all(jobs), Promise.all(finJobs)]).then(function(both){
     var lines = [];
-    both[0].forEach(function(r){ if (!r) return; (r.ev || []).slice(0, 10).forEach(function(ev){ var ts = eventTeams(ev); if (ts.length < 2) return; var st = (ev.status && ev.status.type) || {}; lines.push(r.lg.label + ": " + (ts[0].name || "") + " " + (ts[0].score != null ? ts[0].score : "") + " vs " + (ts[1].name || "") + " " + (ts[1].score != null ? ts[1].score : "") + " (" + (st.shortDetail || st.state || "") + ")"); }); });
+    both[0].forEach(function(r){ if (!r) return; (r.ev || []).slice(0, 10).forEach(function(ev){ var ts = eventTeams(ev); if (ts.length < 2) return; var st = (ev.status && ev.status.type) || {}; var when = ""; if (st.state === "pre" && ev.date) { try { when = " \u00B7 starts " + new Date(ev.date).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); } catch (e) {} } lines.push(r.lg.label + ": " + (ts[0].name || "") + " " + (ts[0].score != null ? ts[0].score : "") + " vs " + (ts[1].name || "") + " " + (ts[1].score != null ? ts[1].score : "") + " (" + (st.shortDetail || st.state || "") + when + ")"); }); });
     var finLines = [];
     both[1].forEach(function(r){ finLines = finLines.concat(r); });
     finLines = finLines.slice(0, 14);
     var pk = "Daily Pick'em \u2014 The Dealmaker's 3 Players: " + PICKEM2.legs.map(function(l){ return l.name + " " + l.statLabel + " line " + l.line + " (" + l.team + " vs " + l.opp + ")"; }).join("; ");
-    return "RECENT FINALS (last 2 days):\n" + finLines.join("\n") + "\nTODAY / UPCOMING:\n" + lines.join("\n") + "\n" + pk;
+    return pk + "\nRECENT FINALS (last 2 days):\n" + finLines.join("\n") + "\nTODAY / UPCOMING (start times are the fan's local time):\n" + lines.slice(0, 24).join("\n");
   });
 }
 function aiAskSend(){
   var input = $("askInput"); if (!input) return;
   var q = (input.value || "").trim(); if (!q) return;
   input.value = "";
+  aiAskSendText(q);
+}
+function aiAskSendText(q){
   ASK_MSGS.push({ role: "user", content: q }); aiAskDraw();
   ASK_MSGS.push({ role: "assistant", content: "\u2026" }); aiAskDraw();
   aiAskCtx().then(function(ctx){
     return aiPost({ mode: "chat", uid: lsGet("pa_uid", "") || "anon", sys: "You are the Agent inside the Score Agent app. Answer fans' sports questions briefly (2-4 sentences) in a sharp, friendly tone. Use ONLY the live app data provided plus well-known general knowledge. Never give betting or gambling advice. If the data does not cover it, say so plainly.", ctx: ctx, messages: ASK_MSGS.filter(function(m){ return m.content !== "\u2026"; }).slice(-8) });
   }).then(function(j){
     ASK_MSGS.pop();
-    if (j && j.ok) ASK_MSGS.push({ role: "assistant", content: j.text });
+    if (j && j.ok) { ASK_MSGS.push({ role: "assistant", content: j.text }); aiSpeak(j.text); }
     else if (j && j.limit) ASK_MSGS.push({ role: "assistant", content: "You've hit today's question limit \u2014 the Agent will be back tomorrow." });
-    else ASK_MSGS.push({ role: "assistant", content: "The Agent couldn't answer that one \u2014 try again in a moment." });
+    else ASK_MSGS.push({ role: "assistant", content: "The Agent is getting swamped right now \u2014 give it a few seconds and ask again." });
     aiAskDraw();
   });
 }
 /* ---- The Dealmaker's Takes (Daily Pick'em) ---- */
 function aiTakesRender(){
   var box = $("pkTakes"); if (!box || !AI_ON || box.getAttribute("data-done")) return;
-  box.setAttribute("data-done", "1");
+  if (window._pkTakeRetry && Date.now() < window._pkTakeRetry) return;
   box.innerHTML = '<div class="note" style="margin-top:8px">\uD83D\uDDE3\uFE0F The Dealmaker is sizing up his 3 players\u2026</div>';
   var jobs = PICKEM2.legs.map(function(l, i){
     return pfFetch(ESPN_V3 + l.sport + "/" + l.league + "/athletes/" + l.athleteId + "/gamelog").then(function(gl){
@@ -9138,7 +9197,12 @@ function aiTakesRender(){
       return aiGen("take_" + PICKEM2.week + "_" + i, "You are THE DEALMAKER, a smooth, confident sports agent character in the Score Agent app. Give your take in ONE sentence, first person, a little swagger, no betting advice \u2014 talk about the player and the number like a scout, not a bookie.", facts, 110).then(function(t){ return t ? '<div class="pk2take">\uD83D\uDDE3\uFE0F <b>' + esc(l.name) + ':</b> ' + esc(t) + '</div>' : ""; });
     }).catch(function(){ return ""; });
   });
-  Promise.all(jobs).then(function(parts){ var b2 = $("pkTakes"); if (b2) b2.innerHTML = parts.join(""); });
+  Promise.all(jobs).then(function(parts){
+    var b2 = $("pkTakes"); if (!b2) return;
+    var html = parts.join("");
+    if (html) { b2.innerHTML = html; b2.setAttribute("data-done", "1"); }
+    else { window._pkTakeRetry = Date.now() + 60000; b2.innerHTML = '<div class="note" style="margin-top:8px">\uD83D\uDDE3\uFE0F The Dealmaker stepped out for a minute \u2014 his takes will pop in shortly.</div>'; }
+  });
 }
 /* ---- Player insight (player pages) ---- */
 function aiInsightRender(){
