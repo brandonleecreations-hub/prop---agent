@@ -2,8 +2,8 @@
   "dependencies": {
     "web-push": "^3.6.7"
   },
-  "description": "Prop Agent \u2014 Props Ticker (static site + push endpoint)",
+  "description": "Score Agent \u2014 live scores, player stats + Agent Clash",
   "name": "prop-agent",
   "private": true,
-  "version": "1.0.176"
+  "version": "1.1.0"
 }

@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Prop Agent</title>
+<title>Score Agent</title>
 <meta name="description" content="Player props ticker — build tickets, track live games, climb the agent tiers.">
 <meta name="theme-color" content="#000000">
-<meta name="apple-mobile-web-app-title" content="Prop Agent">
+<meta name="apple-mobile-web-app-title" content="Score Agent">
 <link rel="manifest" href="/manifest.json?v=2">
 <link rel="icon" type="image/png" sizes="192x192" href="/api/icons?s=192&v=2">
 <link rel="apple-touch-icon" href="/api/icons?s=192&v=2">
@@ -1290,14 +1290,42 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .celtitle{font-size:27px;font-weight:900;color:#f5c518;text-shadow:0 2px 18px rgba(245,197,24,.65);margin-top:16px;animation:celzoom .7s .15s cubic-bezier(.2,.9,.3,1.3) both;z-index:2;text-align:center;padding:0 12px}
 .celsub{font-weight:800;color:#fff;letter-spacing:1.5px;margin-top:5px;z-index:2}
 .celtap{color:#c9c9d4;font-size:12.5px;margin-top:12px;z-index:2}
+#gameProps{display:none}
+.sgh{font-size:16px;margin:14px 0 8px}
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.sgcell{background:#12121e;border:1px solid #26263a;border-radius:10px;padding:7px 4px;text-align:center}
+.sgcell b{display:block;font-size:15.5px;color:#fff}
+.sgcell span{font-size:9.5px;letter-spacing:.6px;color:#9a9ab0;text-transform:uppercase}
+.pfslider{display:flex;gap:9px;overflow-x:auto;padding:8px 2px 12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.pfslider>*{scroll-snap-align:center}
+.pfteam{display:flex;flex-direction:column;align-items:center;gap:6px;background:#12121e;border:1px solid #26263a;border-radius:14px;padding:12px 8px;min-width:106px;max-width:106px;cursor:pointer;color:#fff;font-weight:700;font-size:12px;text-align:center}
+.pfpcard{display:flex;flex-direction:column;align-items:center;gap:5px;background:#12121e;border:1px solid #26263a;border-radius:14px;padding:12px 8px;min-width:110px;max-width:110px;cursor:pointer;text-align:center}
+.pfpcard img{width:56px;height:56px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#7C3AED,#3b1470)}
+.pfpcard b{font-size:12.5px;color:#fff;line-height:1.2}
+.pfpcard span{font-size:10.5px;color:#9a9ab0}
+.pfrow{display:flex;align-items:center;gap:11px;background:#12121e;border:1px solid #26263a;border-radius:14px;padding:9px 12px;margin-bottom:8px;cursor:pointer}
+.pfrow img{width:46px;height:46px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#7C3AED,#3b1470);flex:0 0 auto}
+.l5slider{display:flex;gap:9px;overflow-x:auto;padding:8px 2px 12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.l5card{background:#12121e;border:1px solid #26263a;border-radius:14px;padding:10px 12px;min-width:176px;max-width:176px;scroll-snap-align:center}
+.l5card .l5opp{font-weight:900;font-size:13.5px;color:#fff}
+.l5card .l5line{margin-top:6px;font-size:12.5px;color:#cdbcf5;line-height:1.55}
+.pk2leg{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.28);border:1px solid rgba(245,197,24,.35);border-radius:12px;padding:8px 10px;margin-top:8px}
+.pk2leg img{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#222;flex:0 0 auto}
+.pk2btns{display:flex;gap:6px;margin-left:auto;flex:0 0 auto}
+.pk2btn{background:#1b1b28;color:#fff;border:1px solid #3a3a52;border-radius:9px;padding:8px 10px;font-weight:900;font-size:12.5px}
+.pk2btn.on{background:linear-gradient(135deg,#7C3AED,#6d28d9);border-color:#a78bfa}
+.pk2btn:disabled{opacity:.55}
+.pfhead{display:flex;gap:12px;align-items:center}
+.pfhead img{width:76px;height:76px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#7C3AED,#3b1470);border:2px solid rgba(245,197,24,.6)}
+.psrow[data-player]{cursor:pointer}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bungee&family=Archivo:wght@500;700;900&display=swap" rel="stylesheet"></head>
 <body>
 <header>
   <div class="hwrap">
-    <img class="logo" id="logoImg" src="/api/icons?s=192" alt="Prop Agent" title="Your agent profile">
+    <img class="logo" id="logoImg" src="/api/icons?s=192" alt="Score Agent" title="Your agent profile">
     <div style="min-width:0">
-      <h1>Prop Agent <small class="htick"><span class="hticktrack"><span class="htickseg">Props Ticker · All Sports ·&nbsp;</span><span class="htickseg">Props Ticker · All Sports ·&nbsp;</span><span class="htickseg">Props Ticker · All Sports ·&nbsp;</span><span class="htickseg">Props Ticker · All Sports ·&nbsp;</span></span></small></h1>
+      <h1>Score Agent <small class="htick"><span class="hticktrack"><span class="htickseg">Live Scores · Player Stats ·&nbsp;</span><span class="htickseg">Live Scores · Player Stats ·&nbsp;</span><span class="htickseg">Live Scores · Player Stats ·&nbsp;</span><span class="htickseg">Live Scores · Player Stats ·&nbsp;</span></span></small></h1>
       <div class="hbars"><i></i><i></i></div>
     </div>
     <div class="hsp"></div>
@@ -1312,15 +1340,14 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <section class="view" id="view-home">
     <div id="liveHero"></div>
     <p class="note" id="heroStatus"></p>
-    <div id="topTicket"></div>
-    <div id="tickerWrap" style="display:none"><h2>Your Players Ticker</h2><p class="sub">Your picks, live — follows the players on your slip and tickets, updated with the scores every 30 seconds.</p><div class="tickwrap" id="yourTicker"></div></div>
+    <div id="pickemHome"></div>
     <div id="secUpcoming"><h2>Upcoming Games</h2>
     <div id="upcoming"><p class="empty">Loading upcoming games from ESPN…</p></div></div>
     <div class="homeclash posterad" id="clashHomeAd"><img src="/api/banners?s=clashposter&v=2" alt="Agent Clash Card Game — tap to play"></div>
     <div id="dlPop" class="dlpop" style="display:none">
       <button class="dlpopx" id="dlPopX" type="button" aria-label="Close">✕</button>
-      <div class="dlpopt">📲 Get the Prop Agent App</div>
-      <div class="dlpopn" id="dlPopNote">Put it on your home screen and turn on notifications — never miss a ticket result.</div>
+      <div class="dlpopt">📲 Get the Score Agent App</div>
+      <div class="dlpopn" id="dlPopNote">Put it on your home screen — live scores, player stats and Agent Clash, one tap away.</div>
       <div class="dlpoprow">
         <button class="dlpopb main" id="dlPopInstall" type="button">⬇ Download App</button>
         <button class="dlpopb" id="dlPopNotif" type="button">🔔 Notifications</button>
@@ -1331,11 +1358,11 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
         <img src="/api/icons?s=512" alt="" style="width:52px;height:52px;border-radius:14px;box-shadow:0 8px 26px rgba(0,0,0,.55);flex:0 0 auto">
         <div style="min-width:0">
           <div style="font-size:10px;font-weight:900;letter-spacing:2px;color:#f5b942">FREE · NO DOWNLOAD NEEDED</div>
-          <div style="font-size:20px;font-weight:900;line-height:1.08;color:#fff;text-shadow:0 2px 16px rgba(167,139,250,.65)">PROP AGENT</div>
-          <div style="font-size:12.5px;color:#ddd0ff;line-height:1.35;margin-top:2px">Real player props · Live tickets · <b style="color:#fff">72 collectible agent cards</b> to unlock</div>
+          <div style="font-size:20px;font-weight:900;line-height:1.08;color:#fff;text-shadow:0 2px 16px rgba(167,139,250,.65)">SCORE AGENT</div>
+          <div style="font-size:12.5px;color:#ddd0ff;line-height:1.35;margin-top:2px">Live scores · Player stats · <b style="color:#fff">72 collectible agent cards</b> to battle with</div>
         </div>
       </div>
-      <p class="sub" id="installNote" style="margin:6px 12px 0;color:#cdbcf5">One tap puts Prop Agent on your home screen — its own icon, full screen, opens like a real app.</p>
+      <p class="sub" id="installNote" style="margin:6px 12px 0;color:#cdbcf5">One tap puts Score Agent on your home screen — its own icon, full screen, opens like a real app.</p>
       <p style="margin:8px 12px 0;font-size:13px;font-weight:800;color:#f5b942">🎁 Share &amp; earn a FREE PACK — once a day, every day. Open it on the Board tab.</p>
       <div style="display:flex;gap:8px;padding:10px 12px 12px;flex-wrap:wrap">
         <button class="ghostbtn" id="installBtn" style="flex:1;min-width:150px;background:linear-gradient(135deg,#f5b942,#d97706);color:#1a1000;border:none;font-weight:900;padding:10px 14px;font-size:14px;box-shadow:0 8px 24px rgba(245,185,66,.45)">📲 ADD TO HOME SCREEN</button>
@@ -1343,35 +1370,24 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
       </div>
       <button type="button" id="wReplay" class="ghostbtn" style="width:100%;margin-top:10px;background:transparent;color:#cfcfe0;border:1px solid rgba(255,255,255,.25);font-weight:700;padding:10px">▶ Watch the 10-second welcome</button>
     </div>
-    <p class="note" style="text-align:center;font-size:10px;color:#55556a;margin:12px 8px 0">Prop Agent is not affiliated with or endorsed by PrizePicks. Props data via Parlay API.</p>
+    <p class="note" style="text-align:center;font-size:10px;color:#55556a;margin:12px 8px 0">Score Agent is not affiliated with or endorsed by ESPN. Scores and stats via ESPN.</p>
   </section>
 
-  <!-- SPORT PROPS -->
+  <!-- SPORT: games (scores) + esports board -->
   <section class="view" id="view-sport">
-    <div class="searchbar"><input type="text" id="boardSearch" placeholder="Find a player — tap their tile and all their props pop up"></div>
-    <div class="tabs" id="gameFilters" style="margin:0 0 8px"></div>
-    <div class="tabs" id="propFilters" style="margin:0 0 12px"></div>
-    <div id="popWrap" style="display:none"><h3 style="margin:4px 0 8px;font-size:16px">Popular Players</h3><div class="pgrid" id="popTiles"></div></div>
-    <div class="pgrid" id="sportProps"><p class="empty">Loading props…</p></div>
-    <div class="card slip" id="slipSport" style="margin-top:14px"></div>
-  </section>
-
-  <!-- MY TICKETS -->
-  <section class="view" id="view-tickets">
-    <h2>My Tickets</h2>
-    <p class="sub">These are only yours — tickets save to your cloud profile (Supabase) and this device. Tap the logo (top left) or the Your Agent card on the Board tab to set your agent name and profile pic; your record, tiers and cards follow your agent name.</p>
-    <div class="card" style="background:linear-gradient(135deg,#3b1470,#22103f);border-color:#5b21b6">
-      <div style="font-size:15.5px">Lock a ticket and its live stats load here automatically.</div>
-      <button class="ghostbtn" id="tkRefresh" style="margin-top:10px;background:linear-gradient(135deg,var(--purp2),var(--purp));color:#fff;border:none;font-weight:800;padding:10px 16px">⟳ Refresh stats now</button>
+    <div id="sportGames"><p class="empty">Loading games…</p></div>
+    <div id="espBoardWrap" style="display:none">
+      <div class="tabs" id="gameFilters" style="margin:0 0 8px"></div>
+      <div class="tabs" id="propFilters" style="margin:0 0 12px"></div>
+      <div id="popWrap" style="display:none"><h3 style="margin:4px 0 8px;font-size:16px">Popular Players</h3><div class="pgrid" id="popTiles"></div></div>
+      <div class="pgrid" id="sportProps"><p class="empty">Loading…</p></div>
     </div>
-    <div id="myTickets"><p class="empty">No tickets yet — lock one in from the builder.</p></div>
-    <div id="hlTicket" style="margin-top:14px"></div>
   </section>
 
   <!-- LIVE CENTER -->
   <section class="view" id="view-live">
     <h2>Live Center</h2>
-    <p class="sub">Games are grouped by <b>Live Games</b> (happening now) and <b>Future Games</b> (upcoming). Tap a game to open its score by period, team stats, player stats, and play-by-play. Auto-refreshes every 30 seconds. <b>Every upcoming game shows up here</b> — open a game and its player props are inside whenever any are posted.</p>
+    <p class="sub">Games are grouped by <b>Live Games</b> (happening now) and <b>Future Games</b> (upcoming). Tap a game to open its score by period, team stats, player stats, and play-by-play. Auto-refreshes every 30 seconds. <b>Every upcoming game shows up here</b> — and in any game, tap a player's name to open their full stats page.</p>
     <div class="tabs" id="liveTabs"></div>
     <p class="note" id="liveStatus"></p>
     <div id="liveCenter"><p class="empty">Fetching fresh scores from ESPN…</p></div>
@@ -1381,31 +1397,14 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <div id="espFinished"></div>
   </section>
 
-  <!-- BUILD / ADD TICKET -->
-  <section class="view" id="view-build">
-    <h2>Build Your Ticket</h2>
-    <div class="card slip" id="slipBuildTop" style="margin:0 0 12px"></div>
-    <div class="searchbar"><input type="text" id="searchInput" placeholder="Find a player — type a name or team (e.g. “Ball”)"></div>
-    <div class="tabs" id="buildSports" style="margin:0 0 4px"></div>
-    <div id="searchResults"><p class="empty">Loading players…</p></div>
-    <div class="card slip" id="slipBuild" style="margin-top:14px"></div>
-    <details class="card" style="margin-top:14px">
-      <summary>Optional: add a fully custom leg</summary>
-      <p class="note" style="margin-top:10px">Copy each line exactly as your betting site shows it — your player, your line, your More / Less pick, and which site it came from (PrizePicks, Underdog, DraftKings, FanDuel, Sleeper…). Prop Agent tracks live stats against <b>your</b> line where ESPN reports the stat. Tennis stats like Aces, Double Faults and First Serve % aren't in the ESPN feed, so those legs get a tap-to-track stepper on your ticket.</p>
-      <p class="note" style="margin-top:6px;color:#f5c518;font-weight:700">🧩 Fair-play rule: a ticket with any custom leg earns no tier points, coins or packs — custom picks are graded by you, not the box score. The ticket still tracks, saves, and can be liked like any other.</p>
-      <div class="fld"><label>Player</label><input type="text" id="cPlayer" placeholder="Player name"></div>
-      <div class="row">
-        <div class="fld" style="flex:1"><label>Stat</label><input type="text" id="cStat" placeholder="e.g. Points, Aces, Passing Yards"></div>
-        <div class="fld" style="width:110px"><label>Line</label><input type="number" id="cLine" step="0.5" placeholder="24.5"></div>
-      </div>
-      <div class="row">
-        <div class="fld" style="flex:1"><label>Pick</label><select id="cDir"><option value="MORE">MORE</option><option value="LESS">LESS</option></select></div>
-        <div class="fld" style="flex:1"><label>Sport</label><select id="cSport"></select></div>
-        <div class="fld" style="flex:1"><label>Source site</label><select id="cSrc"><option>PrizePicks</option><option>Underdog</option><option>DraftKings</option><option>FanDuel</option><option>Sleeper</option><option>Other</option></select></div>
-      </div>
-      <button class="ghostbtn" id="cAdd">Add custom leg to slip</button>
-      <p class="err" id="cErr"></p>
-    </details>
+  <!-- PLAYER FINDER -->
+  <section class="view" id="view-players">
+    <h2>Player Finder</h2>
+    <p class="sub">Search any athlete — or browse by sport and team — for season stats, career stats and their last 5 games.</p>
+    <div class="searchbar"><input type="text" id="pfSearch" placeholder="Search any player — try Mahomes or Ohtani" autocomplete="off"></div>
+    <div class="tabs" id="pfPills" style="margin:0 0 10px"></div>
+    <div id="pfResults"></div>
+    <div id="pfBrowse"></div>
   </section>
 
   <!-- LEADERBOARD -->
@@ -1418,11 +1417,11 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <div class="card" style="margin-bottom:10px;padding:10px"><input type="text" id="agentSearch" placeholder="Search usernames…" autocomplete="off" style="width:100%;background:#101018;border:1px solid #2c2c3a;border-radius:10px;color:#fff;padding:9px 12px;font-size:14px;box-sizing:border-box"><div id="agentSearchResults" style="margin-top:6px"></div></div>
     <h2>👥 Following <button type="button" class="csbtn" id="followToggle" style="float:right">▾ HIDE</button></h2>
     <div id="followingBody">
-    <p class="sub">Agents you follow and their latest shared tickets.</p>
+    <p class="sub">Agents you follow — tap one to open their profile.</p>
     <div id="followingBox"><p class="empty">Loading…</p></div>
     </div>
     <h2>🏆 Tiers</h2>
-    <button type="button" id="tiersToggle" class="sectoggle">&#9660; HIDE THE TIERS</button><div id="tiersBody"><p class="sub">Climb the ladder by locking winning tickets. A win counts only when every leg on the ticket hits.</p>
+    <button type="button" id="tiersToggle" class="sectoggle">&#9660; HIDE THE TIERS</button><div id="tiersBody"><p class="sub">Climb the ladder by winning Agent Clash battles — every win earns tier points for the character you set below.</p>
     <div id="tiers"></div></div>
     <div id="clashBox"></div>
     <div id="packsBox"></div>
@@ -1436,16 +1435,14 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 <nav class="bottom">
   <div class="nwrap">
     <button data-nav="home" class="on"><span class="ni"><svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 3.1 2.9 10.9h2.6v8.9h13v-8.9h2.6L12 3.1Z M10.3 19.8v-5h3.4v5h-3.4Z"/></svg></span>Home</button>
-    <button data-nav="tickets"><span class="ni"><svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.5 5h13A2.5 2.5 0 0 1 21 7.5v2a2.75 2.75 0 0 0 0 5v2a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5v-2a2.75 2.75 0 0 0 0-5v-2A2.5 2.5 0 0 1 5.5 5Zm8.7 2.2h1.6v1.9h-1.6V7.2Zm0 4h1.6v1.9h-1.6v-1.9Zm0 4h1.6v1.9h-1.6v-1.9Z"/></svg></span>Tickets</button>
     <button data-nav="live"><span class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.9" stroke-linecap="round"><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/><path d="M8.9 15.1a4.4 4.4 0 0 1 0-6.2M15.1 8.9a4.4 4.4 0 0 1 0 6.2M6.1 17.9a8.4 8.4 0 0 1 0-11.8M17.9 6.1a8.4 8.4 0 0 1 0 11.8"/></svg></span>Live</button>
-    <button data-nav="build" class="addbtn"><span class="addcircle">+</span>Add Ticket</button>
+    <button data-nav="players"><span class="ni"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-3.3 0-8 1.7-8 5v3h16v-3c0-3.3-4.7-5-8-5Z"/></svg></span>Players</button>
     <button data-nav="board"><span class="ni"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.8a6.2 6.2 0 1 1 0 12.4 6.2 6.2 0 0 1 0-12.4Z"/><path d="M8.6 13.9 6.5 21.2 12 18l5.5 3.2-2.1-7.3-2.1 1.1a3.4 3.4 0 0 1-2.6 0L8.6 13.9Z"/></svg></span>Board</button>
   </div>
 </nav>
 
 <dialog id="playerDlg">
   <div id="playerDlgBody"></div>
-  <div class="card slip" id="slipDlg" style="display:none"></div>
 </dialog>
 <dialog id="viewAgentDlg">
   <div id="viewAgentBody"></div>
@@ -1474,7 +1471,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
   <div class="statline" id="agStats"></div>
   <div class="fld" style="margin-top:14px"><label>Push notifications</label>
     <button class="ghostbtn" id="pushBtn" type="button">Enable notifications</button>
-    <p class="note" id="pushNote">Game starts, leg hits/misses and line moves. On iPhone, install Prop Agent via “Add to Home Screen” first.</p>
+    <p class="note" id="pushNote">Agent Clash reminders and big-game alerts. On iPhone, install Score Agent via “Add to Home Screen” first.</p>
   </div>
   <div class="row" style="margin-top:14px">
     <button class="bigbtn" id="agSave" style="flex:1">Save profile</button>
@@ -1484,7 +1481,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 
 <dialog id="pushPromptDlg">
   <h3>&#128276; Never miss a result</h3>
-  <p class="note">Your account is created. Turn on notifications and Prop Agent will tap you before your tickets start and the moment they win or lose &#8212; even with the app closed. Just the good stuff, never spam.</p>
+  <p class="note">Your account is created. Turn on notifications and Score Agent will tap you when your agents need you &#8212; even with the app closed. Just the good stuff, never spam.</p>
   <div class="row" style="margin-top:14px;gap:8px">
     <button class="bigbtn" id="ppEnable" type="button" style="flex:1">Enable notifications</button>
     <button class="ghostbtn" id="ppSkip" type="button">Not now</button>
@@ -1497,25 +1494,25 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
     <button type="button" class="wskip" id="wSkip">Skip ✕</button>
     <div class="wbeat on" id="wBeat1">
       <img src="/api/icons?s=512" alt="" class="wlogo">
-      <div class="wtitle">PROP AGENT</div>
-      <div class="wsub">Real player props, live every game night.<br>No money. All bragging rights.</div>
+      <div class="wtitle">SCORE AGENT</div>
+      <div class="wsub">Live scores &amp; every player's stats.<br>Plus the Agent Clash card game.</div>
     </div>
     <div class="wbeat" id="wBeat2">
       <div class="wcard">
         <img class="wphoto" src="https://a.espncdn.com/i/headshots/nba/players/full/1966.png" alt="" onerror="this.remove()">
         <div class="wcardname">LEBRON JAMES</div>
-        <div class="wcardstat">POINTS</div>
-        <div class="wcardline">24.5</div>
-        <div class="wcardbtns"><span class="wmore">MORE</span><span class="wless">LESS</span></div>
+        <div class="wcardstat">POINTS PER GAME</div>
+        <div class="wcardline">15.7</div>
+        <div class="wcardbtns"><span class="wmore">SEASON</span><span class="wless">CAREER</span></div>
       </div>
-      <div class="wslip"><span>Your slip · 2 picks</span><span class="wstamp">LOCKED IN</span></div>
-      <div class="wsub">Tap MORE or LESS.<br>That's the whole game.</div>
+      <div class="wslip"><span>Every player · Every stat</span><span class="wstamp">LAST 5</span></div>
+      <div class="wsub">Search any player.<br>Season, career &amp; last 5 games.</div>
     </div>
     <div class="wbeat" id="wBeat3">
       <div class="wringwrap"><div class="wringrays"></div><div class="wringcard2"><img src="/api/avatars?s=14" alt="THE RING chase card"><span class="wshine"></span></div></div>
-      <div class="wsub" style="font-size:19px">Win tickets → climb the tiers,<br>open packs, chase <b style="color:#f5c518">THE RING</b>.</div>
-      <div class="wsub">Follow your friends. Like their tickets.</div>
-      <button type="button" class="bigbtn" id="wStart" style="max-width:280px;margin-top:10px">Start picking →</button>
+      <div class="wsub" style="font-size:19px">Win battles → climb the tiers,<br>open packs, chase <b style="color:#f5c518">THE RING</b>.</div>
+      <div class="wsub">Follow your friends. Battle them head-to-head.</div>
+      <button type="button" class="bigbtn" id="wStart" style="max-width:280px;margin-top:10px">Start exploring →</button>
     </div>
     <div class="wdots"><span class="on"></span><span></span><span></span></div>
     <div class="wprog"><i></i></div>
@@ -2015,7 +2012,7 @@ function tileHtml(g){
 }
 function bindTiles(scope){ if (!scope) return; scope.querySelectorAll("[data-player]").forEach(function(t){ t.addEventListener("click", function(){ openPlayer(t.getAttribute("data-player"), t.getAttribute("data-league"), t.getAttribute("data-viewonly")==="1", t.getAttribute("data-final")==="1"); }); }); }
 var dlgPlayer = null;
-function openPlayer(name, leagueKey, viewOnly, finalView){
+function openPlayerLegacy(name, leagueKey, viewOnly, finalView){
   dlgPlayer = {name:name, league:leagueKey, viewOnly:!!viewOnly, finalView:!!finalView};
   dlgSlideIdx = 0;
   fillPlayerDlg();
@@ -2457,42 +2454,33 @@ function renderSportGames(lg){
 }
 function renderBoards(){
   var lg = leagueByKey(currentSport);
-  if (!lg){ currentSport = "nba"; lg = leagueByKey("nba"); }
-  if (lg.key === "esports") { renderEspBoardPage(lg); return; }
-  // Board header block (title / Future Games / count caption / explainer)
-  // removed — board starts at the search box (Brandon 2026-11-20).
-  $("sportProps").innerHTML = '<p class="empty">Loading props…</p>';
-  var pf0 = $("propFilters"); if (pf0) setHtml(pf0, "");
-  var gf0 = $("gameFilters"); if (gf0) setHtml(gf0, "");
-  var pwL = $("popWrap"); if (pwL) pwL.style.display = "none";
-  buildProps(lg).then(function(ps){
-    if (currentSport!==lg.key) return;
-    if (!ps.length){
-      if (propsConfigured === false) $("sportProps").innerHTML = '<p class="empty">Props are almost ready — the PrizePicks feed key is being connected. Scores, news and tickets all work meanwhile.</p>';
-      else { $("sportProps").innerHTML = '<p class="empty">No '+esc(lg.label)+' props on the board right now — games with props will appear here.</p><div id="sportGames"></div><div id="sportNews"></div>'; renderSportNews(lg); renderSportGames(lg); }
-      var pw0 = $("popWrap"); if (pw0) pw0.style.display = "none";
-      getScoreboard(lg, 1).then(function(){
-        var bmE = breakMap[lg.key] || {};
-        if (Object.keys(bmE).length) refreshPropsBrk(lg).then(function(out){ if (out && out.length && currentSport === lg.key) renderBoards(); });
-      }).catch(function(){});
-      return;
-    }
-    getScoreboard(lg, boardSpanDays(ps)).then(function(evs){
-      boardEvents[lg.key] = evs || [];
-      var lt = {};
-      (evs||[]).forEach(function(e){ var st = e.status && e.status.type && e.status.type.state; if (st!=="in") return; var det = (e.status.type.shortDetail || e.status.type.detail || "LIVE"); eventTeams(e).forEach(function(t){ lt[(t.name||"").toLowerCase()] = {detail: det}; }); });
-      liveTeamsByLeague[lg.key] = lt;
-    }).catch(function(){}).then(function(){
-      if (currentSport !== lg.key) return;
-      var bm = breakMap[lg.key] || {};
-      if (Object.keys(bm).length){
-        refreshPropsBrk(lg).then(function(out){ if (currentSport === lg.key) renderBoardTiles(lg, out || ps); });
-      } else renderBoardTiles(lg, ps);
-    });
-  }).catch(function(){ $("sportProps").innerHTML = '<p class="empty">Props could not load — check your connection and tap Refresh.</p>'; });
+  var gw = $("sportGames"), ew = $("espBoardWrap");
+  if (lg.key === "esports"){ if (gw) gw.style.display = "none"; if (ew) ew.style.display = ""; renderEspBoardPage(lg); return; }
+  if (ew) ew.style.display = "none";
+  if (!gw) return;
+  gw.style.display = "";
+  var seq = (window._sgSeq = (window._sgSeq || 0) + 1);
+  var jobs = [getScoreboard(lg, 3).catch(function(){ return []; })];
+  if (lg.key === "tennis") jobs.push(getScoreboard({ key: "tennisw", label: "Tennis", sport: "tennis", league: "wta" }, 3).then(function(ev){ (ev || []).forEach(function(e){ e._tour = "WTA"; }); return ev || []; }).catch(function(){ return []; }));
+  Promise.all(jobs).then(function(rs){
+    if (window._sgSeq !== seq || window._view !== "sport" || currentSport !== lg.key) return;
+    var events = (rs[0] || []).slice();
+    if (rs.length > 1){ events.forEach(function(e){ if (!e._tour) e._tour = "ATP"; }); events = events.concat(rs[1] || []); events.sort(function(a, b){ return String(a.date || "").localeCompare(String(b.date || "")); }); }
+    var live = [], up = [], fin = [];
+    events.forEach(function(ev){ var st = ev.status && ev.status.type && ev.status.type.state; if (st === "in") live.push(ev); else if (st === "post") fin.push(ev); else up.push(ev); });
+    fin.reverse();
+    var slider = function(list){ return '<div class="lvslider">' + list.map(function(ev){ return gameCard(lg, ev); }).join("") + '</div>'; };
+    var html = "";
+    if (live.length) html += '<h3 class="sgh">🔴 Live Now</h3>' + slider(live);
+    if (up.length) html += '<h3 class="sgh">Upcoming</h3>' + slider(up.slice(0, 16));
+    if (fin.length) html += '<h3 class="sgh">Finished</h3>' + slider(fin.slice(0, 16));
+    if (!html) html = '<p class="empty">No ' + esc(lg.label) + ' games on the board right now — check the Live tab for other sports.</p>';
+    gw.innerHTML = html;
+    gw.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var pp = el.getAttribute("data-game").split("|"); showView("live"); window._gameFrom = "sport"; openGame(pp[0], pp[1]); }); });
+    gw.querySelectorAll(".lvslider").forEach(function(tr, i){ try { popSliderInit(tr, "sg" + i, ".card.game"); } catch (e) {} });
+    hydratePbpMinis();
+  });
 }
-/* Days of ESPN scoreboard the board needs: enough to cover the latest
-   prop start on the board (game pills pair props with real games). */
 function boardSpanDays(ps){
   var max = 0;
   (ps || []).forEach(function(p){ if (p.starts){ var t = new Date(p.starts).getTime(); if (isFinite(t) && t > max) max = t; } });
@@ -2732,7 +2720,7 @@ function agentRows(){
   var myTw = lbTicketWins();
   if (mySrv && typeof mySrv.ticket_wins === "number" && mySrv.ticket_wins > myTw) myTw = mySrv.ticket_wins;
   rows.push({id:cloudUid, name:(profile.name||"You")+" (You)", wins:myWins(), ticketWins:myTw, clashW:Math.max(mine.w||0, mySrv ? (mySrv.battle_w||0) : 0), clashL:Math.max(mine.l||0, mySrv ? (mySrv.battle_l||0) : 0), me:true, avatar:profile.avatar||"", featured:profile.featured||"", streak:myStreak()});
-  rows.sort(function(a,b){ return (b.ticketWins-a.ticketWins) || (b.wins-a.wins); });
+  rows.sort(function(a,b){ return (b.clashW-a.clashW) || (b.wins-a.wins); });
   return rows;
 }
 function setHtml(el, html){ if (el && el._lastHtml !== html){ el._lastHtml = html; el.innerHTML = html; return true; } return false; }
@@ -2924,7 +2912,7 @@ function gameCard(lg, ev){
     var sfmt = function(c){ return (c.linescores||[]).map(function(x){ return x.displayValue; }).join(" vs "); };
     extra = '<div class="note" style="margin-top:6px">Sets: '+esc(sfmt(cs[0]))+' vs '+esc(sfmt(cs[1]))+' · '+esc(detail)+' · Point score not reported by ESPN</div>';
   }
-  var sub = live ? "" : "Tap for the game center — props, live tracker, stats & play-by-play →";
+  var sub = live ? "" : "Tap for the game center — live tracker, stats & play-by-play →";
   var bodyHtml = '<div style="margin-top:6px">' + rows + '</div>';
   if (live && lg.key !== "tennis"){
     bodyHtml = '<div style="margin-top:6px">' + rows + '</div><div class="pbptick" data-pbp="' + esc(lg.sport) + '/' + esc(lg.league) + '|' + ev.id + '"></div>';
@@ -3257,121 +3245,7 @@ function gcFetchRosters(lg, cs, key, s){
     if (window._openGame && String(window._openGame.eventId).split(":").pop() === key) renderGameProps(lg, s);
   });
 }
-function renderGameProps(lg, s){
-  var box = $("gameProps"); if (!box) return;
-  var comp = (s.header && s.header.competitions || [])[0] || {};
-  var cs = comp.competitors || [];
-  var st = comp.status && comp.status.type || {};
-  var liveView = st.state === "in";
-  var finalView = st.state === "post";
-  var inBrk = isBreakStatus({status: {type: st}});
-  if (st.state === "in"){
-    var lt = liveTeamsByLeague[lg.key] = liveTeamsByLeague[lg.key] || {};
-    cs.forEach(function(c){ var det = st.shortDetail || st.detail || "LIVE"; if (c.team){ if (c.team.displayName) lt[c.team.displayName.toLowerCase()] = {detail: det}; if (c.team.shortDisplayName) lt[c.team.shortDisplayName.toLowerCase()] = {detail: det}; } });
-  }
-  (inBrk ? refreshPropsBrk(lg).then(function(){ return buildProps(lg); }) : buildProps(lg)).then(function(ps){
-    var head = '<div style="font-size:16px;margin-top:14px"><b>Player Props — This Game</b> <span class="note">best on top · tap a player for all their props</span></div>' + (inBrk ? '<p class="sub" style="color:var(--gold);margin-top:6px">⏸ At the break — fresh props just posted for the next part of the game. Pick before play resumes.</p>' : '') + (liveView ? '<p class="sub" style="margin-top:6px"><span class="gplive">🔴 LIVE</span> View only — picks closed when the game started. <span class="nowval">now</span> = current stat for that prop.</p>' : '') + (finalView ? '<p class="sub" style="margin-top:6px"><span class="gplive">🏁 FINAL</span> View only — this game is over. <span class="nowval">final</span> = final stat for that prop.</p>' : '');
-    var closedHtml = '<div style="font-size:16px;margin-top:14px"><b>Player Props — This Game</b></div><p class="empty">Props closed — this game is over.</p>';
-    if (!ps.length){ box.innerHTML = finalView ? closedHtml : head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'; return; }
-    /* Game membership is decided on FULL names, never surnames (Brandon
-       2026-11-19): the old surname set admitted other games' players — any
-       "Green" matched Josh Green, and the suffix "Jr." (from Jaren Jackson
-       Jr. on a fetched roster) matched Morez Johnson Jr. Box-score athletes
-       live under statistics[].athletes in ESPN summaries (tp.athletes is
-       empty), so read them from there. */
-    var boxNames = {}, rosterNames = {}, teamNames = {};
-    try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ (tp.statistics || []).forEach(function(g){ (g.athletes || []).forEach(function(a){ if (a.athlete && a.athlete.displayName) boxNames[nameKeyOf(a.athlete.displayName)] = 1; }); }); (tp.athletes || []).forEach(function(a){ if (a.athlete && a.athlete.displayName) boxNames[nameKeyOf(a.athlete.displayName)] = 1; }); }); } catch(e){}
-    try { (s.rosters || []).forEach(function(rt){ (rt.athletes || []).forEach(function(a){ var an = a.athlete && a.athlete.displayName; if (an) boxNames[nameKeyOf(an)] = 1; }); }); } catch(e){}
-    var gcKey = String(comp.id || "");
-    var gcCached = gcRosterCache[gcKey];
-    if (gcCached) gcCached.forEach(function(en){ if (en.nm) rosterNames[nameKeyOf(en.nm)] = 1; });
-    if (lg.key === "tennis") cs.forEach(function(c){ if (c.team && c.team.displayName) boxNames[nameKeyOf(c.team.displayName)] = 1; });
-    if (!Object.keys(boxNames).length && !Object.keys(rosterNames).length && cs.length === 2 && cs[0].team && cs[0].team.id && cs[1].team && cs[1].team.id && !gcCached && !gcRosterFetching[gcKey] && lg.key !== "tennis") gcFetchRosters(lg, cs, gcKey, s);
-    cs.forEach(function(c){ if (c.team){ if (c.team.displayName) teamNames[c.team.displayName.toLowerCase()] = 1; if (c.team.shortDisplayName) teamNames[c.team.shortDisplayName.toLowerCase()] = 1; } });
-    var gstart = Date.parse(comp.date || "");
-    var mset = {};
-    if (cs.length === 2) {
-      var vA = [], vB = [];
-      [cs[0], cs[1]].forEach(function(c, ix){ var t = c.team || {}; [t.displayName, t.shortDisplayName].forEach(function(nm){ if (nm) (ix ? vB : vA).push(nm.toLowerCase()); }); });
-      vA.forEach(function(a){ vB.forEach(function(b){ mset[a + " @ " + b] = 1; mset[b + " @ " + a] = 1; }); });
-    }
-    var hasBox = Object.keys(boxNames).length > 0;
-    var hits = ps.filter(function(p){
-      if (p.league && p.league !== lg.key) return false;
-      if (gstart && p.starts) { var pt = Date.parse(p.starts); if (pt && Math.abs(pt - gstart) > 9 * 3600 * 1000) return false; }
-      if (p.matchup && mset[p.matchup.toLowerCase()]) return true;
-      if (p.team && teamNames[p.team.toLowerCase()]) return true;
-      var nk = nameKeyOf(p.player);
-      if (nk && boxNames[nk]) return true;
-      if (!hasBox && nk && rosterNames[nk]) return true;
-      if (String(p.player).indexOf("+") > -1){
-        var parts = String(p.player).split("+").map(function(x){ return nameKeyOf(x); }).filter(Boolean);
-        var src = hasBox ? boxNames : rosterNames;
-        if (parts.length > 1 && parts.every(function(k){ return !!src[k]; })) return true;
-      }
-      return false;
-    });
-    if (!hits.length){ box.innerHTML = gcRosterFetching[gcKey] ? head + '<p class="empty">Loading player props\u2026</p>' : (finalView ? closedHtml : head + '<p class="empty">No PrizePicks props posted for this game yet — they land closer to game time.</p>'); return; }
-    if (liveView || finalView) hits.forEach(function(p){ var v = liveStatFor(s, p); if (v != null) p.liveActual = v; });
-    var gs = sortGroups(playerGroups(hits), "pct");
-    /* Compact rows organized by team (Brandon 2026-11-17): small player
-       rows under a team header; tap a player for all their props. */
-    var teamOf = {};
-    try { ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ var tn = (tp.team && (tp.team.displayName || tp.team.shortDisplayName)) || ""; (tp.statistics || []).forEach(function(g){ (g.athletes || []).forEach(function(a){ if (a.athlete && a.athlete.displayName) teamOf[lastNameOf(a.athlete.displayName)] = tn; }); }); (tp.athletes || []).forEach(function(a){ if (a.athlete && a.athlete.displayName) teamOf[lastNameOf(a.athlete.displayName)] = tn; }); }); } catch(e){}
-    if (gcCached) gcCached.forEach(function(en){ if (!teamOf[en.ln]) teamOf[en.ln] = en.team; });
-    if (lg.key === "tennis") cs.forEach(function(c){ if (c.team && c.team.displayName) teamOf[lastNameOf(c.team.displayName)] = c.team.displayName; });
-    var compTeams = cs.map(function(c){ return c.team ? {name: c.team.displayName || c.team.shortDisplayName || "", away: c.homeAway === "away", logo: logoUrl(c)} : null; }).filter(function(x){ return x && x.name; });
-    compTeams.sort(function(a, b){ return (b.away ? 1 : 0) - (a.away ? 1 : 0); });
-    var buckets = compTeams.map(function(t){ return {name: t.name, logo: t.logo, groups: []}; });
-    var rest = [];
-    gs.forEach(function(g){
-      var tn = g.team || teamOf[lastNameOf(g.player)] || "";
-      var bi = -1;
-      buckets.forEach(function(b, i){ if (tn && (b.name.toLowerCase() === tn.toLowerCase() || lastNameOf(b.name) === lastNameOf(tn))) bi = i; });
-      if (bi >= 0) buckets[bi].groups.push(g); else rest.push(g);
-    });
-    if (rest.length) buckets.push({name: "More players", logo: "", groups: rest});
-    var rowHtml = function(g){
-      var tops = g.props.slice().sort(function(a, b){ return (b.pct || 0) - (a.pct || 0); }).slice(0, 3).map(function(p){ return esc(p.stat) + " " + esc(String(p.line)); }).join(" \u00B7 ");
-      var more = g.props.length > 3 ? ' <span style="color:var(--purp-lt)">+' + (g.props.length - 3) + " more</span>" : "";
-      return '<div class="gprow" data-player="' + esc(g.player) + '" data-league="' + esc(g.league) + '">'
-        + '<span class="pwrap"><span class="pinit">' + esc(initials(g.player)) + '</span>' + (g.img ? '<img src="' + esc(g.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>'
-        + '<span class="gpm"><span class="gpn">' + esc(g.player) + ' <span class="gpc">' + g.props.length + ' prop' + (g.props.length === 1 ? "" : "s") + '</span></span>'
-        + '<span class="gpl">' + tops + more + cdChipHtml(g.starts) + '</span></span>'
-        + '<span class="gpa">\u203A</span></div>';
-    };
-    if (liveView || finalView){
-      var slideHtml = function(g){
-        var topsArr = g.props.slice().sort(function(a, b){ return (b.pct || 0) - (a.pct || 0); });
-        var tops = topsArr.slice(0, 3).map(function(p){ return esc(p.stat) + " " + esc(String(p.line)) + (p.liveActual != null ? ' <span class="nowval">' + (finalView ? "final " : "now ") + p.liveActual + '</span>' : ''); }).join("<br>");
-        var more = g.props.length > 3 ? '<br><span style="color:var(--purp-lt)">+' + (g.props.length - 3) + " more</span>" : "";
-        var tp0 = topsArr[0];
-        var strip5 = (tp0 && !tp0.half && lg.key !== "tennis") ? '<div class="l5row mini" data-l5="1" data-mini="1" data-aid="' + esc(tp0.athleteId || "") + '" data-player="' + esc(tp0.player) + '" data-lg="' + esc(tp0.league) + '" data-stat="' + esc(tp0.stat) + '" data-line="' + tp0.line + '"></div>' : "";
-        return '<div class="gpslide" data-player="' + esc(g.player) + '" data-league="' + esc(g.league) + '" data-viewonly="1"' + (finalView ? ' data-final="1"' : '') + '>'
-          + '<span class="pwrap"><span class="pinit">' + esc(initials(g.player)) + '</span>' + (g.img ? '<img src="' + esc(g.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '</span>'
-          + '<div class="gpn">' + esc(g.player) + '</div>'
-          + '<div class="gpc">' + g.props.length + ' prop' + (g.props.length === 1 ? "" : "s") + '</div>'
-          + '<div class="gpl">' + tops + more + '</div>' + strip5 + '</div>';
-      };
-      box.innerHTML = head + buckets.filter(function(b){ return b.groups.length; }).map(function(b){
-        return '<div class="gphdr">' + (b.logo ? tlogoImg(b.logo, 16) : "") + esc(b.name.toUpperCase()) + '</div><div class="fslider">' + b.groups.map(slideHtml).join("") + '</div>';
-      }).join("");
-      bindTiles(box);
-      hydrateL5();
-      /* Focus glow: run the Game Center prop sliders through the same
-         pop machinery as every other slider, so the slide you are on
-         (.uppop) is the one that glows (Brandon 2026-11-20). */
-      try { box.querySelectorAll(".fslider").forEach(function(tr, i){ popSliderInit(tr, "gc" + i, ".gpslide", "0px -30% 0px -30%"); }); } catch (e) {}
-      return;
-    }
-    box.innerHTML = head + buckets.filter(function(b){ return b.groups.length; }).map(function(b){
-      return '<div class="gphdr">' + (b.logo ? tlogoImg(b.logo, 16) : "") + esc(b.name.toUpperCase()) + '</div>' + b.groups.map(rowHtml).join("");
-    }).join("");
-    bindTiles(box);
-  }).catch(function(){});
-}
-
-/* ---------- game center: animated court/field tracker (Google-style) ---------- */
+function renderGameProps(lg, s){ var box = $("gameProps"); if (box) box.innerHTML = ""; }
 function wpHtml(s, cs){
   var wp = s.winprobability || [];
   if (!wp.length || !cs || cs.length < 2) return "";
@@ -3557,9 +3431,6 @@ function openGame(key, eventId, isRefresh){
     window.scrollTo(0, 0);
   }
   var lg = leagueByKey(key);
-  if (!isRefresh && PARLAY_KEYS[lg.key] && (!propsAt[lg.key] || Date.now() - propsAt[lg.key] > 5*60*1000)) {
-    refreshProps(lg).then(function(){ if (window._openGame && String(window._openGame.eventId) === String(eventId)) openGame(key, eventId, true); });
-  }
   var tourLg = lg.league, eid = String(eventId);
   var ci = eid.indexOf(":");
   if (ci>0){ tourLg = eid.slice(0, ci); eid = eid.slice(ci+1); }
@@ -3608,7 +3479,7 @@ function openGame(key, eventId, isRefresh){
     } else {
       var perf = [];
       (s.leaders || []).forEach(function(tl){ (tl.leaders||[]).forEach(function(cat){ var L = (cat.leaders||[])[0]; if (L && L.athlete && perf.length<4) perf.push({name:L.athlete.displayName, stat:(L.displayValue||"") + " " + (cat.shortDisplayName||cat.displayName||"")}); }); });
-      if (perf.length) html += '<div style="font-size:16px;margin-top:14px"><b>Top</b> <b style="color:var(--gold)">Performers</b></div>' + perf.map(function(p){ return '<div class="row" style="justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><b>' + esc(p.name) + '</b><span style="color:var(--cyan);font-weight:700;font-size:13px">' + esc(p.stat) + '</span></div>'; }).join("");
+      if (perf.length) html += '<div style="font-size:16px;margin-top:14px"><b>Top</b> <b style="color:var(--gold)">Performers</b></div>' + perf.map(function(p){ return '<div class="row" data-player="' + esc(p.name) + '" data-league="' + lg.key + '" style="justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer"><b>' + esc(p.name) + '</b><span style="color:var(--cyan);font-weight:700;font-size:13px">' + esc(p.stat) + '</span></div>'; }).join("");
       var tstats = (s.boxscore && s.boxscore.statistics) || (s.boxscore && s.boxscore.teams) || [];
       if (tstats.length===2){
         /* Team stats as a tidy compact grid (Brandon 2026-11-18): away
@@ -3647,7 +3518,7 @@ function openGame(key, eventId, isRefresh){
                 var parts = [];
                 cols.forEach(function(ci){ var v = stArr[ci]; if (v != null && v !== "" && v !== "--") parts.push(esc(String(v)) + " " + esc(labs[ci])); });
                 if (!parts.length) return;
-                grRows += '<div class="psrow"><span class="psn">' + esc((a.athlete && a.athlete.displayName) || "") + '</span><span class="psl">' + parts.join(" \u00B7 ") + "</span></div>";
+                grRows += '<div class="psrow" data-player="' + esc((a.athlete && a.athlete.displayName) || "") + '" data-league="' + lg.key + '"><span class="psn">' + esc((a.athlete && a.athlete.displayName) || "") + '</span><span class="psl">' + parts.join(" \u00B7 ") + "</span></div>";
               });
               if (grRows) rows += ((tp.statistics || []).length > 1 ? '<div class="psgrp">' + esc(gr.name || "") + "</div>" : "") + grRows;
             });
@@ -3666,6 +3537,7 @@ function openGame(key, eventId, isRefresh){
     else html += '<div style="font-size:14px;margin-top:14px"><b>Play by Play</b></div><p class="note" style="margin-top:6px">' + (lg.key === "tennis" ? "ESPN does not report point-by-point plays for tennis - live set and game scores are in the Match Tracker above." : "No plays reported yet - they will show here as the game goes.") + '</p>';
     html += (st.state === "pre" ? '' : '<div id="gameProps"></div>') + '</div>';
     $("gameDetail").innerHTML = '<button class="gcBack" type="button">← All games</button>' + html;
+    bindTiles($("gameDetail"));
     if (isRefresh && keepY) window.scrollTo(0, keepY);
     var pbpBtn = $("pbpBtn");
     if (pbpBtn) pbpBtn.addEventListener("click", function(){ var all = $("pbpAll"); if (!all) return; var open = all.style.display !== "none"; if (!open && !all.innerHTML) all.innerHTML = plays.slice(15).map(fmtPlay).join(""); all.style.display = open ? "none" : ""; window._pbpOpen = !open; pbpBtn.textContent = open ? "Show all plays" : "Show fewer plays"; });
@@ -4446,7 +4318,7 @@ async function downloadCard(kind, idx, btn){
   ctx.textAlign="center"; ctx.fillStyle="#fff";
   var icon=await loadImgC("/api/icons?s=512", false);
   if (icon) ctx.drawImage(icon, W/2-52, 44, 104, 104);
-  ctx.font="800 30px system-ui, sans-serif"; ctx.fillText("PROP AGENT", W/2, 198);
+  ctx.font="800 30px system-ui, sans-serif"; ctx.fillText("SCORE AGENT", W/2, 198);
   ctx.font="700 15px system-ui, sans-serif"; ctx.fillStyle="#b9a8e8"; ctx.fillText("P R O P S   T I C K E R", W/2, 226);
   var cy=472;
   if (photoSrc){
@@ -4496,7 +4368,7 @@ var POWERS = [
 function charIdxOf(){ var m = /[?&]s=(\d+)/.exec((profile && profile.char) || ""); return m ? parseInt(m[1], 10) : 0; }
 function cardCharIdx(){ var v = parseInt(localStorage.getItem("pa_cardchar") || "0", 10); if (v >= 1 && v <= 12) return v; return charIdxOf() || 1; }
 function cardBackHTML(title, sub){
-  return '<div class="flipback"><img src="/api/icons?s=512" alt=""><div class="bkname">PROP AGENT</div><div class="bksub"><b style="color:#fff">' + title + '</b><br>' + sub + '</div></div>';
+  return '<div class="flipback"><img src="/api/icons?s=512" alt=""><div class="bkname">SCORE AGENT</div><div class="bksub"><b style="color:#fff">' + title + '</b><br>' + sub + '</div></div>';
 }
 /* Brandon 2026-11-19: LEGEND cards carrying his ultimate-form art (battle s=<ci>L), shown whole. */
 var LEGEND_ART = { "1": "1L", "2": "2L", "3": "3L", "4": "4L", "5": "5L", "6": "6L", "7": "7L", "8": "8L", "9": "9L", "10": "10L", "11": "11L", "12": "12L" };
@@ -4589,8 +4461,8 @@ function renderBoard(){
   renderPickem();
   renderFollowing();
   var rows = agentRows();
-  $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Ticket Wins</th><th>Clash</th></tr>'
-    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+(r.id?' class="agentclick" data-agent="'+r.id+'"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px' + frameCss(r.featured, 2, r.avatar) + '">':'')+'<b>'+esc(r.name)+'</b>'+streakBadge(r.streak)+'</td><td>'+t.name+'</td><td>'+r.ticketWins+'</td><td>'+(r.clashW||0)+'W \u2013 '+(r.clashL||0)+'L</td></tr>'; }).join("") + '</table>';
+  $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Tier Pts</th><th>Clash</th></tr>'
+    + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+(r.id?' class="agentclick" data-agent="'+r.id+'"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px' + frameCss(r.featured, 2, r.avatar) + '">':'')+'<b>'+esc(r.name)+'</b>'+streakBadge(r.streak)+'</td><td>'+t.name+'</td><td>'+r.wins+'</td><td>'+(r.clashW||0)+'W \u2013 '+(r.clashL||0)+'L</td></tr>'; }).join("") + '</table>';
   var wins = maxWins();
   $("tiers").innerHTML = tierProgressHTML(charWins(tierCharIdx()), tierCharIdx()); bindTierStrip();
   var cards = allPlayerCardLegs();
@@ -4632,7 +4504,7 @@ function renderBoard(){
 }
 
 /* ---------- Weekly Pick'em (special card reward) ---------- */
-var WEEKLY_PICKEM = { week: "2026-W47", lgKey: "nfl", eventId: "401873066", starts: "2026-11-20T01:15Z", away: "Indianapolis Colts", home: "Houston Texans", awayShort: "Colts", homeShort: "Texans", note: "Thursday Night Football", cardName: "PROP AGENT", art: "/api/avatars?s=13&v=2", bannerArt: "/api/banners?s=pickem" };
+var WEEKLY_PICKEM = { week: "2026-W47", lgKey: "nfl", eventId: "401873066", starts: "2026-11-20T01:15Z", away: "Indianapolis Colts", home: "Houston Texans", awayShort: "Colts", homeShort: "Texans", note: "Thursday Night Football", cardName: "SCORE AGENT", art: "/api/avatars?s=13&v=2", bannerArt: "/api/banners?s=pickem" };
 function specialUnlocked(){ return (lsGet("pa_special", []) || []).indexOf(WEEKLY_PICKEM.week) >= 0; }
 function pickemWhen(){ try { return new Date(WEEKLY_PICKEM.starts).toLocaleString("en-US", { timeZone: "America/Denver", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); } catch(e){ return ""; } }
 /* Weekly Pick'em countdown (Brandon 2026-11-19): medium segmented timer in the
@@ -4839,7 +4711,7 @@ function renderPacks(){
     + '</div>';
 }
 function ringBackHTML(){
-  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512" alt=""></div><div class="bkname" style="color:#f5c518">PROP AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">THE RING · CHAMPIONSHIP EDITION</div><div class="bksub">Signed · One of a Kind<br>The rarest pull in the game — about 1 pack in 200</div><div class="holo" style="--hc:#f5c51859"></div></div>';
+  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512" alt=""></div><div class="bkname" style="color:#f5c518">SCORE AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">THE RING · CHAMPIONSHIP EDITION</div><div class="bksub">Signed · One of a Kind<br>The rarest pull in the game — about 1 pack in 200</div><div class="holo" style="--hc:#f5c51859"></div></div>';
 }
 function stampsGet(){ return lsGet("pa_stamps", []); }
 function ringCardHTML(){
@@ -4848,7 +4720,7 @@ function ringCardHTML(){
     + '<div class="tcplate"><span class="tcname">THE RING</span><span class="tcno">🏆 CHASE</span></div>'
     + '<div class="tcwin"><img class="cardart" src="/api/avatars?s=14" alt="">' + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">THE RING</span><span class="rarpill" style="background:#f5c518;color:#1a1405">ONE OF A KIND</span></div>'
-    + '<div class="tierto" style="margin-top:6px">' + (un ? 'You pulled it — the signed chase card. The rarest card in Prop Agent.' : 'The signed championship ring card. Hiding in about 1 pack in 200 — open packs to hunt it.') + '</div>'
+    + '<div class="tierto" style="margin-top:6px">' + (un ? 'You pulled it — the signed chase card. The rarest card in Score Agent.' : 'The signed championship ring card. Hiding in about 1 pack in 200 — open packs to hunt it.') + '</div>'
     + (un ? '<div style="display:flex;gap:6px;margin-top:8px"><button class="mini setprofs" data-avatar="/api/avatars?s=14" data-featured="The Ring · Chase Card">Set as profile card</button><button class="mini dlring">Download PNG</button></div>' : '')
     + '</div><div class="holo" style="--hc:#f5c51859"></div></div>';
   return '<div class="tiercard' + (un ? ' unlocked ringglow' : ' locked') + '"' + (un ? '' : ' data-noflip="1"') + '><div class="tierinner">' + front + ringBackHTML() + '</div></div>';
@@ -4863,7 +4735,7 @@ function foilCardHTML(t, ci){
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">' + t.name.toUpperCase() + ' <span style="font-size:10px;letter-spacing:1px">' + stars + '</span></span><span class="rarpill" style="background:#f5c518;color:#1a1405">FOIL</span></div>'
     + '<div class="tierto" style="margin-top:6px">Gold foil edition — pulled from a pack</div>'
     + '</div>' + (t.name === "Diamond" ? '<div class="glitterfx"></div>' : '') + (t.name === "Legend" ? '<div class="glitterfx pglit"></div>' : '') + '<div class="foilshine"></div></div>';
-  return '<div class="tiercard unlocked' + (ti === TIERS.length - 1 ? ' lgnd' : '') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · FOIL', t.name + ' tier gold foil edition<br>Pulled from a Prop Agent pack.') + '</div></div>';
+  return '<div class="tiercard unlocked' + (ti === TIERS.length - 1 ? ' lgnd' : '') + '"><div class="tierinner">' + front + cardBackHTML(cname + ' · FOIL', t.name + ' tier gold foil edition<br>Pulled from a Score Agent pack.') + '</div></div>';
 }
 function downloadRingCard(btn){
   var img = new Image();
@@ -4881,7 +4753,7 @@ function downloadRingCard(btn){
     x.fillStyle = "#e5e9f2"; x.font = "700 25px system-ui, sans-serif";
     x.fillText("CHAMPIONSHIP EDITION · ONE OF A KIND", 315, 838);
     x.fillStyle = "#9aa7bd"; x.font = "600 21px system-ui, sans-serif";
-    x.fillText("PROP AGENT", 315, 872);
+    x.fillText("SCORE AGENT", 315, 872);
     var a = document.createElement("a"); a.download = "the-ring-chase-card.png"; a.href = cv.toDataURL("image/png"); a.click();
     if (btn) { var o = btn.textContent; btn.textContent = "Saved ✓"; setTimeout(function(){ btn.textContent = o; }, 1600); }
   };
@@ -4894,13 +4766,13 @@ function specialCardHTML(){
     + '<div class="tcwin"><img class="cardart" src="' + cfg.art + '" alt="">' + (un ? '' : '<div class="lockveil">LOCKED</div>') + '</div>'
     + '<div class="tcinfo"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-weight:900;font-size:13.5px;color:#f5c518">WEEKLY PICK\'EM</span><span class="rarpill" style="background:#f5c518;color:#1a1405">SPECIAL EDITION</span></div>'
     + '<div class="tierto" style="margin-top:6px">' + (un ? 'Unlocked — in your collection · +1 win added to your tier progress' : 'Call the Weekly Pick\'em game right to unlock this rare card') + '</div>'
-    + (un ? '<button class="setprofs mini" data-avatar="' + cfg.art + '" data-featured="Prop Agent · Special Card">Set as profile card</button> <button class="dlspecial mini">Download PNG</button>' : '')
+    + (un ? '<button class="setprofs mini" data-avatar="' + cfg.art + '" data-featured="Score Agent · Special Card">Set as profile card</button> <button class="dlspecial mini">Download PNG</button>' : '')
     + '</div><div class="holo" style="--hc:#f5c51859"></div></div>';
   return '<div class="tiercard' + (un ? ' unlocked' : ' locked') + '"' + (un ? '' : ' data-noflip="1"') + '><div class="tierinner">' + front + specialBackHTML() + '</div></div>';
 }
 function specialBackHTML(){
   var cfg = WEEKLY_PICKEM;
-  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512" alt=""></div><div class="bkname" style="color:#f5c518">PROP AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">WEEKLY PICK\'EM · SPECIAL EDITION</div><div class="bksub">' + cfg.awayShort + ' @ ' + cfg.homeShort + ' · ' + pickemWhen() + ' MST<br>Won in the Weekly Pick\'em</div><div class="holo" style="--hc:#f5c51859"></div></div>';
+  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=512" alt=""></div><div class="bkname" style="color:#f5c518">SCORE AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">WEEKLY PICK\'EM · SPECIAL EDITION</div><div class="bksub">' + cfg.awayShort + ' @ ' + cfg.homeShort + ' · ' + pickemWhen() + ' MST<br>Won in the Weekly Pick\'em</div><div class="holo" style="--hc:#f5c51859"></div></div>';
 }
 function downloadSpecialCard(btn){
   var cfg = WEEKLY_PICKEM;
@@ -4920,7 +4792,7 @@ function downloadSpecialCard(btn){
     ctx.fillStyle = "#e5e9f2"; ctx.font = "700 25px system-ui, sans-serif";
     ctx.fillText("WEEKLY PICK'EM · SPECIAL EDITION", W / 2, 815);
     ctx.fillStyle = "#9aa7bd"; ctx.font = "600 21px system-ui, sans-serif";
-    ctx.fillText("PROP AGENT", W / 2, 855);
+    ctx.fillText("SCORE AGENT", W / 2, 855);
     cv.toBlob(function(bl){
       var a = document.createElement("a"); a.href = URL.createObjectURL(bl); a.download = "prop-agent-special-card.png"; a.click();
       setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
@@ -4941,7 +4813,7 @@ function ensureCardPop(){
   if (document.getElementById("cardPop")) return;
   var cfg = WEEKLY_PICKEM;
   var sparks = [[-120,-160],[110,-140],[-150,40],[150,60],[-90,150],[100,160],[0,-190],[30,190]].map(function(p){ return '<span class="spark" style="--tx:' + p[0] + 'px;--ty:' + p[1] + 'px"></span>'; }).join("");
-  var back = '<div class="sbring"><img src="/api/icons?s=512" alt=""></div><div class="bkname" style="color:#f5c518">PROP AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">WEEKLY PICK\'EM · SPECIAL EDITION</div><div class="bksub">' + cfg.awayShort + ' @ ' + cfg.homeShort + ' · ' + pickemWhen() + ' MST<br>Won in the Weekly Pick\'em</div><div class="holo" style="--hc:#f5c51859"></div>';
+  var back = '<div class="sbring"><img src="/api/icons?s=512" alt=""></div><div class="bkname" style="color:#f5c518">SCORE AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">WEEKLY PICK\'EM · SPECIAL EDITION</div><div class="bksub">' + cfg.awayShort + ' @ ' + cfg.homeShort + ' · ' + pickemWhen() + ' MST<br>Won in the Weekly Pick\'em</div><div class="holo" style="--hc:#f5c51859"></div>';
   var el = document.createElement("div");
   el.className = "cardpop"; el.id = "cardPop";
   el.innerHTML = '<div class="burst"></div>'
@@ -5052,12 +4924,12 @@ function viewPulledCard(i){
   if (pu.ring) {
     front.style.borderColor = "#f5c518";
     front.innerHTML = '<img src="/api/avatars?s=14" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">THE RING</b><span class="rarpill" style="background:#f5c518;color:#1a1405">🏆 CHASE</span></div>';
-    back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">PROP AGENT</b><div style="color:#f5c518;letter-spacing:1.5px;font-weight:800;font-size:12px">THE RING · CHAMPIONSHIP EDITION</div><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">Signed · One of a Kind<br>The rarest pull in the game</div>';
+    back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">SCORE AGENT</b><div style="color:#f5c518;letter-spacing:1.5px;font-weight:800;font-size:12px">THE RING · CHAMPIONSHIP EDITION</div><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">Signed · One of a Kind<br>The rarest pull in the game</div>';
   } else {
     var t = TIERS[pu.ti], cname = CHARNAMES[pu.ci - 1];
     front.style.borderColor = t.color;
     front.innerHTML = '<img src="' + esc(cardArtUrl(pu.ci, pu.ti)) + '" alt="" style="width:100%;height:100%;' + (legendArt(pu.ci, pu.ti) ? 'object-fit:contain;background:#120a26' : 'object-fit:cover') + ';display:block">' + (pu.ti === 2 ? '<div class="glitterfx"></div>' : pu.ti === 3 ? '<div class="glitterfx pglit"></div>' : '') + '<div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + cname + '</b>' + (pu.unlock ? '<span class="rarpill" style="background:' + t.color + '">' + t.name.toUpperCase() + ' · UNLOCKED</span>' : '<span class="rarpill" style="background:#f5c518;color:#1a1405">✨ ' + t.name.toUpperCase() + ' FOIL</span>') + '<span style="display:none"></span></div>';
-    back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">PROP AGENT</b><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">' + (pu.unlock ? cname + ' · ' + t.name.toUpperCase() + ' BATTLE CARD<br>' + (pu.bumped ? 'Unlocked from a pack — ' + cname + ' jumped to ' + t.name.toUpperCase() + ' tier!' : 'Unlocked from a pack — it is on your tier list now.') + '<br>Battle with it in Grid Clash!' : cname + ' · FOIL<br>' + t.name + ' tier gold foil edition<br>Pulled from a Prop Agent pack.') + '</div>';
+    back.innerHTML = '<img src="/api/icons?s=512" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">SCORE AGENT</b><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">' + (pu.unlock ? cname + ' · ' + t.name.toUpperCase() + ' BATTLE CARD<br>' + (pu.bumped ? 'Unlocked from a pack — ' + cname + ' jumped to ' + t.name.toUpperCase() + ' tier!' : 'Unlocked from a pack — it is on your tier list now.') + '<br>Battle with it in Grid Clash!' : cname + ' · FOIL<br>' + t.name + ' tier gold foil edition<br>Pulled from a Score Agent pack.') + '</div>';
   }
   document.getElementById("pullView").classList.add("open");
 }
@@ -5504,7 +5376,7 @@ function clashMenu(){
     + '<div class="clashmeta">🏆 <b>Every agent climbs their own ladder:</b> ticket wins and battle wins add points to the agent set on your tier bar \u2014 right now that\u2019s <b>' + CHARNAMES[tierCharIdx() - 1] + '</b> (' + charWins(tierCharIdx()) + ' pts). Switch the bar on the Board tab to feed a different agent. Each agent\u2019s cards and battle tier unlock with their own points.</div>'
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:10px">Close</button>'
-    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars are just your card\'s tier level — they do NOT decide attacks. Turns alternate: only the player whose turn it is can swing, and an attack lands unless it\'s blocked. Tiers set a card\'s DAMAGE and LIFE.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Prop Agent logo. Both players start with EMPTY hands — no Energy, no items. After the coin flip everyone makes an opening pull (1 random card), and every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>ATTACK COSTS 2 ENERGY — PAID UP FRONT:</b> on your turn, pay 2 Energy cards and your attack LANDS for its damage — unless the enemy blocked on their turn. Same price for every card, Rookie to Legend. Can\'t pay? Attack locks — defend, tag, play an item, or end your turn while your pulls build Energy back up.<br>🎴 <b>ITEMS:</b> you can play ONE item per turn from your hand AND still attack or defend — the item is a bonus play, then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> you pay for your block on YOUR turn and it stays armed for the enemy\'s turn — nobody sees it coming, and it only reveals itself when it stops a hit.<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 3) and live longer (Rookie 3 life → Legend 6). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>👥 <b>ONE OF EACH TIER:</b> Your two fighters must be different tiers — no two of the same tier on a team (no Diamond + Diamond).<br>🎖️ <b>TIER CLASH:</b> battle in tier pairs — your two fighters must be ONE of each tier in the pair (one Rookie + one Gold, one Gold + one Diamond, or one Diamond + one Legend), and the CPU fields one of each too. Rookie–Gold is open to everyone; the higher pairs unlock as you own those cards. Higher tier battles pay more points: a win earns +5 tier points in Rookie-Gold, +6 in Gold-Diamond, and +7 in Diamond-Legend.<br>🛡️ <b>DEFEND costs 2 🔮 Energy:</b> on your turn you can DEFEND instead of attacking — pay 2 Energy cards and your block stays armed: the enemy\'s next attack is fully blocked. If you don\'t block, their attack takes your health. The CPU plays by the same rules.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Two-in-a-row threatens the line — finish 3 in a row to win the ability.<br>🚫 <b>NO TIES, NO SIMULTANEOUS SWINGS:</b> fighters take turns — only the player whose turn it is attacks, so attacks never cancel out. Only landed hits earn grid squares.<br>⏭️ <b>END TURN</b> passes your move — the next player goes. Careful: if they attack and you didn\'t block, you can lose health.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 Smooth beats play while you battle — the 🎵 button (top right) mutes it.</div></details>');
+    + '<details class="clashhelp"><summary>How to play (10 seconds)</summary><div>🪙 <b>Coin flip first:</b> pick 🔴 RED or 🔵 BLUE — winner goes first, but the first player <b>can\'t strike on Turn 1</b> (item or defend only). The second player can strike right away.<br>⭐ Stars are just your card\'s tier level — they do NOT decide attacks. Turns alternate: only the player whose turn it is can swing, and an attack lands unless it\'s blocked. Tiers set a card\'s DAMAGE and LIFE.<br>🎴 <b>ONE DECK — 44 cards:</b> 20 🔮 Energy + 24 items (12 items × 2), shuffled ONCE at the start — both players get the same mix. Card backs carry the Score Agent logo. Both players start with EMPTY hands — no Energy, no items. After the coin flip everyone makes an opening pull (1 random card), and every turn starts with a random pull from the deck (1 card). If your deck runs out, your discard pile shuffles back in. Round 60+: ⏰ SUDDEN DEATH — both fighters take 1 damage a round.<br>🔮 <b>ATTACK COSTS 2 ENERGY — PAID UP FRONT:</b> on your turn, pay 2 Energy cards and your attack LANDS for its damage — unless the enemy blocked on their turn. Same price for every card, Rookie to Legend. Can\'t pay? Attack locks — defend, tag, play an item, or end your turn while your pulls build Energy back up.<br>🎴 <b>ITEMS:</b> you can play ONE item per turn from your hand AND still attack or defend — the item is a bonus play, then it\'s discarded. They help — energy, heals, shields, grid tricks — never overpowered. Duplicates stack in your hand.<br>🕵️ <b>DEFEND IS SECRET:</b> you pay for your block on YOUR turn and it stays armed for the enemy\'s turn — nobody sees it coming, and it only reveals itself when it stops a hit.<br>💥 <b>DAMAGE + LIFE scale with tier:</b> higher tiers hit harder (Rookie 1 damage → Legend 3) and live longer (Rookie 3 life → Legend 6). A card is OUT when its life is gone — knock out both enemy cards to win.<br>⚡ <b>CARD POWERS fire ONCE per game</b> — the first time they trigger, then they are spent. After that your weapons are 🎴 items and ✖ grid abilities. And the CPU never fields a card of a higher tier than your best card.<br>👥 <b>ONE OF EACH TIER:</b> Your two fighters must be different tiers — no two of the same tier on a team (no Diamond + Diamond).<br>🎖️ <b>TIER CLASH:</b> battle in tier pairs — your two fighters must be ONE of each tier in the pair (one Rookie + one Gold, one Gold + one Diamond, or one Diamond + one Legend), and the CPU fields one of each too. Rookie–Gold is open to everyone; the higher pairs unlock as you own those cards. Higher tier battles pay more points: a win earns +5 tier points in Rookie-Gold, +6 in Gold-Diamond, and +7 in Diamond-Legend.<br>🛡️ <b>DEFEND costs 2 🔮 Energy:</b> on your turn you can DEFEND instead of attacking — pay 2 Energy cards and your block stays armed: the enemy\'s next attack is fully blocked. If you don\'t block, their attack takes your health. The CPU plays by the same rules.<br>✖ Land a hit and you place a ✖ on the Clash Grid. 3 in a row wins an ABILITY — 6 of them: ⭐ Overdrive · 💥 Sneak Strike · ❤️ Second Wind · 🛡️ Iron Guard · 🔥 Momentum · 🎯 Head Start.<br>⚡ Two-in-a-row threatens the line — finish 3 in a row to win the ability.<br>🚫 <b>NO TIES, NO SIMULTANEOUS SWINGS:</b> fighters take turns — only the player whose turn it is attacks, so attacks never cancel out. Only landed hits earn grid squares.<br>⏭️ <b>END TURN</b> passes your move — the next player goes. Careful: if they attack and you didn\'t block, you can lose health.<br>🔁 Tag swaps your fighter before a round. Hits stick to a card.<br>🔍 Tap any fighter card to zoom in and read its power.<br>🎵 The trailer rock track plays on the menu and fighter select; the classic battle songs play during fights — the 🎵 button (top right) mutes all music.</div></details>');
   var cp2 = $("clashPanel"); if (cp2) cp2.classList.add("startbg"); cp2.classList.add("menufit");
 }
 /* ---------- Tier Clash: battle in tier pairs, one of each tier (Brandon 2026-11-19) ---------- */
@@ -7017,7 +6889,7 @@ function pvpShowInvite(){
 function pvpShare(){
   if (!pvpActive()) return;
   var link = location.origin + "/?clash=" + CL.pvp.code;
-  if (navigator.share) { navigator.share({ title: "Prop Agent — Agent Clash", text: "⚔️ I challenge you to a head-to-head Agent Clash! Open this link to join my match:", url: link }).catch(function(){}); }
+  if (navigator.share) { navigator.share({ title: "Score Agent — Agent Clash", text: "⚔️ I challenge you to a head-to-head Agent Clash! Open this link to join my match:", url: link }).catch(function(){}); }
   else if (navigator.clipboard) { navigator.clipboard.writeText(link).then(function(){ var s = document.querySelector("[data-pvpshare] span"); if (s) s.textContent = "✓ Link copied — send it to your friend!"; }).catch(function(){}); }
 }
 function pvpJoinFlow(code){
@@ -7308,7 +7180,7 @@ document.addEventListener("click", function(e){
     openPackPop(true);
   } else if (c.hasAttribute("data-sharepack")) {
     var grant = function(){ if (lsGet("pa_share_day", "") !== dayStr()) { lsSet("pa_share_day", dayStr()); var p2 = packsGet(); p2.n = (p2.n || 0) + 1; packsSet(p2); } renderPacks(); };
-    if (navigator.share) { navigator.share({ title: "Prop Agent", text: "Play Prop Agent — real player props, live tickets and collectible agent cards:", url: "https://prop-agent-bre.vercel.app/" }).then(grant).catch(function(){}); }
+    if (navigator.share) { navigator.share({ title: "Score Agent", text: "Play Score Agent — live scores, player stats and the Agent Clash card game:", url: "https://prop-agent-bre.vercel.app/" }).then(grant).catch(function(){}); }
     else if (navigator.clipboard) { navigator.clipboard.writeText("https://prop-agent-bre.vercel.app/").then(grant).catch(function(){}); }
   }
 });
@@ -7516,13 +7388,13 @@ var ftBtn0 = $("followToggle"); if (ftBtn0) ftBtn0.addEventListener("click", fun
 applyFollowToggle();
 function renderFollowing(){
   var box = $("followingBox"); if (!box) return;
-  if (!myFollows.length) { box.innerHTML = '<div class="card"><p class="sub" style="margin:0">You are not following anyone yet — tap any agent on the leaderboard or Top Agents to open their profile and follow them.</p></div>'; return; }
+  if (!myFollows.length) { box.innerHTML = '<div class="card"><p class="sub" style="margin:0">You are not following anyone yet — tap any agent on the leaderboard to open their profile and follow them.</p></div>'; return; }
   if (feedHtmlCache && Date.now() - feedAt < 60000) { box.innerHTML = feedHtmlCache; return; }
   feedAt = Date.now();
   socialGet("feed=1&uid=" + encodeURIComponent(cloudUid)).then(function(j){
     if (!j || !j.ok) { box.innerHTML = '<div class="card"><p class="sub" style="margin:0">Could not load your following feed right now.</p></div>'; return; }
     feedHtmlCache = (!j.items || !j.items.length)
-      ? '<div class="card"><p class="sub" style="margin:0">The agents you follow have not shared any tickets yet.</p></div>'
+      ? '<div class="card"><p class="sub" style="margin:0">The agents you follow have not shared anything yet.</p></div>'
       : feedAgentsRow(j.items) + '<div class="fslider">' + j.items.map(function(it){ return feedTicketCard(it); }).join("") + '</div>';
     box.innerHTML = feedHtmlCache;
   });
@@ -7855,16 +7727,16 @@ function renderInstall(){
   var card = $("installCard"); if (!card) return;
   var standalone = false;
   try { standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true; } catch(e){}
-  if (standalone) { card.style.display = ""; var bS = $("installBtn"), nS = $("installNote"); if (bS) bS.style.display = "none"; if (nS) nS.textContent = "You're using the installed app. Know someone who'd want it? Send them Prop Agent with the share button below."; return; }
+  if (standalone) { card.style.display = ""; var bS = $("installBtn"), nS = $("installNote"); if (bS) bS.style.display = "none"; if (nS) nS.textContent = "You're using the installed app. Know someone who'd want it? Send them Score Agent with the share button below."; return; }
   card.style.display = "";
   var btn = $("installBtn"), note = $("installNote");
-  if (deferredInstall) { btn.style.display = ""; note.textContent = "One tap and Prop Agent lands on your home screen — its own icon, full screen, no browser bars."; }
-  else if (/iphone|ipad|ipod/i.test(navigator.userAgent || "")) { btn.style.display = "none"; note.innerHTML = "On iPhone: tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b> — Prop Agent gets its own icon and opens full screen."; }
-  else { btn.style.display = "none"; note.innerHTML = "Open your browser menu (\u22ee) and tap <b>Install app</b> or <b>Add to Home screen</b> — Prop Agent gets its own icon and opens full screen."; }
+  if (deferredInstall) { btn.style.display = ""; note.textContent = "One tap and Score Agent lands on your home screen — its own icon, full screen, no browser bars."; }
+  else if (/iphone|ipad|ipod/i.test(navigator.userAgent || "")) { btn.style.display = "none"; note.innerHTML = "On iPhone: tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b> — Score Agent gets its own icon and opens full screen."; }
+  else { btn.style.display = "none"; note.innerHTML = "Open your browser menu (\u22ee) and tap <b>Install app</b> or <b>Add to Home screen</b> — Score Agent gets its own icon and opens full screen."; }
 }
 var ib0 = $("installBtn"); if (ib0) ib0.addEventListener("click", function(){ if (!deferredInstall) return; deferredInstall.prompt(); deferredInstall.userChoice.then(function(){ deferredInstall = null; renderInstall(); }); });
 var grantSharePack = function(){ if (lsGet("pa_share_day", "") !== dayStr()) { lsSet("pa_share_day", dayStr()); var p2 = packsGet(); p2.n = (p2.n || 0) + 1; packsSet(p2); try { renderPacks(); } catch (e) {} return true; } return false; };
-var sb0 = $("shareBtn"); if (sb0) sb0.addEventListener("click", function(){ var url = "https://prop-agent-bre.vercel.app/"; var flashPack = function(){ var o = sb0.textContent; sb0.textContent = "🎁 +1 Free Pack!"; setTimeout(function(){ sb0.textContent = o; }, 1800); }; if (navigator.share) { navigator.share({title:"Prop Agent", text:"Prop Agent — real player props, live tickets, 72 collectible agent cards. Get the app:", url:url}).then(function(){ if (grantSharePack()) flashPack(); }, function(){}); } else if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function(){ if (grantSharePack()) { flashPack(); return; } var o = sb0.textContent; sb0.textContent = "\u2713 Link copied"; setTimeout(function(){ sb0.textContent = o; }, 1800); }); } });
+var sb0 = $("shareBtn"); if (sb0) sb0.addEventListener("click", function(){ var url = "https://prop-agent-bre.vercel.app/"; var flashPack = function(){ var o = sb0.textContent; sb0.textContent = "🎁 +1 Free Pack!"; setTimeout(function(){ sb0.textContent = o; }, 1800); }; if (navigator.share) { navigator.share({title:"Score Agent", text:"Score Agent — live scores, player stats, 72 collectible agent cards. Get the app:", url:url}).then(function(){ if (grantSharePack()) flashPack(); }, function(){}); } else if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function(){ if (grantSharePack()) { flashPack(); return; } var o = sb0.textContent; sb0.textContent = "\u2713 Link copied"; setTimeout(function(){ sb0.textContent = o; }, 1800); }); } });
 renderInstall();
 /* ---------- download + notifications popup (Brandon 2026-11-18):
    small Home card, only for people NOT running the installed app. ---------- */
@@ -8058,6 +7930,7 @@ function cloudInit(){
 /* ---------- navigation ---------- */
 function showView(name){
   if (window._openGame) closeGame(true);
+  if (name === "build") name = "players"; else if (name === "tickets") name = "home";
   /* Start back at the first pill (Brandon 2026-11-20): ENTERING a tab
      resets its pill/filter selections to the first/default pill, every
      time — Build: All sports + first-game matchup pills; sport boards:
@@ -8068,7 +7941,7 @@ function showView(name){
      changes): re-renders and refreshes while staying on the tab keep
      the user's place. */
   if (window._view !== name){
-    if (name === "build"){ buildSport = "all"; buildGameByLeague = {}; espBuildMatchSel = {}; }
+    if (name === "players"){ pfSport = "all"; pfTeamSel = null; }
     else if (name === "sport"){ boardGame = "all"; boardStat = "all"; if (currentSport === "esports") espPillSel = {}; }
     else if (name === "live"){ liveFilter = "all"; finPill = "all"; futPill = "all"; document.querySelectorAll("#liveTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-lsport") === "all"); }); }
     else if (name === "home"){ var stp = $("sportTabs"); if (stp){ stp.scrollLeft = 0; stp.querySelectorAll(".tab").forEach(function(t, i){ t.classList.toggle("on", i === 0); }); } }
@@ -8078,9 +7951,8 @@ function showView(name){
   var navName = name==="sport" ? "home" : name;
   document.querySelectorAll("nav.bottom button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-nav")===navName); });
   if (name==="live") renderLive();
-  if (name==="tickets"){ renderTickets(); renderTicketHighlights(); }
   if (name==="board") renderBoard();
-  if (name==="build") renderBuild();
+  if (name==="players") renderFinder();
   window._view = name; lsSet("pa_tab", name); updateSlipChip();
   if (name === "home") setTimeout(maybeShowDlPop, 400); else { var dp0 = $("dlPop"); if (dp0) dp0.style.display = "none"; }
   window.scrollTo(0,0);
@@ -8120,8 +7992,326 @@ function setSport(key){
   });
 })();
 
+
+/* ================= SCORE AGENT: Player Finder + Player Pages + Weekly Pick'em ================= */
+var ESPN_V3 = "https://site.api.espn.com/apis/common/v3/sports/";
+var PF_LEAGUES = [
+  { key: "nba", label: "NBA", sport: "basketball", league: "nba" },
+  { key: "wnba", label: "WNBA", sport: "basketball", league: "wnba" },
+  { key: "nfl", label: "NFL", sport: "football", league: "nfl" },
+  { key: "cfb", label: "College FB", sport: "football", league: "college-football" },
+  { key: "cbb", label: "College BB", sport: "basketball", league: "mens-college-basketball" },
+  { key: "wbb", label: "Womens BB", sport: "basketball", league: "womens-college-basketball" },
+  { key: "nhl", label: "NHL", sport: "hockey", league: "nhl" },
+  { key: "mlb", label: "MLB", sport: "baseball", league: "mlb" },
+  { key: "epl", label: "EPL Soccer", sport: "soccer", league: "eng.1" },
+  { key: "laliga", label: "La Liga", sport: "soccer", league: "esp.1" },
+  { key: "mls", label: "MLS", sport: "soccer", league: "usa.1" },
+  { key: "ucl", label: "Champions Lg", sport: "soccer", league: "uefa.champions" },
+  { key: "tennis", label: "Tennis", sport: "tennis", league: "atp", noteam: 1 },
+  { key: "golf", label: "Golf", sport: "golf", league: "pga", noteam: 1 },
+  { key: "mma", label: "UFC / MMA", sport: "mma", league: "ufc", noteam: 1 }
+];
+var pfSport = "all";
+var pfQuery = "";
+var pfSeq = 0;
+var pfTeamSel = null;
+var pfCache = {};
+var pfResolveCache = {};
+function pfLeagueByKey(k){ for (var i = 0; i < PF_LEAGUES.length; i++) if (PF_LEAGUES[i].key === k) return PF_LEAGUES[i]; return null; }
+function pfFetch(url){
+  if (!pfCache[url]){
+    var pr = fetchJson(url);
+    pr.catch(function(){ if (pfCache[url] === pr) delete pfCache[url]; });
+    pfCache[url] = pr;
+  }
+  return pfCache[url];
+}
+function pfEntryPlayer(c){
+  var id = "";
+  var m = /a:(\d+)/.exec(c.uid || "");
+  if (m) id = m[1];
+  if (!id && c.link && c.link.web){ var m2 = /\/id\/(\d+)/.exec(c.link.web); if (m2) id = m2[1]; }
+  return { id: id, name: c.displayName || "", teamName: c.subtitle || "", leagueLabel: c.description || "", league: c.defaultLeagueSlug || "", sport: c.sport || "", img: (c.image && c.image.default) || "" };
+}
+function pfEntryMatches(c, L){
+  if (!L) return true;
+  if (L.sport === "soccer") return c.sport === "soccer";
+  if ((c.defaultLeagueSlug || "") === L.league) return true;
+  if (c.sport && L.sport && c.sport !== L.sport) return false;
+  return (c.description || "").toLowerCase().indexOf(L.label.toLowerCase().replace("college ", "").replace("womens ", "")) >= 0;
+}
+function renderFinder(){
+  var pills = $("pfPills"); if (!pills) return;
+  var all = [{ key: "all", label: "All Sports" }].concat(PF_LEAGUES);
+  pills.innerHTML = all.map(function(l){ return '<button type="button" class="tab' + (pfSport === l.key ? " on" : "") + '" data-pfpill="' + l.key + '">' + esc(l.label) + '</button>'; }).join("");
+  pills.querySelectorAll("[data-pfpill]").forEach(function(b){ b.addEventListener("click", function(){ pfSport = b.getAttribute("data-pfpill"); pfTeamSel = null; renderFinder(); }); });
+  var res = $("pfResults");
+  if (pfQuery){ if (res) res.style.display = ""; pfDoSearch(pfQuery); }
+  else { if (res){ res.style.display = "none"; res.innerHTML = ""; } pfRenderBrowse(); }
+}
+function pfDoSearch(q){
+  var box = $("pfResults"); if (!box) return;
+  var br = $("pfBrowse"); if (br) br.innerHTML = "";
+  var seq = ++pfSeq;
+  box.innerHTML = '<p class="empty">Searching…</p>';
+  fetchJson("https://site.api.espn.com/apis/search/v2?query=" + encodeURIComponent(q)).then(function(j){
+    if (seq !== pfSeq) return;
+    var players = [];
+    (j.results || []).forEach(function(r){ if (r.type === "player") (r.contents || []).forEach(function(c){ players.push(c); }); });
+    if (pfSport !== "all"){ var L = pfLeagueByKey(pfSport); players = players.filter(function(c){ return pfEntryMatches(c, L); }); }
+    if (!players.length){ box.innerHTML = '<p class="empty">No players found for "' + esc(q) + '".</p>'; return; }
+    box.innerHTML = players.slice(0, 24).map(function(c, i){ var pl = pfEntryPlayer(c); return '<div class="pfrow" data-pfidx="' + i + '">' + (pl.img ? '<img src="' + esc(pl.img) + '" alt="" onerror="this.remove()">' : '') + '<div style="flex:1;min-width:0"><b>' + esc(pl.name) + '</b><div class="note">' + esc(pl.teamName || "") + '</div></div><span class="note" style="font-weight:800">' + esc(pl.leagueLabel || "") + '</span></div>'; }).join("");
+    box.querySelectorAll("[data-pfidx]").forEach(function(el){ el.addEventListener("click", function(){ openPlayerPage(pfEntryPlayer(players[parseInt(el.getAttribute("data-pfidx"), 10)])); }); });
+  }).catch(function(){ if (seq === pfSeq) box.innerHTML = '<p class="empty">Search could not load — check your connection.</p>'; });
+}
+function pfRenderBrowse(){
+  var box = $("pfBrowse"); if (!box) return;
+  if (pfSport === "all"){
+    box.innerHTML = '<h3 style="margin:12px 0 6px;font-size:16px">Every sport. Every team. Every player.</h3><p class="sub">Pick a sport above to browse its teams and rosters — or just search any player by name.</p>';
+    return;
+  }
+  var L = pfLeagueByKey(pfSport);
+  if (!L){ box.innerHTML = ""; return; }
+  if (L.noteam){
+    box.innerHTML = '<div class="card"><b>' + esc(L.label) + '</b><p class="sub" style="margin-top:6px">' + esc(L.label) + ' has no team rosters — search any player by name above and their full stats page opens: season, career and last 5 events.</p></div>';
+    return;
+  }
+  if (pfTeamSel && pfTeamSel.lgKey === L.key){ pfRenderRoster(L, pfTeamSel.team); return; }
+  box.innerHTML = '<h3 style="margin:12px 0 6px;font-size:16px">' + esc(L.label) + ' teams</h3><p class="empty">Loading teams…</p>';
+  pfFetch(ESPN + L.sport + "/" + L.league + "/teams").then(function(j){
+    if (pfSport !== L.key || pfTeamSel || pfQuery) return;
+    var teams = [];
+    try { teams = j.sports[0].leagues[0].teams.map(function(t){ return t.team; }); } catch (e) {}
+    teams = teams.filter(function(t){ return t && t.displayName; }).sort(function(a, b){ return (a.displayName || "").localeCompare(b.displayName || ""); });
+    if (!teams.length){ box.innerHTML = '<p class="empty">Teams could not load for ' + esc(L.label) + '.</p>'; return; }
+    box.innerHTML = '<h3 style="margin:12px 0 6px;font-size:16px">' + esc(L.label) + ' teams</h3><div class="pfslider">' + teams.map(function(t, i){ var logo = (t.logos && t.logos[0] && t.logos[0].href) || ""; return '<div class="pfteam" data-pfteam="' + i + '">' + (logo ? '<img src="' + esc(logo) + '" alt="" style="width:44px;height:44px;object-fit:contain" onerror="this.remove()">' : '') + '<span>' + esc(t.shortDisplayName || t.displayName || "") + '</span></div>'; }).join("") + '</div>';
+    box.querySelectorAll("[data-pfteam]").forEach(function(el){ el.addEventListener("click", function(){ pfTeamSel = { lgKey: L.key, team: teams[parseInt(el.getAttribute("data-pfteam"), 10)] }; pfRenderBrowse(); }); });
+    box.querySelectorAll(".pfslider").forEach(function(tr, i){ try { popSliderInit(tr, "pft" + i, ".pfteam"); } catch (e) {} });
+  }).catch(function(){ if (pfSport === L.key && !pfTeamSel) box.innerHTML = '<p class="empty">Teams could not load — check your connection.</p>'; });
+}
+function pfRenderRoster(L, team){
+  var box = $("pfBrowse"); if (!box) return;
+  var back = '<button type="button" class="ghostbtn" data-pfback="1" style="margin-bottom:8px">← All ' + esc(L.label) + ' teams</button>';
+  box.innerHTML = back + '<h3 style="margin:2px 0 6px;font-size:16px">' + esc(team.displayName || "") + '</h3><p class="empty">Loading roster…</p>';
+  pfWireBack(box);
+  pfFetch(ESPN + L.sport + "/" + L.league + "/teams/" + team.id + "/roster").then(function(j){
+    if (!pfTeamSel || String(pfTeamSel.team.id) !== String(team.id)) return;
+    var players = [];
+    (j.athletes || []).forEach(function(g){ if (g && g.items) g.items.forEach(function(pl){ players.push(pl); }); else if (g && g.displayName) players.push(g); });
+    if (!players.length){ box.innerHTML = back + '<p class="empty">No roster listed for this team right now.</p>'; pfWireBack(box); return; }
+    box.innerHTML = back + '<h3 style="margin:2px 0 6px;font-size:16px">' + esc(team.displayName || "") + ' roster</h3><div class="pfslider">' + players.map(function(pl, i){ var hs = (pl.headshot && pl.headshot.href) || ""; return '<div class="pfpcard" data-pfplayer="' + i + '">' + (hs ? '<img src="' + esc(hs) + '" alt="" onerror="this.remove()">' : '') + '<b>' + esc(pl.displayName || "") + '</b><span>' + esc(((pl.position && pl.position.abbreviation) || "") + (pl.jersey ? " · #" + pl.jersey : "")) + '</span></div>'; }).join("") + '</div>';
+    pfWireBack(box);
+    box.querySelectorAll("[data-pfplayer]").forEach(function(el){ el.addEventListener("click", function(){ var pl = players[parseInt(el.getAttribute("data-pfplayer"), 10)]; openPlayerPage({ id: String(pl.id), name: pl.displayName || "", sport: L.sport, league: L.league, img: (pl.headshot && pl.headshot.href) || "", teamName: team.displayName || "" }); }); });
+    box.querySelectorAll(".pfslider").forEach(function(tr, i){ try { popSliderInit(tr, "pfr" + i, ".pfpcard"); } catch (e) {} });
+  }).catch(function(){ box.innerHTML = back + '<p class="empty">Roster could not load — check your connection.</p>'; pfWireBack(box); });
+}
+function pfWireBack(box){ var b = box.querySelector("[data-pfback]"); if (b) b.addEventListener("click", function(){ pfTeamSel = null; pfRenderBrowse(); }); }
+function pfWireClose(body){ var b = body.querySelector("[data-pfclose]"); if (b) b.addEventListener("click", function(){ var d = $("playerDlg"); if (d && d.open) d.close(); }); }
+function pfHeadHtml(p, img, name, team, meta){
+  return '<div style="text-align:right;margin-bottom:6px"><button type="button" class="ghostbtn" data-pfclose="1">✕ Close</button></div><div class="pfhead">' + (img ? '<img src="' + esc(img) + '" alt="" onerror="this.remove()">' : '') + '<div style="min-width:0"><div style="font-size:19px;font-weight:900">' + esc(name || "Player") + '</div><div class="note">' + esc(team || "") + (meta && meta.length ? ' · ' + esc(meta.join(" · ")) : '') + '</div></div></div>';
+}
+function openPlayerPage(p){
+  var dlg = $("playerDlg"), body = $("playerDlgBody");
+  if (!dlg || !body || !p || !p.id) return;
+  body.innerHTML = pfHeadHtml(p, p.img, p.name, p.teamName, []) + '<p class="empty" style="margin-top:14px">Loading stats…</p>';
+  pfWireClose(body);
+  if (!dlg.open) dlg.showModal();
+  var tryLeagues = [p.league || ""];
+  if (p.sport === "soccer") ["eng.1", "esp.1", "ita.1", "ger.1", "fra.1", "usa.1", "uefa.champions"].forEach(function(x){ if (tryLeagues.indexOf(x) < 0) tryLeagues.push(x); });
+  var attempt = function(ix){
+    if (ix >= tryLeagues.length){ body.innerHTML = pfHeadHtml(p, p.img, p.name, p.teamName, []) + '<p class="empty" style="margin-top:14px">No stats page available for this player yet.</p>'; pfWireClose(body); return; }
+    var base = ESPN_V3 + p.sport + "/" + tryLeagues[ix] + "/athletes/" + p.id;
+    Promise.all([pfFetch(base).catch(function(){ return null; }), pfFetch(base + "/stats").catch(function(){ return null; }), pfFetch(base + "/gamelog").catch(function(){ return null; })]).then(function(rs){
+      if (!dlg.open) return;
+      if (!rs[0] && !rs[1]){ attempt(ix + 1); return; }
+      body.innerHTML = pfPlayerHtml(p, rs[0], rs[1], rs[2]);
+      pfWireClose(body);
+      var l5 = body.querySelector(".l5slider");
+      if (l5){ try { popSliderInit(l5, "l5s", ".l5card"); } catch (e) {} }
+    });
+  };
+  attempt(0);
+}
+function pfPlayerHtml(p, bio, stats, gamelog){
+  var a = (bio && bio.athlete) || bio || {};
+  var name = a.displayName || p.name || "Player";
+  var img = (a.headshot && a.headshot.href) || p.img || "";
+  var team = (a.team && a.team.displayName) || p.teamName || "";
+  var meta = [];
+  if (a.position && a.position.abbreviation) meta.push(a.position.abbreviation);
+  if (a.jersey) meta.push("#" + a.jersey);
+  if (a.displayHeight) meta.push(a.displayHeight);
+  if (a.displayWeight) meta.push(a.displayWeight);
+  if (a.age) meta.push("Age " + a.age);
+  return pfHeadHtml(p, img, name, team, meta) + pfStatsHtml(stats) + pfLast5Html(gamelog);
+}
+function pfStatGrid(labels, vals){
+  if (!labels || !vals) return "";
+  var cells = "";
+  labels.forEach(function(L, i){ var v = vals[i]; if (v === "" || v == null) return; cells += '<div class="sgcell"><b>' + esc(String(v)) + '</b><span>' + esc(L) + '</span></div>'; });
+  return cells ? '<div class="statgrid">' + cells + '</div>' : "";
+}
+function pfStatsHtml(stats){
+  var cats = (stats && stats.categories) || [];
+  if (!cats.length) return '<p class="empty" style="margin-top:12px">Season stats not available for this player.</p>';
+  var avg = null, tot = null;
+  cats.forEach(function(c){ if (c.name === "averages") avg = c; if (c.name === "totals") tot = c; });
+  var h = "";
+  if (avg){
+    var rows = avg.statistics || [];
+    var cur = rows[rows.length - 1];
+    if (cur) h += '<h3 style="margin:16px 0 6px;font-size:16px">This Season <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span></h3>' + pfStatGrid(avg.labels, cur.stats);
+    if (avg.totals) h += '<h3 style="margin:16px 0 6px;font-size:16px">Career Averages</h3>' + pfStatGrid(avg.labels, avg.totals);
+    if (tot && tot.totals) h += '<h3 style="margin:16px 0 6px;font-size:16px">Career Totals</h3>' + pfStatGrid(tot.labels, tot.totals);
+    return h || '<p class="empty" style="margin-top:12px">Season stats not available for this player.</p>';
+  }
+  cats.forEach(function(c){
+    var rows = c.statistics || [];
+    var cur = rows[rows.length - 1];
+    if (cur) h += '<h3 style="margin:16px 0 6px;font-size:16px">' + esc(c.displayName || c.name || "Stats") + ' <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span></h3>' + pfStatGrid(c.labels, cur.stats);
+    if (c.totals) h += '<div class="note" style="margin:10px 0 4px;font-weight:800">Career — ' + esc(c.displayName || c.name || "") + '</div>' + pfStatGrid(c.labels, c.totals);
+  });
+  return h || '<p class="empty" style="margin-top:12px">Season stats not available for this player.</p>';
+}
+function pfLast5Html(gl){
+  if (!gl || !gl.seasonTypes || !gl.seasonTypes.length) return "";
+  var labels = gl.labels || [], names = gl.names || [], events = gl.events || {};
+  var rows = [];
+  (gl.seasonTypes[0].categories || []).forEach(function(cat){ (cat.events || []).forEach(function(ev){ var meta = events[ev.eventId] || {}; rows.push({ stats: ev.stats || [], date: meta.gameDate || "", opp: (meta.opponent && (meta.opponent.abbreviation || meta.opponent.displayName)) || "", atVs: meta.atVs || "", result: meta.gameResult || "", score: meta.score || "" }); }); });
+  if (!rows.length) return "";
+  rows.sort(function(x, y){ return String(y.date).localeCompare(String(x.date)); });
+  rows = rows.slice(0, 5);
+  var want = ["points", "totalRebounds", "assists", "steals", "blocks", "passingYards", "passingTouchdowns", "rushingYards", "receivingYards", "receptions", "goals", "shotsOnGoal", "saves", "strikeouts", "hits", "homeRuns", "runsBattedIn", "wins", "gamesStarted"];
+  var pick = [];
+  want.forEach(function(w){ var ix = names.indexOf(w); if (ix >= 0 && pick.length < 4) pick.push(ix); });
+  if (!pick.length){ for (var i = 0; i < Math.min(4, labels.length); i++) pick.push(i); }
+  var cards = rows.map(function(r){
+    var dstr = "";
+    if (r.date){ var d = new Date(r.date); if (!isNaN(d)) dstr = d.toLocaleDateString([], { month: "short", day: "numeric" }); }
+    var line = pick.map(function(i){ return esc(labels[i] || "") + ' <b style="color:#fff">' + esc(r.stats[i] != null ? String(r.stats[i]) : "–") + '</b>'; }).join(" · ");
+    return '<div class="l5card"><div class="l5opp">' + esc((r.atVs === "at" ? "@ " : "vs ") + (r.opp || "Game")) + (r.result ? ' <span style="color:' + (r.result === "W" ? "#4fe3c1" : "#ff5d7a") + '">' + esc(r.result) + '</span>' : '') + '</div><div class="note">' + esc(dstr) + (r.score ? ' · ' + esc(r.score) : '') + '</div><div class="l5line">' + line + '</div></div>';
+  }).join("");
+  return '<h3 style="margin:16px 0 6px;font-size:16px">Last 5 Games</h3><div class="l5slider">' + cards + '</div>';
+}
+function openPlayer(name, leagueKey, viewOnly, finalView){
+  if (leagueKey === "esports"){ openPlayerLegacy(name, leagueKey, true, finalView); return; }
+  var lg = leagueByKey(leagueKey || currentSport || "nba");
+  var ck = (name || "") + "|" + lg.key;
+  if (pfResolveCache[ck]){ openPlayerPage(pfResolveCache[ck]); return; }
+  fetchJson("https://site.api.espn.com/apis/search/v2?query=" + encodeURIComponent(name || "")).then(function(j){
+    var players = [];
+    (j.results || []).forEach(function(r){ if (r.type === "player") (r.contents || []).forEach(function(c){ players.push(c); }); });
+    var nk = nameKeyOf(name || "");
+    var best = null;
+    players.forEach(function(c){ if (!best && nameKeyOf(c.displayName || "") === nk) best = c; });
+    if (!best) players.forEach(function(c){ if (!best && (c.defaultLeagueSlug || "") === lg.league) best = c; });
+    if (!best) best = players[0];
+    if (!best){ openPlayerLegacy(name, leagueKey, true, finalView); return; }
+    var pl = pfEntryPlayer(best);
+    if (!pl.sport) pl.sport = lg.sport;
+    if (!pl.league) pl.league = lg.league;
+    pfResolveCache[ck] = pl;
+    openPlayerPage(pl);
+  }).catch(function(){ openPlayerLegacy(name, leagueKey, true, finalView); });
+}
+
+/* ---------- Weekly Pick'em 2: Brandon's 3 players, MORE/LESS, 3-for-3 wins a pack ---------- */
+var PICKEM2 = { week: "2026-W47", legs: [
+  { name: "LeBron James", athleteId: "1966", sport: "basketball", league: "nba", eventId: "401910023", stat: "PTS", statLabel: "Points", line: 15.5, team: "Philadelphia 76ers", opp: "Milwaukee Bucks", starts: "2026-11-21T18:00Z", img: "https://a.espncdn.com/i/headshots/nba/players/full/1966.png" },
+  { name: "Anthony Edwards", athleteId: "4594268", sport: "basketball", league: "nba", eventId: "401910026", stat: "PTS", statLabel: "Points", line: 33.5, team: "Minnesota Timberwolves", opp: "Memphis Grizzlies", starts: "2026-11-22T01:00Z", img: "https://a.espncdn.com/i/headshots/nba/players/full/4594268.png" },
+  { name: "Victor Wembanyama", athleteId: "5104157", sport: "basketball", league: "nba", eventId: "401910027", stat: "PTS", statLabel: "Points", line: 28.5, team: "San Antonio Spurs", opp: "New Orleans Pelicans", starts: "2026-11-22T01:00Z", img: "https://a.espncdn.com/i/headshots/nba/players/full/5104157.png" }
+]};
+function pk2State(){ var st = lsGet("pa_pickem2", null); if (!st || st.week !== PICKEM2.week) st = { week: PICKEM2.week, picks: {}, locked: false, graded: "", awarded: false, actuals: {} }; return st; }
+function pk2Save(st){ lsSet("pa_pickem2", st); }
+function pk2FirstStart(){ var t = null; PICKEM2.legs.forEach(function(l){ var d = new Date(l.starts).getTime(); if (t === null || d < t) t = d; }); return t; }
+function renderPickem2(){
+  var box = $("pickemHome"); if (!box) return;
+  var st = pk2State();
+  var started = Date.now() >= pk2FirstStart();
+  var head = '<div class="pk-kick">🏆 WEEKLY PICK\'EM</div><div class="pk-title">Brandon\'s 3 Players</div><div class="note">Pick MORE or LESS on all 3. Get every one right and win a <b style="color:#f5c518">FREE PACK</b>. Free to play — picks lock at the first tip-off.</div>';
+  var legsHtml = PICKEM2.legs.map(function(l, i){
+    var pick = st.picks[i];
+    var act = st.actuals[i];
+    var res = "";
+    if (act != null && act !== "" && pick){ var hit = (pick === "MORE" && act > l.line) || (pick === "LESS" && act < l.line); res = '<div class="note" style="margin-top:4px">Final: <b style="color:#fff">' + act + ' ' + esc(l.statLabel) + '</b>' + (hit ? ' · <b style="color:#4fe3c1">HIT ✓</b>' : ' · <b style="color:#ff5d7a">MISS ✗</b>') + '</div>'; }
+    var dis = (st.locked || started) ? " disabled" : "";
+    return '<div class="pk2leg"><img src="' + esc(l.img) + '" alt="" onerror="this.remove()"><div style="min-width:0;flex:1"><b>' + esc(l.name) + '</b><div class="note">' + esc(l.team) + ' vs ' + esc(l.opp) + ' · ' + esc(l.statLabel) + ' <b style="color:#fff">' + l.line + '</b></div>' + res + '</div><div class="pk2btns"><button type="button" class="pk2btn' + (pick === "MORE" ? " on" : "") + '" data-pk2="' + i + ':MORE"' + dis + '>MORE</button><button type="button" class="pk2btn' + (pick === "LESS" ? " on" : "") + '" data-pk2="' + i + ':LESS"' + dis + '>LESS</button></div></div>';
+  }).join("");
+  var foot = "";
+  if (st.graded === "win") foot = '<div style="margin-top:10px;font-weight:900;color:#4fe3c1">🎉 PERFECT — 3 for 3! Your free pack is waiting on the Board tab.</div>';
+  else if (st.graded === "loss") foot = '<div style="margin-top:10px;font-weight:800;color:#ff8fa3">Not a perfect 3 this week — new players drop next week.</div>';
+  else if (st.locked) foot = '<div style="margin-top:10px;font-weight:800;color:#cdbcf5">🔒 Picks locked — good luck! Results land here when the games finish.</div>';
+  else if (started) foot = '<div style="margin-top:10px" class="note">This week\'s games have started — picks are closed. New players drop next week.</div>';
+  else { var n = Object.keys(st.picks).length; foot = '<button type="button" class="bigbtn" id="pk2Lock" style="width:100%;margin-top:10px"' + (n < 3 ? " disabled" : "") + '>🔒 Lock my picks (' + n + '/3)</button>'; }
+  box.innerHTML = '<div class="pickem">' + head + legsHtml + foot + '</div>';
+  box.querySelectorAll("[data-pk2]").forEach(function(b){ b.addEventListener("click", function(){ var parts = b.getAttribute("data-pk2").split(":"); var s2 = pk2State(); if (s2.locked || Date.now() >= pk2FirstStart()) return; s2.picks[parts[0]] = parts[1]; pk2Save(s2); renderPickem2(); }); });
+  var lk = $("pk2Lock");
+  if (lk) lk.addEventListener("click", function(){ var s2 = pk2State(); if (Object.keys(s2.picks).length < 3) return; s2.locked = true; pk2Save(s2); renderPickem2(); });
+  pk2MaybeGrade();
+}
+var _pk2Grading = false;
+function pk2StatFromSummary(sm, leg){
+  var players = (sm.boxscore && sm.boxscore.players) || [];
+  for (var g = 0; g < players.length; g++){
+    var stats = players[g].statistics || [];
+    for (var k = 0; k < stats.length; k++){
+      var names = stats[k].names || stats[k].labels || [];
+      var ix = names.indexOf(leg.stat);
+      if (ix < 0) continue;
+      var ath = stats[k].athletes || [];
+      for (var i = 0; i < ath.length; i++){
+        if (ath[i].athlete && String(ath[i].athlete.id) === String(leg.athleteId)){
+          var v = parseFloat(ath[i].stats && ath[i].stats[ix]);
+          return isNaN(v) ? null : v;
+        }
+      }
+    }
+  }
+  return null;
+}
+function pk2FinishGrade(st){
+  var win = PICKEM2.legs.every(function(l, i){ var a = st.actuals[i]; return (st.picks[i] === "MORE" && a > l.line) || (st.picks[i] === "LESS" && a < l.line); });
+  st.graded = win ? "win" : "loss";
+  if (win && !st.awarded){ st.awarded = true; var pk = packsGet(); pk.n = (pk.n || 0) + 1; packsSet(pk); }
+  pk2Save(st);
+  renderPickem2();
+  if (win) renderPacks();
+}
+function pk2MaybeGrade(){
+  var st = pk2State();
+  if (st.graded) return;
+  var started = Date.now() >= pk2FirstStart();
+  if (!st.locked && !started) return;
+  if (_pk2Grading) return;
+  var missing = PICKEM2.legs.some(function(l, i){ return st.actuals[i] == null || st.actuals[i] === ""; });
+  if (!missing){ if (st.locked) pk2FinishGrade(st); return; }
+  _pk2Grading = true;
+  var jobs = PICKEM2.legs.map(function(l, i){
+    if (st.actuals[i] != null && st.actuals[i] !== "") return Promise.resolve(true);
+    return fetchJson(ESPN + l.sport + "/" + l.league + "/summary?event=" + l.eventId).then(function(sm){
+      var stt = sm && sm.header && sm.header.competitions && sm.header.competitions[0] && sm.header.competitions[0].status && sm.header.competitions[0].status.type;
+      if (!stt || stt.state !== "post") return false;
+      var val = pk2StatFromSummary(sm, l);
+      if (val === null) return false;
+      st.actuals[i] = val;
+      return true;
+    }).catch(function(){ return false; });
+  });
+  Promise.all(jobs).then(function(done){
+    _pk2Grading = false;
+    pk2Save(st);
+    if (st.locked && done.indexOf(false) < 0) pk2FinishGrade(st);
+    else renderPickem2();
+  });
+}
+(function(){
+  var inp = $("pfSearch");
+  if (inp){ var t = null; inp.addEventListener("input", function(){ pfQuery = inp.value.trim(); pfTeamSel = null; if (t) clearTimeout(t); t = setTimeout(function(){ renderFinder(); }, 260); }); }
+})();
+
 /* ---------- init + refresh ---------- */
-function refreshHome(){ renderUpcoming(); renderTicker(); renderTopTicket(); }
+function refreshHome(){ renderUpcoming(); renderPickem2(); }
 var _rb = $("refreshBtn"); if (_rb) _rb.addEventListener("click", function(){ boardCache = {}; propsCache = {}; refreshHome(); if ($("view-live").classList.contains("on")) renderLive(); if (currentSport!=="all") renderBoards(); });
 var _cc = $("coinChip"); if (_cc) _cc.addEventListener("click", function(){ showView("board"); });
 coinChipUpdate();
@@ -8196,7 +8386,7 @@ cloudInit();
     if (sk && sk !== "all" && leagueByKey(sk).key === sk) { setSport(sk); return; }
     t = "home";
   }
-  if (["home", "tickets", "live", "build", "board"].indexOf(t) < 0) t = "home";
+  if (t === "build") t = "players"; if (t === "tickets") t = "home"; if (["home", "live", "players", "board"].indexOf(t) < 0) t = "home";
   showView(t);
 })();
 /* ---------- Android Back button: in-app navigation (Brandon 2026-11-19) ----------
@@ -8258,11 +8448,10 @@ function paBackStep(){
 })();
 if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").catch(function(){}); }
 setInterval(function(){ boardCache = {}; refreshHome(); if (window._view === "tickets") renderTickets(); if ($("view-live").classList.contains("on")){ renderLive(); if (window._openGame) openGame(window._openGame.key, window._openGame.eventId, true); }
-  if (window._view === "sport" && currentSport !== "all"){ getScoreboard(leagueByKey(currentSport), 1).then(function(){ var bmI = breakMap[currentSport] || {}; if (Object.keys(bmI).length || window._brkWasOpen){ window._brkWasOpen = !!Object.keys(bmI).length; renderBoards(); } }).catch(function(){}); }
+  if (window._view === "sport" && currentSport !== "all" && currentSport !== "esports") renderBoards();
 }, 30000);
 setInterval(function(){
-  if (window._openGame) { var glg = leagueByKey(window._openGame.key); if (glg) refreshProps(glg); }
-  if (currentSport !== "all") { var slg = leagueByKey(currentSport); if (slg && PARLAY_KEYS[slg.key]) refreshProps(slg).then(function(){ renderBoards(); }); }
+  if (currentSport !== "all" && window._view === "sport" && currentSport !== "esports") renderBoards();
 }, 5*60*1000);
 </script>
 <button id="slipChip" type="button"></button>
