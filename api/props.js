@@ -237,6 +237,94 @@ function etSlot() {
 const DAILY_BUDGET = 80;
 const NEW_SPORT_KEYS = ["esports_cs2", "esports_lol"];
 function isNewSport(sport) { return NEW_SPORT_KEYS.indexOf(sport) !== -1 || String(sport || "").indexOf("soccer_") === 0; }
+// ---- AI lane helpers ----
+async function aiCacheGet(key) {
+  try {
+    const rows = await sbReq("props_cache?sport=eq." + encodeURIComponent("ai_" + key) + "&select=sport,props,fetched_at");
+    if (rows && rows[0] && rows[0].props && rows[0].props.text) return rows[0].props;
+  } catch (e) {}
+  return null;
+}
+async function aiCacheSet(key, obj) {
+  try {
+    const nowIso = new Date().toISOString();
+    const ex = await sbReq("props_cache?sport=eq." + encodeURIComponent("ai_" + key) + "&select=sport");
+    if (ex && ex.length) await sbReq("props_cache?sport=eq." + encodeURIComponent("ai_" + key), { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ props: obj, fetched_at: nowIso }) });
+    else await sbReq("props_cache", { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ sport: "ai_" + key, props: obj, fetched_at: nowIso, credits_today: 0, count_day: etToday(), last_slot: 0 }) });
+  } catch (e) {}
+}
+async function aiChatCount(uid) {
+  try {
+    const rows = await sbReq("props_cache?sport=eq." + encodeURIComponent("aichat_" + uid) + "&select=sport,credits_today,count_day");
+    if (rows && rows[0] && String(rows[0].count_day || "") === etToday()) return rows[0].credits_today | 0;
+  } catch (e) {}
+  return 0;
+}
+async function aiChatBump(uid, n) {
+  try {
+    const key = "aichat_" + uid, today = etToday();
+    const rows = await sbReq("props_cache?sport=eq." + encodeURIComponent(key) + "&select=sport,credits_today,count_day");
+    if (rows && rows[0]) {
+      const cur = String(rows[0].count_day || "") === today ? (rows[0].credits_today | 0) : 0;
+      await sbReq("props_cache?sport=eq." + encodeURIComponent(key), { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ credits_today: cur + n, count_day: today }) });
+    } else {
+      await sbReq("props_cache", { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ sport: key, props: {}, fetched_at: new Date().toISOString(), credits_today: n, count_day: today, last_slot: 0 }) });
+    }
+  } catch (e) {}
+}
+async function aiCall(messages, maxTokens) {
+  const ctl = new AbortController();
+  const to = setTimeout(() => ctl.abort(), 20000);
+  try {
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST", signal: ctl.signal,
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + process.env.OPENAI_API_KEY },
+      body: JSON.stringify({ model: "gpt-4o-mini", messages: messages, max_tokens: maxTokens || 240, temperature: 0.75 }),
+    });
+    clearTimeout(to);
+    if (!r.ok) return null;
+    const j = await r.json();
+    const t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+    return t ? String(t).trim() : null;
+  } catch (e) { clearTimeout(to); return null; }
+}
+async function aiLane(req, res) {
+  res.setHeader("Cache-Control", "no-store");
+  const key = process.env.OPENAI_API_KEY || "";
+  if (req.query.ai === "ping") { res.status(200).json({ ok: true, on: !!key }); return; }
+  if (!key) { res.status(200).json({ ok: false, off: true }); return; }
+  let body = req.body;
+  if (typeof body === "string") { try { body = JSON.parse(body); } catch (e) { body = null; } }
+  if (!body || typeof body !== "object") { res.status(200).json({ ok: false }); return; }
+  if (body.mode === "gen") {
+    const ck = String(body.cacheKey || "").replace(/[^a-zA-Z0-9_:-]/g, "").slice(0, 120);
+    const sys = String(body.sys || "").slice(0, 600), usr = String(body.user || "").slice(0, 1800);
+    if (!ck || !usr) { res.status(200).json({ ok: false }); return; }
+    const hit = await aiCacheGet(ck);
+    if (hit && hit.text) { res.status(200).json({ ok: true, text: hit.text, cached: true }); return; }
+    const text = await aiCall([{ role: "system", content: sys || "You write short, punchy sports blurbs." }, { role: "user", content: usr }], body.maxTokens || 240);
+    if (!text) { res.status(200).json({ ok: false }); return; }
+    await aiCacheSet(ck, { text: text, ts: Date.now() });
+    res.status(200).json({ ok: true, text: text });
+    return;
+  }
+  if (body.mode === "chat") {
+    const uid = String(body.uid || "anon").replace(/[^a-zA-Z0-9-]/g, "").slice(0, 40) || "anon";
+    const used = await aiChatCount(uid);
+    if (used >= 40) { res.status(200).json({ ok: false, limit: true }); return; }
+    const msgs = Array.isArray(body.messages) ? body.messages.slice(-8).map((m) => ({ role: m && m.role === "assistant" ? "assistant" : "user", content: String((m && m.content) || "").slice(0, 900) })).filter((m) => m.content) : [];
+    if (!msgs.length) { res.status(200).json({ ok: false }); return; }
+    const sys = String(body.sys || "").slice(0, 700);
+    const ctx = String(body.ctx || "").slice(0, 3500);
+    const full = [{ role: "system", content: sys + (ctx ? "\n\nLIVE APP DATA:\n" + ctx : "") }].concat(msgs);
+    const text = await aiCall(full, 320);
+    if (!text) { res.status(200).json({ ok: false }); return; }
+    await aiChatBump(uid, 1);
+    res.status(200).json({ ok: true, text: text });
+    return;
+  }
+  res.status(200).json({ ok: false });
+}
 function budgetOpen(usedToday) { return usedToday + 6 <= DAILY_BUDGET; }
 async function sbReq(path, opts) {
   if (!SB_URL || !SB_SVC) return null;
@@ -1510,6 +1598,13 @@ module.exports = async (req, res) => {
     } catch (e) { res.status(200).json({ sports: [] }); }
     return;
   }
+  // Score Agent AI lane (Brandon 2026-11-21: all six AI features for every
+  // user). Dormant until OPENAI_API_KEY exists in Vercel env: the client
+  // pings ?ai=ping and hides every AI surface while off. Generated blurbs
+  // are cached in the shared props_cache (sport = "ai_<key>") so each one
+  // is written ONCE and served to everyone; chat is per-user with a daily
+  // cap counted in the same table.
+  if (req.query && req.query.ai) { await aiLane(req, res); return; }
   // Esports lane first: it runs on free sources (bo3.gg / Riot feeds) and
   // the shared cache — it must answer even when no Parlay key is present.
   if (req.query && req.query.esports) { await espLane(req, res); return; }

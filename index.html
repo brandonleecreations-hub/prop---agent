@@ -1349,6 +1349,18 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
 #pickemHome .pk2leg{gap:7px;padding:5px 7px;margin-top:6px;border-radius:10px}
 #pickemHome .pk2leg img{width:34px;height:34px}
 #pickemHome .pk2btn{padding:6px 8px;font-size:11.5px;border-radius:8px}
+[data-ai]{display:none}
+body.aion [data-ai]{display:block}
+.aibox{background:linear-gradient(135deg,#25124a,#150a2c);border:1px solid #7C3AED;border-radius:12px;padding:9px 11px;margin:10px 0;text-align:left}
+.aikick{color:#c4b5fd;font-weight:900;font-size:10.5px;letter-spacing:1.2px}
+.aitext{font-size:13.5px;line-height:1.45;margin-top:3px;color:#f1edff}
+.pk2take{font-size:12.5px;color:#e9e4ff;background:rgba(124,58,237,.14);border:1px solid rgba(124,58,237,.4);border-radius:9px;padding:6px 8px;margin-top:6px;line-height:1.4;text-align:left}
+.askpromo{background:linear-gradient(135deg,#3b1470,#1b1030);border:1px solid #7C3AED;border-radius:14px;padding:12px;margin:10px 0;text-align:left}
+#askDlg{border:1px solid #7C3AED;border-radius:16px;background:#14101f;color:#fff;width:min(94vw,540px);max-height:88dvh;padding:0}
+#askMsgs{max-height:52dvh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-top:10px;padding-right:2px}
+.askmsg{max-width:86%;padding:8px 11px;border-radius:13px;font-size:14px;line-height:1.4;white-space:pre-wrap}
+.askmsg.me{align-self:flex-end;background:linear-gradient(135deg,#7C3AED,#6d28d9)}
+.askmsg.bot{align-self:flex-start;background:#221a3d;border:1px solid #3a2f66}
 .pfhead{display:flex;gap:12px;align-items:center}
 .pfhead img{width:76px;height:76px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#7C3AED,#3b1470);border:2px solid rgba(245,197,24,.6)}
 .psrow[data-player]{cursor:pointer}
@@ -1376,6 +1388,7 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
     <p class="note" id="heroStatus"></p>
     <div id="secUpcoming"><h2>Upcoming Games</h2>
     <div id="upcoming"><p class="empty">Loading upcoming games from ESPN…</p></div></div>
+    <div data-ai class="askpromo" id="askPromo"><div style="font-weight:900;font-size:15.5px">💬 ASK THE AGENT</div><p class="note" style="margin:4px 0 9px">Ask anything about players, games, stats and matchups — the Agent answers from live data.</p><button type="button" class="bigbtn" id="askOpenBtn" style="width:100%">💬 Start asking</button></div>
     <div class="homeclash posterad" id="clashHomeAd"><img src="/api/banners?s=clashposter&v=2" alt="Agent Clash Card Game — tap to play"></div>
     <div id="dlPop" class="dlpop" style="display:none">
       <button class="dlpopx" id="dlPopX" type="button" aria-label="Close">✕</button>
@@ -1432,6 +1445,7 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
 
   <!-- PLAYER FINDER -->
   <section class="view" id="view-players">
+    <div data-ai id="agentReport"></div>
     <h2>Player Finder</h2>
     <p class="sub">Search any athlete — or browse by sport and team — for season stats, career stats and their last 5 games.</p>
     <div class="searchbar"><input type="text" id="pfSearch" placeholder="Search any player — try Mahomes or Ohtani" autocomplete="off"></div>
@@ -1475,6 +1489,7 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
   </div>
 </nav>
 
+<dialog id="askDlg"><div style="padding:14px"><div class="row" style="justify-content:space-between;align-items:center"><b style="font-size:16px">💬 Ask the Agent</b><button type="button" class="csbtn" id="askClose">✕ CLOSE</button></div><div id="askMsgs"></div><div style="display:flex;gap:8px;margin-top:10px"><input id="askInput" type="text" placeholder="Ask about a player, game or stat…" autocomplete="off" style="flex:1;min-width:0;background:#101018;border:1px solid #2c2c3a;border-radius:10px;color:#fff;padding:10px 12px;font-size:14px;box-sizing:border-box"><button id="askSend" class="openbtn" type="button">Ask</button></div><p class="note" style="margin-top:8px">Answers come from the app's live ESPN data · 40 questions a day</p></div></dialog>
 <dialog id="playerDlg">
   <div id="playerDlgBody"></div>
 </dialog>
@@ -3521,7 +3536,8 @@ function openGame(key, eventId, isRefresh){
       (s.leaders || []).forEach(function(tl){ (tl.leaders||[]).forEach(function(cat){ var L = (cat.leaders||[])[0]; if (L && L.athlete && perf.length<4) perf.push({name:L.athlete.displayName, stat:(L.displayValue||"") + " " + (cat.shortDisplayName||cat.displayName||"")}); }); });
       if (perf.length) html += '<div style="font-size:16px;margin-top:14px"><b>Top</b> <b style="color:var(--gold)">Performers</b></div>' + perf.map(function(p){ return '<div class="row" data-player="' + esc(p.name) + '" data-league="' + lg.key + '" style="justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer"><b>' + esc(p.name) + '</b><span style="color:var(--cyan);font-weight:700;font-size:13px">' + esc(p.stat) + '</span></div>'; }).join("");
       var tstats = (s.boxscore && s.boxscore.statistics) || (s.boxscore && s.boxscore.teams) || [];
-      if (tstats.length===2){
+      html += '<div data-ai id="gcAi"></div>';
+        if (tstats.length===2){
         /* Team stats as a tidy compact grid (Brandon 2026-11-18): away
            value | stat label | home value, aligned rows, small type --
            same stats as before, just compact and neat. */
@@ -3578,6 +3594,7 @@ function openGame(key, eventId, isRefresh){
     else html += '<div style="font-size:14px;margin-top:14px"><b>Play by Play</b></div><p class="note" style="margin-top:6px">' + (lg.key === "tennis" ? "ESPN does not report point-by-point plays for tennis - live set and game scores are in the Match Tracker above." : "No plays reported yet - they will show here as the game goes.") + '</p>';
     html += (st.state === "pre" ? '' : '<div id="gameProps"></div>') + '</div>';
     $("gameDetail").innerHTML = '<button class="gcBack" type="button">← All games</button>' + html;
+    aiGameRender(key, s, comp);
     bindTiles($("gameDetail"));
     if (isRefresh && keepY) window.scrollTo(0, keepY);
     var pbpBtn = $("pbpBtn");
@@ -5566,6 +5583,7 @@ function clashStartFight(){
   CL.myActive = 0; CL.cpuActive = 0; CL.round = 1; CL.busy = false; CL.over = false; CL.tagged = false; CL.lastHit = null; CL.lastWin = null; CL.lastBlock = null; CL.lastTag = null; CL.grid = ["", "", "", "", "", "", "", "", ""]; CL.myBonus = 0; CL.cpuBonus = 0; CL.myGuard = 0; CL.cpuGuard = 0; CL.myTemp = 0; CL.cpuTemp = 0; CL.placing = null; CL.abilityPick = null; CL.ttLine = null; CL.ttResolve = null; CL.abResolve = null;
   CL.phase = "flip"; CL.flip = null; CL.firstPlayer = null; CL.myDeck = buildDeck(); CL.cpuDeck = buildDeck(); CL.myHand = []; CL.cpuHand = []; CL.myPile = []; CL.cpuPile = []; CL.pulledMe = []; CL.pulledCpu = []; CL.drawPop = 0; CL.statSurge = 0; CL.justShuffled = true; CL.itemUsedRound = 0; CL.cpuItemRound = 0; CL.myFreeHit = false; CL.cpuFreeHit = false; CL.planned = false; CL.scoutText = null; CL.lastDrawn = []; CL.turn = null; CL.turnNo = 0; CL.myDef = false; CL.cpuDef = false; CL.plan = null; CL._turnKey = null; CL._sdSplash = 0;
   CL.log = ["🥊 " + fName(CL.mine[0]) + " & " + fName(CL.mine[1]) + " vs " + fName(CL.cpu[0]) + " & " + fName(CL.cpu[1]) + " — FIGHT!"];
+  aiClashHype();
   clashArena();
 }
 var ITEMS = [
@@ -6003,9 +6021,11 @@ function clashFinish(won){
   clashPanel('<div class="clashresult">' + (won ? '<div class="reswin">🏆 VICTORY!</div>' : '<div class="reslose">DEFEAT</div>')
     + '<div class="clashsub">' + (won ? 'Your pair takes the night! ' + (earned > 0 ? '<b style="color:#f5c518">+' + earned + ' 🪙 Clash Coins</b>' : '') : CL.mode === "pvp" ? (CL.pvp.oppName || 'Your friend') + ' takes this one. Run it back!' : 'The CPU pair takes this one. Watch their powers, time your tags, and run it back.') + '</div>'
     + '<div class="clashmeta">Battle Record: <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b> · 🪙 <b>' + coinsGet() + '</b>' + (won ? (CL.bwPoint ? ' \u00B7 \uD83C\uDFC6 <b>+' + (CL.bwPts || 5) + ' Tier Points</b> \u2014 ' + CHARNAMES[tierCharIdx() - 1] + ' now has ' + charWins(tierCharIdx()) + ' pts' : ' \u00B7 Every battle win earns 5 tier points') : '') + (CL.mode === "ladder" && won && CL.boss < 7 ? ' · Next up: Boss ' + (CL.boss + 1) : '') + (CL.mode === "ladder" && won && CL.boss === 7 ? ' · 🏆 LADDER CHAMPION!' : '') + '</div>'
+    + '<div data-ai id="clashRecap"></div>'
     + (CL.mode === "pvp" ? '<button class="clashbig gold" data-pvprem="1">🔁 REMATCH<span>Same room — both pick new pairs</span></button>' : '<button class="clashbig gold" data-clashrematch="1">🔁 REMATCH<span>' + (CL.mode === "ladder" ? 'Boss ' + CL.boss + ' again' : 'New CPU pair, same tiers') + '</span></button>'
     + '<button class="clashbig" data-clashmode="' + CL.mode + '">🔄 NEW PAIR<span>Pick different fighters</span></button>')
     + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:8px">Done</button></div>');
+  aiClashRecap(won);
   if (CL.mode === "pvp" && CL.pvp && !CL.pvp.finSent) { CL.pvp.finSent = true; pvpSendFinal(won); }
   if (won && typeof confetti === "function") confetti();
 }
@@ -8626,7 +8646,9 @@ function pfPlayerHtml(p, bio, stats, gamelog){
   }
   var vsHtml = pfCurOpp ? pfVsSectionHtml(pfCurOpp) : "";
   var fightsHtml = p.sport === "mma" ? '<div id="pfFights"><h3 style="margin:16px 0 6px;font-size:16px">Fight Results</h3><p class="empty">Loading fight results…</p></div>' : "";
-  return pfHeadHtml(p, img, name, team, meta) + '<div id="pfL5Wrap">' + pfLast5Html(parsed) + '</div>' + vsHtml + statsHtml + '<div id="pfStatPop"></div>' + fightsHtml;
+  window._pfAi = { id: p.id, name: name, team: team, rows: parsed.rows, names: parsed.names };
+  setTimeout(function(){ aiInsightRender(); }, 0);
+  return pfHeadHtml(p, img, name, team, meta) + '<div data-ai id="pfInsight"></div><div id="pfL5Wrap">' + pfLast5Html(parsed) + '</div>' + vsHtml + statsHtml + '<div id="pfStatPop"></div>' + fightsHtml;
 }
 function pfWirePlayerBody(body){
   body.querySelectorAll(".l5slider").forEach(function(sl, i){ try { popSliderInit(sl, "l5s" + i, ".l5card"); } catch (e) {} });
@@ -8807,7 +8829,8 @@ function renderPickem2(){
   else if (st.locked) foot = '<div style="margin-top:10px;font-weight:800;color:#cdbcf5">🔒 Picks locked — good luck! Results land here when the games finish.</div>';
   else if (started) foot = '<div style="margin-top:10px" class="note">These games have started — picks are closed. New players drop with the next round.</div>';
   else { var n = Object.keys(st.picks).length; foot = '<button type="button" class="bigbtn" id="pk2Lock" style="width:100%;margin-top:10px"' + (n < 3 ? " disabled" : "") + '>🔒 Lock my picks (' + n + '/3)</button>'; }
-  box.innerHTML = '<div class="pickem">' + head + legsHtml + foot + '</div>';
+  box.innerHTML = '<div class="pickem">' + head + legsHtml + '<div data-ai id="pkTakes"></div>' + foot + '</div>';
+  aiTakesRender();
   box.querySelectorAll("[data-pk2]").forEach(function(b){ b.addEventListener("click", function(){ var parts = b.getAttribute("data-pk2").split(":"); var s2 = pk2State(); if (s2.locked || Date.now() >= pk2FirstStart()) return; s2.picks[parts[0]] = parts[1]; pk2Save(s2); renderPickem2(); }); });
   var lk = $("pk2Lock");
   if (lk) lk.addEventListener("click", function(){ var s2 = pk2State(); if (Object.keys(s2.picks).length < 3) return; s2.locked = true; pk2Save(s2); renderPickem2(); });
@@ -9011,6 +9034,141 @@ function paBackStep(){
     try { history.pushState({ pa: "trap" }, ""); } catch (e) {}
   });
 })();
+/* ================= SCORE AGENT AI (Brandon 2026-11-21) =================
+   Six user-facing AI features. All dormant until the server reports an
+   OPENAI_API_KEY (aiBoot ping): every AI surface is [data-ai] and stays
+   CSS-hidden until body.aion. Generated blurbs are cached server-side
+   per key, so each is written once and served to every user. */
+var AI_ON = false;
+function aiPost(body){ return fetch("/api/props?ai=1", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(function(r){ return r.json(); }).catch(function(){ return null; }); }
+function aiGen(cacheKey, sys, user, maxTokens){ if (!AI_ON) return Promise.resolve(null); return aiPost({ mode: "gen", cacheKey: cacheKey, sys: sys, user: user, maxTokens: maxTokens || 220 }).then(function(j){ return (j && j.ok && j.text) ? j.text : null; }); }
+function aiBoxHtml(kick, text){ return '<div class="aibox"><div class="aikick">' + kick + '</div><div class="aitext">' + esc(text) + '</div></div>'; }
+function aiBoot(){
+  fetch("/api/props?ai=ping").then(function(r){ return r.json(); }).then(function(j){
+    if (!j || !j.on) return;
+    AI_ON = true; document.body.classList.add("aion");
+    aiWireAsk(); aiReportRender();
+    if (typeof renderPickem2 === "function") renderPickem2();
+  }).catch(function(){});
+}
+/* ---- Ask the Agent (promoted on Home) ---- */
+var ASK_MSGS = [];
+function aiWireAsk(){
+  var open = $("askOpenBtn"), dlg = $("askDlg"), close = $("askClose"), send = $("askSend"), input = $("askInput");
+  if (!dlg) return;
+  if (open) open.addEventListener("click", function(){ try { dlg.showModal(); } catch (e) {} aiAskSeed(); });
+  if (close) close.addEventListener("click", function(){ dlg.close(); });
+  if (send) send.addEventListener("click", function(){ aiAskSend(); });
+  if (input) input.addEventListener("keydown", function(e){ if (e.key === "Enter") aiAskSend(); });
+}
+function aiAskSeed(){ if (ASK_MSGS.length) return; ASK_MSGS.push({ role: "assistant", content: "I'm the Agent. Ask me about any player, game, stat or matchup \u2014 I answer from the app's live data." }); aiAskDraw(); }
+function aiAskDraw(){ var box = $("askMsgs"); if (!box) return; box.innerHTML = ASK_MSGS.map(function(m){ return '<div class="askmsg ' + (m.role === "user" ? "me" : "bot") + '">' + esc(m.content) + '</div>'; }).join(""); box.scrollTop = box.scrollHeight; }
+function aiAskCtx(){
+  var jobs = visibleLeagueKeys(PROP_LEAGUES).slice(0, 8).map(function(k){ var lg = leagueByKey(k); return getScoreboard(lg, 1).then(function(ev){ return { lg: lg, ev: ev }; }).catch(function(){ return null; }); });
+  return Promise.all(jobs).then(function(rs){
+    var lines = [];
+    rs.forEach(function(r){ if (!r) return; (r.ev || []).slice(0, 10).forEach(function(ev){ var ts = eventTeams(ev); if (ts.length < 2) return; var st = (ev.status && ev.status.type) || {}; lines.push(r.lg.label + ": " + (ts[0].name || "") + " " + (ts[0].score != null ? ts[0].score : "") + " vs " + (ts[1].name || "") + " " + (ts[1].score != null ? ts[1].score : "") + " (" + (st.shortDetail || st.state || "") + ")"); }); });
+    var pk = "Daily Pick'em \u2014 The Dealmaker's 3 Players: " + PICKEM2.legs.map(function(l){ return l.name + " " + l.statLabel + " line " + l.line + " (" + l.team + " vs " + l.opp + ")"; }).join("; ");
+    return lines.join("\n") + "\n" + pk;
+  });
+}
+function aiAskSend(){
+  var input = $("askInput"); if (!input) return;
+  var q = (input.value || "").trim(); if (!q) return;
+  input.value = "";
+  ASK_MSGS.push({ role: "user", content: q }); aiAskDraw();
+  ASK_MSGS.push({ role: "assistant", content: "\u2026" }); aiAskDraw();
+  aiAskCtx().then(function(ctx){
+    return aiPost({ mode: "chat", uid: lsGet("pa_uid", "") || "anon", sys: "You are the Agent inside the Score Agent app. Answer fans' sports questions briefly (2-4 sentences) in a sharp, friendly tone. Use ONLY the live app data provided plus well-known general knowledge. Never give betting or gambling advice. If the data does not cover it, say so plainly.", ctx: ctx, messages: ASK_MSGS.filter(function(m){ return m.content !== "\u2026"; }).slice(-8) });
+  }).then(function(j){
+    ASK_MSGS.pop();
+    if (j && j.ok) ASK_MSGS.push({ role: "assistant", content: j.text });
+    else if (j && j.limit) ASK_MSGS.push({ role: "assistant", content: "You've hit today's question limit \u2014 the Agent will be back tomorrow." });
+    else ASK_MSGS.push({ role: "assistant", content: "The Agent couldn't answer that one \u2014 try again in a moment." });
+    aiAskDraw();
+  });
+}
+/* ---- The Dealmaker's Takes (Daily Pick'em) ---- */
+function aiTakesRender(){
+  var box = $("pkTakes"); if (!box || !AI_ON || box.getAttribute("data-done")) return;
+  box.setAttribute("data-done", "1");
+  box.innerHTML = '<div class="note" style="margin-top:8px">\uD83D\uDDE3\uFE0F The Dealmaker is sizing up his 3 players\u2026</div>';
+  var jobs = PICKEM2.legs.map(function(l, i){
+    return pfFetch(ESPN_V3 + l.sport + "/" + l.league + "/athletes/" + l.athleteId + "/gamelog").then(function(gl){
+      var parsed = pfLogRows(gl); var ix = parsed.names.indexOf("points"); if (ix < 0) ix = 0;
+      var last5 = parsed.rows.slice(0, 5).map(function(r){ return parseFloat(r.stats[ix]) || 0; });
+      var avg = last5.length ? last5.reduce(function(a, b){ return a + b; }, 0) / last5.length : 0;
+      var over = last5.filter(function(v){ return v > l.line; }).length;
+      var facts = l.name + " (" + l.team + " vs " + l.opp + "). The Daily Pick'em line is " + l.line + " " + l.statLabel + ". His last 5 games: " + last5.join(", ") + " " + l.statLabel + " (avg " + avg.toFixed(1) + "). He went OVER " + l.line + " in " + over + " of those 5.";
+      return aiGen("take_" + PICKEM2.week + "_" + i, "You are THE DEALMAKER, a smooth, confident sports agent character in the Score Agent app. Give your take in ONE sentence, first person, a little swagger, no betting advice \u2014 talk about the player and the number like a scout, not a bookie.", facts, 110).then(function(t){ return t ? '<div class="pk2take">\uD83D\uDDE3\uFE0F <b>' + esc(l.name) + ':</b> ' + esc(t) + '</div>' : ""; });
+    }).catch(function(){ return ""; });
+  });
+  Promise.all(jobs).then(function(parts){ var b2 = $("pkTakes"); if (b2) b2.innerHTML = parts.join(""); });
+}
+/* ---- Player insight (player pages) ---- */
+function aiInsightRender(){
+  var box = $("pfInsight"); if (!box || !AI_ON) return;
+  var F = window._pfAi; if (!F || !F.rows || !F.rows.length) { box.innerHTML = ""; return; }
+  var key = "insp_" + (F.id || F.name) + "_" + new Date().toISOString().slice(0, 10);
+  if (box.getAttribute("data-k") === key) return; box.setAttribute("data-k", key);
+  var lines = F.rows.slice(0, 5).map(function(r){ return (r.atVs === "at" ? "@ " : "vs ") + (r.opp || "") + (r.result ? " (" + r.result + (r.score ? " " + r.score : "") + ")" : "") + ": " + F.names.slice(0, 4).map(function(n, i){ return n + " " + (r.stats[i] != null ? r.stats[i] : "-"); }).join(", "); }).join(" | ");
+  aiGen(key, "You are the Agent, a sharp sports analyst in the Score Agent app. Write a 1-2 sentence insight about this player from their recent games. Specific numbers, no fluff, no betting talk.", F.name + (F.team ? " (" + F.team + ")" : "") + " \u2014 last 5 games: " + lines, 160).then(function(t){ var b2 = $("pfInsight"); if (t && b2) b2.innerHTML = aiBoxHtml("\uD83E\uDD16 AGENT INSIGHT", t); });
+}
+/* ---- Game Center preview / recap ---- */
+function aiGameRender(key2, s, comp){
+  var box = $("gcAi"); if (!box || !AI_ON) return;
+  try {
+    var cs = (comp && comp.competitors) || []; if (cs.length < 2) return;
+    var st = (comp.status && comp.status.type) || {};
+    var nm = function(c){ return (c.team && (c.team.displayName || c.team.shortDisplayName)) || ""; };
+    var sc = function(c){ return c.score != null ? c.score : ""; };
+    var state = st.state || "pre";
+    var bucket = state === "post" ? "final" : state === "in" ? "b" + Math.floor(Date.now() / 600000) : "pre";
+    var ck = "game_" + (comp.id || "") + "_" + bucket;
+    var facts = nm(cs[0]) + " " + sc(cs[0]) + " vs " + nm(cs[1]) + " " + sc(cs[1]) + ". Status: " + (st.shortDetail || st.detail || state) + ".";
+    try { var bx = (s.boxscore && s.boxscore.players) || []; var tops = []; bx.forEach(function(tp){ var best = null; (tp.statistics || []).forEach(function(gr){ var labs = gr.labels || gr.names || []; var pi = labs.indexOf("PTS"); if (pi < 0) return; (gr.athletes || []).forEach(function(at){ var v = parseFloat(at.stats && at.stats[pi]) || 0; if (!best || v > best.v) best = { n: (at.athlete && at.athlete.displayName) || "", v: v }; }); }); if (best) tops.push(best.n + " " + best.v + " PTS"); }); if (tops.length) facts += " Top scorers: " + tops.join("; ") + "."; } catch (e) {}
+    var sys = state === "pre" ? "You are the Agent in the Score Agent app. Write a 2-sentence game PREVIEW: what to watch and who matters. No betting talk." : "You are the Agent in the Score Agent app. Write a 2-sentence game recap or live update from the score and top scorers. No betting talk.";
+    aiGen(ck, sys, facts, 180).then(function(t){ var b2 = $("gcAi"); if (t && b2) b2.innerHTML = aiBoxHtml(state === "pre" ? "\uD83E\uDD16 AGENT PREVIEW" : "\uD83E\uDD16 AGENT RECAP", t); });
+  } catch (e) {}
+}
+/* ---- The Player Report (Players tab) ---- */
+function aiReportRender(){
+  var box = $("agentReport"); if (!box || !AI_ON || box.getAttribute("data-done")) return;
+  box.setAttribute("data-done", "1");
+  var y = new Date(Date.now() - 86400000);
+  var ymd = "" + y.getFullYear() + String(y.getMonth() + 1).padStart(2, "0") + String(y.getDate()).padStart(2, "0");
+  var leagues = [["basketball", "nba"], ["football", "nfl"], ["football", "college-football"], ["basketball", "mens-college-basketball"]];
+  var jobs = leagues.map(function(pr){ return fetch("https://site.api.espn.com/apis/site/v2/sports/" + pr[0] + "/" + pr[1] + "/scoreboard?dates=" + ymd).then(function(r){ return r.json(); }).catch(function(){ return null; }); });
+  Promise.all(jobs).then(function(rs){
+    var perf = [];
+    rs.forEach(function(j){ if (!j) return; (j.events || []).forEach(function(ev){ var c = (ev.competitions || [])[0]; if (!c) return; (c.leaders || []).forEach(function(ld){ if (ld.name !== "points") return; var top = (ld.leaders || [])[0]; if (top) perf.push({ n: (top.athlete && top.athlete.displayName) || "", v: parseFloat(top.displayValue) || 0, g: ev.shortName || ev.name || "" }); }); }); });
+    perf.sort(function(a, b){ return b.v - a.v; });
+    var top = perf.slice(0, 6);
+    if (!top.length) return;
+    var facts = "Yesterday's top scoring performances: " + top.map(function(p){ return p.n + " \u2014 " + p.v + " pts (" + p.g + ")"; }).join("; ") + ".";
+    aiGen("report_" + ymd, "You are the Agent in the Score Agent app. Write THE PLAYER REPORT: 3-4 punchy sentences covering yesterday's biggest player performances, like a sharp morning sports briefing. No betting talk.", facts, 260).then(function(t){ var b2 = $("agentReport"); if (t && b2) b2.innerHTML = aiBoxHtml("\uD83D\uDCF0 THE PLAYER REPORT \u2014 YESTERDAY'S STARS", t); });
+  });
+}
+/* ---- Agent Clash hype + recap ---- */
+function aiClashHype(){
+  if (!AI_ON || !window.CL) return;
+  try {
+    var tn = ["Rookie", "Gold", "Diamond", "Legend"];
+    var team = function(pair){ return pair.map(function(f){ return fName(f) + " (" + tn[f.ti] + ")"; }).join(" & "); };
+    var ck = "hype_" + CL.mine.map(function(f){ return f.ci + "." + f.ti; }).join("-") + "_vs_" + CL.cpu.map(function(f){ return f.ci + "." + f.ti; }).join("-");
+    aiGen(ck, "You are a hype-man fight announcer for the Agent Clash card game. Write ONE loud, fun sentence hyping this matchup. No betting talk.", "Matchup: " + team(CL.mine) + " vs " + team(CL.cpu) + ". Mode: " + CL.mode + ".", 90).then(function(t){ if (t && window.CL && CL.log) CL.log.push("\uD83C\uDF99\uFE0F " + t); });
+  } catch (e) {}
+}
+function aiClashRecap(won){
+  var box = $("clashRecap"); if (!box || !AI_ON) return;
+  try {
+    var tn = ["Rookie", "Gold", "Diamond", "Legend"];
+    var team = function(pair){ return pair.map(function(f){ return fName(f) + " (" + tn[f.ti] + ")"; }).join(" & "); };
+    var facts = (won ? "The player's pair WON." : "The player's pair LOST.") + " Player team: " + team(CL.mine) + ". Enemy team: " + team(CL.cpu) + ". Mode: " + CL.mode + ". Battle log highlights: " + (CL.log || []).slice(-8).join(" / ");
+    aiGen("recap_" + Date.now(), "You are a fight commentator for the Agent Clash card game. Write a 1-2 sentence post-fight recap with personality, referring to fighters by name.", facts, 140).then(function(t){ var b2 = $("clashRecap"); if (t && b2) b2.innerHTML = aiBoxHtml("\uD83C\uDF99\uFE0F FIGHT RECAP", t); });
+  } catch (e) {}
+}
+aiBoot();
 if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").catch(function(){}); }
 setInterval(function(){ boardCache = {}; refreshHome(); if (window._view === "tickets") renderTickets(); if ($("view-live").classList.contains("on")){ renderLive(); if (window._openGame) openGame(window._openGame.key, window._openGame.eventId, true); }
   if (window._view === "sport" && currentSport !== "all" && currentSport !== "esports") renderBoards();
