@@ -9,13 +9,14 @@
 self.addEventListener("push", function(event) {
   var data = {};
   try { data = event.data ? event.data.json() : {}; } catch (e) { data = { body: event.data ? event.data.text() : "" }; }
-  var title = data.title || "Prop Agent";
+  var title = data.title || "Score Agent";
   var options = {
     body: data.body || "",
-    icon: "/api/icons?s=192",
-    badge: "/api/icons?s=192",
+    icon: "/api/icons?s=192&v=5",
+    badge: "/api/icons?s=192&v=5",
+    image: (data && data.image) || undefined,
     data: { url: (data && data.url) || "/" },
-    tag: (data && data.type) || "prop-agent"
+    tag: (data && data.type) || "score-agent"
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });

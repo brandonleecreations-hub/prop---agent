@@ -203,10 +203,117 @@ function statForGeneric(summary, leg) {
   return null;
 }
 
+
+// ---- Sports pushes (Brandon 2026-11-21): BIG games only \u2014 NBA, NFL and
+// college (ranked matchups only). Game starts + final scores broadcast to
+// every push subscriber with a big team-logo image, plus a Daily Pick'em
+// reminder at 10 AM Denver. Dedupe state lives in props_cache ("pushstate");
+// the first ever run seeds today's finals silently so nobody gets flooded.
+const SPORT_PUSH_LEAGUES = [["basketball", "nba", "nba", "NBA", "\uD83C\uDFC0"], ["football", "nfl", "nfl", "NFL", "\uD83C\uDFC8"], ["football", "college-football", "cfb", "CFB", "\uD83C\uDFC8"], ["basketball", "mens-college-basketball", "cbb", "CBB", "\uD83C\uDFC0"]];
+function spTeam(c) { const t = (c && c.team) || {}; return { name: t.displayName || t.shortDisplayName || "", abbr: t.abbreviation || "", logo: t.logo || "", score: c && c.score != null ? String(c.score) : "" }; }
+function spBig(ev, key) {
+  if (key === "nba" || key === "nfl") return true;
+  const cs = ((ev.competitions || [])[0] || {}).competitors || [];
+  return cs.some((c) => { const r = c.rank != null ? c.rank : c.curatedRank; return r != null && r >= 1 && r <= 25; });
+}
+function denverParts() {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Denver", hour: "numeric", minute: "numeric", hour12: false }).formatToParts(new Date());
+    const o = {}; parts.forEach((p) => { o[p.type] = p.value; });
+    return { hour: parseInt(o.hour, 10) % 24, minute: parseInt(o.minute, 10) };
+  } catch (e) { return null; }
+}
+function denverYmd() {
+  try { return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Denver", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()); } catch (e) { return ""; }
+}
+async function spStateGet() {
+  const r = await rest("props_cache?sport=eq.pushstate&select=props", { headers: sbHeaders() });
+  const row = Array.isArray(r.json) && r.json[0];
+  return (row && row.props) || {};
+}
+async function spStateSet(obj) {
+  const ex = await rest("props_cache?sport=eq.pushstate&select=sport", { headers: sbHeaders() });
+  const has = !!(ex.json && ex.json.length);
+  const rec = { props: obj, fetched_at: new Date().toISOString() };
+  if (!has) { rec.sport = "pushstate"; rec.credits_today = 0; rec.count_day = ""; rec.last_slot = 0; }
+  await rest(has ? "props_cache?sport=eq.pushstate" : "props_cache", { method: has ? "PATCH" : "POST", headers: sbHeaders({ Prefer: "return=minimal" }), body: JSON.stringify(rec) });
+}
+async function sportsPush(req, res, dry) {
+  const report = { ok: true, sports: true, dry, starts: [], finals: [], seededFinals: 0, pickem: false, pushes: [], pushed: 0, subs: 0, errors: [] };
+  const pub = process.env.VAPID_PUBLIC_KEY, priv = process.env.VAPID_PRIVATE_KEY, subj = process.env.VAPID_SUBJECT;
+  let webpush = null;
+  if (pub && priv && subj) { try { webpush = require("web-push"); webpush.setVapidDetails(subj, pub, priv); } catch (e) { webpush = null; } }
+  const subsRes = await rest("push_subscriptions?select=id,endpoint,p256dh,auth&limit=500", { headers: sbHeaders() });
+  const subs = Array.isArray(subsRes.json) ? subsRes.json : [];
+  report.subs = subs.length;
+  const state = await spStateGet();
+  const sent = state.sent || {};
+  const now = Date.now();
+  Object.keys(sent).forEach((k) => { if (now - (sent[k] || 0) > 3 * 86400000) delete sent[k]; });
+  const firstRun = !state.seeded;
+  const startGames = [], finalGames = [];
+  for (const row of SPORT_PUSH_LEAGUES) {
+    const sport = row[0], league = row[1], key = row[2], label = row[3], emoji = row[4];
+    let j = null;
+    try { j = await getJson(ESPN + sport + "/" + league + "/scoreboard"); } catch (e) { continue; }
+    (j.events || []).forEach((ev) => {
+      if (!spBig(ev, key)) return;
+      const comp = (ev.competitions || [])[0] || {};
+      const cs = comp.competitors || [];
+      if (cs.length < 2) return;
+      const st = (ev.status && ev.status.type) || {};
+      const startMs = new Date(ev.date || comp.date || 0).getTime();
+      const aw = cs.find((c) => c.homeAway === "away") || cs[0];
+      const hm = cs.find((c) => c.homeAway === "home") || cs[1];
+      const g = { id: String(ev.id), label, emoji, a: spTeam(aw), h: spTeam(hm), startMs };
+      if (st.state === "pre" && startMs > now - 5 * 60000 && startMs < now + 35 * 60000 && !sent["s:" + ev.id]) startGames.push(g);
+      if (st.state === "post" && !sent["f:" + ev.id]) finalGames.push(g);
+    });
+  }
+  const winnerOf = (g) => (parseInt(g.a.score, 10) > parseInt(g.h.score, 10) ? g.a : g.h);
+  const pushes = [];
+  if (startGames.length === 1) { const g = startGames[0]; pushes.push({ title: g.emoji + " " + g.label + " starting soon", body: g.a.name + " @ " + g.h.name + " \u2014 starts in about " + Math.max(1, Math.round((g.startMs - now) / 60000)) + " min. Tap to follow it live.", image: g.h.logo || g.a.logo, type: "sports-start" }); }
+  else if (startGames.length > 1) pushes.push({ title: "\uD83C\uDFC0\uD83C\uDFC8 Big games starting soon", body: startGames.slice(0, 3).map((g) => g.a.abbr + " @ " + g.h.abbr).join(" \u00B7 ") + (startGames.length > 3 ? " +" + (startGames.length - 3) + " more" : "") + " \u2014 all inside 35 minutes.", image: startGames[0].h.logo || startGames[0].a.logo, type: "sports-start" });
+  const finalsToPush = firstRun ? [] : finalGames;
+  if (firstRun) report.seededFinals = finalGames.length;
+  if (finalsToPush.length === 1) { const g = finalsToPush[0]; pushes.push({ title: g.emoji + " Final \u2014 " + g.label, body: g.a.name + " " + g.a.score + " @ " + g.h.name + " " + g.h.score + ". " + winnerOf(g).name + " take it.", image: winnerOf(g).logo, type: "sports-final" }); }
+  else if (finalsToPush.length > 1) pushes.push({ title: "\uD83C\uDFC1 Final scores", body: finalsToPush.slice(0, 3).map((g) => g.a.abbr + " " + g.a.score + " @ " + g.h.abbr + " " + g.h.score).join(" \u00B7 ") + (finalsToPush.length > 3 ? " +" + (finalsToPush.length - 3) + " more finals" : ""), image: winnerOf(finalsToPush[0]).logo, type: "sports-final" });
+  const dp = denverParts(), dToday = denverYmd();
+  if (dp && dp.hour === 10 && dp.minute < 15 && state.pickemDay !== dToday) {
+    report.pickem = true;
+    pushes.push({ title: "\uD83C\uDFC6 Daily Pick'em \u2014 The Dealmaker's 3 Players", body: "Today's 3 players are waiting on the Board. Pick MORE or LESS on each \u2014 go 3-for-3 and win a FREE PACK \uD83C\uDF81", image: "https://prop-agent-bre.vercel.app/api/battle?v=14&s=5", type: "pickem" });
+    state.pickemDay = dToday;
+  }
+  report.starts = startGames.map((g) => g.label + " " + g.a.abbr + "@" + g.h.abbr);
+  report.finals = finalGames.map((g) => g.label + " " + g.a.abbr + " " + g.a.score + "@" + g.h.abbr + " " + g.h.score);
+  report.pushes = pushes;
+  if (!dry && webpush && subs.length) {
+    for (const p of pushes) {
+      const payload = JSON.stringify({ title: p.title, body: p.body, url: "/", type: p.type, image: p.image || "" });
+      for (const sm of subs) {
+        try { await webpush.sendNotification({ endpoint: sm.endpoint, keys: { p256dh: sm.p256dh, auth: sm.auth } }, payload); report.pushed++; }
+        catch (e) {
+          if (e && (e.statusCode === 404 || e.statusCode === 410)) { await rest("push_subscriptions?id=eq." + sm.id, { method: "DELETE", headers: sbHeaders({ Prefer: "return=minimal" }) }); }
+          else if (report.errors.length < 5) report.errors.push(String((e && e.message) || e).slice(0, 120));
+        }
+      }
+    }
+  }
+  startGames.forEach((g) => { sent["s:" + g.id] = now; });
+  finalGames.forEach((g) => { sent["f:" + g.id] = now; });
+  state.sent = sent; state.seeded = true;
+  if (!dry) await spStateSet(state);
+  res.status(200).json(report);
+}
+
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   const dry = !!(req.query && req.query.dry);
   if (!SB_URL || !SRK) { res.status(200).json({ ok: false, configured: false }); return; }
+  if (req.query && req.query.sports) {
+    try { await sportsPush(req, res, dry); } catch (e) { res.status(200).json({ ok: false, sports: true, error: String((e && e.message) || e).slice(0, 160) }); }
+    return;
+  }
   const report = { ok: true, dry, pending: 0, finalized: 0, pushed: 0, skipped: 0, startEligible: 0, startPushed: 0, errors: [] };
   try {
     const tix = await rest("tickets?select=id,user_id,legs,created_at&status=eq.pending&order=created_at.asc&limit=100", { headers: sbHeaders() });

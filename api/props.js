@@ -281,24 +281,34 @@ function aiProvider() {
   return null;
 }
 let AI_LAST_STATUS = 0;
+// Gemini model names rotate over time (a retired name 404s on the
+// OpenAI-compatible endpoint), so walk the chain and remember what worked.
+const AI_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest", "gemini-2.5-flash-lite", "gemini-1.5-flash"];
+let AI_MODEL_OK = "";
 async function aiCall(messages, maxTokens) {
   const prov = aiProvider();
   if (!prov) return null;
-  const ctl = new AbortController();
-  const to = setTimeout(() => ctl.abort(), 20000);
-  try {
-    const r = await fetch(prov.url, {
-      method: "POST", signal: ctl.signal,
-      headers: { "Content-Type": "application/json", Authorization: "Bearer " + prov.key },
-      body: JSON.stringify({ model: prov.model, messages: messages, max_tokens: maxTokens || 240, temperature: 0.75 }),
-    });
-    clearTimeout(to);
-    AI_LAST_STATUS = r.status;
-    if (!r.ok) return null;
-    const j = await r.json();
-    const t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
-    return t ? String(t).trim() : null;
-  } catch (e) { clearTimeout(to); return null; }
+  const models = prov.model === "gpt-4o-mini" ? [prov.model] : (AI_MODEL_OK ? [AI_MODEL_OK] : AI_MODELS);
+  for (const m of models) {
+    const ctl = new AbortController();
+    const to = setTimeout(() => ctl.abort(), 20000);
+    try {
+      const r = await fetch(prov.url, {
+        method: "POST", signal: ctl.signal,
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + prov.key },
+        body: JSON.stringify({ model: m, messages: messages, max_tokens: maxTokens || 240, temperature: 0.75 }),
+      });
+      clearTimeout(to);
+      AI_LAST_STATUS = r.status;
+      if (r.status === 404) continue;
+      if (!r.ok) return null;
+      const j = await r.json();
+      const t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+      if (t) { AI_MODEL_OK = m; return String(t).trim(); }
+      return null;
+    } catch (e) { clearTimeout(to); return null; }
+  }
+  return null;
 }
 async function aiLane(req, res) {
   res.setHeader("Cache-Control", "no-store");
