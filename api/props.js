@@ -280,6 +280,7 @@ function aiProvider() {
   if (process.env.OPENAI_API_KEY) return { url: "https://api.openai.com/v1/chat/completions", key: process.env.OPENAI_API_KEY, model: "gpt-4o-mini" };
   return null;
 }
+let AI_LAST_STATUS = 0;
 async function aiCall(messages, maxTokens) {
   const prov = aiProvider();
   if (!prov) return null;
@@ -292,6 +293,7 @@ async function aiCall(messages, maxTokens) {
       body: JSON.stringify({ model: prov.model, messages: messages, max_tokens: maxTokens || 240, temperature: 0.75 }),
     });
     clearTimeout(to);
+    AI_LAST_STATUS = r.status;
     if (!r.ok) return null;
     const j = await r.json();
     const t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
@@ -313,7 +315,7 @@ async function aiLane(req, res) {
     const hit = await aiCacheGet(ck);
     if (hit && hit.text) { res.status(200).json({ ok: true, text: hit.text, cached: true }); return; }
     const text = await aiCall([{ role: "system", content: sys || "You write short, punchy sports blurbs." }, { role: "user", content: usr }], body.maxTokens || 240);
-    if (!text) { res.status(200).json({ ok: false }); return; }
+    if (!text) { res.status(200).json({ ok: false, st: AI_LAST_STATUS }); return; }
     await aiCacheSet(ck, { text: text, ts: Date.now() });
     res.status(200).json({ ok: true, text: text });
     return;
@@ -328,7 +330,7 @@ async function aiLane(req, res) {
     const ctx = String(body.ctx || "").slice(0, 3500);
     const full = [{ role: "system", content: sys + (ctx ? "\n\nLIVE APP DATA:\n" + ctx : "") }].concat(msgs);
     const text = await aiCall(full, 320);
-    if (!text) { res.status(200).json({ ok: false }); return; }
+    if (!text) { res.status(200).json({ ok: false, st: AI_LAST_STATUS }); return; }
     await aiChatBump(uid, 1);
     res.status(200).json({ ok: true, text: text });
     return;
