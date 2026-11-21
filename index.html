@@ -8066,7 +8066,7 @@ function setSport(key){
   if (sportHidden(key)) key = "all";   /* hidden (out-of-season) sport: fall back to Home */
   currentSport = key; lsSet("pa_sport", key);
   boardStat = "all"; boardGame = "all"; boardQuery = ""; var bq = $("boardSearch"); if (bq) bq.value = "";
-  if (key === "esports"){ window._homeSport = "all"; showView("sport"); renderBoards(); document.querySelectorAll("#sportTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-sport")===key); }); return; }
+  /* (esports folds into Home too — see the branch below) */
   /* Brandon 2026-11-21: tapping a sport in the top tabs brings that
      sport's Live / Upcoming / Finished sections up ON THE HOME PAGE.
      Everything else on Home stays — only the games area changes. */
@@ -8074,16 +8074,26 @@ function setSport(key){
   if (key === "all") document.querySelectorAll("#sportTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-sport")===key); });
   showView("home");
   homeSportChrome();
-  if (key === "all") refreshHome(); else renderHomeSport();
+  if (key === "all") refreshHome();
+  else if (key === "esports"){ espHomeMove(); renderBoards(); }
+  else renderHomeSport();
   if (key !== "all") document.querySelectorAll("#sportTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-sport")===key); });
 }
 function homeSportChrome(){
   var all = !window._homeSport || window._homeSport === "all";
-  var hero = $("liveHero"), hs = $("heroStatus"), up = $("secUpcoming"), box = $("homeSportGames");
+  var esp = window._homeSport === "esports";
+  var hero = $("liveHero"), hs = $("heroStatus"), up = $("secUpcoming"), box = $("homeSportGames"), ew = $("espBoardWrap");
   if (hero) hero.style.display = all ? "" : "none";
   if (hs) hs.style.display = all ? "" : "none";
   if (up) up.style.display = all ? "" : "none";
-  if (box) box.style.display = all ? "none" : "";
+  if (box) box.style.display = (all || esp) ? "none" : "";
+  if (ew && ew.parentNode && ew.parentNode.id === "view-home") ew.style.display = esp ? "" : "none";
+}
+function espHomeMove(){
+  var ew = $("espBoardWrap"), box = $("homeSportGames");
+  if (!ew || !box) return;
+  if (ew.parentNode !== box.parentNode) box.parentNode.insertBefore(ew, box.nextSibling);
+  ew.style.display = "";
 }
 function renderHomeSport(){
   var key = window._homeSport; if (!key || key === "all") return;
@@ -8979,7 +8989,7 @@ function pk2MaybeGrade(){
 })();
 
 /* ---------- init + refresh ---------- */
-function refreshHome(){ if (window._homeSport && window._homeSport !== "all"){ renderHomeSport(); renderPickem2(); return; } renderUpcoming(); renderPickem2(); }
+function refreshHome(){ if (window._homeSport && window._homeSport !== "all"){ if (window._homeSport === "esports") renderBoards(); else renderHomeSport(); renderPickem2(); return; } renderUpcoming(); renderPickem2(); }
 function cdTickUpdate(){ document.querySelectorAll(".cdtick").forEach(function(el){ var t = new Date(el.getAttribute("data-cd")).getTime() - Date.now(); if (isNaN(t)) return; if (t <= 0){ el.textContent = "⏳ Starting now"; return; } var m = Math.floor(t / 60000), sec = Math.floor((t % 60000) / 1000); el.textContent = "⏳ Starts in " + m + "m " + (sec < 10 ? "0" : "") + sec + "s"; }); }
 setInterval(cdTickUpdate, 1000);
 var _rb = $("refreshBtn"); if (_rb) _rb.addEventListener("click", function(){ boardCache = {}; propsCache = {}; refreshHome(); if ($("view-live").classList.contains("on")) renderLive(); if (currentSport!=="all") renderBoards(); });
