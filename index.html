@@ -8675,7 +8675,7 @@ function pfAutoMatchup(p, bio){
     var wrap = $("pfL5Wrap"); if (!wrap || !wrap.parentNode) return;
     var div = document.createElement("div");
     div.innerHTML = sec;
-    wrap.parentNode.insertBefore(div, wrap);
+    wrap.parentNode.insertBefore(div, wrap.nextSibling);
     var sl = div.querySelector(".l5slider");
     if (sl){ try { popSliderInit(sl, "l5vs", ".l5card"); } catch (e) {} }
   }).catch(function(){});
