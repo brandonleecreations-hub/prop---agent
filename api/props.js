@@ -28,6 +28,14 @@
 // is missing or Supabase is unreachable, behavior falls back to the
 // per-instance rules above, unchanged.
 
+// FREE-ONLY MODE (Brandon 2026-11-20, "Only do free pulls no credits
+// right now"): while this is true, api/props.js makes ZERO paid Parlay
+// fetches on every lane -- no window claims, no break pulls, no legacy
+// fresh pulls, no key-rotation probes. Boards serve from the shared
+// Supabase cache and the free ESPN fallback only, so the app looks
+// normal, just staler. To restore normal paid pulls, flip this to false.
+var FREE_ONLY_PULLS = true;
+
 const SPORT_KEYS = [
   "basketball_nba", "basketball_ncaab", "basketball_wncaab", "basketball_wnba",
   "americanfootball_nfl", "americanfootball_ncaaf",
@@ -471,6 +479,7 @@ function markGood(k) { goodToday[String(k).slice(-6)] = etToday(); }
 function isGood(k) { return goodToday[String(k).slice(-6)] === etToday(); }
 let rotN = 0;
 async function fetchSport(sport, keys) {
+  if (FREE_ONLY_PULLS) throw new Error("free-only mode: paid Parlay fetches disabled (Brandon 2026-11-20)");
   const all = (Array.isArray(keys) ? keys : [keys]).filter(Boolean);
   const good = all.filter(isGood);
   const rest = all.filter(function (k) { return !isGood(k); });
@@ -1517,6 +1526,16 @@ module.exports = async (req, res) => {
       res.status(200).json({ ok: true, configured: true, cached: true, brk: true, props: hit.props });
       return;
     }
+    if (FREE_ONLY_PULLS) {
+      // Free-only mode (Brandon 2026-11-20): no paid break pull -- serve
+      // the shared board as-is, else this instance's board, else empty.
+      const sbBrk = await sbCacheRow(sport).catch(() => undefined);
+      const sbBrkProps = sbBrk && Array.isArray(sbBrk.props) ? sbBrk.props : null;
+      const brkProps = (sbBrkProps && sbBrkProps.length) ? sbBrkProps : (hit ? hit.props : []);
+      res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=60");
+      res.status(200).json({ ok: true, configured: true, cached: true, brk: true, freeOnly: true, props: brkProps });
+      return;
+    }
     if (!(await gamesToday(sport)) || !brkBudgetOk(sport)) {
       if (hit) { res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=60"); res.status(200).json({ ok: true, configured: true, cached: true, brk: true, props: hit.props }); return; }
       res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=60");
@@ -1630,6 +1649,16 @@ module.exports = async (req, res) => {
   // undefined means the shared store is unavailable -- fall through to the
   // legacy per-instance behavior below, unchanged.
   const sbRow = await sbCacheRow(sport);
+  if (FREE_ONLY_PULLS) {
+    // Free-only mode (Brandon 2026-11-20): no window claim and no paid
+    // fetch on any path below -- serve the shared board / in-memory
+    // board / free ESPN fallback exactly like the stale path does when
+    // a pull is not allowed. Esports props ride this same lane, so they
+    // serve their cached boards too; the free esports lane above is
+    // untouched and stays fully live.
+    await serveStaleOrFallback(res, sport, hit, sbRow === undefined ? null : sbRow);
+    return;
+  }
   let sbClaimed = null;
   if (sbRow !== undefined) {
     if (sbRow && sbFresh(sbRow)) {
