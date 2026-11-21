@@ -45,6 +45,9 @@ h1 small{display:block;font-size:11.5px;color:#a7adb8;font-weight:600;letter-spa
 .tabs::-webkit-scrollbar{display:none}
 .tab{flex:0 0 auto;background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13.5px;font-weight:600;white-space:nowrap}
 .tab.on{background:linear-gradient(135deg,var(--purp),var(--purp2));border-color:var(--purp);color:#fff}
+#gameFilters .tab{display:inline-flex;align-items:center;gap:6px}
+#gameFilters [data-glogo]{display:inline-flex;align-items:center}
+#gameFilters [data-glogo]:empty{display:none}
 main{max-width:1060px;margin:0 auto;padding:14px 14px 96px}
 .view{display:none}
 .view.on{display:block}
@@ -2564,6 +2567,39 @@ function boardGamesFor(lg, ps){
   list.sort(function(a, b){ return new Date(a.starts || "2999") - new Date(b.starts || "2999") || a.label.localeCompare(b.label); });
   return { list: list, keyOf: keyOf, byKey: byKey };
 }
+function gamePillTeams(lg, g, ps, keyOf){
+  /* Both teams of a board game pill, as full names for the ESPN logo
+     directory: the ESPN event behind an "ev" game first, then the
+     label's two sides, then the teams of the props assigned to the
+     game (the same fallbacks the Build headers' gameTeamNames uses). */
+  var names = [];
+  if (g.key.indexOf("ev") === 0){
+    var evs = boardEvents[lg.key] || [];
+    for (var i = 0; i < evs.length; i++){ if ("ev" + String(evs[i].id || "") === g.key){ names = eventTeams(evs[i]).map(function(t){ return t.name; }).filter(function(n){ return !!n; }); break; } }
+  }
+  if (names.length < 2 && g.label){ var parts = g.label.split(" vs "); if (parts.length === 2) names = parts; }
+  if (names.length < 2 && ps && keyOf){
+    var seen = {}; names.forEach(function(n){ seen[teamNameKey(n)] = 1; });
+    ps.forEach(function(p){ if (keyOf[p.id] === g.key && p.team && !seen[teamNameKey(p.team)] && names.length < 2){ seen[teamNameKey(p.team)] = 1; names.push(p.team); } });
+  }
+  return names.slice(0, 2);
+}
+function gamePillLogosHtml(lg, g, ps, keyOf){
+  /* Brandon 2026-11-20: both teams' logos on the game pill, from the
+     same ESPN team directory as the Build section headers. A team with
+     no directory match stays name-only: buildTeamLogo returns "" and
+     no img is emitted for it (never a wrong logo); the span fills in
+     later via applyGamePillLogos once the directory lands. */
+  return gamePillTeams(lg, g, ps, keyOf).map(function(t){ return '<span data-glogo="' + esc(lg.key) + '" data-gteam="' + esc(t) + '">' + tlogoImg(buildTeamLogo(lg.key, t), 16) + '</span>'; }).join("");
+}
+function applyGamePillLogos(L){
+  var gf = $("gameFilters"); if (!gf) return;
+  gf.querySelectorAll('[data-glogo="' + L + '"]').forEach(function(el){
+    if (el.querySelector("img")) return;
+    var url = buildTeamLogo(L, el.getAttribute("data-gteam") || "");
+    if (url) el.insertAdjacentHTML("afterbegin", tlogoImg(url, 16));
+  });
+}
 function renderBoardTiles(lg, ps){
   /* Sort pills removed entirely (Brandon 2026-11-20): boards run ONE
      fixed order — Popular first (most props, then best %, then earliest
@@ -2582,7 +2618,8 @@ function renderBoardTiles(lg, ps){
   var gi = boardGamesFor(lg, ps);
   if (boardGame!=="all" && !gi.byKey[boardGame]) boardGame = "all";
   var gf = $("gameFilters");
-  if (gf){ setHtml(gf, gi.list.length ? '<button type="button" class="tab'+(boardGame==="all"?" on":"")+'" data-gpill="all">All games</button>' + gi.list.map(function(g){ return '<button type="button" class="tab'+(boardGame===g.key?" on":"")+'" data-gpill="'+esc(g.key)+'">'+esc(g.label)+(g.starts ? ' · '+esc(fmtClock(g.starts)) : '')+'</button>'; }).join("") : "");
+  if (gf){ if (gi.list.length) ensureTeamLogos(lg.key);
+    setHtml(gf, gi.list.length ? '<button type="button" class="tab'+(boardGame==="all"?" on":"")+'" data-gpill="all">All games</button>' + gi.list.map(function(g){ return '<button type="button" class="tab'+(boardGame===g.key?" on":"")+'" data-gpill="'+esc(g.key)+'">'+gamePillLogosHtml(lg, g, ps, gi.keyOf)+esc(g.label)+(g.starts ? ' · '+esc(fmtClock(g.starts)) : '')+'</button>'; }).join("") : "");
     gf.querySelectorAll("[data-gpill]").forEach(function(b){ b.addEventListener("click", function(){ boardGame = b.getAttribute("data-gpill"); renderBoards(); }); }); }
   var liveMap = liveTeamsByLeague[lg.key] || {};
   var bm = breakMap[lg.key] || {};
@@ -3712,7 +3749,7 @@ function ensureTeamLogos(L){
     var all = lsGet("pa_teamlogos", {}) || {}; all[L] = { ts: Date.now(), logos: logos }; lsSet("pa_teamlogos", all);
     var m = {}; Object.keys(logos).forEach(function(nm){ teamLogoRegister(m, nm, logos[nm]); });
     teamLogoMaps[L] = m; teamLogoState[L] = "ok";
-    applyTeamLogos(L);
+    applyTeamLogos(L); applyGamePillLogos(L);
   }).catch(function(){ teamLogoState[L] = "fail"; });
 }
 function buildSectionHtml(L, all, label, EMO, searching){
