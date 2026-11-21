@@ -272,14 +272,24 @@ async function aiChatBump(uid, n) {
     }
   } catch (e) {}
 }
+function aiProvider() {
+  // Free first: Google Gemini's free tier (AI Studio key, no billing) via
+  // its OpenAI-compatible endpoint. OpenAI stays as an optional fallback.
+  if (process.env.GEMINI_API_KEY) return { url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", key: process.env.GEMINI_API_KEY, model: "gemini-2.5-flash" };
+  if (process.env.GOOGLE_API_KEY) return { url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", key: process.env.GOOGLE_API_KEY, model: "gemini-2.5-flash" };
+  if (process.env.OPENAI_API_KEY) return { url: "https://api.openai.com/v1/chat/completions", key: process.env.OPENAI_API_KEY, model: "gpt-4o-mini" };
+  return null;
+}
 async function aiCall(messages, maxTokens) {
+  const prov = aiProvider();
+  if (!prov) return null;
   const ctl = new AbortController();
   const to = setTimeout(() => ctl.abort(), 20000);
   try {
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+    const r = await fetch(prov.url, {
       method: "POST", signal: ctl.signal,
-      headers: { "Content-Type": "application/json", Authorization: "Bearer " + process.env.OPENAI_API_KEY },
-      body: JSON.stringify({ model: "gpt-4o-mini", messages: messages, max_tokens: maxTokens || 240, temperature: 0.75 }),
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + prov.key },
+      body: JSON.stringify({ model: prov.model, messages: messages, max_tokens: maxTokens || 240, temperature: 0.75 }),
     });
     clearTimeout(to);
     if (!r.ok) return null;
@@ -290,7 +300,7 @@ async function aiCall(messages, maxTokens) {
 }
 async function aiLane(req, res) {
   res.setHeader("Cache-Control", "no-store");
-  const key = process.env.OPENAI_API_KEY || "";
+  const key = aiProvider() ? "set" : "";
   if (req.query.ai === "ping") { res.status(200).json({ ok: true, on: !!key }); return; }
   if (!key) { res.status(200).json({ ok: false, off: true }); return; }
   let body = req.body;
@@ -1599,7 +1609,7 @@ module.exports = async (req, res) => {
     return;
   }
   // Score Agent AI lane (Brandon 2026-11-21: all six AI features for every
-  // user). Dormant until OPENAI_API_KEY exists in Vercel env: the client
+  // user). Dormant until GEMINI_API_KEY (free) or OPENAI_API_KEY exists in Vercel env: the client
   // pings ?ai=ping and hides every AI surface while off. Generated blurbs
   // are cached in the shared props_cache (sport = "ai_<key>") so each one
   // is written ONCE and served to everyone; chat is per-user with a daily
