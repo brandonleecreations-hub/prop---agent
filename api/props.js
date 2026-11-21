@@ -385,7 +385,7 @@ async function aiLane(req, res) {
     if (!ck || !usr) { res.status(200).json({ ok: false }); return; }
     const hit = await aiCacheGet(ck);
     if (hit && hit.text) { res.status(200).json({ ok: true, text: hit.text, cached: true }); return; }
-    const text = await aiCall([{ role: "system", content: sys || "You write short, punchy sports blurbs." }, { role: "user", content: usr }], body.maxTokens || 240);
+    const text = await aiCall([{ role: "system", content: sys || "You write short, punchy sports blurbs." }, { role: "user", content: usr }], Math.max(body.maxTokens || 240, 600));
     if (!text) { res.status(200).json({ ok: false, st: AI_LAST_STATUS }); return; }
     await aiCacheSet(ck, { text: text, ts: Date.now() });
     res.status(200).json({ ok: true, text: text });
@@ -400,7 +400,7 @@ async function aiLane(req, res) {
     const sys = String(body.sys || "").slice(0, 700);
     const ctx = String(body.ctx || "").slice(0, 3500);
     const full = [{ role: "system", content: sys + (ctx ? "\n\nLIVE APP DATA:\n" + ctx : "") }].concat(msgs);
-    const text = await aiCall(full, 320);
+    const text = await aiCall(full, 700);
     if (!text) { res.status(200).json({ ok: false, st: AI_LAST_STATUS }); return; }
     await aiChatBump(uid, 1);
     res.status(200).json({ ok: true, text: text });

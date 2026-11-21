@@ -9175,7 +9175,7 @@ function aiReportRender(){
     if (!top.length) return;
     box.setAttribute("data-done", "1");
     var facts = "Top recent player performances: " + top.map(function(p){ return p.n + " \u2014 " + p.v + " " + p.stat + " (" + p.g + ")"; }).join("; ") + ".";
-    aiGen("report_" + ymdOf(1), "You are the Agent in the Score Agent app. Write THE PLAYER REPORT: 3-4 punchy sentences covering the biggest recent player performances, like a sharp morning sports briefing. No betting talk.", facts, 260).then(function(t){ var b2 = $("agentReport"); if (t && b2) b2.innerHTML = aiBoxHtml("\uD83D\uDCF0 THE PLAYER REPORT \u2014 TOP PERFORMERS", t); });
+    aiGen("report2_" + ymdOf(1), "You are the Agent in the Score Agent app. Write THE PLAYER REPORT: 3-4 punchy sentences covering the biggest recent player performances, like a sharp morning sports briefing. No betting talk. Begin directly with the first sentence \u2014 no title, no headline, no markdown.", facts, 260).then(function(t){ var b2 = $("agentReport"); if (t && b2) b2.innerHTML = aiBoxHtml("\uD83D\uDCF0 THE PLAYER REPORT \u2014 TOP PERFORMERS", t); });
   }).catch(function(){});
 }
 /* ---- Agent Clash hype + recap ---- */
