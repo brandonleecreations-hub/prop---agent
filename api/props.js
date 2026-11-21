@@ -284,7 +284,7 @@ function aiProvider() {
 let AI_LAST_STATUS = 0;
 // Gemini model names rotate over time (a retired name 404s), so walk the
 // chain and remember what worked.
-const AI_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-3-flash-preview", "gemini-flash-latest", "gemini-2.5-flash"];
+const AI_MODELS = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-3-flash-preview", "gemini-3.8-flash", "gemini-flash-latest"];
 let AI_MODEL_OK = "";
 async function aiCall(messages, maxTokens) {
   const prov = aiProvider();
@@ -338,8 +338,8 @@ async function aiCall(messages, maxTokens) {
       const parts = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts;
       const t = parts ? parts.map((p) => p.text || "").join("") : "";
       if (t) { AI_MODEL_OK = m; return t.trim(); }
-      return null;
-    } catch (e) { clearTimeout(to); return null; }
+      continue;
+    } catch (e) { clearTimeout(to); continue; }
   }
   return null;
 }
