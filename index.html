@@ -8391,7 +8391,7 @@ function mmaFetchRange(ck, fromDays, toDays){
     var ev = (r && r.events) || []; boardCache[ck] = { events: ev, ts: Date.now() }; return ev;
   }).catch(function(){ return []; });
 }
-function mmaFetchFights(){ return mmaFetchRange("mma_fights", -7, 3); }
+function mmaFetchFights(){ return mmaFetchRange("mma_fights", -7, 14); }
 function mmaFetchCards(){ return mmaFetchRange("mma_cards", 4, 42); }
 function mmaLoad(){
   return Promise.all([mmaFetchFights(), mmaFetchCards()]).then(function(rs){
