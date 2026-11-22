@@ -9389,6 +9389,7 @@ function renderPickem2(){
     var act = st.actuals[i];
     var res = "";
     if (act === "VOID"){ res = '<div class="note" style="margin-top:4px">Did not play — <b style="color:#fff">leg removed</b></div>'; }
+    else if (act != null && act !== "" && !pick){ res = '<div class="note" style="margin-top:4px">Final: <b style="color:#fff">' + act + ' ' + esc(l.statLabel) + '</b></div>'; }
     else if (act != null && act !== "" && pick){ var hit = (pick === "MORE" && act > l.line) || (pick === "LESS" && act < l.line); res = '<div class="note" style="margin-top:4px">Final: <b style="color:#fff">' + act + ' ' + esc(l.statLabel) + '</b>' + (hit ? ' · <b style="color:#4fe3c1">HIT ✓</b>' : ' · <b style="color:#ff5d7a">MISS ✗</b>') + '</div>'; }
     var dis = (st.locked || started) ? " disabled" : "";
     return '<div class="pk2leg"><img src="' + esc(l.img) + '" alt="" onerror="this.remove()"><div style="min-width:0;flex:1"><b>' + esc(l.name) + '</b><div class="note">' + esc(l.team) + ' vs ' + esc(l.opp) + ' · ' + esc(l.statLabel) + ' <b style="color:#fff">' + l.line + '</b></div>' + res + '</div><div class="pk2btns"><button type="button" class="pk2btn' + (pick === "MORE" ? " on" : "") + '" data-pk2="' + i + ':MORE"' + dis + '>MORE</button><button type="button" class="pk2btn' + (pick === "LESS" ? " on" : "") + '" data-pk2="' + i + ':LESS"' + dis + '>LESS</button></div></div>';
