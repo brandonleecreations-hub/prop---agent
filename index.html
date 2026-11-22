@@ -9217,6 +9217,7 @@ function pfPlayerHtml(p, bio, stats, gamelog){
   return pfHeadHtml(p, img, name, team, meta) + '<div data-ai id="pfInsight"></div>' + liveHtml + '<div id="pfL5Wrap">' + pfLast5Html(parsed) + '</div>' + vsHtml + statsHtml + '<div id="pfStatPop"></div>' + fightsHtml;
 }
 function pfWirePlayerBody(body){
+  body.querySelectorAll("[data-pfsect]").forEach(function(hd){ hd.addEventListener("click", function(){ var nx = hd.nextElementSibling; if (!nx) return; var hide = nx.style.display !== "none"; nx.style.display = hide ? "none" : ""; var cv = hd.querySelector("[data-pfchev]"); if (cv) cv.textContent = hide ? "▸" : "▾"; }); });
   body.querySelectorAll(".l5slider").forEach(function(sl, i){ try { popSliderInit(sl, "l5s" + i, ".l5card"); } catch (e) {} });
   body.querySelectorAll("[data-pfstat]").forEach(function(cell){ cell.addEventListener("click", function(){ pfStatTap(cell); }); });
 }
@@ -9302,16 +9303,16 @@ function pfStatsHtml(stats){
   if (avg){
     var rows = avg.statistics || [];
     var cur = rows[rows.length - 1];
-    if (cur) h += '<h3 style="margin:16px 0 6px;font-size:16px">This Season <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span></h3>' + pfStatGrid(avg.labels, cur.stats, avg.names);
-    if (avg.totals) h += '<h3 style="margin:16px 0 6px;font-size:16px">Career Averages</h3>' + pfStatGrid(avg.labels, avg.totals, avg.names);
-    if (tot && tot.totals) h += '<h3 style="margin:16px 0 6px;font-size:16px">Career Totals</h3>' + pfStatGrid(tot.labels, tot.totals, tot.names);
+    if (cur) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">This Season <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span> <span data-pfchev="1" style="color:var(--gold);font-size:13px">▾</span></h3><div class="pfsectbody">' + pfStatGrid(avg.labels, cur.stats, avg.names) + '</div>';
+    if (avg.totals) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">Career Averages <span data-pfchev="1" style="color:var(--gold);font-size:13px">▾</span></h3><div class="pfsectbody">' + pfStatGrid(avg.labels, avg.totals, avg.names) + '</div>';
+    if (tot && tot.totals) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">Career Totals <span data-pfchev="1" style="color:var(--gold);font-size:13px">▾</span></h3><div class="pfsectbody">' + pfStatGrid(tot.labels, tot.totals, tot.names) + '</div>';
     return h || '<p class="empty" style="margin-top:12px">Season stats not available for this player.</p>';
   }
   cats.forEach(function(c){
     var rows = c.statistics || [];
     var cur = rows[rows.length - 1];
-    if (cur) h += '<h3 style="margin:16px 0 6px;font-size:16px">' + esc(c.displayName || c.name || "Stats") + ' <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span></h3>' + pfStatGrid(c.labels, cur.stats, c.names);
-    if (c.totals) h += '<div class="note" style="margin:10px 0 4px;font-weight:800">Career — ' + esc(c.displayName || c.name || "") + '</div>' + pfStatGrid(c.labels, c.totals, c.names);
+    if (cur) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">' + esc(c.displayName || c.name || "Stats") + ' <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span> <span data-pfchev="1" style="color:var(--gold);font-size:13px">▾</span></h3><div class="pfsectbody">' + pfStatGrid(c.labels, cur.stats, c.names) + '</div>';
+    if (c.totals) h += '<div class="note" data-pfsect="1" style="margin:10px 0 4px;font-weight:800;cursor:pointer">Career — ' + esc(c.displayName || c.name || "") + ' <span data-pfchev="1" style="color:var(--gold);font-size:12px">▾</span></div><div class="pfsectbody">' + pfStatGrid(c.labels, c.totals, c.names) + '</div>';
   });
   return h || '<p class="empty" style="margin-top:12px">Season stats not available for this player.</p>';
 }
