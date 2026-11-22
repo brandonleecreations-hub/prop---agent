@@ -3763,8 +3763,8 @@ function gcLiveAttrFor(s, nm, clk){
 function openTeamRoster(teamId, teamName){
   var ctx = window._gcCtx; if (!ctx || !teamId) return;
   var lg = ctx.lg, s = ctx.s;
-  var gcLive = false, gcClk = "";
-  try { var comp0 = ((s.header && s.header.competitions) || [])[0] || {}; var gst0 = (comp0.status && comp0.status.type) || {}; gcLive = gst0.state === "in"; gcClk = gst0.shortDetail || gst0.detail || ""; } catch (e) {}
+  var gcLive = false, gcClk = "", gcPre = false;
+  try { var comp0 = ((s.header && s.header.competitions) || [])[0] || {}; var gst0 = (comp0.status && comp0.status.type) || {}; gcLive = gst0.state === "in"; gcPre = gst0.state === "pre"; gcClk = gst0.shortDetail || gst0.detail || ""; } catch (e) {}
   var dlg = $("teamDlg"), body = $("teamDlgBody"); if (!dlg || !body) return;
   saLayersSet({ team: { id: String(teamId), name: teamName || "" } });
   var tid = String(teamId);
@@ -3788,8 +3788,7 @@ function openTeamRoster(teamId, teamName){
   var html = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px' + (gcCol ? ';background:linear-gradient(120deg,#' + gcCol + '59,#' + gcCol + '14 65%,transparent);border:1px solid #' + gcCol + '55;border-radius:12px;padding:10px 12px' : '') + '"><div style="font-size:19px;font-weight:900">' + esc(teamName || "Team") + '</div><button type="button" class="ghostbtn" id="teamDlgClose">\u2715 CLOSE</button></div>';
   html += '<div id="teamPills"></div>';
   if (starters.length) html += '<div class="tgrp">Starters <span class="note">\u2014 this game</span></div><div class="tslider" data-tmslider="1">' + starters.map(function(p){ return card(p); }).join("") + '</div>';
-  else if (played.length) html += '<div class="tgrp">Played <span class="note">\u2014 this game</span></div><div class="tslider" data-tmslider="1">' + played.map(function(p){ return card(p); }).join("") + '</div>';
-  else html += '<p class="note" style="margin-top:12px">Starters post once the game is underway.</p>';
+  else if (gcPre) html += '<p class="note" style="margin-top:12px">Starters post once the game is underway.</p>';
   html += '<div class="tgrp">Full Roster</div><div id="teamRosterList"><p class="empty">Loading roster\u2026</p></div>';
   body.innerHTML = html;
   var cb = $("teamDlgClose"); if (cb) cb.addEventListener("click", function(){ dlg.close(); });
