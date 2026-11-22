@@ -10099,6 +10099,7 @@ var AI_ON = false;
 function aiPost(body){ var ctl = ("AbortController" in window) ? new AbortController() : null; var to = ctl ? setTimeout(function(){ ctl.abort(); }, 65000) : 0; return fetch("/api/props?ai=1", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined }).then(function(r){ if (to) clearTimeout(to); return r.json(); }).catch(function(){ if (to) clearTimeout(to); return null; }); }
 function aiGen(cacheKey, sys, user, maxTokens){ if (!AI_ON) return Promise.resolve(null); return aiPost({ mode: "gen", cacheKey: cacheKey, sys: sys, user: user, maxTokens: maxTokens || 220 }).then(function(j){ return (j && j.ok && j.text) ? j.text : null; }); }
 function aiBoxHtml(kick, text){ return '<div class="aibox"><div class="aikick">' + kick + '</div><div class="aitext">' + esc(text) + '</div></div>'; }
+function aiDmBoxHtml(kick, text){ return '<div class="aibox"><div class="aikick"><img src="/api/battle?s=5" alt="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid #f5c518;vertical-align:-8px;margin-right:7px" onerror="this.remove()">' + kick + '</div><div class="aitext">' + esc(text) + '</div></div>'; }
 function aiBoot(){
   fetch("/api/props?ai=ping").then(function(r){ return r.json(); }).then(function(j){
     if (!j || !j.on) return;
@@ -10248,7 +10249,7 @@ function aiInsightRender(){
   var key = "insp_" + (F.id || F.name) + "_" + new Date().toISOString().slice(0, 10);
   if (box.getAttribute("data-k") === key) return; box.setAttribute("data-k", key);
   var lines = F.rows.slice(0, 5).map(function(r){ return (r.atVs === "at" ? "@ " : "vs ") + (r.opp || "") + (r.result ? " (" + r.result + (r.score ? " " + r.score : "") + ")" : "") + ": " + F.names.slice(0, 4).map(function(n, i){ return n + " " + (r.stats[i] != null ? r.stats[i] : "-"); }).join(", "); }).join(" | ");
-  aiGen(key, "You are the Agent, a sharp sports analyst in the Score Agent app. Write a 1-2 sentence insight about this player from their recent games. Specific numbers, no fluff, no betting talk.", F.name + (F.team ? " (" + F.team + ")" : "") + " \u2014 last 5 games: " + lines, 160).then(function(t){ var b2 = $("pfInsight"); if (t && b2) b2.innerHTML = aiBoxHtml("\uD83E\uDD16 AGENT INSIGHT", t); });
+  aiGen(key, "You are the Agent, a sharp sports analyst in the Score Agent app. Write a 1-2 sentence insight about this player from their recent games. Specific numbers, no fluff, no betting talk.", F.name + (F.team ? " (" + F.team + ")" : "") + " \u2014 last 5 games: " + lines, 160).then(function(t){ var b2 = $("pfInsight"); if (t && b2) b2.innerHTML = aiDmBoxHtml("AGENT INSIGHT", t); });
 }
 /* ---- Game Center preview / recap ---- */
 function aiGameRender(key2, s, comp){
