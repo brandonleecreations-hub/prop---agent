@@ -3419,72 +3419,82 @@ function courtSvg(s){
     + dots + '</svg>';
 }
 function fieldSvg(lg, s, comp, cs){
+  /* Brandon 2026-11-21: realistic 3D-pop field with ONE orientation —
+     away defends the LEFT end zone, home the RIGHT, always. ESPN drive
+     yard lines are offense-relative (0 = own goal, 100 = target goal),
+     so home-team drives are mirrored into absolute field position. */
   var sit = s.situation || comp.situation || {};
   var hm = cs.filter(function(c){ return c.homeAway === "home"; })[0], aw = cs.filter(function(c){ return c.homeAway === "away"; })[0];
-  var ha = (hm && hm.team && hm.team.abbreviation) || "", aa = (aw && aw.team && aw.team.abbreviation) || "";
-  var lines = "";
-  for (var i = 1; i < 10; i++){ var x = 30 + i * 30; lines += '<line x1="' + x + '" y1="6" x2="' + x + '" y2="114" stroke="' + (i === 5 ? '#f5c51888' : '#ffffff2e') + '" stroke-width="' + (i === 5 ? 2 : 1.2) + '"/>'; }
-  var X = function(yl){ return 30 + yl * 3; };
+  var ha = (hm && hm.team && hm.team.abbreviation) || "HOME", aa = (aw && aw.team && aw.team.abbreviation) || "AWAY";
+  var colOf = function(c, dflt){ var col = c && c.team && c.team.color ? String(c.team.color).replace(/[^0-9a-fA-F]/g, "") : ""; return col.length === 6 ? col : dflt; };
+  var awCol = colOf(aw, "2563eb"), hmCol = colOf(hm, "7c3aed");
+  var X = function(abs){ return 30 + abs * 3; };
+  var base = function(){
+    var g = '<defs><linearGradient id="fldG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#177245"/><stop offset=".55" stop-color="#0e5a34"/><stop offset="1" stop-color="#083d23"/></linearGradient></defs>';
+    g += '<rect x="1" y="1" width="358" height="130" rx="10" fill="url(#fldG)"/>';
+    for (var stp = 0; stp < 10; stp++){ if (stp % 2) continue; g += '<rect x="' + (30 + stp * 30) + '" y="4" width="30" height="124" fill="rgba(255,255,255,.05)"/>'; }
+    g += '<rect x="1" y="1" width="31" height="130" rx="10" fill="#' + awCol + '"/><rect x="328" y="1" width="31" height="130" rx="10" fill="#' + hmCol + '"/>';
+    g += '<rect x="1" y="1" width="358" height="130" rx="10" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2"/>';
+    for (var i = 1; i < 10; i++){ var x = 30 + i * 30; g += '<line x1="' + x + '" y1="4" x2="' + x + '" y2="128" stroke="' + (i === 5 ? 'rgba(245,197,24,.65)' : 'rgba(255,255,255,.4)') + '" stroke-width="' + (i === 5 ? 2.2 : 1.3) + '"/>'; }
+    for (var h = 1; h < 20; h++){ var hx = 30 + h * 15; g += '<line x1="' + hx + '" y1="58" x2="' + hx + '" y2="63" stroke="rgba(255,255,255,.35)" stroke-width="1.2"/><line x1="' + hx + '" y1="69" x2="' + hx + '" y2="74" stroke="rgba(255,255,255,.35)" stroke-width="1.2"/>'; }
+    var nums = [10, 20, 30, 40, 50, 40, 30, 20, 10];
+    nums.forEach(function(n, ix){ var x = 60 + ix * 30; g += '<text x="' + x + '" y="22" fill="rgba(255,255,255,.6)" font-size="10" font-weight="800" text-anchor="middle">' + n + '</text><text x="' + x + '" y="118" fill="rgba(255,255,255,.6)" font-size="10" font-weight="800" text-anchor="middle">' + n + '</text>'; });
+    g += '<text x="16" y="71" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle" style="text-shadow:0 1px 3px rgba(0,0,0,.7)">' + esc(aa) + '</text>';
+    g += '<text x="344" y="71" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle" style="text-shadow:0 1px 3px rgba(0,0,0,.7)">' + esc(ha) + '</text>';
+    return g;
+  };
+  var wrap = function(inner){ return '<svg viewBox="0 0 360 132" style="border-radius:10px;box-shadow:0 16px 28px rgba(0,0,0,.6),0 4px 10px rgba(0,0,0,.5),0 0 20px rgba(34,197,94,.28),inset 0 1px 0 rgba(255,255,255,.25)">' + base() + inner + '</svg>'; };
+  var glowLine = function(x, col, w){ return '<line x1="' + x + '" y1="4" x2="' + x + '" y2="128" stroke="' + col + '" stroke-width="' + (w + 5) + '" opacity=".18"/><line x1="' + x + '" y1="4" x2="' + x + '" y2="128" stroke="' + col + '" stroke-width="' + w + '"/>'; };
+  var ballAt = function(x){ return '<circle cx="' + x + '" cy="66" r="12" fill="rgba(245,197,24,.22)"/><circle class="pdot" cx="' + x + '" cy="66" r="8.5" fill="none" stroke="#f5c518" stroke-width="2"/><circle cx="' + x + '" cy="66" r="5" fill="#f5c518" stroke="#ffffff" stroke-width="1.6"/>'; };
   var prevs = (s.drives && s.drives.previous) || [];
   var drv = null;
   if (s.drives && s.drives.current && (s.drives.current.plays || []).length) drv = s.drives.current;
   else if (prevs.length) drv = prevs[prevs.length - 1];
   if (drv && (drv.plays || []).length){
     var offAbbr = (drv.team && (drv.team.abbreviation || drv.team.shortDisplayName)) || ((drv.start && drv.start.text || "").split(" ")[0]) || "";
-    var defAbbr = offAbbr === ha ? aa : ha;
+    var offIsAway = offAbbr === aa;
+    var absOf = function(yl){ return offIsAway ? yl : 100 - yl; };
     var pts = [];
-    if (drv.start && isFinite(drv.start.yardLine)) pts.push(drv.start.yardLine);
-    drv.plays.forEach(function(p){ if (p.end && isFinite(p.end.yardLine)) pts.push(p.end.yardLine); });
+    var p0 = drv.plays[0];
+    if (p0 && p0.start && isFinite(p0.start.yardLine)) pts.push(absOf(p0.start.yardLine));
+    else if (drv.start && isFinite(drv.start.yardLine)) pts.push(absOf(drv.start.yardLine));
+    drv.plays.forEach(function(p){ if (p.end && isFinite(p.end.yardLine)) pts.push(absOf(p.end.yardLine)); });
     if (pts.length > 1){
-      var path = pts.map(function(yl, i){ return (i ? "L" : "M") + X(yl) + " 60"; }).join(" ");
-      var chart = '<path class="drvpath" d="' + path + '" fill="none" stroke="#22d3ee" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/>';
-      drv.plays.forEach(function(p){ if (!p.end || !isFinite(p.end.yardLine)) return; var col = p.scoringPlay ? "#f5c518" : ((p.statYardage || 0) > 0 ? "#22d3ee" : "#9ca3af"); chart += '<circle cx="' + X(p.end.yardLine) + '" cy="60" r="3" fill="' + col + '"/>'; });
-      var lastYl = pts[pts.length - 1];
+      var path = pts.map(function(ax, i){ return (i ? "L" : "M") + X(ax).toFixed(1) + " 66"; }).join(" ");
+      var chart = '<path d="' + path + '" fill="none" stroke="rgba(34,211,238,.35)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><path d="' + path + '" fill="none" stroke="#22d3ee" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>';
+      drv.plays.forEach(function(p){ if (!p.end || !isFinite(p.end.yardLine)) return; var col = p.scoringPlay ? "#f5c518" : ((p.statYardage || 0) > 0 ? "#22d3ee" : "#9ca3af"); chart += '<circle cx="' + X(absOf(p.end.yardLine)) + '" cy="66" r="3.2" fill="' + col + '" stroke="rgba(0,0,0,.35)" stroke-width=".8"/>'; });
+      var lastAbs = pts[pts.length - 1];
       var lp2 = drv.plays[drv.plays.length - 1];
-      chart += '<line x1="' + X(lastYl) + '" y1="4" x2="' + X(lastYl) + '" y2="116" stroke="#ffffff" stroke-width="2"/>';
-      if (lp2 && lp2.end && lp2.end.down > 0 && isFinite(lp2.end.distance)){ var fdx = X(Math.min(100, lastYl + lp2.end.distance)); if (fdx > 30 && fdx < 330) chart += '<line x1="' + fdx + '" y1="4" x2="' + fdx + '" y2="116" stroke="#f5c518" stroke-width="2.4"/>'; }
-      chart += '<circle class="pdot" cx="' + X(lastYl) + '" cy="60" r="11" fill="none" stroke="#f5c518" stroke-width="2"/>';
-      var mpts = [], mxp = -Infinity;
-      pts.forEach(function(yl){ if (yl > mxp) mxp = yl; mpts.push(mxp); });
-      var mpath = mpts.map(function(yl, i){ return (i ? "L" : "M") + X(yl) + " 60"; }).join(" ");
-      var bd = Math.max(3, pts.length * 0.7);
-      var bel = window._gcAnimStart ? (((Date.now() - window._gcAnimStart) / 1000) % bd) : 0;
-      chart += '<circle r="6" fill="#f5c518" stroke="#ffffff" stroke-width="1.5"><animateMotion dur="' + bd.toFixed(1) + 's" begin="-' + bel.toFixed(1) + 's" repeatCount="indefinite" path="' + mpath + '"/></circle>';
+      chart += glowLine(X(lastAbs), "#ffffff", 2.2);
+      if (lp2 && lp2.end && lp2.end.down > 0 && isFinite(lp2.end.distance)){ var fdAbs = lastAbs + (offIsAway ? lp2.end.distance : -lp2.end.distance); if (fdAbs > 0 && fdAbs < 100) chart += glowLine(X(fdAbs), "#f5c518", 2.6); }
+      chart += ballAt(X(lastAbs));
       var ddt2 = (lp2 && lp2.end && lp2.end.downDistanceText) || "";
       var res = drv.displayResult || drv.result || "";
+      var inRZ = offIsAway ? lastAbs >= 80 : lastAbs <= 20;
       var info = '<div style="margin-top:8px"><b>' + esc(offAbbr ? offAbbr + " drive" : "Drive") + '</b>' + (drv.description ? ' <span class="note">' + esc(drv.description) + '</span>' : '')
-        + (ddt2 ? '<div style="margin-top:2px"><b>' + esc(ddt2) + '</b>' + (lastYl >= 80 ? ' <span class="badge" style="background:#b91c1c;color:#fff">RED ZONE</span>' : '') + '</div>' : '')
+        + (ddt2 ? '<div style="margin-top:2px"><b>' + esc(ddt2) + '</b>' + (inRZ ? ' <span class="badge" style="background:#b91c1c;color:#fff">RED ZONE</span>' : '') + '</div>' : '')
         + (!ddt2 && res ? '<div style="margin-top:2px"><b>' + esc(res) + '</b></div>' : '') + '</div>';
-      return '<svg viewBox="0 0 360 120"><rect x="2" y="2" width="356" height="116" rx="6" fill="#0f2a1a" stroke="#22c55e" stroke-width="2"/>'
-        + '<rect x="2" y="2" width="30" height="116" fill="#7C3AED33"/><rect x="328" y="2" width="30" height="116" fill="#38bdf833"/>'
-        + lines + chart
-        + '<text x="17" y="66" fill="#c4b5fd" font-size="11" font-weight="800" text-anchor="middle">' + esc(offAbbr) + '</text>'
-        + '<text x="343" y="66" fill="#7dd3fc" font-size="11" font-weight="800" text-anchor="middle">' + esc(defAbbr) + '</text></svg>'
-        + info;
+      return wrap(chart) + info;
     }
   }
   var ball = "";
   var ddt = sit.downDistanceText || "";
-  var m = /at ([A-Z]{2,4}) (\d{1,2})/.exec(ddt);
+  var m = /at ([A-Z0-9]{2,4}) (\d{1,2})/.exec(ddt);
   if (m){
-    var num = parseInt(m[2], 10), pos = null;
-    if (m[1] === ha) pos = 30 + (100 - num) * 3;
-    else if (m[1] === aa) pos = 30 + num * 3;
-    if (pos != null){
-      ball = '<line x1="' + pos + '" y1="4" x2="' + pos + '" y2="116" stroke="#ffffff" stroke-width="2"/>';
+    var num = parseInt(m[2], 10), absB = null;
+    if (m[1] === aa) absB = num;
+    else if (m[1] === ha) absB = 100 - num;
+    if (absB != null){
+      ball = glowLine(X(absB), "#ffffff", 2.2);
       if (isFinite(sit.distance)){
-        var possHome = sit.possession && hm && String(sit.possession) === String(hm.team && hm.team.id);
-        var fd = possHome ? pos - sit.distance * 3 : pos + sit.distance * 3;
-        if (fd > 30 && fd < 330) ball += '<line x1="' + fd + '" y1="4" x2="' + fd + '" y2="116" stroke="#f5c518" stroke-width="2.4"/>';
+        var possAway = sit.possession && aw && String(sit.possession) === String(aw.team && aw.team.id);
+        var fdB = absB + (possAway ? sit.distance : -sit.distance);
+        if (fdB > 0 && fdB < 100) ball += glowLine(X(fdB), "#f5c518", 2.6);
       }
-      ball += '<circle class="pdot" cx="' + pos + '" cy="60" r="11" fill="none" stroke="#f5c518" stroke-width="2"/><circle cx="' + pos + '" cy="60" r="5.5" fill="#f5c518"/>';
+      ball += ballAt(X(absB));
     }
   }
-  return '<svg viewBox="0 0 360 120"><rect x="2" y="2" width="356" height="116" rx="6" fill="#0f2a1a" stroke="#22c55e" stroke-width="2"/>'
-    + '<rect x="2" y="2" width="30" height="116" fill="#38bdf833"/><rect x="328" y="2" width="30" height="116" fill="#7C3AED33"/>'
-    + lines + ball
-    + '<text x="17" y="66" fill="#7dd3fc" font-size="11" font-weight="800" text-anchor="middle">' + esc(aa) + '</text>'
-    + '<text x="343" y="66" fill="#c4b5fd" font-size="11" font-weight="800" text-anchor="middle">' + esc(ha) + '</text></svg>'
+  return wrap(ball)
     + (ddt ? '<div style="margin-top:8px"><b>' + esc(ddt) + '</b>' + (sit.isRedZone ? ' <span class="badge" style="background:#b91c1c;color:#fff">RED ZONE</span>' : '') + '</div>' : '');
 }
 function diamondSvg(s, comp){
@@ -3747,6 +3757,11 @@ function openGame(key, eventId, isRefresh){
   fetchJson(ESPN+lg.sport+"/"+tourLg+"/summary?event="+encodeURIComponent(eid)).then(function(s){
     var comp = (s.header && s.header.competitions || [])[0] || {};
     var cs = comp.competitors || [];
+    /* Away team first, home second — always (Brandon 2026-11-21): a few
+       ESPN payloads list the home team first, which put Sacramento on the
+       left against the "Boston vs Sacramento" title. Sorting here fixes
+       the faceoff, the period table and the court sides together. */
+    cs = cs.slice().sort(function(x, y){ var w = function(c){ return c.homeAway === "away" ? 0 : c.homeAway === "home" ? 1 : 2; }; return w(x) - w(y); });
     var st = comp.status && comp.status.type || {};
     var live = st.state === "in";
     var isT = lg.key === "tennis";
@@ -3878,6 +3893,10 @@ function openGame(key, eventId, isRefresh){
       if (lbT && lbT.parentNode === ctEl.parentNode) lbT.parentNode.insertBefore(ctEl, lbT.nextSibling);
       else if (tsEl && tsEl.parentNode === ctEl.parentNode) tsEl.parentNode.insertBefore(ctEl, tsEl);
     }
+    /* Brandon 2026-11-21: Team Stats sit UNDER the tracker and its play
+       by play — every team, every game. (NBA's tracker is the court,
+       already pinned above Team Stats.) */
+    if (gtEl && tsEl && gtEl.parentNode && gtEl.parentNode === tsEl.parentNode) gtEl.parentNode.insertBefore(gtEl, tsEl);
     renderGameProps(lg, s);
     /* Game Center opens instantly at the top — no scrolling. */
   }).catch(function(){ var fe = finFind(key, eventId); $("gameDetail").innerHTML = '<button class="gcBack" type="button">\u2190 All games</button>' + (fe ? finFallbackHtml(fe) : '<div class="card"><p class="err">Couldn\'t load that game\'s details from ESPN.</p></div>'); });
