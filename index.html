@@ -1399,6 +1399,9 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
 .pfslider>*{scroll-snap-align:center}
 .pfteam{display:flex;flex-direction:column;align-items:center;gap:6px;background:#12121e;border:1px solid #26263a;border-radius:14px;padding:12px 8px;min-width:106px;max-width:106px;cursor:pointer;color:#fff;font-weight:700;font-size:12px;text-align:center}
 .pfpcard{display:flex;flex-direction:column;align-items:center;gap:5px;background:#12121e;border:1px solid #26263a;border-radius:14px;padding:12px 8px;min-width:110px;max-width:110px;cursor:pointer;text-align:center}
+.pfph{position:relative;display:block;margin:0 auto}
+.pfFlagSlot{position:absolute;right:-11px;bottom:-3px;line-height:0;z-index:2}
+.pfFlagSlot img{width:22px!important;height:16px!important;border-radius:3px!important;object-fit:cover;border:1px solid rgba(255,255,255,.7);box-shadow:0 2px 6px rgba(0,0,0,.55);background:#222}
 .pfpcard img{width:56px;height:56px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#7C3AED,#3b1470)}
 .pfpcard b{font-size:12.5px;color:#fff;line-height:1.2}
 .pfpcard span{font-size:10.5px;color:#9a9ab0}
@@ -9067,6 +9070,17 @@ function mmaFlagCheckOne(id, root){
     apply(_mmaFlagCache[id]);
   }).catch(function(){ _mmaFlagCache[id] = ""; });
 }
+/* Fighter browse cards: country flag at the corner of the picture
+   (Brandon 2026-11-22), from the fighter's ESPN core profile. */
+function pfCardFlag(card, id){
+  if (!card || !id) return;
+  var slot = card.querySelector(".pfFlagSlot");
+  if (!slot || slot.getAttribute("data-done")) return;
+  slot.setAttribute("data-done", "1");
+  var done = function(href){ if (href) slot.innerHTML = '<img src="' + esc(href) + '" alt="" loading="lazy">'; };
+  if (_mmaFlagCache[id] !== undefined){ done(_mmaFlagCache[id]); return; }
+  fetchJson("https://sports.core.api.espn.com/v2/sports/mma/athletes/" + id).then(function(a){ _mmaFlagCache[id] = (a && a.flag && a.flag.href) || ""; done(_mmaFlagCache[id]); }).catch(function(){ _mmaFlagCache[id] = ""; });
+}
 function mmaCard(f){
   var c = (f.competitions || [])[0] || {};
   var st = (f.status && f.status.type) || {};
@@ -9233,7 +9247,7 @@ function pfTennisPage(p){
 function pfMmaCard(rk, isChamp){
   var a = rk.athlete || {};
   var badge = isChamp ? "👑 CHAMPION" : ("#" + (rk.current || ""));
-  return '<div class="pfpcard' + (isChamp ? " pfchamp" : "") + '" data-pfplayer="' + esc(String(a.id || "")) + '" data-pfname="' + esc(a.displayName || "") + '" data-pfimg="' + esc(a.headshot || "") + '">' + pfImgTag(a.headshot, a.displayName, "mma", a.id) + '<b>' + esc(a.displayName || "") + '</b><span>' + esc(badge + (rk.recordSummary ? " · " + rk.recordSummary : "")) + '</span></div>';
+  return '<div class="pfpcard' + (isChamp ? " pfchamp" : "") + '" data-pfplayer="' + esc(String(a.id || "")) + '" data-pfname="' + esc(a.displayName || "") + '" data-pfimg="' + esc(a.headshot || "") + '"><span class="pfph" style="width:56px;height:56px">' + pfImgTag(a.headshot, a.displayName, "mma", a.id) + '<span class="pfFlagSlot"></span></span><b>' + esc(a.displayName || "") + '</b><span>' + esc(badge + (rk.recordSummary ? " · " + rk.recordSummary : "")) + '</span></div>';
 }
 
 function pfInitials(nm){ return String(nm || "?").split(/\s+/).map(function(w){ return w.charAt(0); }).filter(Boolean).slice(0, 2).join("").toUpperCase() || "?"; }
@@ -9304,13 +9318,14 @@ function pfResolveFighterByName(name){
 }
 function pfWikiCard(f){
   var badge = f.rank === 0 ? "👑 CHAMPION" : (f.rank === -1 ? "👑 INTERIM CHAMP" : "#" + f.rank);
-  return '<div class="pfpcard' + (f.rank <= 0 ? " pfchamp" : "") + '" data-pfwiki="1" data-pfwrank="' + f.rank + '" data-pfname="' + esc(f.name) + '"><span class="pfini" style="display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#3b1470,#1b1030);color:#cdbcf5;font-weight:900;font-size:17px;margin:0 auto">' + esc(pfInitials(f.name)) + '</span><b>' + esc(f.name) + '</b><span>' + esc(badge + (f.record ? " · " + f.record : "")) + '</span></div>';
+  return '<div class="pfpcard' + (f.rank <= 0 ? " pfchamp" : "") + '" data-pfwiki="1" data-pfwrank="' + f.rank + '" data-pfname="' + esc(f.name) + '"><span class="pfph" style="width:52px;height:52px"><span class="pfini" style="display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#3b1470,#1b1030);color:#cdbcf5;font-weight:900;font-size:17px;margin:0 auto">' + esc(pfInitials(f.name)) + '</span><span class="pfFlagSlot"></span></span><b>' + esc(f.name) + '</b><span>' + esc(badge + (f.record ? " · " + f.record : "")) + '</span></div>';
 }
 function pfResolveWikiCard(card){
   if (card.getAttribute("data-pfplayer")) return;
   pfResolveFighterByName(card.getAttribute("data-pfname") || "").then(function(pl){
     if (!pl || !pl.id) return;
     card.setAttribute("data-pfplayer", String(pl.id));
+    pfCardFlag(card, pl.id);
     if (pl.img) card.setAttribute("data-pfimg", pl.img);
     var ini = card.querySelector(".pfini");
     if (ini && pl.img){
@@ -9377,6 +9392,7 @@ function pfRenderMmaEspn(box){
     if (!any){ box.innerHTML = '<p class="empty">Rankings could not load — check your connection.</p>'; return; }
     box.innerHTML = h;
     pfWireRankCards(box, "mma", "ufc");
+    box.querySelectorAll(".pfpcard[data-pfplayer]").forEach(function(card){ pfCardFlag(card, card.getAttribute("data-pfplayer")); });
   }).catch(function(){ if (pfSport === "mma") box.innerHTML = '<p class="empty">Rankings could not load — check your connection.</p>'; });
 }
 function pfRenderTennis(box){
