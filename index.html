@@ -3561,12 +3561,12 @@ function closeGame(silent){
 function gcLiveAttrFor(s, nm, clk){
   try {
     var nk = nameKeyOf(nm || ""); if (!nk || !s) return "";
-    var hit = null;
+    var hit = null, hitTeam = "";
     ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){
       (tp.statistics || []).forEach(function(gr){
         var labs = gr.labels || gr.names || [];
         (gr.athletes || []).forEach(function(a){
-          if (!hit && a.athlete && !a.didNotPlay && nameKeyOf(a.athlete.displayName || "") === nk) hit = { labs: labs, stArr: a.stats || [] };
+          if (!hit && a.athlete && !a.didNotPlay && nameKeyOf(a.athlete.displayName || "") === nk){ hit = { labs: labs, stArr: a.stats || [] }; hitTeam = (tp.team && tp.team.displayName) || ""; }
         });
       });
     });
@@ -3575,7 +3575,9 @@ function gcLiveAttrFor(s, nm, clk){
     ["MIN", "TOI", "PTS", "REB", "AST", "STL", "BLK", "FG", "3PT", "FT", "YDS", "TD", "REC", "CAR", "G", "A", "SOG", "SV", "H", "R", "RBI", "HR", "SB", "K", "TO", "PF", "+/-"].forEach(function(k){ var ix = hit.labs.indexOf(k); if (ix >= 0 && hit.stArr[ix] != null && hit.stArr[ix] !== "" && hit.stArr[ix] !== "--") lo[k] = String(hit.stArr[ix]); });
     if (!Object.keys(lo).length) hit.labs.slice(0, 8).forEach(function(k, ix2){ if (hit.stArr[ix2] != null && hit.stArr[ix2] !== "") lo[k] = String(hit.stArr[ix2]); });
     if (!Object.keys(lo).length) return "";
-    return ' data-live="' + esc(JSON.stringify({ stats: lo, clk: clk || "" })) + '"';
+    var oppNm = "";
+    ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){ var tn = (tp.team && tp.team.displayName) || ""; if (tn && tn !== hitTeam && !oppNm) oppNm = tn; });
+    return ' data-live="' + esc(JSON.stringify({ stats: lo, clk: clk || "", opp: oppNm })) + '"';
   } catch (e) { return ""; }
 }
 function openTeamRoster(teamId, teamName){
