@@ -8525,7 +8525,7 @@ function showView(name){
      changes): re-renders and refreshes while staying on the tab keep
      the user's place. */
   if (window._view !== name){
-    if (name === "players"){ pfSport = "all"; pfTeamSel = null; }
+    if (name === "players"){ pfSport = "nba"; pfTeamSel = null; }
     else if (name === "sport"){ boardGame = "all"; boardStat = "all"; if (currentSport === "esports") espPillSel = {}; }
     else if (name === "live"){ liveFilter = "all"; finPill = "all"; futPill = "all"; document.querySelectorAll("#liveTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-lsport") === "all"); }); }
     else if (name === "home"){ var stp = $("sportTabs"); if (stp){ stp.scrollLeft = 0; stp.querySelectorAll(".tab").forEach(function(t, i){ t.classList.toggle("on", i === 0); }); } }
@@ -8660,7 +8660,7 @@ var PF_LEAGUES = [
   { key: "golf", label: "Golf", sport: "golf", league: "pga", noteam: 1 },
   { key: "mma", label: "UFC / MMA", sport: "mma", league: "ufc", rank: 1 }
 ];
-var pfSport = "all";
+var pfSport = "nba";
 var pfQuery = "";
 var pfSeq = 0;
 var pfTeamSel = null;
@@ -8693,7 +8693,7 @@ function pfEntryMatches(c, L){
 }
 function renderFinder(){
   var pills = $("pfPills"); if (!pills) return;
-  var all = [{ key: "all", label: "All Sports" }].concat(PF_LEAGUES);
+  var all = PF_LEAGUES.slice();
   pills.innerHTML = all.map(function(l){ return '<button type="button" class="tab' + (pfSport === l.key ? " on" : "") + '" data-pfpill="' + l.key + '">' + esc(l.label) + '</button>'; }).join("");
   pills.querySelectorAll("[data-pfpill]").forEach(function(b){ b.addEventListener("click", function(){ pfSport = b.getAttribute("data-pfpill"); pfTeamSel = null; renderFinder(); }); });
   var res = $("pfResults");
