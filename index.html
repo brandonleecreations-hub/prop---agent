@@ -2653,8 +2653,8 @@ function renderSportGames(lg){
     if (!live.length && !fut.length){ b2.innerHTML = ""; return; }
     var word = lg.key === "tennis" ? "match" : "game";
     var html = "";
-    if (live.length) html += '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Live ' + (word === "match" ? "Matches" : "Games") + '</h2><span style="color:var(--purp-lt);font-weight:700">' + live.length + ' ' + word + (live.length === 1 ? "" : "s") + '</span></div>' + live.map(function(ev){ return gameCard(lg, ev); }).join("");
-    if (fut.length) html += '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Upcoming ' + (word === "match" ? "Matches" : "Games") + '</h2><span style="color:var(--purp-lt);font-weight:700">' + fut.length + ' ' + word + (fut.length === 1 ? "" : "s") + '</span></div>' + fut.map(function(ev){ return gameCard(lg, ev); }).join("");
+    if (live.length) html += '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Live ' + (word === "match" ? "Matches" : "Games") + '</h2><span style="color:#e6dcff;font-weight:700;background:rgba(10,22,44,.80);padding:1px 8px;border-radius:999px">' + live.length + ' ' + word + (live.length === 1 ? "" : "s") + '</span></div>' + live.map(function(ev){ return gameCard(lg, ev); }).join("");
+    if (fut.length) html += '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Upcoming ' + (word === "match" ? "Matches" : "Games") + '</h2><span style="color:#e6dcff;font-weight:700;background:rgba(10,22,44,.80);padding:1px 8px;border-radius:999px">' + fut.length + ' ' + word + (fut.length === 1 ? "" : "s") + '</span></div>' + fut.map(function(ev){ return gameCard(lg, ev); }).join("");
     b2.innerHTML = html;
     b2.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); showView("live"); window._gameFrom = "sport"; openGame(p[0], p[1]); }); });
   }).catch(function(){});
@@ -3347,7 +3347,7 @@ function groupsTotal(groups){ return groups.reduce(function(a, g){ return a + (g
 function futBlockHtml(){
   if (futPill !== "all" && !_futGroups.some(function(g){ return g.key === futPill; })) futPill = "all";
   var total = groupsTotal(_futGroups);
-  return '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Future Games</h2><span style="color:var(--purp-lt);font-weight:700">' + total + ' game' + (total===1?"":"s") + '</span></div>'
+  return '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Future Games</h2><span style="color:#e6dcff;font-weight:700;background:rgba(10,22,44,.80);padding:1px 8px;border-radius:999px">' + total + ' game' + (total===1?"":"s") + '</span></div>'
     + (total ? pillRowHtml("fut", _futGroups, futPill) + sectionGroupsHtml(futPill, _futGroups) : '<p class="empty">No future games in the next two days.</p>');
 }
 function renderFutBlock(){
@@ -3366,7 +3366,7 @@ function renderFinBlock(){
   var lf = $("liveFinished"); if (!lf) return;
   if (finPill !== "all" && !_finGroups.some(function(g){ return g.key === finPill; })) finPill = "all";
   var total = groupsTotal(_finGroups);
-  var html = total ? '<div class="row" style="justify-content:space-between;align-items:baseline"><h2 class="pop3d">Finished Games</h2><span style="color:var(--purp-lt);font-weight:700">' + total + ' game' + (total===1?"":"s") + '</span></div>'
+  var html = total ? '<div class="row" style="justify-content:space-between;align-items:baseline"><h2 class="pop3d">Finished Games</h2><span style="color:#e6dcff;font-weight:700;background:rgba(10,22,44,.80);padding:1px 8px;border-radius:999px">' + total + ' game' + (total===1?"":"s") + '</span></div>'
     + pillRowHtml("fin", _finGroups, finPill) + sectionGroupsHtml(finPill, _finGroups) : "";
   if (setHtml(lf, html)){
     lf.querySelectorAll("[data-finpill]").forEach(function(b){ b.addEventListener("click", function(){ finPill = b.getAttribute("data-finpill"); renderFinBlock(); }); });
@@ -3449,7 +3449,7 @@ function renderLive(){
       if (!espLiveHtml && !espFut.count && !espFin.count) html = '<p class="empty">No ' + (espGame === "cs2" ? "CS2" : "LoL") + ' matches right now — they will show up here once the schedule posts them.</p>';
     } else {
       html =
-      '<div class="row" style="justify-content:space-between;align-items:baseline"><h2 class="pop3d">Live Games</h2><span style="color:var(--purp-lt);font-weight:700">' + live.length + ' game' + (live.length===1?"":"s") + '</span></div>'
+      '<div class="row" style="justify-content:space-between;align-items:baseline"><h2 class="pop3d">Live Games</h2><span style="color:#e6dcff;font-weight:700;background:rgba(10,22,44,.80);padding:1px 8px;border-radius:999px">' + live.length + ' game' + (live.length===1?"":"s") + '</span></div>'
       + (live.length ? liveHtml : '<p class="empty">No games live right now.</p>')
       + espLiveHtml
       + futBlock;
