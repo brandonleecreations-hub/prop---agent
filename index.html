@@ -8970,9 +8970,15 @@ function pfRenderBrowse(){
     try { teams = j.sports[0].leagues[0].teams.map(function(t){ return t.team; }); } catch (e) {}
     teams = teams.filter(function(t){ return t && t.displayName; }).sort(function(a, b){ return (a.displayName || "").localeCompare(b.displayName || ""); });
     if (!teams.length){ box.innerHTML = '<p class="empty">Teams could not load for ' + esc(L.label) + '.</p>'; return; }
-    box.innerHTML = '<h3 style="margin:12px 0 6px;font-size:16px">' + esc(L.label) + ' teams</h3><div class="pfslider">' + teams.map(function(t, i){ var logo = (t.logos && t.logos[0] && t.logos[0].href) || ""; return '<div class="pfteam" data-pfteam="' + i + '">' + (logo ? '<img src="' + esc(logo) + '" alt="" loading="lazy" style="width:44px;height:44px;object-fit:contain" onerror="this.remove()">' : '') + '<span>' + esc(t.shortDisplayName || t.displayName || "") + '</span></div>'; }).join("") + '</div>';
+    box.innerHTML = '<h3 style="margin:12px 0 6px;font-size:16px">' + esc(L.label) + ' teams</h3><input id="pfTeamSearch" type="text" placeholder="Search teams…" autocomplete="off" style="width:100%;box-sizing:border-box;padding:8px 12px;margin:0 0 8px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:#fff;font-size:13.5px;font-weight:600"><div class="pfslider">' + teams.map(function(t, i){ var logo = (t.logos && t.logos[0] && t.logos[0].href) || ""; return '<div class="pfteam" data-pfteam="' + i + '" data-pfname="' + esc(((t.displayName || "") + " " + (t.shortDisplayName || "")).toLowerCase()) + '">' + (logo ? '<img src="' + esc(logo) + '" alt="" loading="lazy" style="width:44px;height:44px;object-fit:contain" onerror="this.remove()">' : '') + '<span>' + esc(t.shortDisplayName || t.displayName || "") + '</span></div>'; }).join("") + '</div>';
     box.querySelectorAll("[data-pfteam]").forEach(function(el){ el.addEventListener("click", function(){ pfTeamSel = { lgKey: L.key, team: teams[parseInt(el.getAttribute("data-pfteam"), 10)] }; pfRenderBrowse(); }); });
     box.querySelectorAll(".pfslider").forEach(function(tr, i){ try { popSliderInit(tr, "pft" + i, ".pfteam"); } catch (e) {} });
+    var tsi = box.querySelector("#pfTeamSearch");
+    if (tsi) tsi.addEventListener("input", function(){
+      var q = tsi.value.toLowerCase().replace(/\s+/g, " ").trim();
+      box.querySelectorAll("[data-pfteam]").forEach(function(el){ el.style.display = (!q || (el.getAttribute("data-pfname") || "").indexOf(q) >= 0) ? "" : "none"; });
+      var sl = box.querySelector(".pfslider"); if (sl) sl.scrollLeft = 0;
+    });
   }).catch(function(){ if (pfSport === L.key && !pfTeamSel) box.innerHTML = '<p class="empty">Teams could not load — check your connection.</p>'; });
 }
 function pfRenderRoster(L, team){
