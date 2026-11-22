@@ -1375,6 +1375,15 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
    white letters with a dark-navy halo so they read on the navy top AND on
    the off-white lower page. Header + bottom nav stay black (unchanged). */
 h2,h3{text-shadow:0 1px 0 rgba(13,27,48,.45),0 2px 7px rgba(13,27,48,.50),0 0 18px rgba(13,27,48,.35)}
+/* Readability on the off-white zone: gold subheads get a navy halo, pale
+   count labels ride dark chips, and the Board/Live group header bars get a
+   solid dark base so their gold text reads anywhere on the gradient. */
+.fsport{text-shadow:0 1px 0 rgba(13,27,48,.55),0 1px 6px rgba(13,27,48,.55)}
+.fcount{background:rgba(10,22,44,.80);color:#e6dcff;padding:1px 8px;border-radius:999px}
+.foilgcount{background:rgba(10,22,44,.80);color:#e6dcff;padding:1px 8px;border-radius:999px}
+.foilghdr span{text-shadow:0 1px 0 rgba(13,27,48,.60),0 1px 5px rgba(13,27,48,.55)}
+.cardsec-h{background:linear-gradient(90deg,rgba(38,24,74,.94),rgba(24,16,48,.94))}
+.sporthead{background:linear-gradient(90deg,rgba(38,24,74,.94),rgba(24,16,48,.90))}
 .statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
 .sgcell{background:#12121e;border:1px solid #26263a;border-radius:10px;padding:7px 4px;text-align:center}
 .sgcell b{display:block;font-size:15.5px;color:#fff}
