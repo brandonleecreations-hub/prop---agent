@@ -3563,6 +3563,7 @@ function closeGame(silent){
   closeEspGame();
   var dest = window._gameFrom || "live"; window._gameFrom = null;
   window._openGame = null;
+  saLayersSet({ game: null, team: null });
   var gd = $("gameDetail"); if (gd) gd.innerHTML = "";
   ["liveCenter","liveTabs","liveStatus","liveFinished"].forEach(function(id){ var el = $(id); if (el) el.style.display = ""; });
   if (!silent){ if (dest === "home") showView("home"); else if (dest === "sport") { showView("sport"); renderBoards(); } else { renderLive(); if (window._liveScrollY != null) window.scrollTo(0, window._liveScrollY); } }
@@ -3599,6 +3600,7 @@ function openTeamRoster(teamId, teamName){
   var gcLive = false, gcClk = "";
   try { var comp0 = ((s.header && s.header.competitions) || [])[0] || {}; var gst0 = (comp0.status && comp0.status.type) || {}; gcLive = gst0.state === "in"; gcClk = gst0.shortDetail || gst0.detail || ""; } catch (e) {}
   var dlg = $("teamDlg"), body = $("teamDlgBody"); if (!dlg || !body) return;
+  saLayersSet({ team: { id: String(teamId), name: teamName || "" } });
   var tid = String(teamId);
   var gcCol = "";
   try { var hc = (((s.header && s.header.competitions) || [])[0] || {}).competitors || []; for (var hi = 0; hi < hc.length; hi++){ if (hc[hi].team && String(hc[hi].team.id) === tid && hc[hi].team.color){ gcCol = String(hc[hi].team.color).replace(/[^0-9a-fA-F]/g, ""); break; } } } catch (e) {}
@@ -3742,6 +3744,7 @@ function courtPbpHtml(s){
 }
 
 function openGame(key, eventId, isRefresh){
+  saLayersSet({ game: { key: key, eventId: String(eventId) } });
   if (key === "esports") { openEspGame(eventId); return; }
   window._openGame = {key: key, eventId: eventId};
   var keepY = isRefresh ? (window.scrollY || 0) : 0;
@@ -7422,6 +7425,32 @@ function saOpenGame(key, eid){ try { showView("live"); } catch (e) {} try { open
     }, 700);
   } catch (e) {}
 })();
+/* Stay-on-page restore (Brandon 2026-11-21): an open Game Center, team popup or
+   player page survives a page refresh — on every page. */
+function saLayersGet(){ var L = lsGet("pa_layers", null); return (L && typeof L === "object") ? L : {}; }
+function saLayersSet(patch){ try { var L = saLayersGet(); Object.keys(patch).forEach(function(k){ if (patch[k]) L[k] = patch[k]; else delete L[k]; }); lsSet("pa_layers", L); } catch (e) {} }
+(function(){ var pd = $("playerDlg"); if (pd) pd.addEventListener("close", function(){ saLayersSet({ player: null }); }); var td = $("teamDlg"); if (td) td.addEventListener("close", function(){ saLayersSet({ team: null }); }); })();
+(function saRestoreLayers(){
+  try {
+    if (/[?&](game|tab)=/.test(location.search || "")) return;
+    var L = saLayersGet();
+    if (!L.game && !L.player && !L.team) return;
+    setTimeout(function(){
+      var openPl = function(){ if (L.player && L.player.name){ try { openPlayer(L.player.name, L.player.league); } catch (e) {} } };
+      if (L.game && L.game.key && L.game.eventId){
+        try { saOpenGame(L.game.key, L.game.eventId); } catch (e) {}
+        if (L.team && L.team.id){
+          var tries = 0;
+          var iv = setInterval(function(){
+            tries++;
+            if (window._gcCtx){ clearInterval(iv); try { openTeamRoster(L.team.id, L.team.name); } catch (e) {} setTimeout(openPl, 600); }
+            else if (tries > 24){ clearInterval(iv); openPl(); }
+          }, 500);
+        } else setTimeout(openPl, 800);
+      } else openPl();
+    }, 900);
+  } catch (e) {}
+})();
 if (navigator.serviceWorker) navigator.serviceWorker.addEventListener("message", function(ev){
   var d = ev && ev.data; if (!d) return;
   try {
@@ -9347,6 +9376,7 @@ function pfL5Cards(rows){
   }).join("");
 }
 function openPlayer(name, leagueKey, viewOnly, finalView){
+  if (!viewOnly) saLayersSet({ player: { name: name, league: leagueKey || "" } });
   if (leagueKey === "esports"){ openPlayerLegacy(name, leagueKey, true, finalView); return; }
   var oppCtx = window._pfOppCtx || null; window._pfOppCtx = null;
   var liveCtx = window._pfLiveCtx || null; window._pfLiveCtx = null;
