@@ -1877,7 +1877,12 @@ function getScoreboard(lg, days){
   var ck = lg.key+"_"+days;
   if (boardCache[ck] && Date.now()-boardCache[ck].ts < 25000) return Promise.resolve(boardCache[ck].events);
   var today = new Date(); var urls = [];
-  for (var i=0;i<days;i++){ var d = new Date(today); d.setDate(d.getDate()+i); urls.push(ESPN+lg.sport+"/"+lg.league+"/scoreboard?dates="+ymd(d)+"&limit=100"); }
+  /* College sports: ESPN's default scoreboard is Top-25 only. groups=80 =
+     all FBS football, groups=50 = all D1 basketball (Brandon 2026-11-22:
+     show more college games, not just top 25). */
+  var grp = lg.league === "college-football" ? "&groups=80" : (lg.league === "mens-college-basketball" || lg.league === "womens-college-basketball") ? "&groups=50" : "";
+  var lim = grp ? 300 : 100;
+  for (var i=0;i<days;i++){ var d = new Date(today); d.setDate(d.getDate()+i); urls.push(ESPN+lg.sport+"/"+lg.league+"/scoreboard?dates="+ymd(d)+"&limit="+lim+grp); }
   return Promise.all(urls.map(function(u){ return fetchJson(u).catch(function(){ return {events:[]}; }); }))
     .then(function(rs){ var ev=[]; rs.forEach(function(r){ (r.events||[]).forEach(function(e){ ev.push(e); }); });
       /* Away first, home second in every listing too (Brandon 2026-11-21):
