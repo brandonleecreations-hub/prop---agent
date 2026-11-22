@@ -598,15 +598,15 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .heroslide .hrow>span{flex:1;min-width:0}
 .heroslide .hrow b{font-size:19px;font-weight:900;flex:none}
 .heroslider{padding-top:10px;padding-bottom:12px}
-.heroslider .herocol{flex:0 0 78%;scroll-snap-align:center;display:flex;flex-direction:column;gap:8px;transform:scale(.955);opacity:.85;transition:transform .25s ease,opacity .25s ease}
+.heroslider .herocol{flex:0 0 76%;scroll-snap-align:center;display:flex;flex-direction:column;gap:6px;transform:scale(.955);opacity:.85;transition:transform .25s ease,opacity .25s ease}
 .heroslider .herocol.uppop{transform:scale(1);opacity:1}
 .heroslider .herocol .card.game{flex:1 1 auto;margin:0;transform:none;opacity:1}
 .heroslider .herocol.uppop .card.game{box-shadow:0 20px 36px rgba(0,0,0,.62),0 6px 14px rgba(0,0,0,.5),0 0 0 1px rgba(178,107,255,.30),inset 0 1px 0 rgba(255,255,255,.22),0 0 18px rgba(196,168,255,.55),0 0 6px rgba(196,168,255,.45)}
 .heroslider.few1 .herocol{flex-basis:88%;margin:0 auto}
 .heroslider.few2 .herocol{flex-basis:46%}
-.heroslider .heroslide{padding:9px 11px}
-.heroslider .heroslide .hrow{font-size:13px}
-.heroslider .heroslide .hrow b{font-size:16px}
+.heroslider .heroslide{padding:7px 9px}
+.heroslider .heroslide .hrow{font-size:12.5px}
+.heroslider .heroslide .hrow b{font-size:15px}
 .hero2 .hlg{font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:var(--purp-lt)}
 @media (max-width:640px){ .slip{position:static} .pline{font-size:21px} }
 .card{position:relative;box-shadow:0 12px 26px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05)}
@@ -2893,9 +2893,9 @@ function renderUpcoming(){
             var st = g.ev.status && g.ev.status.type || {};
             var a = ts[0] || {}, b = ts[1] || {};
             return '<div class="card game heroslide" data-hero="' + g.lg.key + '|' + g.ev.id + '" style="cursor:pointer">'
-              + '<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:4px"><span class="hlg">' + esc(g.lg.label.toUpperCase()) + '</span><span class="herolive" style="margin:0;padding:2px 8px;font-size:10.5px">\uD83D\uDD34 ' + esc(st.shortDetail || st.detail || "LIVE") + '</span></div>'
-              + '<div class="hrow" style="' + tintForColor(a.color) + '"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(a.logo, 30) + esc(a.name || "") + '</span><b>' + esc(a.score != null ? a.score : "0") + '</b></div>'
-              + '<div class="hrow" style="' + tintForColor(b.color) + '"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(b.logo, 30) + esc(b.name || "") + '</span><b>' + esc(b.score != null ? b.score : "0") + '</b></div>'
+              + '<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:4px"><span class="hlg">' + esc(g.lg.label.toUpperCase()) + '</span><span class="herolive" style="margin:0;padding:1px 7px;font-size:10px">\uD83D\uDD34 ' + esc(st.shortDetail || st.detail || "LIVE") + '</span></div>'
+              + '<div class="hrow" style="' + tintForColor(a.color) + '"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(a.logo, 26) + esc(a.name || "") + '</span><b>' + esc(a.score != null ? a.score : "0") + '</b></div>'
+              + '<div class="hrow" style="' + tintForColor(b.color) + '"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(b.logo, 26) + esc(b.name || "") + '</span><b>' + esc(b.score != null ? b.score : "0") + '</b></div>'
               + '</div>';
           };
           var heroCols = [];
