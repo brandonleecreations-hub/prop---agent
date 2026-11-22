@@ -3625,7 +3625,7 @@ function courtHtml(lg, s, cs, st){
       ["MIN", "PTS", "REB", "AST", "STL", "BLK", "FG", "3PT", "FT", "TO", "PF", "+/-"].forEach(function(k){ var ix = labs.indexOf(k); if (ix >= 0 && a.stats && a.stats[ix] != null && a.stats[ix] !== "") liveObj[k] = String(a.stats[ix]); });
       return { a: a, pts: pts, live: liveObj, pos: (((a.athlete && a.athlete.position && a.athlete.position.abbreviation) || "G") + "").charAt(0).toUpperCase() };
     });
-    return { tp: tp, comp: comp, list: list, home: comp.homeAway === "home" };
+    return { tp: tp, comp: comp, list: list, right: !!(cs[1] && comp.team && cs[1].team && String(comp.team.id) === String(cs[1].team.id)) };
   });
   if (sides.some(function(sd){ return sd.list.length < 3; })) return "";
   var markers = "";
@@ -3642,7 +3642,7 @@ function courtHtml(lg, s, cs, st){
       if (si < 0) return;
       used[si] = 1;
       var sp = SPOTS[si];
-      var x = sd.home ? 100 - sp[0] : sp[0], y = sp[1];
+      var x = sd.right ? 100 - sp[0] : sp[0], y = sp[1];
       var ath = p.a.athlete || {};
       var nm = ath.displayName || "";
       var last = nm.split(" ").pop() || nm;
@@ -3651,8 +3651,10 @@ function courtHtml(lg, s, cs, st){
       markers += '<div class="courtP' + (hot ? ' hot' : '') + '" style="left:' + x + '%;top:' + y + '%" data-player="' + esc(nm) + '" data-league="nba" data-opp="' + esc(oppName) + '" data-live="' + esc(JSON.stringify({ stats: p.live, opp: oppName, clk: (st.shortDetail || st.detail || "") })) + '"><img src="' + esc(img) + '" alt="" loading="lazy" onerror="this.remove()" style="border:2px solid #' + col + '"><div><span class="cpChip">' + (hot ? '\u2605 ' : '') + esc(last) + ' \u00B7 ' + p.pts + '</span></div></div>';
     });
   });
-  var awC = cs.filter(function(c){ return c.homeAway === "away"; })[0] || cs[0] || {};
-  var hmC = cs.filter(function(c){ return c.homeAway === "home"; })[0] || cs[1] || {};
+  /* Court sides match the faceoff above: first team left, second right
+     (Brandon 2026-11-21 flagged Sacramento sitting on the wrong side). */
+  var awC = cs[0] || {};
+  var hmC = cs[1] || {};
   var awCol = awC.team && awC.team.color ? String(awC.team.color).replace(/[^0-9a-fA-F]/g, "") : "334155";
   var hmCol = hmC.team && hmC.team.color ? String(hmC.team.color).replace(/[^0-9a-fA-F]/g, "") : "334155";
   if (awCol.length !== 6) awCol = "334155";
