@@ -2129,7 +2129,7 @@ function tileHtml(g){
     + '<span class="pc">'+g.props.length+' prop'+(g.props.length===1?"":"s")+(g.starts ? ' · '+esc(fmtClock(g.starts)) : '')+'</span>' + cdChipHtml(g.starts)
     + (g.brk ? '<br><span class="plive" style="background:rgba(245,197,24,.16);color:var(--gold)">⏸ '+esc(g.brkDetail || "AT THE BREAK")+'</span>' : (lt ? '<br><span class="plive">LIVE · '+esc(lt.detail)+'</span>' : '')) + '</div>';
 }
-function bindTiles(scope){ if (!scope) return; scope.querySelectorAll("[data-player]").forEach(function(t){ t.addEventListener("click", function(){ var on = t.getAttribute("data-opp"); window._pfOppCtx = on ? { name: on, abbr: t.getAttribute("data-oppabbr") || "" } : null; openPlayer(t.getAttribute("data-player"), t.getAttribute("data-league"), t.getAttribute("data-viewonly")==="1", t.getAttribute("data-final")==="1"); }); }); }
+function bindTiles(scope){ if (!scope) return; scope.querySelectorAll("[data-player]").forEach(function(t){ t.addEventListener("click", function(){ var on = t.getAttribute("data-opp"); window._pfOppCtx = on ? { name: on, abbr: t.getAttribute("data-oppabbr") || "" } : null; var lv = t.getAttribute("data-live"); try { window._pfLiveCtx = lv ? JSON.parse(lv) : null; } catch(e){ window._pfLiveCtx = null; } openPlayer(t.getAttribute("data-player"), t.getAttribute("data-league"), t.getAttribute("data-viewonly")==="1", t.getAttribute("data-final")==="1"); }); }); }
 var dlgPlayer = null;
 function openPlayerLegacy(name, leagueKey, viewOnly, finalView){
   dlgPlayer = {name:name, league:leagueKey, viewOnly:!!viewOnly, finalView:!!finalView};
@@ -3621,7 +3621,9 @@ function courtHtml(lg, s, cs, st){
       var pts = pIx >= 0 ? (parseInt(a.stats && a.stats[pIx], 10) || 0) : 0;
       var aid = String((a.athlete && a.athlete.id) || "");
       if (pts > hotPts){ hotPts = pts; hotId = aid; }
-      return { a: a, pts: pts, pos: (((a.athlete && a.athlete.position && a.athlete.position.abbreviation) || "G") + "").charAt(0).toUpperCase() };
+      var liveObj = {};
+      ["MIN", "PTS", "REB", "AST", "STL", "BLK", "FG", "3PT", "FT", "TO", "PF", "+/-"].forEach(function(k){ var ix = labs.indexOf(k); if (ix >= 0 && a.stats && a.stats[ix] != null && a.stats[ix] !== "") liveObj[k] = String(a.stats[ix]); });
+      return { a: a, pts: pts, live: liveObj, pos: (((a.athlete && a.athlete.position && a.athlete.position.abbreviation) || "G") + "").charAt(0).toUpperCase() };
     });
     return { tp: tp, comp: comp, list: list, home: comp.homeAway === "home" };
   });
@@ -3646,7 +3648,7 @@ function courtHtml(lg, s, cs, st){
       var last = nm.split(" ").pop() || nm;
       var img = (ath.headshot && ath.headshot.href) || ("https://a.espncdn.com/i/headshots/nba/players/full/" + ath.id + ".png");
       var hot = String(ath.id) === hotId;
-      markers += '<div class="courtP' + (hot ? ' hot' : '') + '" style="left:' + x + '%;top:' + y + '%" data-player="' + esc(nm) + '" data-league="nba" data-opp="' + esc(oppName) + '"><img src="' + esc(img) + '" alt="" loading="lazy" onerror="this.remove()" style="border:2px solid #' + col + '"><div><span class="cpChip">' + (hot ? '\u2605 ' : '') + esc(last) + ' \u00B7 ' + p.pts + '</span></div></div>';
+      markers += '<div class="courtP' + (hot ? ' hot' : '') + '" style="left:' + x + '%;top:' + y + '%" data-player="' + esc(nm) + '" data-league="nba" data-opp="' + esc(oppName) + '" data-live="' + esc(JSON.stringify({ stats: p.live, opp: oppName, clk: (st.shortDetail || st.detail || "") })) + '"><img src="' + esc(img) + '" alt="" loading="lazy" onerror="this.remove()" style="border:2px solid #' + col + '"><div><span class="cpChip">' + (hot ? '\u2605 ' : '') + esc(last) + ' \u00B7 ' + p.pts + '</span></div></div>';
     });
   });
   var awC = cs.filter(function(c){ return c.homeAway === "away"; })[0] || cs[0] || {};
@@ -3800,7 +3802,9 @@ function openGame(key, eventId, isRefresh){
                 var parts = [];
                 cols.forEach(function(ci){ var v = stArr[ci]; if (v != null && v !== "" && v !== "--") parts.push(esc(String(v)) + " " + esc(labs[ci])); });
                 if (!parts.length) return;
-                grRows += '<div class="psrow" data-player="' + esc((a.athlete && a.athlete.displayName) || "") + '" data-league="' + lg.key + '"><span class="psn">' + esc((a.athlete && a.athlete.displayName) || "") + '</span><span class="psl">' + parts.join(" \u00B7 ") + "</span></div>";
+                var lvAttr = "";
+                if (live){ var lo = {}; ["MIN", "TOI", "PTS", "REB", "AST", "STL", "BLK", "FG", "3PT", "FT", "YDS", "TD", "REC", "CAR", "G", "A", "SOG", "SV", "H", "R", "RBI", "HR", "SB", "K", "TO", "PF", "+/-"].forEach(function(k){ var ix = labs.indexOf(k); if (ix >= 0 && stArr[ix] != null && stArr[ix] !== "" && stArr[ix] !== "--") lo[k] = String(stArr[ix]); }); if (!Object.keys(lo).length) labs.slice(0, 8).forEach(function(k, ix2){ if (stArr[ix2] != null && stArr[ix2] !== "") lo[k] = String(stArr[ix2]); }); if (Object.keys(lo).length) lvAttr = ' data-live="' + esc(JSON.stringify({ stats: lo, clk: detail })) + '"'; }
+                grRows += '<div class="psrow" data-player="' + esc((a.athlete && a.athlete.displayName) || "") + '" data-league="' + lg.key + '"' + lvAttr + '"><span class="psn">' + esc((a.athlete && a.athlete.displayName) || "") + '</span><span class="psl">' + parts.join(" \u00B7 ") + "</span></div>";
               });
               if (grRows) rows += ((tp.statistics || []).length > 1 ? '<div class="psgrp">' + esc(gr.name || "") + "</div>" : "") + grRows;
             });
@@ -9033,10 +9037,25 @@ function pfWireClose(body){ var b = body.querySelector("[data-pfclose]"); if (b)
 function pfHeadHtml(p, img, name, team, meta){
   return '<div style="text-align:right;margin-bottom:6px"><button type="button" class="ghostbtn" data-pfclose="1">✕ Close</button></div><div class="pfhead">' + pfImgTag(img, name, p.sport, p.id) + '<div style="min-width:0"><div style="font-size:19px;font-weight:900">' + esc(name || "Player") + '</div><div class="note">' + esc(team || "") + (meta && meta.length ? ' · ' + esc(meta.join(" · ")) : '') + '</div></div></div>';
 }
-function openPlayerPage(p, oppCtx){
+var pfCurLive = null;
+/* Brandon 2026-11-21: when a player is tapped from a LIVE game (court
+   tracker or the Game Center Player Stats), his current-game line rides
+   along and renders as a LIVE strip on top of the Last 5 Games section. */
+function pfLiveStripHtml(live){
+  var order = ["MIN", "TOI", "PTS", "REB", "AST", "STL", "BLK", "FG", "3PT", "FT", "YDS", "TD", "REC", "CAR", "G", "A", "SOG", "SV", "H", "R", "RBI", "HR", "SB", "K", "TO", "PF", "+/-"];
+  var st = (live && live.stats) || {};
+  var keys = order.filter(function(k){ return st[k] != null && st[k] !== ""; });
+  Object.keys(st).forEach(function(k){ if (keys.indexOf(k) < 0) keys.push(k); });
+  if (!keys.length) return "";
+  var tiles = keys.slice(0, 10).map(function(k){ return '<div class="sgcell"><b>' + esc(st[k]) + '</b><span>' + esc(k) + '</span></div>'; }).join("");
+  var opp = live.opp || (pfCurOpp && pfCurOpp.name) || "";
+  return '<div style="margin-top:14px;border:1px solid rgba(244,63,94,.45);background:linear-gradient(180deg,rgba(244,63,94,.10),rgba(244,63,94,.03));border-radius:14px;padding:10px 12px;box-shadow:0 10px 20px rgba(0,0,0,.4),0 0 16px rgba(244,63,94,.18)"><div style="font-size:12px;font-weight:900;letter-spacing:1.2px;color:#fda4af"><span class="livedot"></span> LIVE \u2014 THIS GAME' + (opp ? ' <span style="color:var(--mut);letter-spacing:.2px">vs ' + esc(opp) + '</span>' : '') + (live.clk ? ' <span style="color:var(--mut);letter-spacing:.2px">\u00B7 ' + esc(live.clk) + '</span>' : '') + '</div><div class="statgrid" style="margin-top:8px">' + tiles + '</div></div>';
+}
+function openPlayerPage(p, oppCtx, liveCtx){
   var dlg = $("playerDlg"), body = $("playerDlgBody");
   if (!dlg || !body || !p || !p.id) return;
   pfCurOpp = oppCtx || null;
+  pfCurLive = liveCtx || null;
   pfCurPageId = String(p.id);
   pfCurFighter = p.sport === "mma" ? p : null;
   pfCurFights = [];
@@ -9088,7 +9107,8 @@ function pfPlayerHtml(p, bio, stats, gamelog){
   var fightsHtml = p.sport === "mma" ? '<div id="pfFights"><h3 style="margin:16px 0 6px;font-size:16px">Fight Results</h3><p class="empty">Loading fight results…</p></div>' : "";
   window._pfAi = { id: p.id, name: name, team: team, rows: parsed.rows, names: parsed.names };
   setTimeout(function(){ aiInsightRender(); }, 0);
-  return pfHeadHtml(p, img, name, team, meta) + '<div data-ai id="pfInsight"></div><div id="pfL5Wrap">' + pfLast5Html(parsed) + '</div>' + vsHtml + statsHtml + '<div id="pfStatPop"></div>' + fightsHtml;
+  var liveHtml = pfCurLive ? pfLiveStripHtml(pfCurLive) : "";
+  return pfHeadHtml(p, img, name, team, meta) + '<div data-ai id="pfInsight"></div>' + liveHtml + '<div id="pfL5Wrap">' + pfLast5Html(parsed) + '</div>' + vsHtml + statsHtml + '<div id="pfStatPop"></div>' + fightsHtml;
 }
 function pfWirePlayerBody(body){
   body.querySelectorAll(".l5slider").forEach(function(sl, i){ try { popSliderInit(sl, "l5s" + i, ".l5card"); } catch (e) {} });
@@ -9221,9 +9241,10 @@ function pfL5Cards(rows){
 function openPlayer(name, leagueKey, viewOnly, finalView){
   if (leagueKey === "esports"){ openPlayerLegacy(name, leagueKey, true, finalView); return; }
   var oppCtx = window._pfOppCtx || null; window._pfOppCtx = null;
+  var liveCtx = window._pfLiveCtx || null; window._pfLiveCtx = null;
   var lg = leagueByKey(leagueKey || currentSport || "nba");
   var ck = (name || "") + "|" + lg.key;
-  if (pfResolveCache[ck]){ openPlayerPage(pfResolveCache[ck], oppCtx); return; }
+  if (pfResolveCache[ck]){ openPlayerPage(pfResolveCache[ck], oppCtx, liveCtx); return; }
   fetchJson("https://site.api.espn.com/apis/search/v2?query=" + encodeURIComponent(name || "")).then(function(j){
     var players = [];
     (j.results || []).forEach(function(r){ if (r.type === "player") (r.contents || []).forEach(function(c){ players.push(c); }); });
@@ -9237,7 +9258,7 @@ function openPlayer(name, leagueKey, viewOnly, finalView){
     if (!pl.sport) pl.sport = lg.sport;
     if (!pl.league) pl.league = lg.league;
     pfResolveCache[ck] = pl;
-    openPlayerPage(pl, oppCtx);
+    openPlayerPage(pl, oppCtx, liveCtx);
   }).catch(function(){ openPlayerLegacy(name, leagueKey, true, finalView); });
 }
 
