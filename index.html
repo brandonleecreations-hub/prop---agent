@@ -2987,8 +2987,8 @@ function renderUpcoming(){
             var possId = g.lg.sport === "football" ? possOf(g.ev) : "";
             return '<div class="card game heroslide" data-hero="' + g.lg.key + '|' + g.ev.id + '" style="cursor:pointer">'
               + '<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:4px"><span class="hlg">' + esc(g.lg.label.toUpperCase()) + '</span><span class="herolive" style="margin:0;padding:1px 7px;font-size:10px">\uD83D\uDD34 ' + esc(st.shortDetail || st.detail || "LIVE") + '</span></div>'
-              + '<div class="hrow" style="' + tintForColor(a.color) + '"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(a.logo, 26) + esc(a.name || "") + (possId && a.id === possId ? fbIcon(13) : "") + '</span><b>' + esc(a.score != null ? a.score : "0") + '</b></div>'
-              + '<div class="hrow" style="' + tintForColor(b.color) + '"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(b.logo, 26) + esc(b.name || "") + (possId && b.id === possId ? fbIcon(13) : "") + '</span><b>' + esc(b.score != null ? b.score : "0") + '</b></div>'
+              + '<div class="hrow" style="' + tintForColor(a.color) + '"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(a.logo, 26) + esc(a.name || "") + (possId && a.id === possId ? fbIcon(14) : "") + '</span><b>' + esc(a.score != null ? a.score : "0") + '</b></div>'
+              + '<div class="hrow" style="' + tintForColor(b.color) + '"><span style="display:flex;align-items:center;gap:6px">' + tlogoImg(b.logo, 26) + esc(b.name || "") + (possId && b.id === possId ? fbIcon(14) : "") + '</span><b>' + esc(b.score != null ? b.score : "0") + '</b></div>'
               + '</div>';
           };
           var heroCols = [];
@@ -3121,7 +3121,7 @@ function gameCard(lg, ev){
   var rows = cs.map(function(c){
     var nm = (c.team && (c.team.shortDisplayName || c.team.displayName)) || "";
     var sc = pre ? "0" : (c.score!=null ? c.score : "");
-    return '<div class="gteam" style="'+teamTintStyle(c)+'">'+teamLogo(c,22)+esc(nm)+(possId && c.team && String(c.team.id) === possId ? " " + fbIcon(15) : "")+' <span class="gscore">'+esc(sc)+'</span></div>';
+    return '<div class="gteam" style="'+teamTintStyle(c)+'">'+teamLogo(c,22)+esc(nm)+(possId && c.team && String(c.team.id) === possId ? " " + fbIcon(16) : "")+' <span class="gscore">'+esc(sc)+'</span></div>';
   }).join("");
   var extra = "";
   if (lg.key==="tennis" && live && cs.length===2){
@@ -4049,7 +4049,7 @@ function openGame(key, eventId, isRefresh){
     var html = '<div class="card" style="border-top:3px solid var(--purp2)"><div style="font-size:24px;font-weight:900;line-height:1.15">' + esc(title) + ' <span style="color:var(--purp-lt);font-size:15px;font-weight:800">' + esc(lg.label) + '</span></div>'
       + (venue ? '<div class="note" style="margin:4px 0 8px">' + esc(venue) + '</div>' : '')
       + (live ? '<div><span style="background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.45);border-radius:999px;padding:4px 11px;font-weight:800;font-size:12px">● LIVE' + (detail ? ' · ' + esc(detail) : '') + '</span></div>' : '')
-      + ((cs.length===2 && (logoUrl(cs[0]) || logoUrl(cs[1]))) ? '<div style="display:flex;justify-content:space-around;align-items:center;margin:14px 0 2px">' + cs.map(function(c){ var gt = (c.team && c.team.id != null) ? ' data-gcteam="' + esc(String(c.team.id)) + '" data-gcname="' + esc(c.team.displayName || "") + '"' : ""; return '<div' + gt + ' style="text-align:center;width:42%;border-radius:14px;padding:8px 2px;' + teamFaceTint(c) + (gt ? 'cursor:pointer;' : '') + '">' + tlogoImg(logoUrl(c),54) + '<div style="font-weight:800;font-size:13px;margin-top:5px">' + esc((c.team && (c.team.shortDisplayName || c.team.displayName)) || "") + (possId && c.team && String(c.team.id) === possId ? " " + fbIcon(16) : "") + '</div><div style="font-size:23px;font-weight:900;color:var(--purp-lt)">' + esc(c.score!=null ? c.score : "") + '</div></div>'; }).join('<div style="font-weight:900;color:var(--mut);font-size:15px">VS</div>') + '</div><div class="note" style="text-align:center;margin-top:2px">Tap a team logo for starters &amp; roster</div>' : '');
+      + ((cs.length===2 && (logoUrl(cs[0]) || logoUrl(cs[1]))) ? '<div style="display:flex;justify-content:space-around;align-items:center;margin:14px 0 2px">' + cs.map(function(c){ var gt = (c.team && c.team.id != null) ? ' data-gcteam="' + esc(String(c.team.id)) + '" data-gcname="' + esc(c.team.displayName || "") + '"' : ""; return '<div' + gt + ' style="text-align:center;width:42%;border-radius:14px;padding:8px 2px;' + teamFaceTint(c) + (gt ? 'cursor:pointer;' : '') + '">' + tlogoImg(logoUrl(c),54) + '<div style="font-weight:800;font-size:13px;margin-top:5px">' + esc((c.team && (c.team.shortDisplayName || c.team.displayName)) || "") + (possId && c.team && String(c.team.id) === possId ? " " + fbIcon(20) : "") + '</div><div style="font-size:23px;font-weight:900;color:var(--purp-lt)">' + esc(c.score!=null ? c.score : "") + '</div></div>'; }).join('<div style="font-weight:900;color:var(--mut);font-size:15px">VS</div>') + '</div><div class="note" style="text-align:center;margin-top:2px">Tap a team logo for starters &amp; roster</div>' : '');
     html += watchHtml(lg, comp, s, st);
     html += wpHtml(s, cs);
     var nper = 0; cs.forEach(function(c){ nper = Math.max(nper, (c.linescores||[]).length); });
@@ -4058,7 +4058,7 @@ function openGame(key, eventId, isRefresh){
       for (var i=0;i<nper;i++) html += '<th>' + (isT ? "S" : "P") + (i+1) + '</th>';
       html += '<th>Total</th></tr>' + cs.map(function(c){
         var cells = (c.linescores||[]).map(function(x){ return '<td>' + esc(x.displayValue!=null ? x.displayValue : "") + '</td>'; }).join("");
-        return '<tr><td>' + teamLogo(c,24) + esc((c.team && c.team.displayName) || "") + (possId && c.team && String(c.team.id) === possId ? " " + fbIcon(14) : "") + '</td>' + cells + '<td style="color:var(--purp-lt);font-weight:800">' + esc(c.score!=null ? c.score : "") + '</td></tr>';
+        return '<tr><td>' + teamLogo(c,24) + esc((c.team && c.team.displayName) || "") + (possId && c.team && String(c.team.id) === possId ? " " + fbIcon(17) : "") + '</td>' + cells + '<td style="color:var(--purp-lt);font-weight:800">' + esc(c.score!=null ? c.score : "") + '</td></tr>';
       }).join("") + '</table>';
     }
     html += courtHtml(lg, s, cs, st);
