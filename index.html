@@ -9767,24 +9767,45 @@ function pfLogNameFor(statsName){
 function pfStatsHtml(stats){
   var cats = (stats && stats.categories) || [];
   if (!cats.length) return '<p class="empty" style="margin-top:12px">Season stats not available for this player.</p>';
+  /* Brandon 2026-11-22: ALL season stats in ONE hideable section on top,
+     ALL career stats together in ONE hideable section under it — the same
+     two-section layout for every sport. Categories become plain sub-blocks
+     inside each section. */
+  var sectH = function(title, note, body, first){
+    return '<h3 data-pfsect="1" style="margin:' + (first ? "16px" : "12px") + ' 0 6px;font-size:16px;cursor:pointer">' + title + (note ? ' <span class="note">' + esc(note) + '</span>' : '') + ' <span data-pfchev="1" style="color:var(--gold);font-size:13px">▸</span></h3><div class="pfsectbody" style="display:none">' + body + '</div>';
+  };
+  var subH = function(label, first){
+    return '<div style="margin:' + (first ? "2px" : "14px") + ' 0 4px;font-weight:800;font-size:13.5px;color:#e9e4ff">' + esc(label) + '</div>';
+  };
   var avg = null, tot = null;
   cats.forEach(function(c){ if (c.name === "averages") avg = c; if (c.name === "totals") tot = c; });
-  var h = "";
   if (avg){
-    var rows = avg.statistics || [];
-    var cur = rows[rows.length - 1];
-    if (cur) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">This Season <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span> <span data-pfchev="1" style="color:var(--gold);font-size:13px">▸</span></h3><div class="pfsectbody" style="display:none">' + pfStatGrid(avg.labels, cur.stats, avg.names) + '</div>';
-    if (avg.totals) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">Career Averages <span data-pfchev="1" style="color:var(--gold);font-size:13px">▸</span></h3><div class="pfsectbody" style="display:none">' + pfStatGrid(avg.labels, avg.totals, avg.names) + '</div>';
-    if (tot && tot.totals) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">Career Totals <span data-pfchev="1" style="color:var(--gold);font-size:13px">▸</span></h3><div class="pfsectbody" style="display:none">' + pfStatGrid(tot.labels, tot.totals, tot.names) + '</div>';
-    return h || '<p class="empty" style="margin-top:12px">Season stats not available for this player.</p>';
+    var arows = avg.statistics || [];
+    var acur = arows[arows.length - 1];
+    if (!acur) return '<p class="empty" style="margin-top:12px">Season stats not available for this player.</p>';
+    var hA = sectH("Season Stats", (acur.season && acur.season.displayName) || "", pfStatGrid(avg.labels, acur.stats, avg.names), true);
+    var cBody = "", cFirst = true;
+    if (avg.totals){ cBody += subH("Averages", cFirst) + pfStatGrid(avg.labels, avg.totals, avg.names); cFirst = false; }
+    if (tot && tot.totals){ cBody += subH("Totals", cFirst) + pfStatGrid(tot.labels, tot.totals, tot.names); cFirst = false; }
+    if (cBody) hA += sectH("Career Stats", "", cBody, false);
+    return hA;
   }
+  var sBody = "", sFirst = true, sNote = "", cBody2 = "", cFirst2 = true;
   cats.forEach(function(c){
     var rows = c.statistics || [];
     var cur = rows[rows.length - 1];
-    if (cur) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">' + esc(c.displayName || c.name || "Stats") + ' <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span> <span data-pfchev="1" style="color:var(--gold);font-size:13px">▸</span></h3><div class="pfsectbody" style="display:none">' + pfStatGrid(c.labels, cur.stats, c.names) + '</div>';
-    if (c.totals) h += '<div class="note" data-pfsect="1" style="margin:10px 0 4px;font-weight:800;cursor:pointer">Career — ' + esc(c.displayName || c.name || "") + ' <span data-pfchev="1" style="color:var(--gold);font-size:12px">▸</span></div><div class="pfsectbody" style="display:none">' + pfStatGrid(c.labels, c.totals, c.names) + '</div>';
+    var label = c.displayName || c.name || "Stats";
+    if (cur){
+      if (!sNote && cur.season && cur.season.displayName) sNote = cur.season.displayName;
+      sBody += subH(label, sFirst) + pfStatGrid(c.labels, cur.stats, c.names); sFirst = false;
+    }
+    if (c.totals){ cBody2 += subH(label, cFirst2) + pfStatGrid(c.labels, c.totals, c.names); cFirst2 = false; }
   });
-  return h || '<p class="empty" style="margin-top:12px">Season stats not available for this player.</p>';
+  if (!sBody && !cBody2) return '<p class="empty" style="margin-top:12px">Season stats not available for this player.</p>';
+  var h = "";
+  if (sBody) h += sectH("Season Stats", sNote, sBody, true);
+  if (cBody2) h += sectH("Career Stats", "", cBody2, !sBody);
+  return h;
 }
 function pfDstr(ds){ if (!ds) return ""; var d = new Date(ds); return isNaN(d) ? "" : d.toLocaleDateString([], { month: "short", day: "numeric" }); }
 function pfLogRows(gl){
