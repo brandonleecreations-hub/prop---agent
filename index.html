@@ -18,7 +18,11 @@
   --r:14px;
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0;overflow-x:clip;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+html,body{margin:0;padding:0;overflow-x:clip;background:#000;color:var(--txt);}
+/* Dark silver shine page background (Brandon 2026-11-22): the black
+   behind the tables gets a metallic dark-silver sheen. Header,
+   bottom nav and the boxes keep their own black — untouched. */
+body{background-image:radial-gradient(900px 500px at 50% -10%,rgba(216,224,238,.17),rgba(0,0,0,0) 60%),linear-gradient(160deg,#1b1e26 0%,#060607 32%,#12141b 54%,#040405 76%,#16181f 100%);background-attachment:fixed}font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 a{color:var(--blu);text-decoration:none}
 button{font-family:inherit;cursor:pointer}
 header{position:sticky;top:0;z-index:50;background:radial-gradient(620px 130px at 6% 0%, rgba(124,58,237,.20), rgba(0,0,0,0) 60%), rgba(0,0,0,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
