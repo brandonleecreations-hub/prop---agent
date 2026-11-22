@@ -3849,7 +3849,8 @@ function openTeamRoster(teamId, teamName){
    floor for each team (ESPN boxscore "active" flags), photos on a 3D-pop
    court, live points on every player, gold highlight on the top scorer. */
 function courtHtml(lg, s, cs, st){
-  if (lg.key !== "nba" || !st || st.state !== "in") return "";
+  if ((lg.key !== "nba" && lg.key !== "cbb" && lg.key !== "wbb") || !st || st.state !== "in") return "";
+  var hsPath = lg.key === "cbb" ? "mens-college-basketball" : lg.key === "wbb" ? "womens-college-basketball" : "nba";
   var bx = (s.boxscore && s.boxscore.players) || [];
   if (bx.length !== 2) return "";
   var byId = {};
@@ -3891,9 +3892,9 @@ function courtHtml(lg, s, cs, st){
       var ath = p.a.athlete || {};
       var nm = ath.displayName || "";
       var last = nm.split(" ").pop() || nm;
-      var img = (ath.headshot && ath.headshot.href) || ("https://a.espncdn.com/i/headshots/nba/players/full/" + ath.id + ".png");
+      var img = (ath.headshot && ath.headshot.href) || ("https://a.espncdn.com/i/headshots/" + hsPath + "/players/full/" + ath.id + ".png");
       var hot = String(ath.id) === hotId;
-      markers += '<div class="courtP' + (hot ? ' hot' : '') + '" style="left:' + x + '%;top:' + y + '%" data-player="' + esc(nm) + '" data-league="nba" data-opp="' + esc(oppName) + '" data-live="' + esc(JSON.stringify({ stats: p.live, opp: oppName, clk: (st.shortDetail || st.detail || "") })) + '"><img src="' + esc(img) + '" alt="" loading="lazy" onerror="this.remove()" style="border:2px solid #' + col + '"><div><span class="cpChip">' + (hot ? '\u2605 ' : '') + esc(last) + ' \u00B7 ' + p.pts + '</span></div></div>';
+      markers += '<div class="courtP' + (hot ? ' hot' : '') + '" style="left:' + x + '%;top:' + y + '%" data-player="' + esc(nm) + '" data-league="' + lg.key + '" data-opp="' + esc(oppName) + '" data-live="' + esc(JSON.stringify({ stats: p.live, opp: oppName, clk: (st.shortDetail || st.detail || "") })) + '"><img src="' + esc(img) + '" alt="" loading="lazy" onerror="this.remove()" style="border:2px solid #' + col + '"><div><span class="cpChip">' + (hot ? '\u2605 ' : '') + esc(last) + ' \u00B7 ' + p.pts + '</span></div></div>';
     });
   });
   /* Court sides match the faceoff above: first team left, second right
@@ -4041,7 +4042,7 @@ function openGame(key, eventId, isRefresh){
     }
     html += courtHtml(lg, s, cs, st);
     if (st.state === "pre") html += '<div id="gameProps"></div>';
-    if (lg.key !== "nba") html += trackerHtml(lg, s, comp, cs); /* NBA: the old shot-chart Live Tracker is removed (Brandon 2026-11-21) — the ON THE COURT tracker replaces it. */
+    if (lg.key !== "nba" && lg.key !== "cbb" && lg.key !== "wbb") html += trackerHtml(lg, s, comp, cs); /* NBA + college basketball: the ON THE COURT tracker replaces the old Live Tracker (Brandon 2026-11-21 / 2026-11-22). */
     if (isT){
       var setNo = Math.max(1, nper);
       var chips = '<span class="badge">Set ' + setNo + '</span>';
