@@ -22,7 +22,8 @@ html,body{margin:0;padding:0;overflow-x:clip;background:#000;color:var(--txt);}
 /* Dark silver shine page background (Brandon 2026-11-22): the black
    behind the tables gets a metallic dark-silver sheen. Header,
    bottom nav and the boxes keep their own black — untouched. */
-body{background-image:radial-gradient(1000px 560px at 50% -10%,rgba(246,231,203,.36),rgba(0,0,0,0) 62%),linear-gradient(160deg,#3b2f1d 0%,#0d0a06 30%,#2f2516 52%,#090705 74%,#342a19 100%);background-attachment:fixed}font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+body{background-image:radial-gradient(1000px 560px at 50% -10%,rgba(246,231,203,.36),rgba(0,0,0,0) 62%),linear-gradient(160deg,#3b2f1d 0%,#0d0a06 30%,#2f2516 52%,#090705 74%,#342a19 100%);background-attachment:fixed}
+body.onboard{background-image:radial-gradient(1000px 560px at 50% -10%,rgba(255,255,255,.14),rgba(0,0,0,0) 62%),linear-gradient(160deg,#17171a 0%,#000 34%,#101013 55%,#000 78%,#131316 100%)}font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 a{color:var(--blu);text-decoration:none}
 button{font-family:inherit;cursor:pointer}
 header{position:sticky;top:0;z-index:50;background:radial-gradient(620px 130px at 6% 0%, rgba(124,58,237,.20), rgba(0,0,0,0) 60%), rgba(0,0,0,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
@@ -1391,12 +1392,17 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
 .pk2btn{background:#1b1b28;color:#fff;border:1px solid #3a3a52;border-radius:9px;padding:8px 10px;font-weight:900;font-size:12.5px}
 .pk2btn.on{background:linear-gradient(135deg,#7C3AED,#6d28d9);border-color:#a78bfa}
 .pk2btn:disabled{opacity:.55}
-#pickemHome .pickem{padding:7px 9px}
-#pickemHome .pk-title{font-size:14.5px;margin:1px 0}
+#pickemHome .pickem{padding:4px 7px}
+#pickemHome .pk-title{font-size:12.5px;margin:0}
 #pickemHome .pk-kick{font-size:10px}
-#pickemHome .pk2leg{gap:7px;padding:5px 7px;margin-top:6px;border-radius:10px}
-#pickemHome .pk2leg img{width:34px;height:34px}
-#pickemHome .pk2btn{padding:6px 8px;font-size:11.5px;border-radius:8px}
+#pickemHome .pk2leg{gap:5px;padding:3px 5px;margin-top:4px;border-radius:9px}
+#pickemHome .pk2leg img{width:26px;height:26px}
+#pickemHome .pk2btn{padding:3px 6px;font-size:10.5px;border-radius:7px}
+.pktick{margin-top:5px;overflow:hidden;white-space:nowrap;background:rgba(0,0,0,.3);border:1px solid rgba(245,197,24,.3);border-radius:8px;padding:3px 0}
+.pktickin{display:inline-block;padding-left:100%;animation:pktickmove 24s linear infinite;font-size:11px;font-weight:700;color:#ffe9a8}
+@keyframes pktickmove{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+.reptick{overflow:hidden;white-space:nowrap;border-radius:12px;padding:8px 0;margin:6px 0;background:linear-gradient(180deg,#191430,#0d0d16);border:1px solid rgba(167,139,250,.55);box-shadow:0 10px 22px rgba(0,0,0,.55),0 4px 10px rgba(0,0,0,.5),0 0 18px rgba(124,58,237,.35),inset 0 1px 0 rgba(255,255,255,.14)}
+.reptickin{display:inline-block;padding-left:100%;animation:pktickmove 32s linear infinite;font-size:12.5px;font-weight:700;color:#efe9ff}
 [data-ai]{display:none}
 body.aion [data-ai]{display:block}
 .aibox{background:linear-gradient(135deg,#25124a,#150a2c);border:1px solid #7C3AED;border-radius:12px;padding:9px 11px;margin:10px 0;text-align:left}
@@ -8530,7 +8536,7 @@ function showView(name){
   if (name==="live") renderLive();
   if (name==="board") renderBoard();
   if (name==="players") renderFinder();
-  try { document.body.classList.toggle("onhome", name === "home"); } catch (e) {}
+  try { document.body.classList.toggle("onhome", name === "home"); document.body.classList.toggle("onboard", name === "board"); } catch (e) {}
   window._view = name; lsSet("pa_tab", name); updateSlipChip();
   if (name === "home") setTimeout(maybeShowDlPop, 400); else { var dp0 = $("dlPop"); if (dp0) dp0.style.display = "none"; }
   window.scrollTo(0,0);
@@ -9591,7 +9597,7 @@ function renderPickem2(){
   var box = $("pickemHome"); if (!box) return;
   var st = pk2State();
   var started = Date.now() >= pk2FirstStart();
-  var head = '<div style="display:flex;gap:9px;align-items:center"><img src="/api/battle?v=14&s=5" alt="" style="width:44px;height:44px;border-radius:10px;object-fit:cover;object-position:top;border:1px solid #f5c518;flex:0 0 auto"><div style="min-width:0"><div class="pk-kick">🏆 DAILY PICK\'EM</div><div class="pk-title">The Dealmaker\'s 3 Players</div></div></div><div class="note" style="margin-top:4px">Pick MORE or LESS on all 3. Get every one right and win a <b style="color:#f5c518">FREE PACK</b>. Free to play — picks lock at the first tip-off.</div>';
+  var head = '<div style="display:flex;gap:7px;align-items:center"><img src="/api/battle?v=14&s=5" alt="" style="width:30px;height:30px;border-radius:8px;object-fit:cover;object-position:top;border:1px solid #f5c518;flex:0 0 auto"><div style="min-width:0"><div class="pk-kick">🏆 DAILY PICK\'EM</div><div class="pk-title">The Dealmaker\'s 3 Players</div></div></div><div class="note" style="margin-top:4px">Pick MORE or LESS on all 3. Get every one right and win a <b style="color:#f5c518">FREE PACK</b>. Free to play — picks lock at the first tip-off.</div>';
   var legsHtml = PICKEM2.legs.map(function(l, i){
     var pick = st.picks[i];
     var act = st.actuals[i];
@@ -9603,11 +9609,11 @@ function renderPickem2(){
     return '<div class="pk2leg"><img src="' + esc(l.img) + '" alt="" onerror="this.remove()"><div style="min-width:0;flex:1"><b>' + esc(l.name) + '</b><div class="note">' + esc(l.team) + ' vs ' + esc(l.opp) + ' · ' + esc(l.statLabel) + ' <b style="color:#fff">' + l.line + '</b></div>' + res + '</div><div class="pk2btns"><button type="button" class="pk2btn' + (pick === "MORE" ? " on" : "") + '" data-pk2="' + i + ':MORE"' + dis + '>MORE</button><button type="button" class="pk2btn' + (pick === "LESS" ? " on" : "") + '" data-pk2="' + i + ':LESS"' + dis + '>LESS</button></div></div>';
   }).join("");
   var foot = "";
-  if (st.graded === "win"){ var nd = PICKEM2.legs.filter(function(l, i){ return st.actuals[i] !== "VOID"; }).length; foot = '<div style="margin-top:10px;font-weight:900;color:#4fe3c1">🎉 PERFECT — ' + nd + ' for ' + nd + '! Your free pack is waiting in My Packs below.</div>'; }
-  else if (st.graded === "loss") foot = '<div style="margin-top:10px;font-weight:800;color:#ff8fa3">Not a perfect 3 — new players drop with the next round.</div>';
-  else if (st.locked) foot = '<div style="margin-top:10px;font-weight:800;color:#cdbcf5">🔒 Picks locked — good luck! Results land here when the games finish.</div>';
-  else if (started) foot = '<div style="margin-top:10px" class="note">These games have started — picks are closed. New players drop with the next round.</div>';
-  else { var n = Object.keys(st.picks).length; foot = '<button type="button" class="bigbtn" id="pk2Lock" style="width:100%;margin-top:10px"' + (n < 3 ? " disabled" : "") + '>🔒 Lock my picks (' + n + '/3)</button>'; }
+  if (st.graded === "win"){ var nd = PICKEM2.legs.filter(function(l, i){ return st.actuals[i] !== "VOID"; }).length; foot = '<div style="margin-top:6px;font-weight:900;color:#4fe3c1">🎉 PERFECT — ' + nd + ' for ' + nd + '! Your free pack is waiting in My Packs below.</div>'; }
+  else if (st.graded === "loss") foot = '<div style="margin-top:6px;font-weight:800;color:#ff8fa3">Not a perfect 3 — new players drop with the next round.</div>';
+  else if (st.locked) foot = '<div style="margin-top:6px;font-weight:800;color:#cdbcf5">🔒 Picks locked — good luck! Results land here when the games finish.</div>';
+  else if (started) foot = '<div style="margin-top:6px" class="note">These games have started — picks are closed. New players drop with the next round.</div>';
+  else { var n = Object.keys(st.picks).length; foot = '<button type="button" class="bigbtn" id="pk2Lock" style="width:100%;margin-top:6px"' + (n < 3 ? " disabled" : "") + '>🔒 Lock my picks (' + n + '/3)</button>'; }
   box.innerHTML = '<div class="pickem">' + head + legsHtml + '<div data-ai id="pkTakes"></div>' + foot + '</div>';
   aiTakesRender();
   box.querySelectorAll("[data-pk2]").forEach(function(b){ b.addEventListener("click", function(){ var parts = b.getAttribute("data-pk2").split(":"); var s2 = pk2State(); if (s2.locked || Date.now() >= pk2FirstStart()) return; s2.picks[parts[0]] = parts[1]; pk2Save(s2); renderPickem2(); }); });
@@ -9967,12 +9973,13 @@ function aiTakesRender(){
       var avg = last5.length ? last5.reduce(function(a, b){ return a + b; }, 0) / last5.length : 0;
       var over = last5.filter(function(v){ return v > l.line; }).length;
       var facts = l.name + " (" + l.team + " vs " + l.opp + "). The Daily Pick'em line is " + l.line + " " + l.statLabel + ". His last 5 games: " + last5.join(", ") + " " + l.statLabel + " (avg " + avg.toFixed(1) + "). He went OVER " + l.line + " in " + over + " of those 5.";
-      return aiGen("take_" + PICKEM2.week + "_" + i, "You are THE DEALMAKER, a smooth, confident sports agent character in the Score Agent app. Give your take in ONE sentence, first person, a little swagger, no betting advice \u2014 talk about the player and the number like a scout, not a bookie.", facts, 110).then(function(t){ return t ? '<div class="pk2take">\uD83D\uDDE3\uFE0F <b>' + esc(l.name) + ':</b> ' + esc(t) + '</div>' : ""; });
+      return aiGen("take_" + PICKEM2.week + "_" + i, "You are THE DEALMAKER, a smooth, confident sports agent character in the Score Agent app. Give your take in ONE sentence, first person, a little swagger, no betting advice \u2014 talk about the player and the number like a scout, not a bookie.", facts, 110).then(function(t){ return t ? esc(l.name) + ": " + esc(t) : ""; });
     }).catch(function(){ return ""; });
   });
   Promise.all(jobs).then(function(parts){
     var b2 = $("pkTakes"); if (!b2) return;
-    var html = parts.join("");
+    var segs = parts.filter(function(x){ return !!x; });
+    var html = segs.length ? '<div class="pktick"><div class="pktickin">🗣️ THE DEALMAKER — ' + segs.join(' &nbsp;•&nbsp; ') + '</div></div>' : "";
     window._pkTakeStarted = 0;
     if (html) { window._pkTakesHtml = html; b2.innerHTML = html; b2.setAttribute("data-done", "1"); }
     else { window._pkTakeRetry = Date.now() + 60000; window._pkTakesNote = '<div class="note" style="margin-top:8px">\uD83D\uDDE3\uFE0F The Dealmaker stepped out for a minute \u2014 his takes will pop in shortly.</div>'; b2.innerHTML = window._pkTakesNote; }
@@ -10037,7 +10044,7 @@ function aiReportRender(){
     if (!top.length) return;
     box.setAttribute("data-done", "1");
     var facts = "Top recent player performances: " + top.map(function(p){ return p.n + " \u2014 " + p.v + " " + p.stat + " (" + p.g + ")"; }).join("; ") + ".";
-    aiGen("report2_" + ymdOf(1), "You are the Agent in the Score Agent app. Write THE PLAYER REPORT: 3-4 punchy sentences covering the biggest recent player performances, like a sharp morning sports briefing. No betting talk. Begin directly with the first sentence \u2014 no title, no headline, no markdown.", facts, 260).then(function(t){ var b2 = $("agentReport"); if (t && b2) b2.innerHTML = aiBoxHtml("\uD83D\uDCF0 THE PLAYER REPORT \u2014 TOP PERFORMERS", t); });
+    aiGen("report2_" + ymdOf(1), "You are the Agent in the Score Agent app. Write THE PLAYER REPORT: 3-4 punchy sentences covering the biggest recent player performances, like a sharp morning sports briefing. No betting talk. Begin directly with the first sentence \u2014 no title, no headline, no markdown.", facts, 260).then(function(t){ var b2 = $("agentReport"); if (t && b2) b2.innerHTML = '<div class="reptick"><div class="reptickin">📰 THE PLAYER REPORT — ' + esc(t) + '</div></div>'; });
   }).catch(function(){});
 }
 /* ---- Agent Clash hype + recap ---- */
