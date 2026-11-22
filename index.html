@@ -1682,11 +1682,27 @@ var LEAGUES = [
   {key:"wbb",   label:"Women's College Basketball",sport:"basketball",  league:"womens-college-basketball", cats:[["Points","pointsPerGame","point"],["Rebounds","reboundsPerGame","rebound"],["Assists","assistsPerGame","assist"]]},
   {key:"tennis",label:"Tennis",            sport:"tennis",      league:"atp",              cats:[]},
   {key:"nhl",   label:"NHL",               sport:"hockey",      league:"nhl",              cats:[["Points","points","point"],["Goals","goals","goal"],["Assists","assists","assist"]]},
+  {key:"soccer",label:"Soccer",            sport:"soccer",      league:"eng.1",            cats:[]},
   {key:"mma",   label:"UFC / MMA",         sport:"mma",         league:"ufc",              cats:[]},
   {key:"mlb",   label:"MLB",               sport:"baseball",    league:"mlb",              cats:[]},
   {key:"esports",label:"Esports",           sport:"esports",     league:"esports",          cats:[]}
 ];
-function leagueByKey(k){ for (var i=0;i<LEAGUES.length;i++) if (LEAGUES[i].key===k) return LEAGUES[i]; return LEAGUES[0]; }
+/* Soccer leagues (Brandon 2026-11-22): one Soccer tab/pill, organized
+   BY LEAGUE inside it. Each league is its own entry so scoreboard
+   caches, game cards and Game Centers resolve per league. */
+var SOCCER_LEAGUES = [
+  {key:"epl",       label:"Premier League",   sport:"soccer", league:"eng.1",          cats:[]},
+  {key:"laliga",    label:"La Liga",          sport:"soccer", league:"esp.1",          cats:[]},
+  {key:"bundesliga",label:"Bundesliga",       sport:"soccer", league:"ger.1",          cats:[]},
+  {key:"seriea",    label:"Serie A",          sport:"soccer", league:"ita.1",          cats:[]},
+  {key:"ligue1",    label:"Ligue 1",          sport:"soccer", league:"fra.1",          cats:[]},
+  {key:"mls",       label:"MLS",              sport:"soccer", league:"usa.1",          cats:[]},
+  {key:"ucl",       label:"Champions League", sport:"soccer", league:"uefa.champions", cats:[]},
+  {key:"europa",    label:"Europa League",    sport:"soccer", league:"uefa.europa",    cats:[]},
+  {key:"ligamx",    label:"Liga MX",          sport:"soccer", league:"mex.1",          cats:[]}
+];
+function soccerLeagueByKey(k){ for (var i=0;i<SOCCER_LEAGUES.length;i++) if (SOCCER_LEAGUES[i].key===k) return SOCCER_LEAGUES[i]; return null; }
+function leagueByKey(k){ for (var i=0;i<LEAGUES.length;i++) if (LEAGUES[i].key===k) return LEAGUES[i]; return soccerLeagueByKey(k) || LEAGUES[0]; }
 /* Out-of-season hide (Brandon 2026-11-20): MLB is out of season, so it
    is hidden EVERYWHERE — no header pill, no board, no Build pill or
    section, no Live pill or games, no Home games, and no props or
@@ -3282,6 +3298,13 @@ function renderLive(){
     var lf0 = $("liveFinished"); if (lf0) lf0.innerHTML = "";
     var lc0 = $("liveCenter"); if (lc0 && !window._mmaData) setHtml(lc0, '<p class="empty">Loading fights\u2026</p>');
     mmaLoad().then(function(){ if (liveFilter === "mma" && window._view === "live"){ var lc = $("liveCenter"); if (lc){ mmaRenderInto(lc); lc._lastHtml = "__mma__"; } } });
+    return;
+  }
+  if (liveFilter === "soccer"){
+    var ls1 = $("liveStatus"); if (ls1) ls1.textContent = "Soccer \u00B7 every league \u00B7 fresh from ESPN \u00B7 auto-refreshes every 30s";
+    var lf1 = $("liveFinished"); if (lf1) lf1.innerHTML = "";
+    var lc1 = $("liveCenter"); if (lc1 && !window._soccerData) setHtml(lc1, '<p class="empty">Loading soccer\u2026</p>');
+    soccerLoad().then(function(){ if (liveFilter === "soccer" && window._view === "live"){ var lc = $("liveCenter"); if (lc){ soccerRenderInto(lc); lc._lastHtml = "__soccer__"; } } });
     return;
   }
   var leagues = LEAGUES.slice(1).filter(function(lg){ return lg.key!=="esports" && lg.key!=="mma" && !sportHidden(lg.key) && (liveFilter==="all" || lg.key===liveFilter); });
@@ -8444,6 +8467,7 @@ function renderHomeSport(){
   if (!box.innerHTML) box.innerHTML = '<p class="empty">Loading games\u2026</p>';
   var seq = (window._hsgSeq = (window._hsgSeq || 0) + 1);
   if (lg.key === "mma"){ mmaLoad().then(function(){ if (window._hsgSeq === seq && window._view === "home" && window._homeSport === "mma") mmaRenderInto(box); }); return; }
+  if (lg.key === "soccer"){ soccerLoad().then(function(){ if (window._hsgSeq === seq && window._view === "home" && window._homeSport === "soccer") soccerRenderInto(box); }); return; }
   var jobs = [getScoreboard(lg, 3).catch(function(){ return []; })];
   if (lg.key === "tennis") jobs.push(getScoreboard({ key: "tennisw", label: "Tennis", sport: "tennis", league: "wta" }, 3).then(function(ev){ (ev || []).forEach(function(e){ e._tour = "WTA"; }); return ev || []; }).catch(function(){ return []; }));
   Promise.all(jobs).then(function(rs){
@@ -8746,6 +8770,39 @@ function mmaRenderInto(box){
 function mmaRerender(){
   if (window._homeSport === "mma" && window._view === "home"){ var b = $("homeSportGames"); if (b) mmaRenderInto(b); }
   if (liveFilter === "mma" && window._view === "live"){ var lc = $("liveCenter"); if (lc) mmaRenderInto(lc); }
+}
+/* Soccer sections (Brandon 2026-11-22): every league ESPN carries,
+   grouped BY LEAGUE, each with Live / Upcoming / Finished sliders —
+   the same organization as the other sport tabs. Shared by the Home
+   Soccer tab and the Live Center Soccer pill. */
+function soccerLoad(){
+  return Promise.all(SOCCER_LEAGUES.map(function(lg){
+    return getScoreboard(lg, 3).then(function(ev){ return { lg: lg, ev: ev || [] }; }).catch(function(){ return { lg: lg, ev: [] }; });
+  })).then(function(rs){ window._soccerData = rs; return rs; });
+}
+function soccerSectionsHtml(groups){
+  var html = "", any = false;
+  (groups || []).forEach(function(g){
+    var live = [], up = [], fin = [];
+    (g.ev || []).forEach(function(ev){ var st = ev.status && ev.status.type && ev.status.type.state; if (st === "in") live.push(ev); else if (st === "post") fin.push(ev); else up.push(ev); });
+    if (!live.length && !up.length && !fin.length) return;
+    any = true;
+    fin.reverse();
+    var slider = function(list){ return '<div class="lvslider">' + list.map(function(ev){ return gameCard(g.lg, ev); }).join("") + '</div>'; };
+    html += '<h3 class="sgh">\u26BD ' + esc(g.lg.label) + '</h3>';
+    if (live.length) html += '<div class="note" style="margin:2px 0 4px">\uD83D\uDD34 Live Now</div>' + slider(live);
+    if (up.length) html += '<div class="note" style="margin:8px 0 4px">Upcoming</div>' + slider(up.slice(0, 60));
+    if (fin.length) html += '<div class="note" style="margin:8px 0 4px">Finished</div>' + slider(fin.slice(0, 60));
+  });
+  if (!any) html = '<p class="empty">No soccer games on the board right now.</p>';
+  return html;
+}
+function soccerRenderInto(box){
+  if (!box) return;
+  box.innerHTML = soccerSectionsHtml(window._soccerData || []);
+  box.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var pp = el.getAttribute("data-game").split("|"); var fromHome = window._view === "home"; if (fromHome){ showView("live"); window._gameFrom = "home"; } openGame(pp[0], pp[1]); }); });
+  bindTiles(box);
+  box.querySelectorAll(".lvslider").forEach(function(tr, i){ try { popSliderInit(tr, "soc" + i, ".card.game"); } catch (e) {} });
 }
 function pfTnWhen(ds){ var d = new Date(ds); if (isNaN(d)) return ""; return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) + " · " + d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
 function tnCompName(x){ if (!x) return ""; if (x.athlete && x.athlete.displayName) return x.athlete.displayName; if (x.roster && x.roster.displayName) return x.roster.displayName; return ""; }
