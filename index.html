@@ -1816,6 +1816,9 @@ function getScoreboard(lg, days){
   for (var i=0;i<days;i++){ var d = new Date(today); d.setDate(d.getDate()+i); urls.push(ESPN+lg.sport+"/"+lg.league+"/scoreboard?dates="+ymd(d)+"&limit=100"); }
   return Promise.all(urls.map(function(u){ return fetchJson(u).catch(function(){ return {events:[]}; }); }))
     .then(function(rs){ var ev=[]; rs.forEach(function(r){ (r.events||[]).forEach(function(e){ ev.push(e); }); });
+      /* Away first, home second in every listing too (Brandon 2026-11-21):
+         some ESPN payloads list the home team first. */
+      ev.forEach(function(e){ (e.competitions || []).forEach(function(cp){ if (cp.competitors && cp.competitors.length > 1) cp.competitors.sort(function(x, y){ var w = function(c){ return c.homeAway === "away" ? 0 : c.homeAway === "home" ? 1 : 2; }; return w(x) - w(y); }); }); });
       noteBreaks(lg, ev); boardCache[ck] = {events:ev, ts:Date.now()}; return ev; });
 }
 function eventTeams(ev){
