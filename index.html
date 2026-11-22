@@ -3765,7 +3765,7 @@ function openGame(key, eventId, isRefresh){
     } else {
       var perf = [];
       (s.leaders || []).forEach(function(tl){ (tl.leaders||[]).forEach(function(cat){ var L = (cat.leaders||[])[0]; if (L && L.athlete && perf.length<4) perf.push({name:L.athlete.displayName, stat:(L.displayValue||"") + " " + (cat.shortDisplayName||cat.displayName||"")}); }); });
-      if (perf.length) html += '<div style="font-size:16px;margin-top:14px"><b>Top</b> <b style="color:var(--gold)">Performers</b></div>' + perf.map(function(p){ return '<div class="row" data-player="' + esc(p.name) + '" data-league="' + lg.key + '" style="justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer"><b>' + esc(p.name) + '</b><span style="color:var(--cyan);font-weight:700;font-size:13px">' + esc(p.stat) + '</span></div>'; }).join("");
+      if (perf.length) html += '<div style="font-size:13.5px;margin-top:10px"><b>Top</b> <b style="color:var(--gold)">Performers</b></div>' + perf.map(function(p){ return '<div class="row" data-player="' + esc(p.name) + '" data-league="' + lg.key + '" style="justify-content:space-between;padding:4.5px 0;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px"><b>' + esc(p.name) + '</b><span style="color:var(--cyan);font-weight:700;font-size:12px">' + esc(p.stat) + '</span></div>'; }).join("");
       var tstats = (s.boxscore && s.boxscore.statistics) || (s.boxscore && s.boxscore.teams) || [];
       html += '<div data-ai id="gcAi"></div>';
         if (tstats.length===2){
