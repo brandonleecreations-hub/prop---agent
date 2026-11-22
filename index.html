@@ -3556,9 +3556,33 @@ function closeGame(silent){
 }
 /* ===== Game Center: tap a team logo -> starters + full roster
    (Brandon 2026-11-21; goes for all sports) ===== */
+/* Look a player up in a game's box score and return his data-live
+   attribute (Brandon 2026-11-21: every player in every game, every sport). */
+function gcLiveAttrFor(s, nm, clk){
+  try {
+    var nk = nameKeyOf(nm || ""); if (!nk || !s) return "";
+    var hit = null;
+    ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){
+      (tp.statistics || []).forEach(function(gr){
+        var labs = gr.labels || gr.names || [];
+        (gr.athletes || []).forEach(function(a){
+          if (!hit && a.athlete && !a.didNotPlay && nameKeyOf(a.athlete.displayName || "") === nk) hit = { labs: labs, stArr: a.stats || [] };
+        });
+      });
+    });
+    if (!hit) return "";
+    var lo = {};
+    ["MIN", "TOI", "PTS", "REB", "AST", "STL", "BLK", "FG", "3PT", "FT", "YDS", "TD", "REC", "CAR", "G", "A", "SOG", "SV", "H", "R", "RBI", "HR", "SB", "K", "TO", "PF", "+/-"].forEach(function(k){ var ix = hit.labs.indexOf(k); if (ix >= 0 && hit.stArr[ix] != null && hit.stArr[ix] !== "" && hit.stArr[ix] !== "--") lo[k] = String(hit.stArr[ix]); });
+    if (!Object.keys(lo).length) hit.labs.slice(0, 8).forEach(function(k, ix2){ if (hit.stArr[ix2] != null && hit.stArr[ix2] !== "") lo[k] = String(hit.stArr[ix2]); });
+    if (!Object.keys(lo).length) return "";
+    return ' data-live="' + esc(JSON.stringify({ stats: lo, clk: clk || "" })) + '"';
+  } catch (e) { return ""; }
+}
 function openTeamRoster(teamId, teamName){
   var ctx = window._gcCtx; if (!ctx || !teamId) return;
   var lg = ctx.lg, s = ctx.s;
+  var gcLive = false, gcClk = "";
+  try { var comp0 = ((s.header && s.header.competitions) || [])[0] || {}; var gst0 = (comp0.status && comp0.status.type) || {}; gcLive = gst0.state === "in"; gcClk = gst0.shortDetail || gst0.detail || ""; } catch (e) {}
   var dlg = $("teamDlg"), body = $("teamDlgBody"); if (!dlg || !body) return;
   var tid = String(teamId);
   var gcCol = "";
@@ -3575,7 +3599,7 @@ function openTeamRoster(teamId, teamName){
   });
   var row = function(p, extra){
     var img = p.img ? '<img src="' + esc(p.img) + '" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex:none" loading="lazy" onerror="this.remove()">' : "";
-    return '<div class="row" data-player="' + esc(p.name) + '" data-league="' + lg.key + '" style="gap:9px;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer;justify-content:flex-start;align-items:center">' + img + '<b style="flex:1;min-width:0">' + esc(p.name) + '</b>' + (extra || "") + '</div>';
+    return '<div class="row" data-player="' + esc(p.name) + '" data-league="' + lg.key + '"' + (gcLive ? gcLiveAttrFor(s, p.name, gcClk) : "") + ' style="gap:9px;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer;justify-content:flex-start;align-items:center">' + img + '<b style="flex:1;min-width:0">' + esc(p.name) + '</b>' + (extra || "") + '</div>';
   };
   var html = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px' + (gcCol ? ';background:linear-gradient(120deg,#' + gcCol + '59,#' + gcCol + '14 65%,transparent);border:1px solid #' + gcCol + '55;border-radius:12px;padding:10px 12px' : '') + '"><div style="font-size:19px;font-weight:900">' + esc(teamName || "Team") + '</div><button type="button" class="ghostbtn" id="teamDlgClose">\u2715 CLOSE</button></div>';
   if (starters.length) html += '<div style="font-size:16px;margin:14px 0 4px"><b>Starters</b> <span class="note">\u2014 this game</span></div>' + starters.map(function(p){ return row(p); }).join("");
@@ -3765,7 +3789,7 @@ function openGame(key, eventId, isRefresh){
     } else {
       var perf = [];
       (s.leaders || []).forEach(function(tl){ (tl.leaders||[]).forEach(function(cat){ var L = (cat.leaders||[])[0]; if (L && L.athlete && perf.length<4) perf.push({name:L.athlete.displayName, stat:(L.displayValue||"") + " " + (cat.shortDisplayName||cat.displayName||"")}); }); });
-      if (perf.length) html += '<div style="font-size:13.5px;margin-top:10px"><b>Top</b> <b style="color:var(--gold)">Performers</b></div>' + perf.map(function(p){ return '<div class="row" data-player="' + esc(p.name) + '" data-league="' + lg.key + '" style="justify-content:space-between;padding:4.5px 0;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px"><b>' + esc(p.name) + '</b><span style="color:var(--cyan);font-weight:700;font-size:12px">' + esc(p.stat) + '</span></div>'; }).join("");
+      if (perf.length) html += '<div style="font-size:13.5px;margin-top:10px"><b>Top</b> <b style="color:var(--gold)">Performers</b></div>' + perf.map(function(p){ return '<div class="row" data-player="' + esc(p.name) + '" data-league="' + lg.key + '"' + (live ? gcLiveAttrFor(s, p.name, detail) : "") + ' style="justify-content:space-between;padding:4.5px 0;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px"><b>' + esc(p.name) + '</b><span style="color:var(--cyan);font-weight:700;font-size:12px">' + esc(p.stat) + '</span></div>'; }).join("");
       var tstats = (s.boxscore && s.boxscore.statistics) || (s.boxscore && s.boxscore.teams) || [];
       html += '<div data-ai id="gcAi"></div>';
         if (tstats.length===2){
