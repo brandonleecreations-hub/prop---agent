@@ -3833,15 +3833,15 @@ function openGame(key, eventId, isRefresh){
       try {
         var bxP = (s.boxscore && s.boxscore.players) || [];
         if (bxP.length && st.state !== "pre"){
-          var PKEYS = ["MIN", "TOI", "PTS", "REB", "AST", "STL", "BLK", "G", "A", "YDS", "TD", "REC", "CAR", "SOG", "SV", "H", "R", "RBI", "HR", "SB", "K", "FG", "3PT", "FT", "+/-", "PF"];
+          var PKEYS = ["MIN", "TOI", "PTS", "REB", "AST", "STL", "BLK", "PF", "G", "A", "YDS", "TD", "REC", "CAR", "SOG", "SV", "H", "R", "RBI", "HR", "SB", "K", "FG", "3PT", "FT", "+/-"];
           var teamBlocks = bxP.map(function(tp){
             var rows = "";
             (tp.statistics || []).forEach(function(gr){
               var labs = gr.labels || gr.names || [];
               if (!labs.length) return;
               var cols = [];
-              PKEYS.forEach(function(k){ var ix = labs.indexOf(k); if (ix >= 0 && cols.length < 6) cols.push(ix); });
-              for (var li = 0; li < labs.length && cols.length < 6; li++){ if (cols.indexOf(li) < 0) cols.push(li); }
+              PKEYS.forEach(function(k){ var ix = labs.indexOf(k); if (ix >= 0 && cols.length < 7) cols.push(ix); });
+              for (var li = 0; li < labs.length && cols.length < 7; li++){ if (cols.indexOf(li) < 0) cols.push(li); }
               var grRows = "";
               (gr.athletes || []).forEach(function(a){
                 if (!a || a.dnp || a.didNotPlay) return;
@@ -9148,12 +9148,12 @@ var pfCurLive = null;
    tracker or the Game Center Player Stats), his current-game line rides
    along and renders as a LIVE strip on top of the Last 5 Games section. */
 function pfLiveStripHtml(live){
-  var order = ["MIN", "TOI", "PTS", "REB", "AST", "STL", "BLK", "FG", "3PT", "FT", "YDS", "TD", "REC", "CAR", "G", "A", "SOG", "SV", "H", "R", "RBI", "HR", "SB", "K", "TO", "PF", "+/-"];
+  var order = ["MIN", "TOI", "PTS", "REB", "AST", "STL", "BLK", "PF", "FG", "3PT", "FT", "YDS", "TD", "REC", "CAR", "G", "A", "SOG", "SV", "H", "R", "RBI", "HR", "SB", "K", "TO", "+/-"];
   var st = (live && live.stats) || {};
   var keys = order.filter(function(k){ return st[k] != null && st[k] !== ""; });
   Object.keys(st).forEach(function(k){ if (keys.indexOf(k) < 0) keys.push(k); });
   if (!keys.length) return "";
-  var tiles = keys.slice(0, 10).map(function(k){ return '<div class="sgcell"><b>' + esc(st[k]) + '</b><span>' + esc(k) + '</span></div>'; }).join("");
+  var tiles = keys.slice(0, 12).map(function(k){ return '<div class="sgcell"><b>' + esc(st[k]) + '</b><span>' + esc(k) + '</span></div>'; }).join("");
   var opp = live.opp || (pfCurOpp && pfCurOpp.name) || "";
   return '<div style="margin-top:14px;border:1px solid rgba(244,63,94,.45);background:linear-gradient(180deg,rgba(244,63,94,.10),rgba(244,63,94,.03));border-radius:14px;padding:10px 12px;box-shadow:0 10px 20px rgba(0,0,0,.4),0 0 16px rgba(244,63,94,.18)"><div style="font-size:12px;font-weight:900;letter-spacing:1.2px;color:#fda4af"><span class="livedot"></span> LIVE \u2014 THIS GAME' + (opp ? ' <span style="color:var(--mut);letter-spacing:.2px">vs ' + esc(opp) + '</span>' : '') + (live.clk ? ' <span style="color:var(--mut);letter-spacing:.2px">\u00B7 ' + esc(live.clk) + '</span>' : '') + '</div><div class="statgrid" style="margin-top:8px">' + tiles + '</div></div>';
 }
