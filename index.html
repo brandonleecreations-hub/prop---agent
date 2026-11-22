@@ -2595,8 +2595,8 @@ function renderBoards(){
     var slider = function(list){ return '<div class="lvslider">' + list.map(function(ev){ return ev._tn ? tnCard(ev) : gameCard(lg, ev); }).join("") + '</div>'; };
     var html = "";
     if (live.length) html += '<h3 class="sgh">🔴 Live Now</h3>' + slider(live);
-    if (up.length) html += '<h3 class="sgh">Upcoming</h3>' + slider(up.slice(0, 16));
-    if (fin.length) html += '<h3 class="sgh">Finished</h3>' + slider(fin.slice(0, 16));
+    if (up.length) html += '<h3 class="sgh">Upcoming</h3>' + slider(up.slice(0, 60));
+    if (fin.length) html += '<h3 class="sgh">Finished</h3>' + slider(fin.slice(0, 60));
     if (!html) html = '<p class="empty">No ' + esc(lg.label) + ' games on the board right now — check the Live tab for other sports.</p>';
     gw.innerHTML = html;
     gw.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var pp = el.getAttribute("data-game").split("|"); showView("live"); window._gameFrom = "sport"; openGame(pp[0], pp[1]); }); });
@@ -8428,8 +8428,8 @@ function renderHomeSport(){
     var slider = function(list){ return '<div class="lvslider">' + list.map(function(ev){ return ev._tn ? tnCard(ev) : gameCard(lg, ev); }).join("") + '</div>'; };
     var html = "";
     if (live.length) html += '<h3 class="sgh">\uD83D\uDD34 Live Now</h3>' + slider(live);
-    if (up.length) html += '<h3 class="sgh">Upcoming</h3>' + slider(up.slice(0, 16));
-    if (fin.length) html += '<h3 class="sgh">Finished</h3>' + slider(fin.slice(0, 16));
+    if (up.length) html += '<h3 class="sgh">Upcoming</h3>' + slider(up.slice(0, 60));
+    if (fin.length) html += '<h3 class="sgh">Finished</h3>' + slider(fin.slice(0, 60));
     if (!html) html = '<p class="empty">No ' + esc(lg.label) + ' games on the board right now.</p>';
     box.innerHTML = html;
     box.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var pp = el.getAttribute("data-game").split("|"); showView("live"); window._gameFrom = "home"; openGame(pp[0], pp[1]); }); });
