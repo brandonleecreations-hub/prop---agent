@@ -3786,6 +3786,7 @@ function openTeamRoster(teamId, teamName){
     return '<div class="tcard" data-player="' + esc(p.name) + '" data-league="' + lg.key + '"' + (gcLive ? gcLiveAttrFor(s, p.name, gcClk) : "") + '>' + pic + '<div class="tnm">' + esc(p.name) + '</div>' + (extra ? '<div class="tmeta">' + extra + '</div>' : "") + '</div>';
   };
   var html = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px' + (gcCol ? ';background:linear-gradient(120deg,#' + gcCol + '59,#' + gcCol + '14 65%,transparent);border:1px solid #' + gcCol + '55;border-radius:12px;padding:10px 12px' : '') + '"><div style="font-size:19px;font-weight:900">' + esc(teamName || "Team") + '</div><button type="button" class="ghostbtn" id="teamDlgClose">\u2715 CLOSE</button></div>';
+  html += '<div id="teamPills"></div>';
   if (starters.length) html += '<div class="tgrp">Starters <span class="note">\u2014 this game</span></div><div class="tslider" data-tmslider="1">' + starters.map(function(p){ return card(p); }).join("") + '</div>';
   else if (played.length) html += '<div class="tgrp">Played <span class="note">\u2014 this game</span></div><div class="tslider" data-tmslider="1">' + played.map(function(p){ return card(p); }).join("") + '</div>';
   else html += '<p class="note" style="margin-top:12px">Starters post once the game is underway.</p>';
@@ -3822,9 +3823,10 @@ function openTeamRoster(teamId, teamName){
       }).join("");
       return '<div data-tgrpwrap="' + esc(g) + '"><div class="tgrp">' + esc(g) + '</div><div class="tslider">' + cards + '</div></div>';
     }).join("");
-    list.innerHTML = pillHtml + secsHtml;
-    list.querySelectorAll("[data-tpill]").forEach(function(b){ b.addEventListener("click", function(){
-      list.querySelectorAll("[data-tpill]").forEach(function(x){ x.classList.toggle("on", x === b); });
+    var tp = $("teamPills"); if (tp) tp.innerHTML = pillHtml;
+    list.innerHTML = secsHtml;
+    body.querySelectorAll("[data-tpill]").forEach(function(b){ b.addEventListener("click", function(){
+      body.querySelectorAll("[data-tpill]").forEach(function(x){ x.classList.toggle("on", x === b); });
       var want = b.getAttribute("data-tpill");
       list.querySelectorAll("[data-tgrpwrap]").forEach(function(w){ w.style.display = (want === "__all" || w.getAttribute("data-tgrpwrap") === want) ? "" : "none"; });
       list.querySelectorAll(".tslider").forEach(function(tr, ix){ if (tr.offsetParent !== null) popSliderInit(tr, "tmR" + ix, ".tcard"); });
