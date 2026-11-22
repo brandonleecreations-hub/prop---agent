@@ -3542,7 +3542,7 @@ function trackerHtml(lg, s, comp, cs){
     var plays = summaryPlays(s);
     var lastTxt = "";
     if (plays.length && lg.key !== "tennis"){ var lp = plays[plays.length - 1]; lastTxt = '<div class="note" style="margin-top:8px">Last play: ' + esc(lp.text || lp.shortText || "") + ' <span style="white-space:nowrap">(' + esc(((lp.period && lp.period.displayValue) || "") + " " + ((lp.clock && lp.clock.displayValue) || "")) + ')</span></div>'; }
-    return '<div class="trk" id="gameTracker"><div class="row" style="justify-content:space-between;margin-bottom:8px"><span class="trkLbl">' + (live ? '<span class="livedot"></span> ' : '') + 'Live Tracker</span><span class="note">' + esc(st.shortDetail || st.detail || "") + '</span></div>' + inner + lastTxt + '</div>';
+    return '<div class="trk" id="gameTracker"><div class="row" style="justify-content:space-between;margin-bottom:8px"><span class="trkLbl">' + (live ? '<span class="livedot"></span> ' : '') + 'Live Tracker</span><span class="note">' + esc(st.shortDetail || st.detail || "") + '</span></div>' + inner + (courtPbpHtml(s) || lastTxt) + '</div>';
   } catch(e){ return ""; }
 }
 
@@ -3823,8 +3823,7 @@ function openGame(key, eventId, isRefresh){
     }
       var fmtPlay = function(pl){ var sc = (pl.awayScore != null && pl.homeScore != null) ? ' <span style="color:var(--cyan);font-weight:700;white-space:nowrap">' + esc(pl.awayScore) + '–' + esc(pl.homeScore) + '</span>' : ''; var per = (((pl.period && (pl.period.displayValue || (pl.period.number ? "Q" + pl.period.number : ""))) || "") + " " + ((pl.clock && pl.clock.displayValue) || "")).trim(); return '<div style="padding:3.5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;line-height:1.35;' + (pl.scoringPlay ? 'border-left:3px solid var(--gold);padding-left:7px' : '') + '"><span style="display:inline-block;background:rgba(124,58,237,.16);border:1px solid rgba(124,58,237,.35);border-radius:6px;padding:0 5px;font-size:10.5px;font-weight:700;white-space:nowrap;margin-right:5px">' + esc(per) + '</span>' + esc(pl.text || pl.shortText || "") + sc + '</div>'; };
     var plays = summaryPlays(s).slice().reverse();
-      if (plays.length && lg.key !== "nba") html += '<div style="font-size:14px;margin-top:14px"><b>Play by Play</b> <span class="note">ticker - latest first - updates every 30s</span></div><div style="border:1px solid var(--line);border-radius:12px;background:#0d0d13;padding:6px 10px;margin-top:6px">' + plays.slice(0, 15).map(fmtPlay).join("") + (plays.length > 15 ? '<div id="pbpAll" style="display:' + (window._pbpOpen ? '' : 'none') + '">' + (window._pbpOpen ? plays.slice(15).map(fmtPlay).join("") : "") + '</div>' : '') + '</div>' + (plays.length > 15 ? '<button type="button" class="ghostbtn" id="pbpBtn" style="margin-top:8px;font-size:12px;padding:6px 11px">' + (window._pbpOpen ? 'Show fewer plays' : 'Show all ' + plays.length + ' plays') + '</button>' : '');
-    else if (lg.key !== "nba") html += '<div style="font-size:14px;margin-top:14px"><b>Play by Play</b></div><p class="note" style="margin-top:6px">' + (lg.key === "tennis" ? "ESPN does not report point-by-point plays for tennis - live set and game scores are in the Match Tracker above." : "No plays reported yet - they will show here as the game goes.") + '</p>';
+      /* Full Play by Play section removed for ALL sports (Brandon 2026-11-21) — the mini play-by-play strip in the tracker carries the latest plays. */
     html += (st.state === "pre" ? '' : '<div id="gameProps"></div>') + '</div>';
     $("gameDetail").innerHTML = '<button class="gcBack" type="button">← All games</button>' + html;
     aiGameRender(key, s, comp);
