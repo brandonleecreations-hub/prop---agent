@@ -7621,7 +7621,7 @@ function saLayersSet(patch){ try { var L = saLayersGet(); Object.keys(patch).for
 (function(){ var pd = $("playerDlg"); if (pd) pd.addEventListener("close", function(){ saLayersSet({ player: null, playerObj: null }); }); var td = $("teamDlg"); if (td) td.addEventListener("close", function(){ saLayersSet({ team: null }); }); })();
 (function saRestoreLayers(){
   try {
-    if (/[?&](game|tab)=/.test(location.search || "")) return;
+    if (/[?&](game|tab|dl)=/.test(location.search || "")) return;
     var L = saLayersGet();
     if (!L.game && !L.player && !L.playerObj && !L.team) return;
     setTimeout(function(){
@@ -7772,8 +7772,8 @@ document.addEventListener("click", function(e){
     openPackPop(true);
   } else if (c.hasAttribute("data-sharepack")) {
     var grant = function(){ if (lsGet("pa_share_day", "") !== dayStr()) { lsSet("pa_share_day", dayStr()); var p2 = packsGet(); p2.n = (p2.n || 0) + 1; packsSet(p2); } renderPacks(); };
-    if (navigator.share) { navigator.share({ title: "Score Agent", text: "Play Score Agent — live scores, player stats and the Agent Clash card game:", url: "https://prop-agent-bre.vercel.app/" }).then(grant).catch(function(){}); }
-    else if (navigator.clipboard) { navigator.clipboard.writeText("https://prop-agent-bre.vercel.app/").then(grant).catch(function(){}); }
+    if (navigator.share) { navigator.share({ title: "Score Agent", text: "Play Score Agent — live scores, player stats and the Agent Clash card game:", url: "https://prop-agent-bre.vercel.app/?dl=1" }).then(grant).catch(function(){}); }
+    else if (navigator.clipboard) { navigator.clipboard.writeText("https://prop-agent-bre.vercel.app/?dl=1").then(grant).catch(function(){}); }
   }
 });
 loadPickemEvent();
@@ -8364,7 +8364,7 @@ function renderInstall(){
 }
 var ib0 = $("installBtn"); if (ib0) ib0.addEventListener("click", function(){ startInstallFlow($("installNote"), ib0); });
 var grantSharePack = function(){ if (lsGet("pa_share_day", "") !== dayStr()) { lsSet("pa_share_day", dayStr()); var p2 = packsGet(); p2.n = (p2.n || 0) + 1; packsSet(p2); try { renderPacks(); } catch (e) {} return true; } return false; };
-var sb0 = $("shareBtn"); if (sb0) sb0.addEventListener("click", function(){ var url = "https://prop-agent-bre.vercel.app/"; var flashPack = function(){ var o = sb0.textContent; sb0.textContent = "🎁 +1 Free Pack!"; setTimeout(function(){ sb0.textContent = o; }, 1800); }; if (navigator.share) { navigator.share({title:"Score Agent", text:"Score Agent — live scores, player stats, 72 collectible agent cards. Get the app:", url:url}).then(function(){ if (grantSharePack()) flashPack(); }, function(){}); } else if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function(){ if (grantSharePack()) { flashPack(); return; } var o = sb0.textContent; sb0.textContent = "\u2713 Link copied"; setTimeout(function(){ sb0.textContent = o; }, 1800); }); } });
+var sb0 = $("shareBtn"); if (sb0) sb0.addEventListener("click", function(){ var url = "https://prop-agent-bre.vercel.app/?dl=1"; var flashPack = function(){ var o = sb0.textContent; sb0.textContent = "🎁 +1 Free Pack!"; setTimeout(function(){ sb0.textContent = o; }, 1800); }; if (navigator.share) { navigator.share({title:"Score Agent", text:"Score Agent — live scores, player stats, 72 collectible agent cards. Get the app:", url:url}).then(function(){ if (grantSharePack()) flashPack(); }, function(){}); } else if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function(){ if (grantSharePack()) { flashPack(); return; } var o = sb0.textContent; sb0.textContent = "\u2713 Link copied"; setTimeout(function(){ sb0.textContent = o; }, 1800); }); } });
 renderInstall();
 /* ---------- download + notifications popup (Brandon 2026-11-18):
    small Home card, only for people NOT running the installed app. ---------- */
@@ -8372,6 +8372,14 @@ function isStandaloneApp(){ try { return (window.matchMedia && matchMedia("(disp
 function maybeShowDlPop(){
   var pop = $("dlPop"); if (!pop) return;
   if (window._view !== "home" || isStandaloneApp()) { pop.style.display = "none"; return; }
+  if (window._dlLanding || /[?&]dl=1/.test(location.search || "")) {
+    window._dlLanding = true;
+    if (!lsGet("pa_welcomed", 0) && (window._dlTries = (window._dlTries || 0) + 1) < 8) { pop.style.display = "none"; setTimeout(maybeShowDlPop, 2500); return; }
+    var nb2 = $("dlPopNotif"); if (nb2 && window.Notification && Notification.permission === "granted") nb2.style.display = "none";
+    pop.style.display = "";
+    setTimeout(function(){ try { pop.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {} }, 400);
+    return;
+  }
   if (!lsGet("pa_welcomed", 0) && !window._dlPopWaited) { window._dlPopWaited = 1; pop.style.display = "none"; setTimeout(maybeShowDlPop, 11000); return; }
   var hideUntil = parseInt(lsGet("pa_dlpop_hide", 0), 10) || 0;
   if (Date.now() < hideUntil) { pop.style.display = "none"; return; }
@@ -8387,7 +8395,7 @@ function startInstallFlow(n, btn){
   if (fireInstall()) return;
   if (inAppBrowser()) {
     if (n) { n.innerHTML = "You're viewing inside another app, and downloads don't work here. Tap the <b>menu</b> and choose <b>Open in Chrome</b>, then tap Download there — or copy the app link:"; dlGoldNote(n); }
-    if (btn) { btn.textContent = "📋 Copy App Link"; if (navigator.clipboard) navigator.clipboard.writeText("https://prop-agent-bre.vercel.app/").then(function(){ btn.textContent = "✓ Link Copied — open it in Chrome"; }, function(){}); }
+    if (btn) { btn.textContent = "📋 Copy App Link"; if (navigator.clipboard) navigator.clipboard.writeText("https://prop-agent-bre.vercel.app/?dl=1").then(function(){ btn.textContent = "✓ Link Copied — open it in Chrome"; }, function(){}); }
     return;
   }
   if (/iphone|ipad|ipod/i.test(navigator.userAgent || "")) { if (n) { n.innerHTML = "On iPhone: tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b>."; dlGoldNote(n); } return; }
