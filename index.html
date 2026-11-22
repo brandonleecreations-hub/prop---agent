@@ -616,6 +616,14 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .courtP.hot img{box-shadow:0 0 0 2px var(--gold),0 0 16px rgba(245,197,24,.75),0 7px 12px rgba(0,0,0,.6)}
 .courtP.hot .cpChip{color:var(--gold);border-color:rgba(245,197,24,.6)}
 .courtTag{position:absolute;bottom:5px;font-size:10px;font-weight:900;letter-spacing:1px;z-index:1;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+.courtPbp{margin-top:10px;border-radius:12px;padding:8px 10px 6px;background:linear-gradient(180deg,#161128,#0a0716);border:1px solid rgba(178,107,255,.30);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -8px 14px rgba(0,0,0,.45),0 10px 18px rgba(0,0,0,.5),0 0 16px rgba(139,92,246,.28)}
+.courtPbpT{font-size:10px;font-weight:900;letter-spacing:1.6px;color:var(--purp-lt);margin-bottom:4px}
+.cpbRow{display:flex;gap:7px;align-items:flex-start;font-size:11px;line-height:1.35;padding:4px 0;border-bottom:1px dashed rgba(255,255,255,.07)}
+.cpbRow:last-child{border-bottom:none}
+.cpbRow.first{font-weight:700}
+.cpbRow.score{border-left:3px solid var(--gold);padding-left:7px}
+.cpbClk{flex:0 0 auto;background:rgba(124,58,237,.20);border:1px solid rgba(124,58,237,.4);border-radius:6px;padding:0 5px;font-size:10px;font-weight:800;white-space:nowrap;color:#e9e4ff}
+.cpbSc{margin-left:auto;flex:0 0 auto;color:var(--cyan);font-weight:800;white-space:nowrap;font-size:10.5px}
 .hero2 .hlg{font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:var(--purp-lt)}
 @media (max-width:640px){ .slip{position:static} .pline{font-size:21px} }
 .card{position:relative;box-shadow:0 12px 26px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05)}
@@ -3671,7 +3679,22 @@ function courtHtml(lg, s, cs, st){
     + '<span class="courtTag" style="left:8px;color:#' + awCol + '">' + esc((awC.team && awC.team.abbreviation) || "") + '</span>'
     + '<span class="courtTag" style="right:8px;color:#' + hmCol + '">' + esc((hmC.team && hmC.team.abbreviation) || "") + '</span>'
     + markers + '</div>'
-    + '<p class="note" style="margin-top:8px">The five on the floor for each team right now, with live points. Tap a player for his page. \u2605 = top scorer on the floor.</p></div>';
+    + '<p class="note" style="margin-top:8px">The five on the floor for each team right now, with live points. Tap a player for his page. \u2605 = top scorer on the floor.</p>' + courtPbpHtml(s) + '</div>';
+}
+
+/* Mini play-by-play strip for the bottom of the court tracker (Brandon
+   2026-11-21): the last 3 plays, latest first, scoring plays gold-edged. */
+function courtPbpHtml(s){
+  var plays = [];
+  try { plays = summaryPlays(s) || []; } catch(e){ plays = []; }
+  if (!plays.length) return "";
+  var last3 = plays.slice(-3).reverse();
+  var rows = last3.map(function(pl, i){
+    var per = (((pl.period && (pl.period.displayValue || (pl.period.number ? "Q" + pl.period.number : ""))) || "") + " " + ((pl.clock && pl.clock.displayValue) || "")).trim();
+    var sc = (pl.awayScore != null && pl.homeScore != null) ? '<span class="cpbSc">' + esc(pl.awayScore) + '\u2013' + esc(pl.homeScore) + '</span>' : '';
+    return '<div class="cpbRow' + (i === 0 ? ' first' : '') + (pl.scoringPlay ? ' score' : '') + '"><span class="cpbClk">' + esc(per || "LIVE") + '</span><span>' + esc(pl.text || pl.shortText || "") + '</span>' + sc + '</div>';
+  }).join("");
+  return '<div class="courtPbp"><div class="courtPbpT">\u25B6 PLAY BY PLAY \u2014 LATEST</div>' + rows + '</div>';
 }
 
 function openGame(key, eventId, isRefresh){
