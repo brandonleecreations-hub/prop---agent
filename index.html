@@ -3798,7 +3798,8 @@ function openTeamRoster(teamId, teamName){
   fetchJson(ESPN + lg.sport + "/" + ctx.tourLg + "/teams/" + tid + "/roster").then(function(r){
     var list = $("teamRosterList"); if (!list || !dlg.open) return;
     var groups = [], gmap = {};
-    var addTo = function(gname, a){ if (!gmap[gname]) { gmap[gname] = []; groups.push(gname); } gmap[gname].push(a); };
+    var fmtGrp = function(g){ g = String(g || "Players").replace(/([a-z])([A-Z])/g, "$1 $2"); return g.charAt(0).toUpperCase() + g.slice(1); };
+    var addTo = function(gname, a){ gname = fmtGrp(gname); if (!gmap[gname]) { gmap[gname] = []; groups.push(gname); } gmap[gname].push(a); };
     ((r && r.athletes) || []).forEach(function(e){
       if (e && e.items) {
         var raw = (typeof e.position === "string" && e.position) || (e.position && (e.position.displayName || e.position.name)) || e.name || e.displayName || "Players";
