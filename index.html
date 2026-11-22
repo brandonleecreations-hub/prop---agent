@@ -3815,7 +3815,7 @@ function openTeamRoster(teamId, teamName){
       else if (e) addTo((e.position && (e.position.displayName || e.position.abbreviation)) || "Players", e);
     });
     if (!groups.length){ list.innerHTML = '<p class="empty">Roster not available for this team right now.</p>'; return; }
-    var pillHtml = '<div class="tpills"><button type="button" class="tab on" data-tpill="__all">All</button>' + groups.map(function(g){ return '<button type="button" class="tab" data-tpill="' + esc(g) + '">' + esc(g) + '</button>'; }).join("") + '</div>';
+    var pillHtml = '<div class="tpills">' + groups.map(function(g, gi){ return '<button type="button" class="tab' + (gi === 0 ? " on" : "") + '" data-tpill="' + esc(g) + '">' + esc(g) + '</button>'; }).join("") + '</div>';
     var secsHtml = groups.map(function(g){
       var cards = gmap[g].map(function(a){
         var pos = a.position && a.position.abbreviation ? a.position.abbreviation : "";
@@ -3826,6 +3826,7 @@ function openTeamRoster(teamId, teamName){
     }).join("");
     var tp = $("teamPills"); if (tp) tp.innerHTML = pillHtml;
     list.innerHTML = secsHtml;
+    list.querySelectorAll("[data-tgrpwrap]").forEach(function(w){ w.style.display = (w.getAttribute("data-tgrpwrap") === groups[0]) ? "" : "none"; });
     body.querySelectorAll("[data-tpill]").forEach(function(b){ b.addEventListener("click", function(){
       body.querySelectorAll("[data-tpill]").forEach(function(x){ x.classList.toggle("on", x === b); });
       var want = b.getAttribute("data-tpill");
