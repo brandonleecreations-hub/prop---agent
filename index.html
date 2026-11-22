@@ -3745,7 +3745,7 @@ function openGame(key, eventId, isRefresh){
     }
     html += courtHtml(lg, s, cs, st);
     if (st.state === "pre") html += '<div id="gameProps"></div>';
-    html += trackerHtml(lg, s, comp, cs);
+    if (lg.key !== "nba") html += trackerHtml(lg, s, comp, cs); /* NBA: the old shot-chart Live Tracker is removed (Brandon 2026-11-21) — the ON THE COURT tracker replaces it. */
     if (isT){
       var setNo = Math.max(1, nper);
       var chips = '<span class="badge">Set ' + setNo + '</span>';
