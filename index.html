@@ -3617,12 +3617,13 @@ function openTeamRoster(teamId, teamName){
     return '<div class="row" data-player="' + esc(p.name) + '" data-league="' + lg.key + '"' + (gcLive ? gcLiveAttrFor(s, p.name, gcClk) : "") + ' style="gap:9px;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer;justify-content:flex-start;align-items:center">' + img + '<b style="flex:1;min-width:0">' + esc(p.name) + '</b>' + (extra || "") + '</div>';
   };
   var html = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px' + (gcCol ? ';background:linear-gradient(120deg,#' + gcCol + '59,#' + gcCol + '14 65%,transparent);border:1px solid #' + gcCol + '55;border-radius:12px;padding:10px 12px' : '') + '"><div style="font-size:19px;font-weight:900">' + esc(teamName || "Team") + '</div><button type="button" class="ghostbtn" id="teamDlgClose">\u2715 CLOSE</button></div>';
-  if (starters.length) html += '<div style="font-size:16px;margin:14px 0 4px"><b>Starters</b> <span class="note">\u2014 this game</span></div>' + starters.map(function(p){ return row(p); }).join("");
-  else if (played.length) html += '<div style="font-size:16px;margin:14px 0 4px"><b>Played</b> <span class="note">\u2014 this game</span></div>' + played.map(function(p){ return row(p); }).join("");
+  if (starters.length) html += '<div data-tsect="1" style="font-size:16px;margin:14px 0 4px;cursor:pointer"><b>Starters</b> <span class="note">\u2014 this game</span> <span data-tchev="1" style="color:var(--gold);font-size:13px">▸</span></div><div class="tsectbody" style="display:none">' + starters.map(function(p){ return row(p); }).join("") + '</div>';
+  else if (played.length) html += '<div data-tsect="1" style="font-size:16px;margin:14px 0 4px;cursor:pointer"><b>Played</b> <span class="note">\u2014 this game</span> <span data-tchev="1" style="color:var(--gold);font-size:13px">▸</span></div><div class="tsectbody" style="display:none">' + played.map(function(p){ return row(p); }).join("") + '</div>';
   else html += '<p class="note" style="margin-top:12px">Starters post once the game is underway.</p>';
-  html += '<div style="font-size:16px;margin:16px 0 4px"><b>Full Roster</b></div><div id="teamRosterList"><p class="empty">Loading roster\u2026</p></div>';
+  html += '<div data-tsect="1" style="font-size:16px;margin:16px 0 4px;cursor:pointer"><b>Full Roster</b> <span data-tchev="1" style="color:var(--gold);font-size:13px">▸</span></div><div id="teamRosterList" style="display:none"><p class="empty">Loading roster\u2026</p></div>';
   body.innerHTML = html;
   var cb = $("teamDlgClose"); if (cb) cb.addEventListener("click", function(){ dlg.close(); });
+  body.querySelectorAll("[data-tsect]").forEach(function(hd){ hd.addEventListener("click", function(){ var nx = hd.nextElementSibling; if (!nx) return; var hide = nx.style.display !== "none"; nx.style.display = hide ? "none" : ""; var cv = hd.querySelector("[data-tchev]"); if (cv) cv.textContent = hide ? "▸" : "▾"; }); });
   bindTiles(body);
   if (!dlg._wired){ dlg._wired = 1; dlg.addEventListener("click", function(e){ if (e.target === dlg) dlg.close(); }); }
   if (!dlg.open) dlg.showModal();
@@ -9206,7 +9207,7 @@ function pfPlayerHtml(p, bio, stats, gamelog){
   if (stats && (stats.categories || []).length) statsHtml = pfStatsHtml(stats);
   else {
     var ss = (a.statsSummary && a.statsSummary.statistics) || [];
-    if (ss.length) statsHtml = '<h3 style="margin:16px 0 6px;font-size:16px">Record</h3><div class="statgrid">' + ss.map(function(sx){ return '<div class="sgcell"><b>' + esc(sx.displayValue || "") + '</b><span>' + esc(sx.abbreviation || sx.shortDisplayName || "") + '</span></div>'; }).join("") + '</div>';
+    if (ss.length) statsHtml = '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">Record <span data-pfchev="1" style="color:var(--gold);font-size:13px">▸</span></h3><div class="pfsectbody" style="display:none"><div class="statgrid">' + ss.map(function(sx){ return '<div class="sgcell"><b>' + esc(sx.displayValue || "") + '</b><span>' + esc(sx.abbreviation || sx.shortDisplayName || "") + '</span></div>'; }).join("") + '</div></div>';
     else statsHtml = p.sport === "mma" ? "" : pfStatsHtml(stats);
   }
   var vsHtml = pfCurOpp ? pfVsSectionHtml(pfCurOpp) : "";
@@ -9303,16 +9304,16 @@ function pfStatsHtml(stats){
   if (avg){
     var rows = avg.statistics || [];
     var cur = rows[rows.length - 1];
-    if (cur) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">This Season <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span> <span data-pfchev="1" style="color:var(--gold);font-size:13px">▾</span></h3><div class="pfsectbody">' + pfStatGrid(avg.labels, cur.stats, avg.names) + '</div>';
-    if (avg.totals) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">Career Averages <span data-pfchev="1" style="color:var(--gold);font-size:13px">▾</span></h3><div class="pfsectbody">' + pfStatGrid(avg.labels, avg.totals, avg.names) + '</div>';
-    if (tot && tot.totals) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">Career Totals <span data-pfchev="1" style="color:var(--gold);font-size:13px">▾</span></h3><div class="pfsectbody">' + pfStatGrid(tot.labels, tot.totals, tot.names) + '</div>';
+    if (cur) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">This Season <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span> <span data-pfchev="1" style="color:var(--gold);font-size:13px">▸</span></h3><div class="pfsectbody" style="display:none">' + pfStatGrid(avg.labels, cur.stats, avg.names) + '</div>';
+    if (avg.totals) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">Career Averages <span data-pfchev="1" style="color:var(--gold);font-size:13px">▸</span></h3><div class="pfsectbody" style="display:none">' + pfStatGrid(avg.labels, avg.totals, avg.names) + '</div>';
+    if (tot && tot.totals) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">Career Totals <span data-pfchev="1" style="color:var(--gold);font-size:13px">▸</span></h3><div class="pfsectbody" style="display:none">' + pfStatGrid(tot.labels, tot.totals, tot.names) + '</div>';
     return h || '<p class="empty" style="margin-top:12px">Season stats not available for this player.</p>';
   }
   cats.forEach(function(c){
     var rows = c.statistics || [];
     var cur = rows[rows.length - 1];
-    if (cur) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">' + esc(c.displayName || c.name || "Stats") + ' <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span> <span data-pfchev="1" style="color:var(--gold);font-size:13px">▾</span></h3><div class="pfsectbody">' + pfStatGrid(c.labels, cur.stats, c.names) + '</div>';
-    if (c.totals) h += '<div class="note" data-pfsect="1" style="margin:10px 0 4px;font-weight:800;cursor:pointer">Career — ' + esc(c.displayName || c.name || "") + ' <span data-pfchev="1" style="color:var(--gold);font-size:12px">▾</span></div><div class="pfsectbody">' + pfStatGrid(c.labels, c.totals, c.names) + '</div>';
+    if (cur) h += '<h3 data-pfsect="1" style="margin:16px 0 6px;font-size:16px;cursor:pointer">' + esc(c.displayName || c.name || "Stats") + ' <span class="note">' + esc((cur.season && cur.season.displayName) || "") + '</span> <span data-pfchev="1" style="color:var(--gold);font-size:13px">▸</span></h3><div class="pfsectbody" style="display:none">' + pfStatGrid(c.labels, cur.stats, c.names) + '</div>';
+    if (c.totals) h += '<div class="note" data-pfsect="1" style="margin:10px 0 4px;font-weight:800;cursor:pointer">Career — ' + esc(c.displayName || c.name || "") + ' <span data-pfchev="1" style="color:var(--gold);font-size:12px">▸</span></div><div class="pfsectbody" style="display:none">' + pfStatGrid(c.labels, c.totals, c.names) + '</div>';
   });
   return h || '<p class="empty" style="margin-top:12px">Season stats not available for this player.</p>';
 }
@@ -9387,12 +9388,13 @@ function renderPickem2(){
     var pick = st.picks[i];
     var act = st.actuals[i];
     var res = "";
-    if (act != null && act !== "" && pick){ var hit = (pick === "MORE" && act > l.line) || (pick === "LESS" && act < l.line); res = '<div class="note" style="margin-top:4px">Final: <b style="color:#fff">' + act + ' ' + esc(l.statLabel) + '</b>' + (hit ? ' · <b style="color:#4fe3c1">HIT ✓</b>' : ' · <b style="color:#ff5d7a">MISS ✗</b>') + '</div>'; }
+    if (act === "VOID"){ res = '<div class="note" style="margin-top:4px">Did not play — <b style="color:#fff">leg removed</b></div>'; }
+    else if (act != null && act !== "" && pick){ var hit = (pick === "MORE" && act > l.line) || (pick === "LESS" && act < l.line); res = '<div class="note" style="margin-top:4px">Final: <b style="color:#fff">' + act + ' ' + esc(l.statLabel) + '</b>' + (hit ? ' · <b style="color:#4fe3c1">HIT ✓</b>' : ' · <b style="color:#ff5d7a">MISS ✗</b>') + '</div>'; }
     var dis = (st.locked || started) ? " disabled" : "";
     return '<div class="pk2leg"><img src="' + esc(l.img) + '" alt="" onerror="this.remove()"><div style="min-width:0;flex:1"><b>' + esc(l.name) + '</b><div class="note">' + esc(l.team) + ' vs ' + esc(l.opp) + ' · ' + esc(l.statLabel) + ' <b style="color:#fff">' + l.line + '</b></div>' + res + '</div><div class="pk2btns"><button type="button" class="pk2btn' + (pick === "MORE" ? " on" : "") + '" data-pk2="' + i + ':MORE"' + dis + '>MORE</button><button type="button" class="pk2btn' + (pick === "LESS" ? " on" : "") + '" data-pk2="' + i + ':LESS"' + dis + '>LESS</button></div></div>';
   }).join("");
   var foot = "";
-  if (st.graded === "win") foot = '<div style="margin-top:10px;font-weight:900;color:#4fe3c1">🎉 PERFECT — 3 for 3! Your free pack is waiting in My Packs below.</div>';
+  if (st.graded === "win"){ var nd = PICKEM2.legs.filter(function(l, i){ return st.actuals[i] !== "VOID"; }).length; foot = '<div style="margin-top:10px;font-weight:900;color:#4fe3c1">🎉 PERFECT — ' + nd + ' for ' + nd + '! Your free pack is waiting in My Packs below.</div>'; }
   else if (st.graded === "loss") foot = '<div style="margin-top:10px;font-weight:800;color:#ff8fa3">Not a perfect 3 — new players drop with the next round.</div>';
   else if (st.locked) foot = '<div style="margin-top:10px;font-weight:800;color:#cdbcf5">🔒 Picks locked — good luck! Results land here when the games finish.</div>';
   else if (started) foot = '<div style="margin-top:10px" class="note">These games have started — picks are closed. New players drop with the next round.</div>';
@@ -9405,6 +9407,19 @@ function renderPickem2(){
   pk2MaybeGrade();
 }
 var _pk2Grading = false;
+function pk2PlayerDnp(sm, leg){
+  var players = (sm.boxscore && sm.boxscore.players) || [];
+  for (var g = 0; g < players.length; g++){
+    var stats = players[g].statistics || [];
+    for (var k = 0; k < stats.length; k++){
+      var ath = stats[k].athletes || [];
+      for (var i = 0; i < ath.length; i++){
+        if (ath[i].athlete && String(ath[i].athlete.id) === String(leg.athleteId)) return !!(ath[i].didNotPlay || ath[i].dnp);
+      }
+    }
+  }
+  return true;
+}
 function pk2StatFromSummary(sm, leg){
   var players = (sm.boxscore && sm.boxscore.players) || [];
   for (var g = 0; g < players.length; g++){
@@ -9425,7 +9440,8 @@ function pk2StatFromSummary(sm, leg){
   return null;
 }
 function pk2FinishGrade(st){
-  var win = PICKEM2.legs.every(function(l, i){ var a = st.actuals[i]; return (st.picks[i] === "MORE" && a > l.line) || (st.picks[i] === "LESS" && a < l.line); });
+  if (PICKEM2.legs.every(function(l, i){ return st.actuals[i] === "VOID"; })) return;
+  var win = PICKEM2.legs.every(function(l, i){ var a = st.actuals[i]; if (a === "VOID") return true; return (st.picks[i] === "MORE" && a > l.line) || (st.picks[i] === "LESS" && a < l.line); });
   st.graded = win ? "win" : "loss";
   if (win && !st.awarded){ st.awarded = true; var pk = packsGet(); pk.n = (pk.n || 0) + 1; packsSet(pk); }
   pk2Save(st);
@@ -9447,6 +9463,7 @@ function pk2MaybeGrade(){
       var stt = sm && sm.header && sm.header.competitions && sm.header.competitions[0] && sm.header.competitions[0].status && sm.header.competitions[0].status.type;
       if (!stt || stt.state !== "post") return false;
       var val = pk2StatFromSummary(sm, l);
+      if (val === null && pk2PlayerDnp(sm, l)){ st.actuals[i] = "VOID"; return true; }
       if (val === null) return false;
       st.actuals[i] = val;
       return true;
