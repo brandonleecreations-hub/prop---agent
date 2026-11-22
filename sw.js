@@ -38,6 +38,14 @@ self.addEventListener("notificationclick", function(event) {
   );
 });
 
+/* Installability: Chrome only offers the app install (and fires
+   beforeinstallprompt for the Download button) when the service worker
+   handles fetch events. This handler is network-only — it changes
+   nothing about what loads, it just passes every request through. */
+self.addEventListener("fetch", function(event) {
+  event.respondWith(fetch(event.request));
+});
+
 /* No offline caching here on purpose: the app's live ESPN feed and baked
    catalog are already cached by the app itself (localStorage), and an
    aggressive cache would risk serving a stale board. */

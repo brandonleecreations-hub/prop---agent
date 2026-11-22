@@ -8345,6 +8345,8 @@ var dli = $("dlPopInstall"); if (dli) dli.addEventListener("click", function(){
   var n = $("dlPopNote"); if (!n) return;
   if (/iphone|ipad|ipod/i.test(navigator.userAgent || "")) n.innerHTML = "On iPhone: tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b>.";
   else n.innerHTML = "Open your browser menu (\u22ee) and tap <b>Install app</b> or <b>Add to Home screen</b>.";
+  n.style.cssText = "background:rgba(245,197,24,.16);border:1px solid rgba(245,197,24,.65);border-radius:10px;padding:9px 11px;font-weight:800;color:#ffe9a8";
+  try { n.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {}
 });
 var dln = $("dlPopNotif"); if (dln) dln.addEventListener("click", function(){
   var b = $("pushBtn"); if (b) b.click();
