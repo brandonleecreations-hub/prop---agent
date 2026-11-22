@@ -12,8 +12,8 @@ self.addEventListener("push", function(event) {
   var title = data.title || "Score Agent";
   var options = {
     body: data.body || "",
-    icon: "/api/icons?s=192&v=8",
-    badge: "/api/icons?s=192&v=8",
+    icon: "/api/icons?s=logo",
+    badge: "/api/icons?s=logo",
     image: (data && data.image) || undefined,
     data: { url: (data && data.url) || "/", game: (data && data.game) || null, tab: (data && data.tab) || null },
     tag: (data && data.type) || "score-agent"
