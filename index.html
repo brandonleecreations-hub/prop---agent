@@ -3642,7 +3642,16 @@ function soccerPitchHtml(lg, s, comp, cs){
           var img = hs ? '<img src="' + esc(hs) + '" alt="" loading="lazy" onerror="this.remove()">' : esc(String(p.jersey || ""));
           var badge = cards[String(a.id)] ? '<span class="socCard ' + cards[String(a.id)] + '"></span>' : "";
           var liveAttr = "";
-          try { var _stt = comp.status && comp.status.type; if (_stt && _stt.state === "in") liveAttr = gcLiveAttrFor(s, a.displayName || "", (comp.status.displayClock || _stt.shortDetail || "")); } catch (e) {}
+          try {
+            /* Soccer has no boxscore.players — the live line lives on the
+               roster entry itself (p.stats: name/abbreviation/displayValue). */
+            var _stt = comp.status && comp.status.type;
+            if (_stt && _stt.state === "in" && Array.isArray(p.stats) && p.stats.length) {
+              var so = {}, PREF = { G: 1, A: 1, SH: 1, SOT: 1, SV: 1, FC: 1, FA: 1, YC: 1, RC: 1 };
+              p.stats.forEach(function(x){ var ab = x.abbreviation || x.shortDisplayName; if (ab && PREF[ab]) so[ab] = x.displayValue != null ? String(x.displayValue) : String(x.value); });
+              if (Object.keys(so).length) liveAttr = ' data-live="' + esc(JSON.stringify({ stats: so, opp: (ha === "away" ? ((home.team || {}).displayName || "") : ((away.team || {}).displayName || "")), clk: (comp.status.displayClock || _stt.shortDetail || "") })) + '"';
+            }
+          } catch (e) {}
           var last = a.lastName || (a.displayName || "").split(" ").pop() || "";
           markers += '<div class="socP' + (p.subbedOut ? " out" : "") + '" style="left:' + x.toFixed(1) + '%;top:' + y.toFixed(1) + '%" data-player="' + esc(a.displayName || "") + '" data-league="' + esc(lg.key) + '"' + liveAttr + '><span class="socPc" style="border:2px solid ' + m.col + '">' + img + badge + '</span><span class="socPn">' + esc(last) + '</span></div>';
         });
