@@ -3542,7 +3542,7 @@ function trackerHtml(lg, s, comp, cs){
     var plays = summaryPlays(s);
     var lastTxt = "";
     if (plays.length && lg.key !== "tennis"){ var lp = plays[plays.length - 1]; lastTxt = '<div class="note" style="margin-top:8px">Last play: ' + esc(lp.text || lp.shortText || "") + ' <span style="white-space:nowrap">(' + esc(((lp.period && lp.period.displayValue) || "") + " " + ((lp.clock && lp.clock.displayValue) || "")) + ')</span></div>'; }
-    return '<div class="trk" id="gameTracker"><div class="row" style="justify-content:space-between;margin-bottom:8px"><span class="trkLbl">' + (live ? '<span class="livedot"></span> ' : '') + 'Live Tracker</span><span class="note">' + esc(st.shortDetail || st.detail || "") + '</span></div>' + inner + lastTxt + wpHtml(s, cs) + '</div>';
+    return '<div class="trk" id="gameTracker"><div class="row" style="justify-content:space-between;margin-bottom:8px"><span class="trkLbl">' + (live ? '<span class="livedot"></span> ' : '') + 'Live Tracker</span><span class="note">' + esc(st.shortDetail || st.detail || "") + '</span></div>' + inner + lastTxt + '</div>';
   } catch(e){ return ""; }
 }
 
@@ -3733,6 +3733,7 @@ function openGame(key, eventId, isRefresh){
       + '<div class="note" style="margin:4px 0 8px">' + esc(detail) + (venue ? ' · ' + esc(venue) : '') + '</div>'
       + (live ? '<div><span style="background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.45);border-radius:999px;padding:4px 11px;font-weight:800;font-size:12px">● LIVE' + (detail ? ' · ' + esc(detail) : '') + '</span></div>' : '')
       + ((cs.length===2 && (logoUrl(cs[0]) || logoUrl(cs[1]))) ? '<div style="display:flex;justify-content:space-around;align-items:center;margin:14px 0 2px">' + cs.map(function(c){ var gt = (c.team && c.team.id != null) ? ' data-gcteam="' + esc(String(c.team.id)) + '" data-gcname="' + esc(c.team.displayName || "") + '"' : ""; return '<div' + gt + ' style="text-align:center;width:42%;border-radius:14px;padding:8px 2px;' + teamFaceTint(c) + (gt ? 'cursor:pointer;' : '') + '">' + tlogoImg(logoUrl(c),54) + '<div style="font-weight:800;font-size:13px;margin-top:5px">' + esc((c.team && (c.team.shortDisplayName || c.team.displayName)) || "") + '</div><div style="font-size:23px;font-weight:900;color:var(--purp-lt)">' + esc(c.score!=null ? c.score : "") + '</div></div>'; }).join('<div style="font-weight:900;color:var(--mut);font-size:15px">VS</div>') + '</div><div class="note" style="text-align:center;margin-top:2px">Tap a team logo for starters &amp; roster</div>' : '');
+    html += wpHtml(s, cs);
     var nper = 0; cs.forEach(function(c){ nper = Math.max(nper, (c.linescores||[]).length); });
     if (cs.length && nper){
       html += '<table class="lb" style="margin-top:12px"><tr><th>Team</th>';
