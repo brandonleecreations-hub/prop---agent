@@ -8324,9 +8324,12 @@ function renderInstall(){
   var btn = $("installBtn"), note = $("installNote");
   if (deferredInstall) { btn.style.display = ""; note.textContent = "One tap and Score Agent lands on your home screen — its own icon, full screen, no browser bars."; }
   else if (/iphone|ipad|ipod/i.test(navigator.userAgent || "")) { btn.style.display = "none"; note.innerHTML = "On iPhone: tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b> — Score Agent gets its own icon and opens full screen."; }
-  else { btn.style.display = "none"; note.innerHTML = "Open your browser menu (\u22ee) and tap <b>Install app</b> or <b>Add to Home screen</b> — Score Agent gets its own icon and opens full screen."; }
+  else { btn.style.display = ""; btn.textContent = "⬇ Download App"; note.textContent = "Tap Download and we'll get the install ready — Score Agent gets its own icon and opens full screen, no browser bars."; }
 }
-var ib0 = $("installBtn"); if (ib0) ib0.addEventListener("click", function(){ if (!deferredInstall) return; deferredInstall.prompt(); deferredInstall.userChoice.then(function(){ deferredInstall = null; renderInstall(); }); });
+var ib0 = $("installBtn"); if (ib0) ib0.addEventListener("click", function(){
+  var d = $("dlPopInstall"); if (d) { try { d.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {} d.click(); return; }
+  if (!deferredInstall) return; deferredInstall.prompt(); deferredInstall.userChoice.then(function(){ deferredInstall = null; renderInstall(); });
+});
 var grantSharePack = function(){ if (lsGet("pa_share_day", "") !== dayStr()) { lsSet("pa_share_day", dayStr()); var p2 = packsGet(); p2.n = (p2.n || 0) + 1; packsSet(p2); try { renderPacks(); } catch (e) {} return true; } return false; };
 var sb0 = $("shareBtn"); if (sb0) sb0.addEventListener("click", function(){ var url = "https://prop-agent-bre.vercel.app/"; var flashPack = function(){ var o = sb0.textContent; sb0.textContent = "🎁 +1 Free Pack!"; setTimeout(function(){ sb0.textContent = o; }, 1800); }; if (navigator.share) { navigator.share({title:"Score Agent", text:"Score Agent — live scores, player stats, 72 collectible agent cards. Get the app:", url:url}).then(function(){ if (grantSharePack()) flashPack(); }, function(){}); } else if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function(){ if (grantSharePack()) { flashPack(); return; } var o = sb0.textContent; sb0.textContent = "\u2713 Link copied"; setTimeout(function(){ sb0.textContent = o; }, 1800); }); } });
 renderInstall();
@@ -8343,13 +8346,25 @@ function maybeShowDlPop(){
   pop.style.display = "";
 }
 var dlx = $("dlPopX"); if (dlx) dlx.addEventListener("click", function(){ lsSet("pa_dlpop_hide", Date.now() + 24*3600*1000); var p = $("dlPop"); if (p) p.style.display = "none"; });
+function inAppBrowser(){ var ua = navigator.userAgent || ""; return /FBAN|FBAV|Instagram|Messenger|Line\/|Twitter|Snapchat|; wv\)/i.test(ua); }
+function dlGoldNote(n){ if (!n) return; n.style.cssText = "background:rgba(245,197,24,.16);border:1px solid rgba(245,197,24,.65);border-radius:10px;padding:9px 11px;font-weight:800;color:#ffe9a8"; try { n.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {} }
+function fireInstall(){ if (!deferredInstall) return false; deferredInstall.prompt(); deferredInstall.userChoice.then(function(){ deferredInstall = null; renderInstall(); var p = $("dlPop"); if (p) p.style.display = "none"; }); return true; }
+function waitInstallPrompt(done){ if (deferredInstall) { done(true); return; } var tries = 0; var iv = setInterval(function(){ tries++; if (deferredInstall) { clearInterval(iv); done(true); } else if (tries >= 24) { clearInterval(iv); done(false); } }, 250); }
 var dli = $("dlPopInstall"); if (dli) dli.addEventListener("click", function(){
-  if (deferredInstall) { deferredInstall.prompt(); deferredInstall.userChoice.then(function(){ deferredInstall = null; renderInstall(); var p = $("dlPop"); if (p) p.style.display = "none"; }); return; }
-  var n = $("dlPopNote"); if (!n) return;
-  if (/iphone|ipad|ipod/i.test(navigator.userAgent || "")) n.innerHTML = "On iPhone: tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b>.";
-  else n.innerHTML = "Open your browser menu (\u22ee) and tap <b>Install app</b> or <b>Add to Home screen</b>.";
-  n.style.cssText = "background:rgba(245,197,24,.16);border:1px solid rgba(245,197,24,.65);border-radius:10px;padding:9px 11px;font-weight:800;color:#ffe9a8";
-  try { n.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {}
+  var n = $("dlPopNote");
+  if (fireInstall()) return;
+  if (inAppBrowser()) {
+    if (n) { n.innerHTML = "You're viewing inside another app, and downloads don't work here. Tap the <b>menu</b> and choose <b>Open in Chrome</b>, then tap Download there — or copy the app link:"; dlGoldNote(n); }
+    dli.textContent = "📋 Copy App Link";
+    if (navigator.clipboard) navigator.clipboard.writeText("https://prop-agent-bre.vercel.app/").then(function(){ dli.textContent = "✓ Link Copied — open it in Chrome"; }, function(){});
+    return;
+  }
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent || "")) { if (n) { n.innerHTML = "On iPhone: tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b>."; dlGoldNote(n); } return; }
+  if (n) n.textContent = "Getting the install ready…";
+  waitInstallPrompt(function(ok){
+    if (ok) { if (n) { n.innerHTML = "<b>Ready!</b> Tap <b>Download App</b> one more time to install."; dlGoldNote(n); } dli.textContent = "⬇ Tap to Install"; return; }
+    if (n) { n.innerHTML = "<b>Almost there — 3 quick taps:</b><br>1. Tap the <b>⋮ menu</b> at the top right of Chrome<br>2. Tap <b>Install app</b> (or Add to Home screen)<br>3. Tap <b>Install</b>"; dlGoldNote(n); }
+  });
 });
 var dln = $("dlPopNotif"); if (dln) dln.addEventListener("click", function(){
   var b = $("pushBtn"); if (b) b.click();
