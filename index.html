@@ -607,6 +607,15 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .heroslider .heroslide{padding:7px 9px}
 .heroslider .heroslide .hrow{font-size:12.5px}
 .heroslider .heroslide .hrow b{font-size:15px}
+.courtpop{margin-top:14px;border-radius:16px;padding:12px;background:linear-gradient(170deg,#171029,#0c0918);border:1px solid rgba(178,107,255,.35);box-shadow:0 20px 36px rgba(0,0,0,.62),0 6px 14px rgba(0,0,0,.5),0 0 0 1px rgba(178,107,255,.18),inset 0 1px 0 rgba(255,255,255,.14),0 0 22px rgba(139,92,246,.35)}
+.court{position:relative;width:100%;aspect-ratio:47/25;border-radius:12px;overflow:hidden;background:#0d0a18;box-shadow:inset 0 0 0 1px rgba(255,255,255,.10),inset 0 -18px 30px rgba(0,0,0,.5)}
+.court svg{position:absolute;inset:0;width:100%;height:100%}
+.courtP{position:absolute;width:66px;transform:translate(-50%,-50%);text-align:center;cursor:pointer;z-index:2}
+.courtP img{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#1b1b28;box-shadow:0 7px 12px rgba(0,0,0,.6),0 2px 4px rgba(0,0,0,.5)}
+.courtP .cpChip{display:inline-block;margin-top:2px;background:rgba(5,5,12,.82);border:1px solid rgba(255,255,255,.16);color:#fff;border-radius:999px;padding:1px 6px;font-size:9.5px;font-weight:800;white-space:nowrap}
+.courtP.hot img{box-shadow:0 0 0 2px var(--gold),0 0 16px rgba(245,197,24,.75),0 7px 12px rgba(0,0,0,.6)}
+.courtP.hot .cpChip{color:var(--gold);border-color:rgba(245,197,24,.6)}
+.courtTag{position:absolute;bottom:5px;font-size:10px;font-weight:900;letter-spacing:1px;z-index:1;text-shadow:0 1px 4px rgba(0,0,0,.8)}
 .hero2 .hlg{font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:var(--purp-lt)}
 @media (max-width:640px){ .slip{position:static} .pline{font-size:21px} }
 .card{position:relative;box-shadow:0 12px 26px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05)}
@@ -3583,6 +3592,88 @@ function openTeamRoster(teamId, teamName){
     bindTiles(list);
   }).catch(function(){ var list = $("teamRosterList"); if (list) list.innerHTML = '<p class="empty">Roster not available for this team right now.</p>'; });
 }
+/* Brandon 2026-11-21: NBA Game Center COURT TRACKER — the live five on the
+   floor for each team (ESPN boxscore "active" flags), photos on a 3D-pop
+   court, live points on every player, gold highlight on the top scorer. */
+function courtHtml(lg, s, cs, st){
+  if (lg.key !== "nba" || !st || st.state !== "in") return "";
+  var bx = (s.boxscore && s.boxscore.players) || [];
+  if (bx.length !== 2) return "";
+  var byId = {};
+  cs.forEach(function(c){ if (c.team && c.team.id != null) byId[String(c.team.id)] = c; });
+  var SPOTS = [[32,50],[24,15],[24,85],[13,28],[12,66]];
+  var PREF = { C:[4,3,0,1,2], F:[3,2,1,4,0], G:[0,1,2,3,4] };
+  var hotPts = -1, hotId = "";
+  var sides = bx.map(function(tp){
+    var comp = byId[String(tp.team && tp.team.id)] || {};
+    var gr = (tp.statistics || [])[0] || {};
+    var labs = gr.labels || [];
+    var pIx = labs.indexOf("PTS");
+    var list = (gr.athletes || []).filter(function(a){ return a.active && !a.didNotPlay; }).slice(0, 5).map(function(a){
+      var pts = pIx >= 0 ? (parseInt(a.stats && a.stats[pIx], 10) || 0) : 0;
+      var aid = String((a.athlete && a.athlete.id) || "");
+      if (pts > hotPts){ hotPts = pts; hotId = aid; }
+      return { a: a, pts: pts, pos: (((a.athlete && a.athlete.position && a.athlete.position.abbreviation) || "G") + "").charAt(0).toUpperCase() };
+    });
+    return { tp: tp, comp: comp, list: list, home: comp.homeAway === "home" };
+  });
+  if (sides.some(function(sd){ return sd.list.length < 3; })) return "";
+  var markers = "";
+  sides.forEach(function(sd){
+    var col = sd.comp.team && sd.comp.team.color ? String(sd.comp.team.color).replace(/[^0-9a-fA-F]/g, "") : "8b5cf6";
+    if (col.length !== 6) col = "8b5cf6";
+    var opp = sides.filter(function(o){ return o !== sd; })[0];
+    var oppName = (opp.comp.team && opp.comp.team.displayName) || "";
+    var used = {}, order = sd.list.slice().sort(function(x, y){ var w = { C:0, F:1, G:2 }; return (w[x.pos] != null ? w[x.pos] : 2) - (w[y.pos] != null ? w[y.pos] : 2); });
+    order.forEach(function(p){
+      var pref = PREF[p.pos] || PREF.G, si = -1;
+      for (var i = 0; i < pref.length; i++){ if (!used[pref[i]]){ si = pref[i]; break; } }
+      if (si < 0){ for (var j = 0; j < 5; j++){ if (!used[j]){ si = j; break; } } }
+      if (si < 0) return;
+      used[si] = 1;
+      var sp = SPOTS[si];
+      var x = sd.home ? 100 - sp[0] : sp[0], y = sp[1];
+      var ath = p.a.athlete || {};
+      var nm = ath.displayName || "";
+      var last = nm.split(" ").pop() || nm;
+      var img = (ath.headshot && ath.headshot.href) || ("https://a.espncdn.com/i/headshots/nba/players/full/" + ath.id + ".png");
+      var hot = String(ath.id) === hotId;
+      markers += '<div class="courtP' + (hot ? ' hot' : '') + '" style="left:' + x + '%;top:' + y + '%" data-player="' + esc(nm) + '" data-league="nba" data-opp="' + esc(oppName) + '"><img src="' + esc(img) + '" alt="" loading="lazy" onerror="this.remove()" style="border:2px solid #' + col + '"><div><span class="cpChip">' + (hot ? '\u2605 ' : '') + esc(last) + ' \u00B7 ' + p.pts + '</span></div></div>';
+    });
+  });
+  var awC = cs.filter(function(c){ return c.homeAway === "away"; })[0] || cs[0] || {};
+  var hmC = cs.filter(function(c){ return c.homeAway === "home"; })[0] || cs[1] || {};
+  var awCol = awC.team && awC.team.color ? String(awC.team.color).replace(/[^0-9a-fA-F]/g, "") : "334155";
+  var hmCol = hmC.team && hmC.team.color ? String(hmC.team.color).replace(/[^0-9a-fA-F]/g, "") : "334155";
+  if (awCol.length !== 6) awCol = "334155";
+  if (hmCol.length !== 6) hmCol = "334155";
+  var svg = '<svg viewBox="0 0 470 250" preserveAspectRatio="none" aria-hidden="true">'
+    + '<defs><linearGradient id="cgF" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1533"/><stop offset="1" stop-color="#0b0817"/></linearGradient></defs>'
+    + '<rect x="0" y="0" width="470" height="250" fill="url(#cgF)"/>'
+    + '<rect x="0" y="0" width="235" height="250" fill="#' + awCol + '" opacity="0.10"/>'
+    + '<rect x="235" y="0" width="235" height="250" fill="#' + hmCol + '" opacity="0.10"/>'
+    + '<g fill="none" stroke="rgba(255,255,255,.38)" stroke-width="2">'
+    + '<rect x="5" y="5" width="460" height="240"/>'
+    + '<line x1="235" y1="5" x2="235" y2="245"/>'
+    + '<circle cx="235" cy="125" r="36"/>'
+    + '<rect x="5" y="77" width="90" height="96" fill="rgba(255,255,255,.05)"/>'
+    + '<circle cx="95" cy="125" r="36"/>'
+    + '<path d="M5 35 H118 A112 112 0 0 1 118 215 H5"/>'
+    + '<rect x="375" y="77" width="90" height="96" fill="rgba(255,255,255,.05)"/>'
+    + '<circle cx="375" cy="125" r="36"/>'
+    + '<path d="M465 35 H352 A112 112 0 0 0 352 215 H465"/>'
+    + '</g>'
+    + '<circle cx="28" cy="125" r="10" fill="none" stroke="rgba(245,197,24,.75)" stroke-width="2.5"/>'
+    + '<circle cx="442" cy="125" r="10" fill="none" stroke="rgba(245,197,24,.75)" stroke-width="2.5"/>'
+    + '</svg>';
+  return '<div id="gcCourt" class="courtpop"><div class="row" style="justify-content:space-between;margin-bottom:8px"><span style="font-size:15px;font-weight:900">\uD83C\uDFC0 ON THE COURT</span><span class="note">' + esc(st.shortDetail || st.detail || "LIVE") + '</span></div>'
+    + '<div class="court">' + svg
+    + '<span class="courtTag" style="left:8px;color:#' + awCol + '">' + esc((awC.team && awC.team.abbreviation) || "") + '</span>'
+    + '<span class="courtTag" style="right:8px;color:#' + hmCol + '">' + esc((hmC.team && hmC.team.abbreviation) || "") + '</span>'
+    + markers + '</div>'
+    + '<p class="note" style="margin-top:8px">The five on the floor for each team right now, with live points. Tap a player for his page. \u2605 = top scorer on the floor.</p></div>';
+}
+
 function openGame(key, eventId, isRefresh){
   if (key === "esports") { openEspGame(eventId); return; }
   window._openGame = {key: key, eventId: eventId};
@@ -3624,6 +3715,7 @@ function openGame(key, eventId, isRefresh){
         return '<tr><td>' + teamLogo(c,24) + esc((c.team && c.team.displayName) || "") + '</td>' + cells + '<td style="color:var(--purp-lt);font-weight:800">' + esc(c.score!=null ? c.score : "") + '</td></tr>';
       }).join("") + '</table>';
     }
+    html += courtHtml(lg, s, cs, st);
     if (st.state === "pre") html += '<div id="gameProps"></div>';
     html += trackerHtml(lg, s, comp, cs);
     if (isT){
@@ -3725,6 +3817,12 @@ function openGame(key, eventId, isRefresh){
         else { gpEl.parentNode.insertBefore(tsEl, gpEl); if (psEl) gpEl.parentNode.insertBefore(psEl, gpEl); }
       }
     } else if (st.state !== "pre" && gtEl && gpEl && gtEl.parentNode){ gtEl.parentNode.insertBefore(gpEl, gtEl.nextSibling); if (psEl && !tsEl) gtEl.parentNode.insertBefore(psEl, gpEl); }
+    var ctEl = $("gcCourt");
+    if (ctEl && ctEl.parentNode){
+      var lbT = $("gameDetail").querySelector("table.lb");
+      if (lbT && lbT.parentNode === ctEl.parentNode) lbT.parentNode.insertBefore(ctEl, lbT.nextSibling);
+      else if (tsEl && tsEl.parentNode === ctEl.parentNode) tsEl.parentNode.insertBefore(ctEl, tsEl);
+    }
     renderGameProps(lg, s);
     /* Game Center opens instantly at the top — no scrolling. */
   }).catch(function(){ var fe = finFind(key, eventId); $("gameDetail").innerHTML = '<button class="gcBack" type="button">\u2190 All games</button>' + (fe ? finFallbackHtml(fe) : '<div class="card"><p class="err">Couldn\'t load that game\'s details from ESPN.</p></div>'); });
