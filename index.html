@@ -1387,6 +1387,9 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
 .pfpcard b{font-size:12.5px;color:#fff;line-height:1.2}
 .pfpcard span{font-size:10.5px;color:#9a9ab0}
 .pfrow{display:flex;align-items:center;gap:11px;background:#12121e;border:1px solid #26263a;border-radius:14px;padding:9px 12px;margin-bottom:8px;cursor:pointer}
+.pfrow .pflive{margin-top:3px;font-size:11.5px;line-height:1.5;color:#ff5d7a;font-weight:800}
+.pfrow .pflive .pflmeta{color:#e8e4f5;font-weight:700}
+.pfrow .pflive .pflstats{color:#ffd9a8;font-weight:800}
 .pfrow img{width:46px;height:46px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#7C3AED,#3b1470);flex:0 0 auto}
 .l5slider{display:flex;gap:9px;overflow-x:auto;padding:8px 2px 12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
 .l5card{background:#12121e;border:1px solid #26263a;border-radius:14px;padding:10px 12px;min-width:176px;max-width:176px;scroll-snap-align:center}
@@ -8720,7 +8723,115 @@ function pfDoSearch(q){
     if (!players.length){ box.innerHTML = '<p class="empty">No players found for "' + esc(q) + '".</p>'; return; }
     box.innerHTML = players.slice(0, 24).map(function(c, i){ var pl = pfEntryPlayer(c); return '<div class="pfrow" data-pfidx="' + i + '">' + pfImgTag(pl.img, pl.name, pl.sport, pl.id) + '<div style="flex:1;min-width:0"><b>' + esc(pl.name) + '</b><div class="note">' + esc(pl.teamName || "") + '</div></div><span class="note" style="font-weight:800">' + esc(pl.leagueLabel || "") + '</span></div>'; }).join("");
     box.querySelectorAll("[data-pfidx]").forEach(function(el){ el.addEventListener("click", function(){ openPlayerPage(pfEntryPlayer(players[parseInt(el.getAttribute("data-pfidx"), 10)])); }); });
+    pfLiveAnnotate(players, seq);
   }).catch(function(){ if (seq === pfSeq) box.innerHTML = '<p class="empty">Search could not load — check your connection.</p>'; });
+}
+/* Live stats on Finder search rows (Brandon 2026-11-22): if a searched
+   player is in a game being played right now, his row grows a red LIVE
+   line with this game's stats — every sport the Finder covers. */
+var PF_LIVE_KEYS = ["MIN","TOI","PTS","REB","AST","STL","BLK","FG","3PT","FT","YDS","TD","REC","CAR","G","A","SOG","SV","H","R","RBI","HR","SB","K","TO","PF","+/-"];
+function pfLiveApply(box, pls, map){
+  box.querySelectorAll("[data-pfidx]").forEach(function(row){
+    var pl = pls[parseInt(row.getAttribute("data-pfidx"), 10)]; if (!pl) return;
+    var hit = map[String(pl.id)]; if (!hit) return;
+    var mid = row.children[1]; if (!mid || mid.querySelector(".pflive")) return;
+    var h = '<div class="pflive">● LIVE <span class="pflmeta">vs ' + esc(hit.opp || "") + (hit.clk ? " · " + esc(hit.clk) : "") + "</span>";
+    if (hit.pairs && hit.pairs.length) h += '<br><span class="pflstats">' + hit.pairs.map(function(p){ return esc(p[0]) + " " + esc(p[1]); }).join(" · ") + "</span>";
+    mid.insertAdjacentHTML("beforeend", h + "</div>");
+  });
+}
+function pfLiveAnnotate(players, seq){
+  var box = $("pfResults"); if (!box) return;
+  var L = pfLeagueByKey(pfSport); if (!L) return;
+  var pls = players.map(function(c){ return pfEntryPlayer(c); });
+  var want = {}; pls.forEach(function(p){ if (p.id) want[String(p.id)] = 1; });
+  if (!Object.keys(want).length) return;
+  var done = function(map){ if (seq === pfSeq && Object.keys(map).length) pfLiveApply(box, pls, map); };
+  try {
+    if (L.key === "tennis"){
+      var td = ymd(new Date());
+      Promise.all(["atp", "wta"].map(function(t){ return fetchJson(ESPN + "tennis/" + t + "/scoreboard?dates=" + td + "&limit=100").catch(function(){ return { events: [] }; }); })).then(function(rs){
+        var map = {};
+        rs.forEach(function(r){ tnFlatten(r.events || []).forEach(function(m){
+          var c = (m.competitions || [])[0] || {}; var st = (c.status && c.status.type) || {}; if (st.state !== "in") return;
+          var cs = c.competitors || []; if (cs.length < 2) return;
+          cs.forEach(function(x, xi){
+            var aid = x.athlete && String(x.athlete.id); if (!aid || !want[aid]) return;
+            var sets = (x.linescores || []).map(function(l){ return l.value != null ? String(l.value) : "–"; }).join(" ");
+            var osets = (cs[1 - xi].linescores || []).map(function(l){ return l.value != null ? String(l.value) : "–"; }).join(" ");
+            map[aid] = { opp: (cs[1 - xi].athlete && cs[1 - xi].athlete.displayName) || "", clk: (sets || osets) ? ("Sets " + sets + " – " + osets) : (st.detail || "Live"), pairs: [] };
+          });
+        }); });
+        done(map);
+      }).catch(function(){});
+      return;
+    }
+    if (L.key === "mma"){
+      mmaFetchRange("mma_fights", -7, 14).then(function(evs){
+        var map = {};
+        mmaFlatten(evs || []).forEach(function(f){
+          var c = (f.competitions || [])[0] || {}; var st = (c.status && c.status.type) || {}; if (st.state !== "in") return;
+          var cs = c.competitors || []; if (cs.length < 2) return;
+          cs.forEach(function(x, xi){
+            var aid = x.athlete && String(x.athlete.id); if (!aid || !want[aid]) return;
+            map[aid] = { opp: (cs[1 - xi].athlete && cs[1 - xi].athlete.displayName) || "", clk: st.shortDetail || st.detail || "Live now", pairs: [] };
+          });
+        });
+        done(map);
+      }).catch(function(){});
+      return;
+    }
+    if (L.sport === "golf"){
+      fetchJson(ESPN + "golf/pga/scoreboard?dates=" + ymd(new Date()) + "&limit=100").then(function(r){
+        var map = {};
+        (r.events || []).forEach(function(ev){
+          var st = (ev.status && ev.status.type) || {}; if (st.state !== "in") return;
+          ((ev.competitions || [])[0] || {}).competitors && ((ev.competitions || [])[0].competitors || []).forEach(function(x){
+            var aid = x.athlete && String(x.athlete.id); if (!aid || !want[aid]) return;
+            var sc = (x.score != null && x.score !== "") ? String(x.score) : "";
+            map[aid] = { opp: ev.shortName || ev.name || "", clk: "", pairs: sc ? [["Score", sc]] : [] };
+          });
+        });
+        done(map);
+      }).catch(function(){});
+      return;
+    }
+    getScoreboard(L, 1).then(function(evs){
+      var live = (evs || []).filter(function(e){ return e.status && e.status.type && e.status.type.state === "in"; }).slice(0, 10);
+      if (!live.length) return;
+      var map = {};
+      Promise.all(live.map(function(ev){
+        return summaryForEvent(L, ev.id).then(function(s){
+          var comp = (ev.competitions || [])[0] || {}; var cst = (comp.status && comp.status.type) || {};
+          var clk = cst.shortDetail || cst.detail || "";
+          if (L.sport === "soccer"){
+            var rosters = (s && s.rosters) || []; var names = rosters.map(function(r){ return (r.team && r.team.displayName) || ""; });
+            rosters.forEach(function(r, ri){
+              (r.roster || []).forEach(function(p){
+                var aid = p.athlete && String(p.athlete.id); if (!aid || !want[aid]) return;
+                var pairs = [];
+                (p.stats || []).forEach(function(st2){ if (["G", "A", "SHOT", "SOG", "SV"].indexOf(st2.abbreviation) >= 0 && st2.displayValue && st2.displayValue !== "0") pairs.push([st2.abbreviation === "SHOT" ? "Shots" : st2.abbreviation, st2.displayValue]); });
+                map[aid] = { opp: names[1 - ri] || "", clk: clk, pairs: pairs.slice(0, 4) };
+              });
+            });
+          } else {
+            var groups = (s && s.boxscore && s.boxscore.players) || []; var tnames = groups.map(function(g){ return (g.team && g.team.displayName) || ""; });
+            groups.forEach(function(g, gi){
+              (g.statistics || []).forEach(function(gr){
+                var labs = gr.labels || gr.names || [];
+                (gr.athletes || []).forEach(function(a){
+                  var aid = a.athlete && String(a.athlete.id); if (!aid || !want[aid] || a.didNotPlay) return;
+                  var pairs = [];
+                  PF_LIVE_KEYS.forEach(function(k){ var ix = labs.indexOf(k); if (ix >= 0 && a.stats && a.stats[ix] != null && a.stats[ix] !== "" && a.stats[ix] !== "--") pairs.push([k, String(a.stats[ix])]); });
+                  map[aid] = { opp: tnames[1 - gi] || "", clk: clk, pairs: pairs.slice(0, 5) };
+                });
+              });
+            });
+          }
+        }).catch(function(){});
+      })).then(function(){ done(map); });
+    }).catch(function(){});
+  } catch (e) {}
 }
 function pfRenderBrowse(){
   var box = $("pfBrowse"); if (!box) return;
