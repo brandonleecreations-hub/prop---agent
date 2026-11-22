@@ -1798,6 +1798,19 @@ function eventTeams(ev){
 function logoUrl(c){ var t = c && c.team; return t ? (t.logo || (t.logos && t.logos[0] && t.logos[0].href) || "") : ""; }
 function tlogoImg(url, size){ return url ? '<img class="tlogo" src="'+esc(url)+'" width="'+size+'" height="'+size+'" alt="" loading="lazy" onerror="this.remove()">' : ""; }
 function teamLogo(c, size){ var u = logoUrl(c); return u ? '<img class="tlogo" style="margin-right:6px" src="'+esc(u)+'" width="'+size+'" height="'+size+'" alt="" loading="lazy" onerror="this.remove()">' : ""; }
+/* Team-color wash, PrizePicks-style (Brandon 2026-11-21): a team's row/box
+   carries its real color — gradient wash + solid color edge. */
+function tintForColor(col){
+  col = col ? String(col).replace(/[^0-9a-fA-F]/g, "") : "";
+  if (col.length !== 6) return "";
+  return "background:linear-gradient(90deg,#" + col + "66,#" + col + "1f 55%,transparent 85%);border-left:3px solid #" + col + ";border-radius:9px;padding:4px 8px;margin-top:4px;";
+}
+function teamTintStyle(c){ return tintForColor(c && c.team && c.team.color); }
+function teamFaceTint(c){
+  var col = c && c.team && c.team.color ? String(c.team.color).replace(/[^0-9a-fA-F]/g, "") : "";
+  if (col.length !== 6) return "";
+  return "background:radial-gradient(circle at 50% 34%,#" + col + "73,#" + col + "24 58%,transparent 76%);";
+}
 function nextGameFor(events, teamId){
   var best = null;
   events.forEach(function(ev){
@@ -2990,7 +3003,7 @@ function gameCard(lg, ev){
   var rows = cs.map(function(c){
     var nm = (c.team && (c.team.shortDisplayName || c.team.displayName)) || "";
     var sc = pre ? "0" : (c.score!=null ? c.score : "");
-    return '<div class="gteam">'+teamLogo(c,22)+esc(nm)+' <span class="gscore">'+esc(sc)+'</span></div>';
+    return '<div class="gteam" style="'+teamTintStyle(c)+'">'+teamLogo(c,22)+esc(nm)+' <span class="gscore">'+esc(sc)+'</span></div>';
   }).join("");
   var extra = "";
   if (lg.key==="tennis" && live && cs.length===2){
@@ -3010,7 +3023,7 @@ function futureCard(lg, ev){
   var when = new Date(ev.date).toLocaleString([], {weekday:"short", month:"short", day:"numeric", hour:"numeric", minute:"2-digit"});
   var rows = cs.map(function(c){
     var nm = (c.team && (c.team.shortDisplayName || c.team.displayName)) || "";
-    return '<div class="fteam">'+teamLogo(c,20)+'<span>'+esc(nm)+'</span></div>';
+    return '<div class="fteam" style="'+teamTintStyle(c)+'">'+teamLogo(c,20)+'<span>'+esc(nm)+'</span></div>';
   }).join("");
   var tour = ev._tour ? " \u00B7 "+ev._tour : "";
   return '<div class="fcard" data-game="'+lg.key+'|'+(ev._tour ? ev._tour.toLowerCase()+":" : "")+ev.id+'"><div class="ftime">'+esc(when)+tour+'</div>'+rows+'</div>';
@@ -3066,7 +3079,7 @@ function finTeamOf(c, isT){
   var nm = (c.team && (c.team.shortDisplayName || c.team.displayName)) || (c.roster && c.roster.displayName) || (c.athlete && c.athlete.displayName) || "";
   if (!nm && c.roster && c.roster.athletes) nm = c.roster.athletes.map(function(a){ return a.displayName || ""; }).filter(Boolean).join(" / ");
   var logo = logoUrl(c) || (c.athlete && c.athlete.flag && c.athlete.flag.href) || (c.roster && c.roster.athletes && c.roster.athletes[0] && c.roster.athletes[0].flag && c.roster.athletes[0].flag.href) || "";
-  return { n: nm, logo: logo, s: isT ? finSetScore(c) : (c.score != null ? String(c.score) : ""), w: c.winner === true, sc: (c.score != null && !isNaN(parseFloat(c.score))) ? parseFloat(c.score) : null };
+  return { n: nm, logo: logo, col: (c.team && c.team.color) || "", s: isT ? finSetScore(c) : (c.score != null ? String(c.score) : ""), w: c.winner === true, sc: (c.score != null && !isNaN(parseFloat(c.score))) ? parseFloat(c.score) : null };
 }
 function finEntry(lg, ev, match){
   var isT = lg.key === "tennis";
@@ -3118,7 +3131,7 @@ function finCardHtml(en){
   var rows = (en.teams || []).map(function(t){
     var cls = anyW ? (t.w ? " fwin" : " flose") : "";
     var logo = t.logo ? '<img class="tlogo" style="margin-right:6px" src="' + esc(t.logo) + '" width="20" height="20" alt="" loading="lazy" onerror="this.remove()">' : "";
-    return '<div class="gteam' + cls + '">' + logo + '<span class="gname">' + esc(t.n) + '</span><span class="gscore' + (isT ? " tset" : "") + '">' + esc(t.s) + '</span></div>';
+    return '<div class="gteam' + cls + '" style="' + tintForColor(t.col) + '">' + logo + '<span class="gname">' + esc(t.n) + '</span><span class="gscore' + (isT ? " tset" : "") + '">' + esc(t.s) + '</span></div>';
   }).join("");
   var leagueLine = isT ? "Tennis" + (en.tour ? " \u00B7 " + en.tour : " \u00B7 ATP") : en.label;
   var right = en.detail + (en.d ? " \u00B7 " + fmtDay(en.d) : "");
@@ -3127,7 +3140,7 @@ function finCardHtml(en){
 function finFallbackHtml(en){
   var rows = (en.teams || []).map(function(t){
     var logo = t.logo ? '<img class="tlogo" style="margin-right:6px" src="' + esc(t.logo) + '" width="22" height="22" alt="" loading="lazy" onerror="this.remove()">' : "";
-    return '<div class="gteam">' + logo + esc(t.n) + ' <span class="gscore">' + esc(t.s) + '</span></div>';
+    return '<div class="gteam" style="' + tintForColor(t.col) + '">' + logo + esc(t.n) + ' <span class="gscore">' + esc(t.s) + '</span></div>';
   }).join("");
   return '<div class="card"><div class="note" style="text-transform:uppercase;letter-spacing:1px">' + esc(en.label) + (en.d ? ' \u00B7 ' + esc(fmtDay(en.d)) : '') + '</div><div style="margin-top:6px">' + rows + '</div>' + (en.star ? '<div class="finstar">\u2605 ' + esc(en.star) + '</div>' : '') + '<p class="empty" style="margin-top:8px">Final result saved on this device \u2014 the full Game Center could not load from ESPN right now.</p></div>';
 }
@@ -3517,6 +3530,8 @@ function openTeamRoster(teamId, teamName){
   var lg = ctx.lg, s = ctx.s;
   var dlg = $("teamDlg"), body = $("teamDlgBody"); if (!dlg || !body) return;
   var tid = String(teamId);
+  var gcCol = "";
+  try { var hc = (((s.header && s.header.competitions) || [])[0] || {}).competitors || []; for (var hi = 0; hi < hc.length; hi++){ if (hc[hi].team && String(hc[hi].team.id) === tid && hc[hi].team.color){ gcCol = String(hc[hi].team.color).replace(/[^0-9a-fA-F]/g, ""); break; } } } catch (e) {}
   var starters = [], played = [];
   ((s.boxscore && s.boxscore.players) || []).forEach(function(tp){
     if (!tp.team || String(tp.team.id) !== tid) return;
@@ -3531,7 +3546,7 @@ function openTeamRoster(teamId, teamName){
     var img = p.img ? '<img src="' + esc(p.img) + '" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex:none" loading="lazy" onerror="this.remove()">' : "";
     return '<div class="row" data-player="' + esc(p.name) + '" data-league="' + lg.key + '" style="gap:9px;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer;justify-content:flex-start;align-items:center">' + img + '<b style="flex:1;min-width:0">' + esc(p.name) + '</b>' + (extra || "") + '</div>';
   };
-  var html = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div style="font-size:19px;font-weight:900">' + esc(teamName || "Team") + '</div><button type="button" class="ghostbtn" id="teamDlgClose">\u2715 CLOSE</button></div>';
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px' + (gcCol ? ';background:linear-gradient(120deg,#' + gcCol + '59,#' + gcCol + '14 65%,transparent);border:1px solid #' + gcCol + '55;border-radius:12px;padding:10px 12px' : '') + '"><div style="font-size:19px;font-weight:900">' + esc(teamName || "Team") + '</div><button type="button" class="ghostbtn" id="teamDlgClose">\u2715 CLOSE</button></div>';
   if (starters.length) html += '<div style="font-size:16px;margin:14px 0 4px"><b>Starters</b> <span class="note">\u2014 this game</span></div>' + starters.map(function(p){ return row(p); }).join("");
   else if (played.length) html += '<div style="font-size:16px;margin:14px 0 4px"><b>Played</b> <span class="note">\u2014 this game</span></div>' + played.map(function(p){ return row(p); }).join("");
   else html += '<p class="note" style="margin-top:12px">Starters post once the game is underway.</p>';
@@ -3585,7 +3600,7 @@ function openGame(key, eventId, isRefresh){
     var html = '<div class="card" style="border-top:3px solid var(--purp2)"><div style="font-size:24px;font-weight:900;line-height:1.15">' + esc(title) + ' <span style="color:var(--purp-lt);font-size:15px;font-weight:800">' + esc(lg.label) + '</span></div>'
       + '<div class="note" style="margin:4px 0 8px">' + esc(detail) + (venue ? ' · ' + esc(venue) : '') + '</div>'
       + (live ? '<div><span style="background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.45);border-radius:999px;padding:4px 11px;font-weight:800;font-size:12px">● LIVE' + (detail ? ' · ' + esc(detail) : '') + '</span></div>' : '')
-      + ((cs.length===2 && (logoUrl(cs[0]) || logoUrl(cs[1]))) ? '<div style="display:flex;justify-content:space-around;align-items:center;margin:14px 0 2px">' + cs.map(function(c){ var gt = (c.team && c.team.id != null) ? ' data-gcteam="' + esc(String(c.team.id)) + '" data-gcname="' + esc(c.team.displayName || "") + '"' : ""; return '<div' + gt + ' style="text-align:center;width:42%' + (gt ? ';cursor:pointer' : '') + '">' + tlogoImg(logoUrl(c),54) + '<div style="font-weight:800;font-size:13px;margin-top:5px">' + esc((c.team && (c.team.shortDisplayName || c.team.displayName)) || "") + '</div><div style="font-size:23px;font-weight:900;color:var(--purp-lt)">' + esc(c.score!=null ? c.score : "") + '</div></div>'; }).join('<div style="font-weight:900;color:var(--mut);font-size:15px">VS</div>') + '</div><div class="note" style="text-align:center;margin-top:2px">Tap a team logo for starters &amp; roster</div>' : '');
+      + ((cs.length===2 && (logoUrl(cs[0]) || logoUrl(cs[1]))) ? '<div style="display:flex;justify-content:space-around;align-items:center;margin:14px 0 2px">' + cs.map(function(c){ var gt = (c.team && c.team.id != null) ? ' data-gcteam="' + esc(String(c.team.id)) + '" data-gcname="' + esc(c.team.displayName || "") + '"' : ""; return '<div' + gt + ' style="text-align:center;width:42%;border-radius:14px;padding:8px 2px;' + teamFaceTint(c) + (gt ? 'cursor:pointer;' : '') + '">' + tlogoImg(logoUrl(c),54) + '<div style="font-weight:800;font-size:13px;margin-top:5px">' + esc((c.team && (c.team.shortDisplayName || c.team.displayName)) || "") + '</div><div style="font-size:23px;font-weight:900;color:var(--purp-lt)">' + esc(c.score!=null ? c.score : "") + '</div></div>'; }).join('<div style="font-weight:900;color:var(--mut);font-size:15px">VS</div>') + '</div><div class="note" style="text-align:center;margin-top:2px">Tap a team logo for starters &amp; roster</div>' : '');
     var nper = 0; cs.forEach(function(c){ nper = Math.max(nper, (c.linescores||[]).length); });
     if (cs.length && nper){
       html += '<table class="lb" style="margin-top:12px"><tr><th>Team</th>';
