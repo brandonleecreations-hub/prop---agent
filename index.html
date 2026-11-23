@@ -7357,7 +7357,7 @@ function espCs2SbHtml(d){
   }).join("");
   var h = '<div class="espsb"><div class="espsbhd"><span>🗺️ SCOREBOARD</span><span class="note">' + (d.state === "in" ? "LIVE" : (d.state === "post" ? "FINAL" : "UPCOMING")) + '</span></div><div class="espmaps">' + strip + '</div>';
   if (d.state === "in" && liveM) {
-    h += '<div class="esplive"><span>🔴 MAP ' + liveM.n + ' · ' + esc(liveM.name || "") + '</span><b>' + (espTallyScore(liveM, d) || "—") + '</b><span class="note">ROUND ' + ((liveM.roundsPlayed || 0) + 1) + '</span></div>';
+    h += '<div class="esplive"><span>🔴 MAP ' + liveM.n + ' · ' + esc(liveM.name || "") + '</span><b>' + (espTallyScore(liveM, d) || "—") + '</b>' + ((liveM.roundsPlayed) ? '<span class="note">ROUND ' + (liveM.roundsPlayed + 1) + '</span>' : '') + '</div>';
     if ((liveM.rounds || []).length) {
       var lt0 = d.teams[0] || {}, lt1 = d.teams[1] || {};
       h += '<div class="esprounds">' + liveM.rounds.map(function(w, i){
@@ -7392,7 +7392,7 @@ function espCs2SbHtml(d){
       h += '<p class="empty" style="margin:6px 0 2px">MAP ' + m.n + ' · ' + esc(m.name || "") + ' is live — player stats post here as the source reports them.</p>';
     } else if (played) {
       sections++;
-      h += '<p class="empty" style="margin:6px 0 2px">MAP ' + m.n + ' · ' + esc(m.name || "") + ' — player stats haven\'t been posted by the source yet.</p>';
+      h += '<p class="empty" style="margin:6px 0 2px">MAP ' + m.n + ' · ' + esc(m.name || "") + ((m.s1 != null && m.s2 != null) ? ' · FINAL ' + m.s1 + '–' + m.s2 : '') + ' — player stats post here when the match ends (the source parses them after the series, not map by map).</p>';
     }
   });
   if (!sections) h += '<p class="empty" style="margin:6px 0 2px">Player stats post here as maps are played.</p>';
