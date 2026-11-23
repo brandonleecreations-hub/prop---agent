@@ -1566,6 +1566,7 @@ body.aion [data-ai]{display:block}
   <section class="view" id="view-live">
     <div id="liveCenter"><p class="empty">Fetching fresh scores from ESPN…</p></div>
     <div id="gameDetail"></div>
+    <div id="espStreamWrap"></div>
     <div id="espGameDetail"></div>
     <div id="liveFinished"></div>
     <div id="espFinished"></div>
@@ -7212,6 +7213,7 @@ function espLoadMatch(isRefresh){
 }
 function closeEspGame(){
   espOpen = null;
+  var sw = $("espStreamWrap"); if (sw){ sw.innerHTML = ""; sw._espKey = ""; }
   var gd = $("espGameDetail"); if (gd) gd.innerHTML = "";
   var ef = $("espFinished"); if (ef) ef.style.display = "";
 }
@@ -7225,6 +7227,39 @@ function espRenderGc(){
     + (d.game === "lol" ? espLolSbHtml(d) : espCs2SbHtml(d))
     + espGcPropsHtml(d);
   espWireSliders(gd); bindTiles(gd);
+  espSyncStream(d);
+}
+/* Live stream for esports matches (Brandon 2026-11-23): official Twitch
+   broadcasts are embeddable (unlike the big leagues). The player lives in
+   #espStreamWrap OUTSIDE #espGameDetail so the 45-60s auto-refresh that
+   rebuilds the scoreboard never reloads the video. */
+function espTwitchChannel(d){
+  if (d.game === "lol"){
+    var L = String(d.league || "").toLowerCase();
+    if (L.indexOf("lck") >= 0) return "lck";
+    if (L.indexOf("lpl") >= 0) return "lpl";
+    if (L.indexOf("lec") >= 0 || L.indexOf("emea") >= 0) return "lec";
+    if (L.indexOf("lta") >= 0 || L.indexOf("lcs") >= 0) return "lta";
+    if (L.indexOf("cblol") >= 0) return "cblol";
+    return "riotgames";
+  }
+  var T = String(d.tournament || "").toLowerCase();
+  if (T.indexOf("blast") >= 0) return "blastpremier";
+  if (T.indexOf("pgl") >= 0) return "pgl";
+  if (T.indexOf("starladder") >= 0 || T.indexOf("starseries") >= 0) return "starladder_cs2";
+  if (T.indexOf("fissure") >= 0) return "fissure_cs2";
+  return "eslcs";
+}
+function espSyncStream(d){
+  var w = $("espStreamWrap"); if (!w) return;
+  var key = d && d.state === "in" ? (d.game + ":" + (d.slug || d.id || "") + ":" + espTwitchChannel(d)) : "";
+  if (w._espKey === key) return;
+  w._espKey = key;
+  if (!key){ w.innerHTML = ""; return; }
+  var ch = espTwitchChannel(d);
+  w.innerHTML = '<div class="card" style="margin-bottom:10px"><div class="row" style="justify-content:space-between;align-items:center"><span style="font-weight:900">📺 WATCH LIVE</span><a href="https://www.twitch.tv/' + ch + '" target="_blank" rel="noopener" style="color:#c9a7ff;font-weight:800;font-size:12px">Open in Twitch ↗</a></div>'
+    + '<div style="position:relative;padding-top:56.25%;margin-top:8px;border-radius:10px;overflow:hidden;background:#000"><iframe src="https://player.twitch.tv/?channel=' + ch + '&parent=prop-agent-bre.vercel.app&autoplay=true&muted=true" style="position:absolute;left:0;top:0;width:100%;height:100%;border:0" allowfullscreen title="Live stream"></iframe></div>'
+    + '<p class="note" style="margin-top:6px">Official broadcast via Twitch — free to watch.</p></div>';
 }
 function espScoreHeadHtml(d){
   var t = d.teams || [];
