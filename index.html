@@ -1546,7 +1546,6 @@ body.aion [data-ai]{display:block}
   <!-- LIVE CENTER -->
   <section class="view" id="view-live">
     <h2>Live Center</h2>
-    <div class="tabs" id="liveTabs"></div>
     <p class="note" id="liveStatus"></p>
     <div id="liveCenter"><p class="empty">Fetching fresh scores from ESPN…</p></div>
     <div id="gameDetail"></div>
@@ -8716,6 +8715,7 @@ document.querySelectorAll("nav.bottom button").forEach(function(b){
   b.addEventListener("click", function(){
     var n = b.getAttribute("data-nav");
     if (n==="home"){ setSport("all"); }
+    else if (n==="live"){ liveFilter = "all"; finPill = "all"; futPill = "all"; showView("live"); }
     else showView(n);
   });
 });
