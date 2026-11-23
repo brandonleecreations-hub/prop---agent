@@ -8697,7 +8697,7 @@ function showView(name){
   if (window._view !== name){
     if (name === "players"){ pfSport = "nba"; pfTeamSel = null; }
     else if (name === "sport"){ boardGame = "all"; boardStat = "all"; if (currentSport === "esports") espPillSel = {}; }
-    else if (name === "live"){ /* Brandon 2026-11-23: the Live tab KEEPS the sport you picked (header pills link here) instead of resetting to All Sports. */ document.querySelectorAll("#liveTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-lsport") === liveFilter); }); }
+    else if (name === "live"){ /* Brandon 2026-11-23: the Live tab KEEPS the sport you picked (header pills link here) instead of resetting to All Sports. */ document.querySelectorAll("#liveTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-lsport") === liveFilter); }); document.querySelectorAll("#sportTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-sport") === liveFilter); }); }
     else if (name === "home"){ var stp = $("sportTabs"); if (stp){ stp.scrollLeft = 0; stp.querySelectorAll(".tab").forEach(function(t, i){ t.classList.toggle("on", i === 0); }); } }
   }
   document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("on"); });
