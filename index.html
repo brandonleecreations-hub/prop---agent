@@ -1408,6 +1408,7 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
 .pfvrow[data-pffight]{transition:box-shadow .15s ease,background .15s ease,transform .15s ease}
 .pfvrow.pfOn{box-shadow:0 0 0 2px var(--gold),0 0 16px rgba(245,185,66,.45);background:rgba(245,185,66,.10);animation:pfpop .22s ease}
 .tnm{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.tnm.darkbox{background:var(--panel);box-shadow:0 12px 26px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05)}
 .tnrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:2.5px 0;font-size:13px}
 .tnsets{color:var(--cyan);font-weight:800;white-space:nowrap}
 .lvslider .tnm{flex:0 0 78%;min-width:0;scroll-snap-align:center;margin:0;transform:scale(.955);opacity:.85;transition:transform .25s ease,opacity .25s ease,box-shadow .25s ease}
@@ -9054,7 +9055,7 @@ function tnCard(ev){
     return '<div class="tnrow"><span style="' + (x.winner ? "font-weight:800;color:#fff" : "color:#c9c9d6") + '">' + nm + '</span><span class="tnsets">' + esc(sets) + '</span></div>';
   }).join("");
   var when = st.state === "in" ? '<span style="color:#ff5d7a;font-weight:800">LIVE</span>' : (st.state === "post" ? "Final" : esc(pfTnWhen(ev.date)));
-  return '<div class="tnm"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--mut);margin-bottom:4px"><span>' + esc(ev._tname || "") + (ev._tour ? " · " + esc(ev._tour) : "") + '</span><span>' + when + '</span></div>' + rows + '</div>';
+  return '<div class="tnm darkbox"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--mut);margin-bottom:4px"><span>' + esc(ev._tname || "") + (ev._tour ? " · " + esc(ev._tour) : "") + '</span><span>' + when + '</span></div>' + rows + '</div>';
 }
 /* ===== UFC / MMA: fights flattened from event cards, organized by
    weight-class pills, plus a Next Fight Cards section (Brandon 2026-11-21) ===== */
@@ -9131,7 +9132,7 @@ function mmaCard(f){
   if (st.state === "in") when = '<span style="color:#ff5d7a;font-weight:800">LIVE' + (f.status.period ? " \u00B7 R" + f.status.period : "") + (f.status.displayClock ? " " + esc(f.status.displayClock) : "") + '</span>';
   else if (st.state === "post"){ var m = mmaMethod(c); when = "Final" + (m ? " \u00B7 " + esc(m) : "") + (f.status.period ? " \u00B7 R" + f.status.period : ""); }
   else when = esc(pfTnWhen(f.date));
-  return '<div class="tnm mmam"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;color:var(--mut);margin-bottom:4px"><img src="' + UFC_LOGO + '" alt="UFC" style="height:16px;width:16px;object-fit:contain;flex:none" onerror="this.remove()"><span style="flex:1;min-width:0">' + esc(f._ename || "") + (f._wc ? " \u00B7 " + esc(f._wc) : "") + '</span><span>' + when + '</span></div>' + rows + '</div>';
+  return '<div class="tnm mmam darkbox"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;color:var(--mut);margin-bottom:4px"><img src="' + UFC_LOGO + '" alt="UFC" style="height:16px;width:16px;object-fit:contain;flex:none" onerror="this.remove()"><span style="flex:1;min-width:0">' + esc(f._ename || "") + (f._wc ? " \u00B7 " + esc(f._wc) : "") + '</span><span>' + when + '</span></div>' + rows + '</div>';
 }
 function mmaFetchRange(ck, fromDays, toDays){
   if (boardCache[ck] && Date.now() - boardCache[ck].ts < 25000) return Promise.resolve(boardCache[ck].events);
@@ -9169,7 +9170,7 @@ function mmaSectionsHtml(fights, cards){
       var comps = e.competitions || []; var main = comps[comps.length - 1];
       var names = main ? (main.competitors || []).map(function(x){ return esc((x.athlete && x.athlete.displayName) || ""); }).join(" vs ") : "";
       var wc = main && main.type ? main.type.abbreviation : "";
-      return '<div class="tnm mmam"><div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mut);margin-bottom:4px"><img src="' + UFC_LOGO + '" alt="UFC" style="height:16px;width:16px;object-fit:contain;flex:none" onerror="this.remove()"><span>' + esc(pfTnWhen(e.date)) + (wc ? " \u00B7 " + esc(wc) : "") + '</span></div><div style="font-weight:800;color:#fff;font-size:14px;line-height:1.25">' + esc(e.name || "UFC Event") + '</div>' + (names ? '<div class="note" style="margin-top:3px">Main event: ' + names + '</div>' : "") + '<div class="note">' + comps.length + ' fights on the card</div></div>';
+      return '<div class="tnm mmam darkbox"><div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mut);margin-bottom:4px"><img src="' + UFC_LOGO + '" alt="UFC" style="height:16px;width:16px;object-fit:contain;flex:none" onerror="this.remove()"><span>' + esc(pfTnWhen(e.date)) + (wc ? " \u00B7 " + esc(wc) : "") + '</span></div><div style="font-weight:800;color:#fff;font-size:14px;line-height:1.25">' + esc(e.name || "UFC Event") + '</div>' + (names ? '<div class="note" style="margin-top:3px">Main event: ' + names + '</div>' : "") + '<div class="note">' + comps.length + ' fights on the card</div></div>';
     }).join("") + '</div>';
   }
   return html;
