@@ -9913,9 +9913,9 @@ function pfL5Cards(rows){
   /* Football: one combined TD stat (passing + rushing + receiving TDs) in
      the Last 5 cards — Brandon 2026-11-23. Replaces the passing-TD-only
      column when it was picked. */
-  var tdIx = ["passingTouchdowns", "rushingTouchdowns", "receivingTouchdowns"].map(function(nm){ return names.indexOf(nm); }).filter(function(x){ return x >= 0; });
+  var tdIx = ["passingTouchdowns", "rushingTouchdowns", "receivingTouchdowns", "interceptionTouchdowns", "fumbleTouchdowns", "kickReturnTouchdowns", "puntReturnTouchdowns"].map(function(nm){ return names.indexOf(nm); }).filter(function(x){ return x >= 0; });
   var tdPos = -1;
-  if (tdIx.length && (names.indexOf("passingYards") >= 0 || names.indexOf("rushingYards") >= 0 || names.indexOf("receivingYards") >= 0)){
+  if (tdIx.length){
     pick = pick.filter(function(i){ return tdIx.indexOf(i) < 0; });
     tdPos = Math.min(1, pick.length);
   }
