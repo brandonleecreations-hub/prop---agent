@@ -3774,7 +3774,7 @@ function trackerHtml(lg, s, comp, cs){
 }
 
 function closeGame(silent){
-  closeEspGame();
+  closeEspGame(!silent);
   var dest = window._gameFrom || "live"; window._gameFrom = null;
   window._openGame = null;
   saLayersSet({ game: null, team: null });
@@ -7210,7 +7210,7 @@ function espLoadMatch(isRefresh){
     }
   }).catch(function(){});
 }
-function closeEspGame(){
+function closeEspGame(nav){
   /* Back from a match lands on that game's list only (Brandon
      2026-11-23): CS2 match -> CS2 games, LoL match -> LoL games. The
      chip at the top of the board switches back to all esports. */
@@ -7219,7 +7219,7 @@ function closeEspGame(){
   var sw = $("espStreamWrap"); if (sw){ sw.innerHTML = ""; sw._espKey = ""; }
   var gd = $("espGameDetail"); if (gd) gd.innerHTML = "";
   var ef = $("espFinished"); if (ef) ef.style.display = "";
-  if (g) { setSport("esports"); window._espBoardOnly = g; renderEspBoardPage(espLg()); }
+  if (nav && g) { setSport("esports"); window._espBoardOnly = g; renderEspBoardPage(espLg()); }
 }
 document.addEventListener("click", function(e){
   var t = e.target && e.target.closest ? e.target.closest("#espOnlyChip") : null;
