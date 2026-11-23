@@ -6695,8 +6695,8 @@ function espEnsureAttr(){
 function espTick(){
   if (document.hidden) return;
   espEnsure();
-  var due = espOpen.game === "lol" ? 60000 : 45000;
-  if (espOpen.game === "cs2"){ var od = espCache["cs2:" + espOpen.slug]; if (od && od.state === "in") due = 20000; }
+  var due = espOpen && espOpen.game === "lol" ? 60000 : 45000;
+  if (espOpen && espOpen.game === "cs2"){ var od = espCache["cs2:" + espOpen.slug]; if (od && od.state === "in") due = 20000; }
   if (espOpen && Date.now() - espOpen.at > due) espLoadMatch(true);
 }
 /* ---------- attribution: Parlay rows -> bo3 matches ---------- */
@@ -6985,8 +6985,10 @@ function espBoardHtml(groups){
   var GAMES = [["cs2", "Counter-Strike 2"], ["lol", "League of Legends"]];
   var STATES = [["live", "in", "\uD83D\uDD34 Live"], ["upcoming", "pre", "Upcoming"], ["finished", "post", "\uD83C\uDFC1 Finished"]];
   var h = "";
+  if (window._espBoardOnly) h += '<div style="margin:0 0 8px"><button type="button" class="espmapchip on" id="espOnlyChip">Showing ' + (window._espBoardOnly === "cs2" ? "Counter-Strike 2" : "League of Legends") + ' only \u2014 tap for all esports \u2715</button></div>';
   GAMES.forEach(function(gd){
     var g = gd[0];
+    if (window._espBoardOnly && g !== window._espBoardOnly) return;
     var gGroups = groups.filter(function(mg){ return mg.game === g; });
     var gProps = gGroups.reduce(function(n, mg){ return n + mg.rows.length; }, 0);
     var gMatches = 0;
@@ -7192,6 +7194,7 @@ function openEspGame(ref){
   var gi = String(ref || "").indexOf(":");
   if (gi <= 0) return;
   espOpen = { game: String(ref).slice(0, gi), ref: String(ref).slice(gi + 1), at: 0, data: null };
+  window._espMapSel = null;
   window._openGame = { key: "esports", eventId: String(ref) };
   window._liveScrollY = window.scrollY || 0;
   ["liveCenter", "liveTabs", "liveStatus", "liveFinished", "espFinished"].forEach(function(id){ var el = $(id); if (el) el.style.display = "none"; });
@@ -7215,11 +7218,22 @@ function espLoadMatch(isRefresh){
   }).catch(function(){});
 }
 function closeEspGame(){
+  /* Back from a match lands on that game's list only (Brandon
+     2026-11-23): CS2 match -> CS2 games, LoL match -> LoL games. The
+     chip at the top of the board switches back to all esports. */
+  var g = espOpen && espOpen.game;
   espOpen = null;
   var sw = $("espStreamWrap"); if (sw){ sw.innerHTML = ""; sw._espKey = ""; }
   var gd = $("espGameDetail"); if (gd) gd.innerHTML = "";
   var ef = $("espFinished"); if (ef) ef.style.display = "";
+  if (g) { setSport("esports"); window._espBoardOnly = g; renderEspBoardPage(espLg()); }
 }
+document.addEventListener("click", function(e){
+  var t = e.target && e.target.closest ? e.target.closest("#espOnlyChip") : null;
+  if (!t) return;
+  window._espBoardOnly = null;
+  if (currentSport === "esports") renderEspBoardPage(espLg());
+});
 function espRenderGc(){
   var gd = $("espGameDetail");
   if (!gd || !espOpen || !espOpen.data) return;
@@ -7230,6 +7244,7 @@ function espRenderGc(){
     + (d.game === "lol" ? espLolSbHtml(d) : espCs2SbHtml(d))
     + espGcPropsHtml(d);
   espWireSliders(gd); bindTiles(gd);
+  gd.querySelectorAll("[data-espmap]").forEach(function(b){ b.addEventListener("click", function(){ window._espMapSel = parseInt(b.getAttribute("data-espmap"), 10) || null; espRenderGc(); }); });
   espSyncStream(d);
 }
 /* Live stream for esports matches (Brandon 2026-11-23): official Twitch
@@ -7323,14 +7338,24 @@ function espTallyScore(m, d){
 function espCs2SbHtml(d){
   var maps = d.maps || [];
   if (!maps.length) return '<div class="card"><p class="empty">The map-by-map scoreboard appears here once the match starts.</p></div>';
+  var liveM = null;
+  maps.forEach(function(m){ if (d.liveMap === m.n) liveM = m; });
+  /* Map tabs (Brandon 2026-11-23): tapping a map chip shows THAT map's
+     player board. Default view = the live map, else the last map with
+     posted stats. */
+  var sel = window._espMapSel;
+  if (!maps.some(function(m){ return m.n === sel; })) {
+    sel = null;
+    if (d.state === "in" && liveM) sel = liveM.n;
+    if (sel == null) { for (var si = maps.length - 1; si >= 0; si--) { if ((maps[si].players || []).length) { sel = maps[si].n; break; } } }
+    if (sel == null) sel = maps[maps.length - 1].n;
+  }
   var strip = maps.map(function(m){
     var live = d.liveMap === m.n && d.state === "in";
     var sc = (m.s1 != null && m.s2 != null) ? m.s1 + "–" + m.s2 : (live ? (espTallyScore(m, d) || "—") : "—");
-    return '<span class="espmapchip' + (live ? " on" : "") + '">MAP ' + m.n + ' · ' + esc(m.name || "") + ' · <b>' + sc + '</b>' + (live ? ' · 🔴' : '') + '</span>';
+    return '<button type="button" class="espmapchip' + (m.n === sel ? " on" : "") + '" data-espmap="' + m.n + '">MAP ' + m.n + ' \u00B7 ' + esc(m.name || "") + ' \u00B7 <b>' + sc + '</b>' + (live ? ' \u00B7 \uD83D\uDD34' : '') + '</button>';
   }).join("");
   var h = '<div class="espsb"><div class="espsbhd"><span>🗺️ SCOREBOARD</span><span class="note">' + (d.state === "in" ? "LIVE" : (d.state === "post" ? "FINAL" : "UPCOMING")) + '</span></div><div class="espmaps">' + strip + '</div>';
-  var liveM = null;
-  maps.forEach(function(m){ if (d.liveMap === m.n) liveM = m; });
   if (d.state === "in" && liveM) {
     h += '<div class="esplive"><span>🔴 MAP ' + liveM.n + ' · ' + esc(liveM.name || "") + '</span><b>' + (espTallyScore(liveM, d) || "—") + '</b><span class="note">ROUND ' + ((liveM.roundsPlayed || 0) + 1) + '</span></div>';
     if ((liveM.rounds || []).length) {
@@ -7353,6 +7378,7 @@ function espCs2SbHtml(d){
   var ordered = maps.slice();
   if (d.state === "in" && liveM) ordered = [liveM].concat(maps.filter(function(x){ return x !== liveM; }));
   ordered.forEach(function(m){
+    if (m.n !== sel) return;
     var has = (m.players || []).length > 0;
     var isLive = d.state === "in" && d.liveMap === m.n;
     var played = (m.s1 != null && m.s2 != null) || m.status === "finished" || m.state === "done";
@@ -8882,7 +8908,7 @@ function setSport(key){
   showView("home");
   homeSportChrome();
   if (key === "all") refreshHome();
-  else if (key === "esports"){ espHomeMove(); renderBoards(); }
+  else if (key === "esports"){ window._espBoardOnly = null; espHomeMove(); renderBoards(); }
   else renderHomeSport();
   if (key !== "all") document.querySelectorAll("#sportTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-sport")===key); });
 }
