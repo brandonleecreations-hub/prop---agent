@@ -6693,6 +6693,7 @@ function espEnsureAttr(){
   }).catch(function(){ espAttrBusy = false; });
 }
 function espTick(){
+  if (document.hidden) return;
   espEnsure();
   var due = espOpen.game === "lol" ? 60000 : 45000;
   if (espOpen.game === "cs2"){ var od = espCache["cs2:" + espOpen.slug]; if (od && od.state === "in") due = 20000; }
@@ -8337,7 +8338,7 @@ var wStageEl = $("wStage"); if (wStageEl) wStageEl.addEventListener("click", fun
 var wReplayB = $("wReplay"); if (wReplayB) wReplayB.addEventListener("click", function(){ showWelcome(); });
 if (!lsGet("pa_welcomed", 0)) setTimeout(function(){ showWelcome(); }, 600);
 
-setInterval(function(){ loadPickemEvent(); }, 30000);
+setInterval(function(){ if (document.hidden) return; loadPickemEvent(); }, 30000);
 
 /* ---------- profile + push ---------- */
 function refreshAgentBtn(){
@@ -10603,9 +10604,20 @@ function aiClashRecap(won){
 }
 aiBoot();
 if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/sw.js").catch(function(){}); }
-setInterval(function(){ boardCache = {}; refreshHome(); if (window._view === "tickets") renderTickets(); if ($("view-live").classList.contains("on")){ renderLive(); if (window._openGame) openGame(window._openGame.key, window._openGame.eventId, true); }
+function mainRefreshCycle(){
+  boardCache = {};
+  if (window._view === "board") renderPickem2();
+  else if (!window._view || window._view === "home") refreshHome();
+  if (window._view === "tickets") renderTickets();
+  if ($("view-live").classList.contains("on")){ renderLive(); if (window._openGame) openGame(window._openGame.key, window._openGame.eventId, true); }
   if (window._view === "sport" && currentSport !== "all" && currentSport !== "esports") renderBoards();
-}, 30000);
+}
+/* Speed pass (Brandon 2026-11-23): the refresh loop rests while the app
+   is in the background or the screen is off, and only refreshes the tab
+   actually on screen — a big save on low-end phones. Coming back to the
+   app fires one refresh right away so scores are never stale. */
+setInterval(function(){ if (document.hidden) return; mainRefreshCycle(); }, 30000);
+document.addEventListener("visibilitychange", function(){ if (!document.hidden) mainRefreshCycle(); });
 setInterval(function(){
   if (currentSport !== "all" && window._view === "sport" && currentSport !== "esports") renderBoards();
 }, 5*60*1000);
