@@ -4087,7 +4087,7 @@ function openGame(key, eventId, isRefresh){
     } else {
       var perf = [];
       (s.leaders || []).forEach(function(tl){ (tl.leaders||[]).forEach(function(cat){ var L = (cat.leaders||[])[0]; if (L && L.athlete && perf.length<4) perf.push({name:L.athlete.displayName, img:(L.athlete.headshot && L.athlete.headshot.href) || (L.athlete.id ? "https://a.espncdn.com/i/headshots/" + lg.league + "/players/full/" + L.athlete.id + ".png" : ""), stat:(L.displayValue||"") + " " + (cat.shortDisplayName||cat.displayName||"")}); }); });
-      if (perf.length) html += '<div style="font-size:13.5px;margin-top:10px"><b>Top</b> <b style="color:var(--gold)">Performers</b></div>' + perf.map(function(p){ return '<div class="row" data-player="' + esc(p.name) + '" data-league="' + lg.key + '"' + (live ? gcLiveAttrFor(s, p.name, detail) : "") + ' style="justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer;font-size:14.5px"><span style="display:flex;align-items:center;gap:11px;min-width:0">' + (p.img ? '<img src="' + esc(p.img) + '" alt="" onerror="this.remove()" style="width:56px;height:56px;border-radius:50%;object-fit:cover;object-position:top;background:#1a1a22;border:2px solid rgba(245,197,24,.55);flex:0 0 auto">' : '') + '<b>' + esc(p.name) + '</b></span><span style="color:var(--cyan);font-weight:700;font-size:12.5px;white-space:nowrap">' + esc(p.stat) + '</span></div>'; }).join("");
+      if (perf.length) html += '<div id="gameTopPerf"><div style="font-size:13.5px;margin-top:10px"><b>Top</b> <b style="color:var(--gold)">Performers</b></div>' + perf.map(function(p){ return '<div class="row" data-player="' + esc(p.name) + '" data-league="' + lg.key + '"' + (live ? gcLiveAttrFor(s, p.name, detail) : "") + ' style="justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer;font-size:14.5px"><span style="display:flex;align-items:center;gap:11px;min-width:0">' + (p.img ? '<img src="' + esc(p.img) + '" alt="" onerror="this.remove()" style="width:56px;height:56px;border-radius:50%;object-fit:cover;object-position:top;background:#1a1a22;border:2px solid rgba(245,197,24,.55);flex:0 0 auto">' : '') + '<b>' + esc(p.name) + '</b></span><span style="color:var(--cyan);font-weight:700;font-size:12.5px;white-space:nowrap">' + esc(p.stat) + '</span></div>'; }).join("") + '</div>';
       var tstats = (s.boxscore && s.boxscore.statistics) || (s.boxscore && s.boxscore.teams) || [];
       html += '<div data-ai id="gcAi"></div>';
         if (tstats.length===2){
@@ -4178,6 +4178,17 @@ function openGame(key, eventId, isRefresh){
        by play — every team, every game. (NBA's tracker is the court,
        already pinned above Team Stats.) */
     if (gtEl && tsEl && gtEl.parentNode && gtEl.parentNode === tsEl.parentNode) gtEl.parentNode.insertBefore(gtEl, tsEl);
+    /* Brandon 2026-11-23: for FINISHED games the Top Performers section
+       replaces the Live Tracker section (all sports) — it moves into the
+       tracker's slot and the tracker comes out. */
+    if (st.state === "post"){
+      var tpEl2 = $("gameTopPerf");
+      var trkEl2 = $("gameTracker") || $("gcCourt");
+      if (tpEl2){
+        if (trkEl2 && trkEl2.parentNode){ trkEl2.parentNode.insertBefore(tpEl2, trkEl2); trkEl2.remove(); }
+        else if (tsEl && tsEl.parentNode){ tsEl.parentNode.insertBefore(tpEl2, tsEl); }
+      }
+    }
     renderGameProps(lg, s);
     /* Game Center opens instantly at the top — no scrolling. */
   }).catch(function(){ var fe = finFind(key, eventId); $("gameDetail").innerHTML = '<button class="gcBack" type="button">\u2190 All games</button>' + (fe ? finFallbackHtml(fe) : '<div class="card"><p class="err">Couldn\'t load that game\'s details from ESPN.</p></div>'); });
