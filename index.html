@@ -3329,17 +3329,17 @@ function pillRowHtml(kind, groups, sel){
     + groups.map(function(g){ return '<button type="button" class="tab' + (sel === g.key ? " on" : "") + '" data-' + kind + 'pill="' + esc(g.key) + '">' + esc(g.pillLabel) + '</button>'; }).join("")
     + '</div>';
 }
-function sectionGroupsHtml(sel, groups){
+function sectionGroupsHtml(sel, groups, bare){
   var show = sel === "all" ? groups : groups.filter(function(g){ return g.key === sel; });
   if (!show.length) show = groups;
-  return show.map(function(g){ return '<div class="fsport"><span>' + esc(g.headLabel) + '</span><span class="fcount">' + esc(g.countText) + '</span></div>' + g.bodyHtml; }).join("");
+  return show.map(function(g){ return bare ? g.bodyHtml : '<div class="fsport"><span>' + esc(g.headLabel) + '</span><span class="fcount">' + esc(g.countText) + '</span></div>' + g.bodyHtml; }).join("");
 }
 function groupsTotal(groups){ return groups.reduce(function(a, g){ return a + (g.count || 0); }, 0); }
 function futBlockHtml(){
   if (futPill !== "all" && !_futGroups.some(function(g){ return g.key === futPill; })) futPill = "all";
   var total = groupsTotal(_futGroups);
   return '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Future Games</h2><span style="color:#e6dcff;font-weight:700;background:rgba(10,22,44,.80);padding:1px 8px;border-radius:999px">' + total + ' game' + (total===1?"":"s") + '</span></div>'
-    + (total ? pillRowHtml("fut", _futGroups, futPill) + sectionGroupsHtml(futPill, _futGroups) : '<p class="empty">No future games in the next two days.</p>');
+    + (total ? (liveFilter === "all" ? pillRowHtml("fut", _futGroups, futPill) : "") + sectionGroupsHtml(futPill, _futGroups, liveFilter !== "all") : '<p class="empty">No future games in the next two days.</p>');
 }
 function renderFutBlock(){
   var fb = $("futBlock"); if (!fb) return;
@@ -3358,7 +3358,7 @@ function renderFinBlock(){
   if (finPill !== "all" && !_finGroups.some(function(g){ return g.key === finPill; })) finPill = "all";
   var total = groupsTotal(_finGroups);
   var html = total ? '<div class="row" style="justify-content:space-between;align-items:baseline"><h2 class="pop3d">Finished Games</h2><span style="color:#e6dcff;font-weight:700;background:rgba(10,22,44,.80);padding:1px 8px;border-radius:999px">' + total + ' game' + (total===1?"":"s") + '</span></div>'
-    + pillRowHtml("fin", _finGroups, finPill) + sectionGroupsHtml(finPill, _finGroups) : "";
+    + (liveFilter === "all" ? pillRowHtml("fin", _finGroups, finPill) : "") + sectionGroupsHtml(finPill, _finGroups, liveFilter !== "all") : "";
   if (setHtml(lf, html)){
     lf.querySelectorAll("[data-finpill]").forEach(function(b){ b.addEventListener("click", function(){ finPill = b.getAttribute("data-finpill"); renderFinBlock(); }); });
     lf.querySelectorAll("[data-game]").forEach(function(el){ el.addEventListener("click", function(){ var p = el.getAttribute("data-game").split("|"); openGame(p[0], p[1]); }); });
@@ -3413,7 +3413,7 @@ function renderLive(){
     live.forEach(function(g){ var k2 = g.lg.key; if (!lgroups[k2]){ lgroups[k2] = { lg: g.lg, items: [] }; lorder.push(k2); } lgroups[k2].items.push(g); });
     var PRIO_LIVE = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
     lorder.sort(function(a, b){ var ai = PRIO_LIVE.indexOf(a), bi = PRIO_LIVE.indexOf(b); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; });
-    var liveHtml = lorder.map(function(k2){ var gr = lgroups[k2]; return '<div class="fsport"><span>' + esc(gr.lg.key === "tennis" ? "Tennis" : gr.lg.label) + '</span><span class="fcount">' + gr.items.length + ' live</span></div><div class="lvslider' + (gr.items.length === 1 ? ' few1' : '') + '">' + gr.items.map(function(g){ return g.ev._mma ? mmaCard(g.ev) : gameCard(g.lg, g.ev); }).join("") + '</div>'; }).join("");
+    var liveHtml = lorder.map(function(k2){ var gr = lgroups[k2]; return (liveFilter === "all" ? '<div class="fsport"><span>' + esc(gr.lg.key === "tennis" ? "Tennis" : gr.lg.label) + '</span><span class="fcount">' + gr.items.length + ' live</span></div>' : '') + '<div class="lvslider' + (gr.items.length === 1 ? ' few1' : '') + '">' + gr.items.map(function(g){ return g.ev._mma ? mmaCard(g.ev) : gameCard(g.lg, g.ev); }).join("") + '</div>'; }).join("");
     var finAll = finEntriesFor(leagues.map(function(l){ return l.key; }));
     var forder = [], fgroups = {};
     finAll.forEach(function(en){ var k3 = en.lg; if (!fgroups[k3]){ fgroups[k3] = { label: en.label, items: [] }; forder.push(k3); } fgroups[k3].items.push(en); });
