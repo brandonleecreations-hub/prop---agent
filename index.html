@@ -3854,13 +3854,14 @@ function teamStandHtml(lg, grp, tid){
     var sm = {};
     (e.stats || []).forEach(function(x){ sm[x.name] = x.displayValue; });
     var logo = ((t.logos || [])[0] || {}).href || "";
-    return '<tr' + (String(t.id) === String(tid) ? ' class="on"' : '') + '><td>' + (logo ? '<img class="tlogo" src="' + esc(logo) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + esc(t.abbreviation || t.shortDisplayName || t.displayName || "") + '</td>'
+    return '<tr data-tstand-team="' + esc(t.id) + '" data-tstand-name="' + esc(t.displayName || "") + '"' + (String(t.id) === String(tid) ? ' class="on"' : '') + ' style="cursor:pointer"><td>' + (logo ? '<img class="tlogo" src="' + esc(logo) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + esc(t.abbreviation || t.shortDisplayName || t.displayName || "") + '</td>'
       + cols.map(function(c){ return '<td>' + esc(sm[c[0]] != null ? sm[c[0]] : "—") + '</td>'; }).join("") + '</tr>';
   }).join("");
   return '<div class="tgrp">' + esc(grp.name) + ' Standings</div><table class="tstand"><tr><th>TEAM</th>' + cols.map(function(c){ return '<th>' + c[1] + '</th>'; }).join("") + '</tr>' + rows + '</table>';
 }
 function teamStandLoad(lg, tourLg, tid, box){
   if (!box) return;
+  if (!box._standWired){ box._standWired = 1; box.addEventListener("click", function(e){ var tr = e.target && e.target.closest ? e.target.closest("tr[data-tstand-team]") : null; if (!tr) return; var b = $("teamDlgBody"); if (b) b.scrollTop = 0; openTeamRoster(tr.getAttribute("data-tstand-team"), tr.getAttribute("data-tstand-name")); }); }
   var base = ESPN.replace("/site/v2/", "/v2/") + lg.sport + "/" + tourLg + "/standings";
   fetchJson(base).then(function(d){
     var g0 = teamStandFind(teamStandGroups(d), tid); if (!g0) return;
@@ -3899,7 +3900,7 @@ function teamSchedLoad(lg, tourLg, tid, box, curId){
       }
       var on = curId && String(ev.id) === String(curId);
       var logo = ((ot.logos || [])[0] || {}).href || ot.logo || "";
-      return '<div class="tscard' + (on ? " tscard-on" : "") + '"><div class="tscdate">' + esc(dateTxt) + '</div>'
+      return '<div class="tscard' + (on ? " tscard-on" : "") + '"' + (st.state === "post" ? ' data-sched-game="' + esc(ev.id) + '" style="cursor:pointer"' : '') + '><div class="tscdate">' + esc(dateTxt) + '</div>'
         + (logo ? '<img class="tsclogo" src="' + esc(logo) + '" alt="" loading="lazy" onerror="this.remove()">' : '')
         + '<div class="tscopp">' + (me.homeAway === "away" ? "@ " : "vs ") + esc(ot.abbreviation || ot.shortDisplayName || "") + '</div>'
         + res + (on ? '<span class="tscon">THIS GAME</span>' : '') + '</div>';
@@ -3908,11 +3909,13 @@ function teamSchedLoad(lg, tourLg, tid, box, curId){
     box.innerHTML = '<div class="tgrp">Schedule</div><div class="tslider" id="teamSchedSlider">' + cards + '</div>';
     var sl = $("teamSchedSlider"), onEl = sl ? sl.querySelector(".tscard-on") : null;
     if (sl && onEl) sl.scrollLeft = Math.max(0, onEl.offsetLeft - 14);
+    box.querySelectorAll("[data-sched-game]").forEach(function(c){ c.addEventListener("click", function(){ var raw = c.getAttribute("data-sched-game"); var gid = (tourLg !== lg.league) ? tourLg + ":" + raw : raw; var d = $("teamDlg"); if (d && d.open) d.close(); showView("live"); window._gameFrom = "sport"; openGame(lg.key, gid); }); });
   }).catch(function(){});
 }
 function openTeamRoster(teamId, teamName){
   var ctx = window._gcCtx; if (!ctx || !teamId) return;
   var lg = ctx.lg, s = ctx.s;
+  var isCollege = (lg.key === "cfb" || lg.key === "cbb" || lg.key === "wbb");
   var gcLive = false, gcClk = "", gcPre = false;
   try { var comp0 = ((s.header && s.header.competitions) || [])[0] || {}; var gst0 = (comp0.status && comp0.status.type) || {}; gcLive = gst0.state === "in"; gcPre = gst0.state === "pre"; gcClk = gst0.shortDetail || gst0.detail || ""; } catch (e) {}
   var dlg = $("teamDlg"), body = $("teamDlgBody"); if (!dlg || !body) return;
@@ -3936,11 +3939,10 @@ function openTeamRoster(teamId, teamName){
     return '<div class="tcard" data-player="' + esc(p.name) + '" data-league="' + lg.key + '"' + (gcLive ? gcLiveAttrFor(s, p.name, gcClk) : "") + '>' + pic + '<div class="tnm">' + esc(p.name) + '</div>' + (extra ? '<div class="tmeta">' + extra + '</div>' : "") + '</div>';
   };
   var html = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px' + (gcCol ? ';background:linear-gradient(120deg,#' + gcCol + '59,#' + gcCol + '14 65%,transparent);border:1px solid #' + gcCol + '55;border-radius:12px;padding:10px 12px' : '') + '"><div style="font-size:19px;font-weight:900">' + esc(teamName || "Team") + '</div><button type="button" class="ghostbtn" id="teamDlgClose">\u2715 CLOSE</button></div>';
-  html += '<div id="teamPills"></div>';
-  if (starters.length) html += '<div class="tgrp">Starters <span class="note">\u2014 this game</span></div><div class="tslider" data-tmslider="1">' + starters.map(function(p){ return card(p); }).join("") + '</div>';
-  else if (gcPre) html += '<p class="note" style="margin-top:12px">Starters post once the game is underway.</p>';
+  if (!isCollege && starters.length) html += '<div class="tgrp">Starters <span class="note">\u2014 this game</span></div><div class="tslider" data-tmslider="1">' + starters.map(function(p){ return card(p); }).join("") + '</div>';
+  else if (!isCollege && gcPre) html += '<p class="note" style="margin-top:12px">Starters post once the game is underway.</p>';
   html += '<div id="teamStandBox"></div><div id="teamSchedBox"></div>';
-  html += '<div class="tgrp">Full Roster</div><div id="teamRosterList"><p class="empty">Loading roster\u2026</p></div>';
+  html += '<div class="tgrp">Full Roster</div><div id="teamPills"></div><div id="teamRosterList"><p class="empty">Loading roster\u2026</p></div>';
   body.innerHTML = html;
   var cb = $("teamDlgClose"); if (cb) cb.addEventListener("click", function(){ dlg.close(); });
   if (!body._selWired){ body._selWired = 1; body.addEventListener("click", function(e){ var c = e.target && e.target.closest ? e.target.closest(".tcard") : null; if (!c) return; body.querySelectorAll(".tcard.tsel").forEach(function(x){ x.classList.remove("tsel"); }); c.classList.add("tsel"); }); }
