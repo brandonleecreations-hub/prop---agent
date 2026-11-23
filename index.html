@@ -860,7 +860,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #teamDlgBody::-webkit-scrollbar{display:none}
 .tslider{display:flex;gap:9px;overflow-x:auto;scroll-snap-type:x mandatory;padding:12px 4px 14px;scrollbar-width:none;-webkit-overflow-scrolling:touch;min-width:0}
 .tslider::-webkit-scrollbar{display:none}
-.tcard{flex:0 0 auto;width:102px;scroll-snap-align:center;background:linear-gradient(165deg,#1d1440,#120b28);border:1.5px solid #4c4470;border-radius:14px;padding:10px 6px 8px;text-align:center;cursor:pointer;transform:scale(.94);opacity:.82;transition:transform .25s,opacity .25s,box-shadow .25s,border-color .25s;box-shadow:0 8px 18px rgba(0,0,0,.5)}
+.tstand{width:100%;border-collapse:collapse;font-size:12.5px;margin:2px 0 6px}.tstand th{color:#9a9aad;font-size:10.5px;letter-spacing:.6px;text-align:right;padding:3px 4px;font-weight:800}.tstand th:first-child{text-align:left}.tstand td{padding:4px;border-top:1px solid var(--line);text-align:right;font-weight:700;white-space:nowrap}.tstand td:first-child{text-align:left}.tstand tr.on td{background:rgba(245,185,66,.14)}.tstand .tlogo{width:20px;height:20px;object-fit:contain;vertical-align:-6px;margin-right:6px}.tscard{flex:0 0 auto;width:92px;scroll-snap-align:center;background:linear-gradient(165deg,#1d1440,#120b28);border:1.5px solid #4c4470;border-radius:14px;padding:8px 5px 7px;text-align:center;transform:scale(.96);opacity:.88}.tscdate{font-size:9.5px;color:#9a9aad;font-weight:800;letter-spacing:.4px;white-space:nowrap}.tsclogo{width:34px;height:34px;object-fit:contain;margin:3px auto 1px;display:block}.tscopp{font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden}.tscres{font-size:11px;font-weight:900;margin-top:1px;white-space:nowrap}.tscard-on{border-color:var(--gold);opacity:1;transform:scale(1.06);box-shadow:0 6px 0 rgba(0,0,0,.45),0 0 0 2px var(--gold),0 12px 24px rgba(0,0,0,.5);z-index:1}.tscon{display:inline-block;margin-top:3px;font-size:8.5px;font-weight:900;letter-spacing:.8px;color:#120b28;background:var(--gold);border-radius:99px;padding:1px 6px}.tcard{flex:0 0 auto;width:102px;scroll-snap-align:center;background:linear-gradient(165deg,#1d1440,#120b28);border:1.5px solid #4c4470;border-radius:14px;padding:10px 6px 8px;text-align:center;cursor:pointer;transform:scale(.94);opacity:.82;transition:transform .25s,opacity .25s,box-shadow .25s,border-color .25s;box-shadow:0 8px 18px rgba(0,0,0,.5)}
 .tslider .tcard.uppop{transform:scale(1);opacity:1;box-shadow:0 18px 34px rgba(0,0,0,.55),0 0 0 2px rgba(167,139,250,.6),0 0 22px rgba(124,58,237,.35),0 0 18px rgba(196,168,255,.55),0 0 6px rgba(196,168,255,.45)}
 .tslider .tcard.tsel{border-color:var(--gold);transform:scale(1.05);opacity:1;box-shadow:0 0 0 2px var(--gold),0 0 26px rgba(245,197,24,.7),0 18px 34px rgba(0,0,0,.55)}
 .tcard img{width:54px;height:54px;border-radius:50%;object-fit:cover;background:#241a4a}
@@ -3808,6 +3808,99 @@ function gcLiveAttrFor(s, nm, clk){
     return ' data-live="' + esc(JSON.stringify({ stats: lo, clk: clk || "", opp: oppNm })) + '"';
   } catch (e) { return ""; }
 }
+/* Team popup extras (Brandon 2026-11-23): the team's DIVISION standings
+   and its full schedule as a swipe slider, above the roster — for every
+   sport/team ESPN carries them for; sports without them just skip the
+   section. The game you're on pops 3D gold in the schedule slider. */
+function teamStandGroups(d){
+  var out = [];
+  (function walk(g){
+    if (!g) return;
+    var es = (g.standings || {}).entries;
+    if (es && es.length) out.push({ id: g.id, name: g.name || "", entries: es });
+    (g.children || []).forEach(walk);
+  })(d);
+  return out;
+}
+function teamStandFind(groups, tid){
+  var best = null;
+  groups.forEach(function(g){
+    var has = g.entries.some(function(e){ return String((e.team || {}).id) === String(tid); });
+    if (has && (!best || g.entries.length < best.entries.length)) best = g;
+  });
+  return best;
+}
+function teamStandCols(lg){
+  if (lg.sport === "hockey") return [["wins", "W"], ["losses", "L"], ["otLosses", "OT"], ["points", "PTS"]];
+  if (lg.sport === "soccer") return [["wins", "W"], ["ties", "D"], ["losses", "L"], ["pointDifferential", "GD"], ["points", "PTS"]];
+  if (lg.sport === "basketball" || lg.sport === "baseball") return [["wins", "W"], ["losses", "L"], ["winPercent", "PCT"], ["gamesBehind", "GB"]];
+  return [["wins", "W"], ["losses", "L"], ["ties", "T"], ["winPercent", "PCT"]];
+}
+function teamStandHtml(lg, grp, tid){
+  var cols = teamStandCols(lg).filter(function(c){
+    return grp.entries.some(function(e){ return (e.stats || []).some(function(x){ return x.name === c[0]; }); });
+  });
+  var rows = grp.entries.map(function(e){
+    var t = e.team || {};
+    var sm = {};
+    (e.stats || []).forEach(function(x){ sm[x.name] = x.displayValue; });
+    var logo = ((t.logos || [])[0] || {}).href || "";
+    return '<tr' + (String(t.id) === String(tid) ? ' class="on"' : '') + '><td>' + (logo ? '<img class="tlogo" src="' + esc(logo) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + esc(t.abbreviation || t.shortDisplayName || t.displayName || "") + '</td>'
+      + cols.map(function(c){ return '<td>' + esc(sm[c[0]] != null ? sm[c[0]] : "—") + '</td>'; }).join("") + '</tr>';
+  }).join("");
+  return '<div class="tgrp">' + esc(grp.name) + ' Standings</div><table class="tstand"><tr><th>TEAM</th>' + cols.map(function(c){ return '<th>' + c[1] + '</th>'; }).join("") + '</tr>' + rows + '</table>';
+}
+function teamStandLoad(lg, tourLg, tid, box){
+  if (!box) return;
+  var base = ESPN.replace("/site/v2/", "/v2/") + lg.sport + "/" + tourLg + "/standings";
+  fetchJson(base).then(function(d){
+    var g0 = teamStandFind(teamStandGroups(d), tid); if (!g0) return;
+    var render = function(grp){ box.innerHTML = teamStandHtml(lg, grp, tid); };
+    if (g0.id == null) { render(g0); return; }
+    fetchJson(base + "?group=" + encodeURIComponent(g0.id)).then(function(d2){
+      var g1 = teamStandFind(teamStandGroups(d2), tid);
+      render(g1 || g0);
+    }).catch(function(){ render(g0); });
+  }).catch(function(){});
+}
+function teamSchedLoad(lg, tourLg, tid, box, curId){
+  if (!box) return;
+  fetchJson(ESPN + lg.sport + "/" + tourLg + "/teams/" + tid + "/schedule").then(function(d){
+    var evs = (d && d.events) || [];
+    if (!evs.length) return;
+    var cards = evs.map(function(ev){
+      var comp = (ev.competitions || [])[0] || {};
+      var cs = comp.competitors || [];
+      var me = null, opp = null;
+      cs.forEach(function(c){ if (String((c.team || {}).id) === String(tid)) me = c; else opp = c; });
+      if (!me || !opp) return "";
+      var ot = opp.team || {};
+      var st = ((comp.status || {}).type || {});
+      var dt = new Date(ev.date);
+      var dateTxt = dt.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+      var res;
+      if (st.state === "post") {
+        var ms = (me.score || {}).displayValue, os = (opp.score || {}).displayValue;
+        var wl = me.winner ? "W" : (opp.winner ? "L" : "T");
+        res = '<div class="tscres" style="color:' + (wl === "W" ? "#4fe3c1" : (wl === "L" ? "#ff6b7a" : "#9a9aad")) + '">' + wl + " " + esc(ms != null ? ms : "") + "–" + esc(os != null ? os : "") + '</div>';
+      } else if (st.state === "in") {
+        res = '<div class="tscres" style="color:#ff5266">LIVE ' + esc((me.score || {}).displayValue || "") + "–" + esc((opp.score || {}).displayValue || "") + '</div>';
+      } else {
+        res = '<div class="tscres" style="color:#cdbcf5">' + esc(dt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })) + '</div>';
+      }
+      var on = curId && String(ev.id) === String(curId);
+      var logo = ((ot.logos || [])[0] || {}).href || ot.logo || "";
+      return '<div class="tscard' + (on ? " tscard-on" : "") + '"><div class="tscdate">' + esc(dateTxt) + '</div>'
+        + (logo ? '<img class="tsclogo" src="' + esc(logo) + '" alt="" loading="lazy" onerror="this.remove()">' : '')
+        + '<div class="tscopp">' + (me.homeAway === "away" ? "@ " : "vs ") + esc(ot.abbreviation || ot.shortDisplayName || "") + '</div>'
+        + res + (on ? '<span class="tscon">THIS GAME</span>' : '') + '</div>';
+    }).join("");
+    if (!cards) return;
+    box.innerHTML = '<div class="tgrp">Schedule</div><div class="tslider" id="teamSchedSlider">' + cards + '</div>';
+    var sl = $("teamSchedSlider"), onEl = sl ? sl.querySelector(".tscard-on") : null;
+    if (sl && onEl) sl.scrollLeft = Math.max(0, onEl.offsetLeft - 14);
+  }).catch(function(){});
+}
 function openTeamRoster(teamId, teamName){
   var ctx = window._gcCtx; if (!ctx || !teamId) return;
   var lg = ctx.lg, s = ctx.s;
@@ -3837,6 +3930,7 @@ function openTeamRoster(teamId, teamName){
   html += '<div id="teamPills"></div>';
   if (starters.length) html += '<div class="tgrp">Starters <span class="note">\u2014 this game</span></div><div class="tslider" data-tmslider="1">' + starters.map(function(p){ return card(p); }).join("") + '</div>';
   else if (gcPre) html += '<p class="note" style="margin-top:12px">Starters post once the game is underway.</p>';
+  html += '<div id="teamStandBox"></div><div id="teamSchedBox"></div>';
   html += '<div class="tgrp">Full Roster</div><div id="teamRosterList"><p class="empty">Loading roster\u2026</p></div>';
   body.innerHTML = html;
   var cb = $("teamDlgClose"); if (cb) cb.addEventListener("click", function(){ dlg.close(); });
@@ -3845,6 +3939,8 @@ function openTeamRoster(teamId, teamName){
   bindTiles(body);
   if (!dlg._wired){ dlg._wired = 1; dlg.addEventListener("click", function(e){ if (e.target === dlg) dlg.close(); }); }
   if (!dlg.open) dlg.showModal();
+  teamStandLoad(lg, ctx.tourLg, tid, $("teamStandBox"));
+  teamSchedLoad(lg, ctx.tourLg, tid, $("teamSchedBox"), String(((s.header || {}).id) || ((window._openGame || {}).eventId) || "").split(":").pop());
   fetchJson(ESPN + lg.sport + "/" + ctx.tourLg + "/teams/" + tid + "/roster").then(function(r){
     var list = $("teamRosterList"); if (!list || !dlg.open) return;
     var groups = [], gmap = {};
