@@ -6694,7 +6694,9 @@ function espEnsureAttr(){
 }
 function espTick(){
   espEnsure();
-  if (espOpen && Date.now() - espOpen.at > (espOpen.game === "lol" ? 60000 : 45000)) espLoadMatch(true);
+  var due = espOpen.game === "lol" ? 60000 : 45000;
+  if (espOpen.game === "cs2"){ var od = espCache["cs2:" + espOpen.slug]; if (od && od.state === "in") due = 20000; }
+  if (espOpen && Date.now() - espOpen.at > due) espLoadMatch(true);
 }
 /* ---------- attribution: Parlay rows -> bo3 matches ---------- */
 function espRosterIndex(){

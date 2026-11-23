@@ -1160,7 +1160,7 @@ async function bo3GameStats(gameId, live) {
   // Live and final stats use SEPARATE cache keys: a mid-map partial fetched
   // on the live lane must never be served as the map's FINAL line by the
   // final lane's 30-min TTL once the map ends (Brandon 2026-11-20 audit).
-  return espCached(live ? "esp_gl_" + gameId : "esp_g_" + gameId, live ? 30000 : 30 * 60 * 1000, 24 * 3600 * 1000, async () => {
+  return espCached(live ? "esp_gl_" + gameId : "esp_g_" + gameId, live ? 12000 : 30 * 60 * 1000, 24 * 3600 * 1000, async () => {
     const d = await espGet(BO3_API + "/games/" + gameId + "/players_stats");
     const rows = Array.isArray(d) ? d : (d && Array.isArray(d.results) ? d.results : null);
     if (!rows || !rows.length) return null;
