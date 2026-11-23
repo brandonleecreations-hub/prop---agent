@@ -8697,7 +8697,7 @@ function showView(name){
   if (window._view !== name){
     if (name === "players"){ pfSport = "nba"; pfTeamSel = null; }
     else if (name === "sport"){ boardGame = "all"; boardStat = "all"; if (currentSport === "esports") espPillSel = {}; }
-    else if (name === "live"){ liveFilter = "all"; finPill = "all"; futPill = "all"; document.querySelectorAll("#liveTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-lsport") === "all"); }); }
+    else if (name === "live"){ /* Brandon 2026-11-23: the Live tab KEEPS the sport you picked (header pills link here) instead of resetting to All Sports. */ document.querySelectorAll("#liveTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-lsport") === liveFilter); }); }
     else if (name === "home"){ var stp = $("sportTabs"); if (stp){ stp.scrollLeft = 0; stp.querySelectorAll(".tab").forEach(function(t, i){ t.classList.toggle("on", i === 0); }); } }
   }
   document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("on"); });
@@ -8736,6 +8736,18 @@ function setSport(key){
   else if (key === "esports"){ espHomeMove(); renderBoards(); }
   else renderHomeSport();
   if (key !== "all") document.querySelectorAll("#sportTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-sport")===key); });
+}
+/* Header sport pills link to the matching LIVE CENTER sport page
+   (Brandon 2026-11-23): tapping NBA / NFL / College / etc. up top
+   opens the Live view filtered to that same sport, so the page
+   looks exactly like the Live page for that sport. Esports keeps
+   its Home board — the Live Center splits it into CS2 / LoL pills. */
+function goLiveSport(key){
+  if (sportHidden(key)) key = "all";
+  liveFilter = key; finPill = "all"; futPill = "all";
+  document.querySelectorAll("#liveTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-lsport") === key); });
+  document.querySelectorAll("#sportTabs .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-sport") === key); });
+  showView("live");
 }
 function homeSportChrome(){
   var all = !window._homeSport || window._homeSport === "all";
@@ -8789,7 +8801,7 @@ function renderHomeSport(){
   LEAGUES.slice(1).filter(function(l){ return !sportHidden(l.key); }).forEach(function(l){
     var b = document.createElement("button");
     b.className = "tab"; b.textContent = l.label; b.setAttribute("data-sport", l.key);
-    b.addEventListener("click", function(){ setSport(l.key); });
+    b.addEventListener("click", function(){ if (l.key === "esports") setSport(l.key); else goLiveSport(l.key); });
     wrap.appendChild(b);
   });
 })();
