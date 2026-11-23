@@ -5354,7 +5354,6 @@ function renderPacks(){
     
     + '<button class="openbtn" data-buypack="1"' + (coinsGet() >= CLASH_PACK_COST ? '' : ' disabled') + '>🪙 Buy a Pack · ' + CLASH_PACK_COST + ' Coins</button>'
     + '</div>'
-    + '<div class="note" style="margin-top:10px">🏆 Win a 4-leg ticket → <b>15 Clash Coins</b> · 5 legs → <b>1 pack</b> · 6 legs → <b>2 packs</b></div>'
     + '<div class="freehdr"><span><span class="bigchev">' + (fpOpen ? "\u25BC" : "\u25B6") + '</span>\uD83C\uDF81 DAILY FREE PACK' + (!fpOpen && freeWaiting ? ' <span class="freeready">READY</span>' : '') + '</span><button type="button" class="csbtn" data-freepacktoggle="1">' + (fpOpen ? '\u25BE HIDE' : '\u25B8 SHOW') + '</button></div>'
     + (fpOpen ? (freeWaiting ? '<div class="freestrip"><span class="freelab">1 waits max \u2014 open it daily, they don\'t stack.</span><button class="freeopen" data-openfreepack="1">\uD83C\uDF81 Free pack \u2014 OPEN</button></div>' : '<div class="freestrip"><span class="freelab">1 waits max \u2014 open it daily, they don\'t stack.</span><span class="freedone">\u2713 Opened \u2014 next one tomorrow</span></div>') : '')
     + '</div>';
