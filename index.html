@@ -165,7 +165,7 @@ input[type=number]{width:110px}
 .espgrp{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 0;font-weight:900;font-size:14.5px;cursor:pointer}
 .espteams{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
 .espteam{display:flex;align-items:center;gap:2px;min-width:0;font-size:14.5px}
-.espscore{font-size:24px;font-weight:900;color:var(--gold);white-space:nowrap}
+.espscore{font-size:24px;font-weight:900;color:var(--gold);white-space:nowrap}.espmapscores{display:flex;flex-wrap:wrap;gap:3px 14px;justify-content:center;margin-top:7px;font-size:11px;color:#9a9aad;font-weight:700}.espmapscores b{color:#e8e4f5;font-weight:900}
 .espsb{position:relative;border:1px solid rgba(139,92,246,.55);background:linear-gradient(165deg,#1d1140,#100826 60%,#0b0618);border-radius:14px;padding:10px 12px;margin:0 0 10px;box-shadow:0 16px 32px rgba(0,0,0,.5),0 0 18px rgba(124,58,237,.28),inset 0 1px 0 rgba(255,255,255,.09);overflow:hidden}
 .espsb::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.07) 45%,transparent 60%);pointer-events:none}
 .espsbhd{display:flex;justify-content:space-between;align-items:center;font-weight:900;letter-spacing:1px;font-size:13px;margin-bottom:8px}
@@ -7318,7 +7318,8 @@ function espScoreHeadHtml(d){
   var sub = d.game === "cs2" ? (d.tournament || "Counter-Strike 2") : (d.league || "League of Legends");
   var teamRow = function(tm){ return '<div class="espteam">' + espTeamLogo(tm, 30) + '<b>' + esc(tm.name || "") + '</b></div>'; };
   return '<div class="card" style="margin-bottom:10px"><div class="row" style="justify-content:space-between"><span class="note" style="text-transform:uppercase;letter-spacing:1px">' + esc(sub) + (d.bo ? ' · BEST OF ' + d.bo : '') + '</span>' + chip + '</div>'
-    + '<div class="espteams">' + teamRow(t[0] || {}) + '<div class="espscore">' + (s1 != null ? s1 : 0) + ' – ' + (s2 != null ? s2 : 0) + '</div>' + teamRow(t[1] || {}) + '</div></div>';
+    + '<div class="espteams">' + teamRow(t[0] || {}) + '<div class="espscore">' + (s1 != null ? s1 : 0) + ' – ' + (s2 != null ? s2 : 0) + '</div>' + teamRow(t[1] || {}) + '</div>'
+    + ((d.game === "cs2" && (d.maps || []).length) ? '<div class="espmapscores">' + (d.maps || []).map(function(m){ var sc = (m.s1 != null && m.s2 != null) ? m.s1 + "–" + m.s2 : ((d.liveMap === m.n && d.state === "in") ? (espTallyScore(m, d) || "–") : "–"); return '<span>' + esc(m.name || ("Map " + m.n)) + ' <b>' + sc + '</b></span>'; }).join("") + '</div>' : '') + '</div>';
 }
 /* ----- CS2 scoreboard (bo3 layout: map strip, live rounds, K/A/D/ADR) ----- */
 function espTallyScore(m, d){
@@ -7353,14 +7354,8 @@ function espCs2SbHtml(d){
   /* Map tabs (Brandon 2026-11-23): the board opens on SERIES TOTALS —
      every map's posted stats combined — and tapping a map chip shows
      that single map's board instead. */
-  var sel = window._espMapSel;
-  if (sel !== "tot" && !maps.some(function(m){ return m.n === sel; })) sel = "tot";
-  var strip = '<button type="button" class="espmapchip' + (sel === "tot" ? " on" : "") + '" data-espmap="tot">TOTAL</button>' + maps.map(function(m){
-    var live = d.liveMap === m.n && d.state === "in";
-    var sc = (m.s1 != null && m.s2 != null) ? m.s1 + "–" + m.s2 : (live ? (espTallyScore(m, d) || "—") : "—");
-    return '<button type="button" class="espmapchip' + (m.n === sel ? " on" : "") + '" data-espmap="' + m.n + '">MAP ' + m.n + ' \u00B7 ' + esc(m.name || "") + ' \u00B7 <b>' + sc + '</b>' + (live ? ' \u00B7 \uD83D\uDD34' : '') + '</button>';
-  }).join("");
-  var h = '<div class="espsb"><div class="espsbhd"><span>🗺️ SCOREBOARD</span><span class="note">' + (d.state === "in" ? "LIVE" : (d.state === "post" ? "FINAL" : "UPCOMING")) + '</span></div><div class="espmaps">' + strip + '</div>';
+  var sel = "tot"; // Map pills removed (Brandon 2026-11-23): match totals only.
+  var h = '<div class="espsb"><div class="espsbhd"><span>🗺️ SCOREBOARD</span><span class="note">' + (d.state === "in" ? "LIVE" : (d.state === "post" ? "FINAL" : "UPCOMING")) + '</span></div>';
   if (d.state === "in" && liveM) {
     h += '<div class="esplive"><span>🔴 MAP ' + liveM.n + ' · ' + esc(liveM.name || "") + '</span><b>' + (espTallyScore(liveM, d) || "—") + '</b>' + ((liveM.roundsPlayed) ? '<span class="note">ROUND ' + (liveM.roundsPlayed + 1) + '</span>' : '') + '</div>';
     if ((liveM.rounds || []).length) {
