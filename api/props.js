@@ -1134,7 +1134,8 @@ function bo3DetailNorm(d) {
     }
     return { n: g.number || 0, gameId: g.id, name: bo3MapName(g.map_name), state: g.state || "", status: g.status || "", s1, s2, winner, rounds: g.rounds_count || 0, begin: g.begin_at || "" };
   });
-  return { game: "cs2", id: d.id, slug: d.slug, starts: d.start_date || "", ends: d.end_date || "", state, status: d.status || "", parsed: d.parsed_status || "", bo: d.bo_type || 0, tournament: (d.tournament && d.tournament.name) || "", tier: d.tier || "", teams: [t1, t2], score: [d.team1_score || 0, d.team2_score || 0], maps };
+  const streams = (Array.isArray(d.streams) ? d.streams : []).filter((x) => x && x.raw_url).sort((x, y) => (y.official ? 1 : 0) - (x.official ? 1 : 0)).slice(0, 3).map((x) => ({ raw: x.raw_url, name: x.name || "", lang: x.language || "", official: !!x.official }));
+  return { game: "cs2", id: d.id, slug: d.slug, starts: d.start_date || "", ends: d.end_date || "", state, status: d.status || "", parsed: d.parsed_status || "", bo: d.bo_type || 0, tournament: (d.tournament && d.tournament.name) || "", tier: d.tier || "", teams: [t1, t2], score: [d.team1_score || 0, d.team2_score || 0], maps, streams };
 }
 async function bo3Detail(slug) {
   const key = "esp_m_" + slug;
