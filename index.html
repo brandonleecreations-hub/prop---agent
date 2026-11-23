@@ -1760,7 +1760,7 @@ var LEAGUES = [
   {key:"soccer",label:"Soccer",            sport:"soccer",      league:"eng.1",            cats:[]},
   {key:"mma",   label:"UFC / MMA",         sport:"mma",         league:"ufc",              cats:[]},
   {key:"mlb",   label:"MLB",               sport:"baseball",    league:"mlb",              cats:[]},
-  {key:"esports",label:"Esports",           sport:"esports",     league:"esports",          cats:[]}
+  {key:"esports",label:"CS2",           sport:"esports",     league:"esports",          cats:[]}
 ];
 /* Soccer leagues (Brandon 2026-11-22): one Soccer tab/pill, organized
    BY LEAGUE inside it. Each league is its own entry so scoreboard
@@ -3439,13 +3439,13 @@ function renderLive(){
     var PRIO_FIN = ["nfl","nba","nhl","cfb","cbb","wbb","mlb","tennis"];
     forder.sort(function(a, b){ var ai = PRIO_FIN.indexOf(a), bi = PRIO_FIN.indexOf(b); ai = ai < 0 ? 99 : ai; bi = bi < 0 ? 99 : bi; return ai - bi; });
     var finGroups = forder.map(function(k3){ var gr = fgroups[k3]; var flabel = k3 === "tennis" ? "Tennis" : gr.label; return { key: k3, pillLabel: flabel, headLabel: flabel, count: gr.items.length, countText: gr.items.length + ' final' + (gr.items.length===1?"":"s"), bodyHtml: '<div class="finslider">' + gr.items.map(function(en){ return finCardHtml(en); }).join("") + '</div>' }; });
-    var espGame = (liveFilter === "cs2" || liveFilter === "lol") ? liveFilter : null;
+    var espGame = liveFilter === "cs2" ? liveFilter : null;
     /* Esports placement (Brandon 2026-11-20 14:42): dedicated sections
        hold LIVE matches only; upcoming CS2/LoL groups ride the shared
        Future Games block and finished CS2/LoL groups the shared
        Finished Games block below. A CS2/LoL pill narrows all three
        blocks to that game, exactly like a regular sport filter. */
-    var espGames = liveFilter === "all" ? ["cs2", "lol"] : (espGame ? [espGame] : []);
+    var espGames = liveFilter === "all" ? ["cs2"] : (espGame ? [espGame] : []);
     var espLiveHtml = espGames.map(function(g){ return espLiveSectionHtml(g, g === "cs2" ? "CS2" : "LoL"); }).join("");
     var espFut = espFutGroupsHtml(espGames);
     var espFin = espFinGroupsHtml(espGames);
@@ -4391,7 +4391,7 @@ function renderBuildSportPills(){
   if (!keys.length){ setHtml(el, ""); return; }
   var h = '<button type="button" class="tab' + (buildSport === "all" ? " on" : "") + '" data-bsport="all">All sports</button>';
   h += keys.map(function(k){
-    var lab = k === "esports" ? "Esports" : (buildSportLabels[k] || String(k).toUpperCase());
+    var lab = k === "esports" ? "CS2" : (buildSportLabels[k] || String(k).toUpperCase());
     return '<button type="button" class="tab' + (buildSport === k ? " on" : "") + '" data-bsport="' + esc(k) + '">' + esc(lab) + '</button>';
   }).join("");
   if (setHtml(el, h)){
@@ -6982,11 +6982,11 @@ function espRepaintBoard(){
    props area governed by pill tabs: match pills, then team pills, then
    the selected team's props in a 3D-pop slider. */
 function espBoardHtml(groups){
-  if (!espSched && !groups.length) return '<p class="empty">Loading the esports schedule\u2026</p>';
-  var GAMES = [["cs2", "Counter-Strike 2"], ["lol", "League of Legends"]];
+  if (!espSched && !groups.length) return '<p class="empty">Loading the CS2 schedule\u2026</p>';
+  var GAMES = [["cs2", "Counter-Strike 2"]];
   var STATES = [["live", "in", "\uD83D\uDD34 Live"], ["upcoming", "pre", "Upcoming"], ["finished", "post", "\uD83C\uDFC1 Finished"]];
   var h = "";
-  if (window._espBoardOnly) h += '<div style="margin:0 0 8px"><button type="button" class="espmapchip on" id="espOnlyChip">Showing ' + (window._espBoardOnly === "cs2" ? "Counter-Strike 2" : "League of Legends") + ' only \u2014 tap for all esports \u2715</button></div>';
+  if (window._espBoardOnly) h += '<div style="margin:0 0 8px"><button type="button" class="espmapchip on" id="espOnlyChip">Showing ' + (window._espBoardOnly === "cs2" ? "Counter-Strike 2" : "League of Legends") + ' only \u2014 tap for all CS2 \u2715</button></div>';
   GAMES.forEach(function(gd){
     var g = gd[0];
     if (window._espBoardOnly && g !== window._espBoardOnly) return;
@@ -7054,7 +7054,7 @@ function espBuildMatchesHtml(){
      organized like the Esports tab (game, then Live -> Upcoming ->
      Finished sliders) — never a dead empty view (Brandon 2026-11-20). */
   var h = "";
-  [["cs2", "Counter-Strike 2"], ["lol", "League of Legends"]].forEach(function(gd){
+  [["cs2", "Counter-Strike 2"]].forEach(function(gd){
     var g = gd[0], any = false, s = '<div class="espb-game">' + gd[1] + "</div>";
     [["live", "\uD83D\uDD34 Live"], ["upcoming", "Upcoming"], ["finished", "\uD83C\uDFC1 Finished"]].forEach(function(sd){
       var items = espSched && espSched[g] ? (espSched[g][sd[0]] || []) : [];
@@ -7086,7 +7086,7 @@ function renderBuildEsp(){
     espAttachProps(ps);
     var rows = ps.filter(function(p){ return espFreshRow(p) && p.espState !== "in" && p.espState !== "post"; });
     buildEspPresent = !!rows.length;
-    var h = '<div class="teamhead sporthead">\uD83C\uDFAE Esports<span style="margin-left:auto;font-size:11px;color:#cdbcf5;font-weight:800;letter-spacing:.6px">SWIPE \u203a</span></div>';
+    var h = '<div class="teamhead sporthead">\uD83C\uDFAE CS2<span style="margin-left:auto;font-size:11px;color:#cdbcf5;font-weight:800;letter-spacing:.6px">SWIPE \u203a</span></div>';
     if (rows.length) {
       var groups = espMatchGroups(rows);
       h += espBuildMatchHtml("cs2", "Counter-Strike 2", groups);
@@ -7200,7 +7200,7 @@ function openEspGame(ref){
   window._liveScrollY = window.scrollY || 0;
   ["liveCenter", "liveTabs", "liveStatus", "liveFinished", "espFinished"].forEach(function(id){ var el = $(id); if (el) el.style.display = "none"; });
   var gd = $("espGameDetail");
-  if (gd) gd.innerHTML = '<button class="gcBack" type="button">← All games</button><div class="card"><p class="empty">Loading Esports Game Center…</p></div>';
+  if (gd) gd.innerHTML = '<button class="gcBack" type="button">← All games</button><div class="card"><p class="empty">Loading Game Center…</p></div>';
   window.scrollTo(0, 0);
   espEnsure();
   espLoadMatch(false);
