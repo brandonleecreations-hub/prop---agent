@@ -7276,7 +7276,28 @@ function espSyncStream(d){
   if (!emb){ w.innerHTML = ""; return; }
   w.innerHTML = '<div class="card" style="margin-bottom:10px"><div class="row" style="justify-content:space-between;align-items:center"><span style="font-weight:900">📺 WATCH LIVE</span><a href="' + emb.open + '" target="_blank" rel="noopener" style="color:#c9a7ff;font-weight:800;font-size:12px">Open in ' + emb.label + ' ↗</a></div>'
     + '<div style="position:relative;padding-top:56.25%;margin-top:8px;border-radius:10px;overflow:hidden;background:#000"><iframe src="' + emb.src + '" style="position:absolute;left:0;top:0;width:100%;height:100%;border:0" allowfullscreen title="Live stream"></iframe></div>'
-    + '<p class="note" style="margin-top:6px">This match\u2019s official stream \u2014 plays automatically, tap the speaker in the player for sound.</p></div>';
+    + '<button class="espSndBtn" type="button" data-on="0" style="width:100%;margin-top:8px;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:#fff;font-weight:900;font-size:14px">🔊 Tap for sound</button>'
+    + '<p class="note" style="margin-top:6px">This match\u2019s official stream \u2014 plays automatically, sound is one tap.</p></div>';
+  var sb = w.querySelector(".espSndBtn");
+  if (sb) sb.addEventListener("click", function(){ espStreamSound(sb); });
+}
+/* The embedded players (Kick especially on phones) hide their own unmute
+   control, so the app provides one: reloads the player unmuted on the
+   tap (a user gesture, so sound is allowed). Brandon 2026-11-23. */
+function espStreamSound(btn){
+  var w = $("espStreamWrap"); if (!w || !btn) return;
+  var f = w.querySelector("iframe"); if (!f) return;
+  var on = btn.getAttribute("data-on") === "1";
+  var src = f.src;
+  if (!on){
+    src = src.replace("muted=true", "muted=false").replace("mute=1", "mute=0");
+    if (src.indexOf("muted=") < 0 && src.indexOf("player.kick.com") >= 0) src += (src.indexOf("?") >= 0 ? "&" : "?") + "muted=false";
+    btn.setAttribute("data-on", "1"); btn.textContent = "🔇 Mute";
+  } else {
+    src = src.replace("muted=false", "muted=true").replace("mute=0", "mute=1");
+    btn.setAttribute("data-on", "0"); btn.textContent = "🔊 Tap for sound";
+  }
+  f.src = src;
 }
 function espScoreHeadHtml(d){
   var t = d.teams || [];
