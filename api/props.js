@@ -1178,7 +1178,7 @@ async function bo3GameRounds(gameId) {
   const rounds = Array.isArray(d.game_rounds) ? d.game_rounds : [];
   const tally = {};
   rounds.forEach((r) => { if (r.winner_clan_name) tally[r.winner_clan_name] = (tally[r.winner_clan_name] || 0) + 1; });
-  return { roundsPlayed: rounds.length, tally, wClan: (d.winner_team_clan && d.winner_team_clan.clan_name) || "", wId: (d.winner_team_clan && d.winner_team_clan.team_id) || 0, lClan: (d.loser_team_clan && d.loser_team_clan.clan_name) || "", lId: (d.loser_team_clan && d.loser_team_clan.team_id) || 0 };
+  return { roundsPlayed: rounds.length, tally, rounds: rounds.map((r) => r.winner_clan_name || ""), wClan: (d.winner_team_clan && d.winner_team_clan.clan_name) || "", wId: (d.winner_team_clan && d.winner_team_clan.team_id) || 0, lClan: (d.loser_team_clan && d.loser_team_clan.clan_name) || "", lId: (d.loser_team_clan && d.loser_team_clan.team_id) || 0 };
 }
 async function espCs2Match(slug) {
   const det = await bo3Detail(slug);
@@ -1195,7 +1195,7 @@ async function espCs2Match(slug) {
     if (cur) {
       det.liveMap = cur.n;
       const rd = await bo3GameRounds(cur.gameId).catch(() => null);
-      if (rd && rd.roundsPlayed) { cur.roundsPlayed = rd.roundsPlayed; cur.tally = rd.tally; cur.clanIds = {}; if (rd.wClan) cur.clanIds[rd.wClan] = rd.wId; if (rd.lClan) cur.clanIds[rd.lClan] = rd.lId; }
+      if (rd && rd.roundsPlayed) { cur.roundsPlayed = rd.roundsPlayed; cur.tally = rd.tally; cur.rounds = rd.rounds || []; cur.clanIds = {}; if (rd.wClan) cur.clanIds[rd.wClan] = rd.wId; if (rd.lClan) cur.clanIds[rd.lClan] = rd.lId; }
       const st = await bo3GameStats(cur.gameId, true);
       if (st) { cur.players = st; cur.statsFrom = "live"; }
     }
