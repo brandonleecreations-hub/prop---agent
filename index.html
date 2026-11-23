@@ -1576,8 +1576,6 @@ body.aion [data-ai]{display:block}
     <div id="packsBox"></div>
     <h2>🃏 My Cards</h2>
     <div class="charstrip" id="cardStrip"></div><div class="grid" id="myCards"><p class="empty">Loading cards…</p></div>
-    <h2 style="font-size:17px;margin:12px 0 6px">🏆 Leaderboard</h2>
-    <div class="card" id="leaderboard" style="padding:8px 10px"><p class="empty">Loading the board…</p></div>
   </section>
 </main>
 
@@ -1609,6 +1607,7 @@ body.aion [data-ai]{display:block}
   <p class="note" id="agNameHint" style="margin:-4px 0 8px">Pick your own unique username — 3-20 characters, letters, numbers and _ only. It's the name other agents see; your email always stays private.</p>
   <div class="cardsec" id="profCharSec"><button type="button" class="cardsec-h" id="profCharToggle"><span class="bigchev" id="profCharChev">▼</span><span>🎭 PICK YOUR CHARACTER</span><span class="csbtn" id="profCharBtn">▾ HIDE</span></button><div class="cardsec-b"><div id="agAvatars" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div><p class="note" style="margin-top:8px">Your character shows on all your tier cards and becomes your profile pic.</p></div></div>
   <div class="cardsec" id="profSocialSec"><button type="button" class="cardsec-h" id="profSocialToggle"><span class="bigchev" id="profSocialChev">▼</span><span>👥 FIND AGENTS &amp; FOLLOWING</span><span class="csbtn" id="profSocialBtn">▾ HIDE</span></button><div class="cardsec-b"><div class="card" style="margin-bottom:10px;padding:10px"><input type="text" id="agentSearch" placeholder="Search usernames…" autocomplete="off" style="width:100%;background:#101018;border:1px solid #2c2c3a;border-radius:10px;color:#fff;padding:9px 12px;font-size:14px;box-sizing:border-box"><div id="agentSearchResults" style="margin-top:6px"></div></div><p class="sub">Agents you follow — tap one to open their profile.</p><div id="followingBox"><p class="empty">Loading…</p></div></div></div>
+  <div class="cardsec" id="profLbSec"><button type="button" class="cardsec-h" id="profLbToggle"><span class="bigchev" id="profLbChev">▼</span><span>🏆 LEADERBOARD &amp; TOP CLASHERS</span><span class="csbtn" id="profLbBtn">▾ HIDE</span></button><div class="cardsec-b"><div class="card" id="leaderboard" style="padding:8px 10px"><p class="empty">Loading the board…</p></div><div id="profClashLb" style="margin-top:10px"></div></div></div>
   <div class="fld"><label>Account — email &amp; password</label>
     <div id="agAuthOut">
       <input type="email" id="agEmail" placeholder="you@example.com" autocomplete="email">
@@ -5091,6 +5090,7 @@ function renderBoard(){
   var rows = agentRows();
   $("leaderboard").innerHTML = '<table class="lb"><tr><th>#</th><th>Agent</th><th>Tier</th><th>Tier Pts</th><th>Clash</th></tr>'
     + rows.map(function(r,i){ var t = tierFor(r.wins); return '<tr'+(r.me?' style="color:var(--gold)"':"")+(r.id?' class="agentclick" data-agent="'+r.id+'"':"")+'><td>'+(i+1)+'</td><td>'+(r.avatar?'<img src="'+esc(r.avatar)+'" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:6px' + frameCss(r.featured, 2, r.avatar) + '">':'')+'<b>'+esc(r.name)+'</b>'+streakBadge(r.streak)+'</td><td>'+t.name+'</td><td>'+r.wins+'</td><td>'+(r.clashW||0)+'W \u2013 '+(r.clashL||0)+'L</td></tr>'; }).join("") + '</table>';
+  var _pcl = $("profClashLb"); if (_pcl) _pcl.innerHTML = clashLbHtml();
   var wins = maxWins();
   $("tiers").innerHTML = tierProgressHTML(charWins(tierCharIdx()), tierCharIdx()); bindTierStrip();
   var cards = allPlayerCardLegs();
@@ -5613,7 +5613,7 @@ function renderClash(){
   var box = $("clashBox"); if (!box) return;
   var b = battlesGet(), lad = ladderGet();
   box.innerHTML = '<div class="clashad posterad" data-clashnow="1"><img src="/api/banners?s=clashposter&v=2" alt="Agent Clash Card Game \u2014 tap to play"></div>'
-    + '<div class="clashrec">Battle Record: ' + b.w + 'W \u2013 ' + b.l + 'L \u00B7 ' + (lad >= 7 ? '\uD83C\uDFC6 LADDER CHAMPION' : 'Ladder: Boss ' + (lad + 1) + ' of 7') + ' \u00B7 \uD83E\uDE99 ' + coinsGet() + '</div>' + clashLbHtml();
+    + '<div class="clashrec">Battle Record: ' + b.w + 'W \u2013 ' + b.l + 'L \u00B7 ' + (lad >= 7 ? '\uD83C\uDFC6 LADDER CHAMPION' : 'Ladder: Boss ' + (lad + 1) + ' of 7') + ' \u00B7 \uD83E\uDE99 ' + coinsGet() + '</div>';
 }
 
 function mkFighter(ci, ti){ return { ci: ci, ti: ti, hits: 0, used: {} }; }
@@ -8206,7 +8206,7 @@ function openAgentDlg(){
   var t = tierFor(charWins(tierCharIdx())), nx = nextTier(charWins(tierCharIdx()));
   var _w = myWins(), _l = myLosses(), _st = myStreak(), _pct = (_w + _l) ? Math.round(100 * _w / (_w + _l)) : null;
   $("agStats").innerHTML = "<span>"+CHARNAMES[tierCharIdx() - 1]+" \u00B7 Tier <b>"+t.name+"</b></span><span>Wins <b>"+_w+"</b></span><span>Record <b>"+_w+"W–"+_l+"L</b></span>" + (_pct != null ? "<span>Win rate <b>"+_pct+"%</b></span>" : "") + "<span>Streak <b>"+_st+"</b>"+(_st >= 3 ? " 🔥" : "")+"</span><span>Tickets <b>"+tickets.length+"</b></span>" + (nx ? "<span>Next: <b>"+nx.name+"</b> in "+(nx.wins-charWins(tierCharIdx()))+" wins</span>" : "<span><b>Top tier reached 👑</b></span>");
-  renderAuth(); renderAvatarGrid();
+  renderAuth(); renderAvatarGrid(); renderBoard();
   $("agentDlg").showModal();
 }
 var _ab0 = $("agentBtn"); if (_ab0) _ab0.addEventListener("click", openAgentDlg);
@@ -8226,6 +8226,14 @@ $("agClose").addEventListener("click", function(){ $("agentDlg").close(); });
   function applyProfSocial(){ var open = profSocialOpen(); sec.classList.toggle("closed", !open); if (btn) btn.textContent = open ? "▾ HIDE" : "▸ SHOW"; if (chv) chv.textContent = open ? "▼" : "▶"; }
   tog.addEventListener("click", function(){ var st = lsGet("pa_cardsecs", {}); st["profsocial"] = !profSocialOpen(); lsSet("pa_cardsecs", st); applyProfSocial(); sfx("click"); });
   applyProfSocial();
+})();
+(function(){
+  var sec = $("profLbSec"), tog = $("profLbToggle"), btn = $("profLbBtn"), chv = $("profLbChev");
+  if (!sec || !tog) return;
+  function profLbOpen(){ var st = lsGet("pa_cardsecs", {}); return ("proflb" in st) ? !!st["proflb"] : true; }
+  function applyProfLb(){ var open = profLbOpen(); sec.classList.toggle("closed", !open); if (btn) btn.textContent = open ? "\u25BE HIDE" : "\u25B8 SHOW"; if (chv) chv.textContent = open ? "\u25BC" : "\u25B6"; }
+  tog.addEventListener("click", function(){ var st = lsGet("pa_cardsecs", {}); st["proflb"] = !profLbOpen(); lsSet("pa_cardsecs", st); applyProfLb(); sfx("click"); });
+  applyProfLb();
 })();
 $("agSave").addEventListener("click", function(){
   var nm = $("agName").value.trim();
