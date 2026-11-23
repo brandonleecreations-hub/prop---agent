@@ -173,7 +173,7 @@ input[type=number]{width:110px}
 .espmaps{margin-bottom:2px}
 .espmapchip{display:inline-block;padding:4px 8px;border:1px solid var(--line);border-radius:999px;font-size:11.5px;margin:0 6px 6px 0;background:rgba(255,255,255,.04)}
 .espmapchip.on{border-color:var(--gold);color:var(--gold);box-shadow:0 0 10px rgba(245,185,66,.35)}
-.espstrip{display:flex;flex-direction:column;gap:6px;margin:8px 0 2px}.espstripteam{display:flex;gap:4px}.espstrippl{flex:1 1 0;min-width:0;text-align:center;background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:10px;padding:6px 1px 5px;box-shadow:0 3px 0 rgba(0,0,0,.35)}.espstripava{position:relative;width:42px;height:42px;border-radius:50%;background:#241545;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0 auto;border:2px solid rgba(245,185,66,.6)}.espstripava img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.espstripava i{font-style:normal;font-weight:900;font-size:13px;color:#e8e4f5}.espstripnk{display:block;font-size:10px;font-weight:800;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.espstripnums{display:flex;justify-content:space-around;font-size:13px;margin-top:1px}.espstriplab{display:flex;justify-content:space-around;font-size:8.5px;color:#9a9aad;font-weight:800}
+.espstrip{display:flex;flex-direction:column;gap:6px;margin:8px 0 2px}.espstripteam{display:flex;gap:4px}.espstrippl{flex:1 1 0;min-width:0;text-align:center;background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:10px;padding:6px 1px 5px;box-shadow:0 3px 0 rgba(0,0,0,.35)}.espstripava{position:relative;width:42px;height:42px;border-radius:50%;background:#241545;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0 auto;border:2px solid rgba(245,185,66,.6)}.espstripava img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.espstripava i{font-style:normal;font-weight:900;font-size:13px;color:#e8e4f5}.espstripnk{display:block;font-size:10px;font-weight:800;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.espstripnums{display:flex;justify-content:space-around;font-size:13px;margin-top:1px}.espstriplab{display:flex;justify-content:space-around;font-size:8.5px;color:#9a9aad;font-weight:800}.espstripnums2{margin-top:3px;border-top:1px solid rgba(255,255,255,.07);padding-top:3px}
 .esplive{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid rgba(255,84,112,.5);background:rgba(255,84,112,.08);border-radius:10px;padding:6px 10px;margin:4px 0 6px;font-weight:900;font-size:13px}
 .esplive b{font-size:19px;color:#ff8fa5}
 .espthd{display:flex;align-items:center;gap:4px;margin:9px 0 3px;font-size:13px}
@@ -7338,7 +7338,9 @@ function espCs2Strip(d, players){
       return '<div class="espstrippl"><span class="espstripava">' + (r.img ? '<img src="' + esc(r.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '<i>' + esc(initials(r.nick || r.name || "?")) + '</i></span>'
         + '<span class="espstripnk">' + esc(r.nick || r.name || "") + '</span>'
         + '<span class="espstripnums"><b>' + (r.k || 0) + '</b><b>' + (r.a || 0) + '</b><b>' + (r.d || 0) + '</b></span>'
-        + '<span class="espstriplab"><span>K</span><span>A</span><span>D</span></span></div>';
+        + '<span class="espstriplab"><span>K</span><span>A</span><span>D</span></span>'
+        + '<span class="espstripnums espstripnums2"><b>' + (r.hs || 0) + '</b><b>' + (r.adr == null ? "\u2014" : (Math.round(r.adr * 10) / 10)) + '</b></span>'
+        + '<span class="espstriplab"><span>HS</span><span>ADR</span></span></div>';
     }).join("") + '</div>';
   });
   return h + '</div>';
@@ -7394,10 +7396,10 @@ function espCs2SbHtml(d){
     });
     if (aggOrder.length) {
       sections++;
-      h += '<div class="espsblb">SERIES TOTALS \u00B7 ALL MAPS</div>' + espCs2Strip(d, aggOrder) + espCs2TeamTable(d, { players: aggOrder }, 0) + espCs2TeamTable(d, { players: aggOrder }, 1) + espCs2TeamTable(d, { players: aggOrder }, -1);
+      h += '<div class="espsblb">SERIES TOTALS \u00B7 ALL MAPS</div>' + espCs2Strip(d, aggOrder);
     } else if (liveM && (liveM.players || []).length) {
       sections++;
-      h += '<div class="espsblb">SERIES TOTALS \u00B7 ALL MAPS</div>' + espCs2Strip(d, liveM.players) + espCs2TeamTable(d, liveM, 0) + espCs2TeamTable(d, liveM, 1) + espCs2TeamTable(d, liveM, -1)
+      h += '<div class="espsblb">SERIES TOTALS \u00B7 ALL MAPS</div>' + espCs2Strip(d, liveM.players)
         + '<p class="note" style="margin:4px 0 2px">Live chart \u2014 totals fill in here the moment the source posts them.</p>';
     } else {
       sections++;
@@ -7412,7 +7414,7 @@ function espCs2SbHtml(d){
     if (has) {
       sections++;
       h += '<div class="espsblb">MAP ' + m.n + ' · ' + (m.statsFrom === "final" ? "FINAL PLAYER STATS" : "LIVE PLAYER STATS") + '</div>'
-        + espCs2Strip(d, m.players) + espCs2TeamTable(d, m, 0) + espCs2TeamTable(d, m, 1) + espCs2TeamTable(d, m, -1)
+        + espCs2Strip(d, m.players)
         + (m.statsFrom === "roster" ? '<p class="note" style="margin:4px 0 2px">Live chart — kills, deaths and headshots fill in here the moment the source posts them.</p>' : '');
     } else if (isLive) {
       sections++;
