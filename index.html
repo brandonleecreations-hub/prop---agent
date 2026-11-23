@@ -39,7 +39,7 @@ h1{overflow:hidden}
 .logo{width:52px;height:52px;border-radius:13px;object-fit:contain;background:#000;padding:4px;flex:0 0 auto;cursor:pointer;box-shadow:0 0 18px rgba(124,58,237,.35)}
 h1{font-size:clamp(16px,5.2vw,28px);margin:0;letter-spacing:.3px;font-weight:900;text-transform:uppercase;line-height:1.02;white-space:nowrap;text-shadow:0 3px 10px rgba(147,51,234,.3)}
 h2,h3{font-weight:900}
-span[data-pfchev],span[data-tchev]{font-size:21px !important;line-height:1;display:inline-block;transform:scale(1.9);vertical-align:-3px;margin:0 9px 0 7px;font-weight:900}
+span[data-pfchev],span[data-tchev],span.bigchev{font-size:21px !important;line-height:1;display:inline-block;transform:scale(1.9);vertical-align:-3px;margin:0 9px 0 7px;font-weight:900}
 .ttlpop{display:inline-block;font-family:"Bungee","Archivo",sans-serif;letter-spacing:.6px;background:linear-gradient(180deg,rgba(255,255,255,1) 0%,rgba(255,255,255,.99) 26%,rgba(226,232,240,.95) 44%,rgba(255,255,255,1) 53%,rgba(241,245,249,.98) 70%,rgba(191,202,216,.95) 88%,rgba(226,232,240,.97) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(38,26,74,.95)) drop-shadow(0 2px 0 rgba(34,22,66,.95)) drop-shadow(0 3px 0 rgba(29,19,57,.95)) drop-shadow(0 4px 0 rgba(24,16,48,.95)) drop-shadow(0 5px 0 rgba(19,13,38,.95)) drop-shadow(0 6px 0 rgba(15,10,30,.95)) drop-shadow(0 7px 0 rgba(10,7,22,.95)) drop-shadow(0 12px 18px rgba(0,0,0,.7))}
 h1 small{display:block;font-size:11.5px;color:#a7adb8;font-weight:600;letter-spacing:2.2px;text-transform:uppercase;margin-top:3px;white-space:nowrap;overflow:hidden;max-width:46vw;position:relative;height:12px}
 .hticktrack{position:absolute;left:0;top:0;display:flex;white-space:nowrap;line-height:12px;animation:htickmove 20s linear infinite;will-change:transform}
@@ -1375,10 +1375,13 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
    white letters with a dark-navy halo so they read on the navy top AND on
    the off-white lower page. Header + bottom nav stay black (unchanged). */
 h2,h3{text-shadow:0 1px 0 rgba(13,27,48,.45),0 2px 7px rgba(13,27,48,.50),0 0 18px rgba(13,27,48,.35)}
+.view h2,.view h3{color:#251a47}
+#view-players .sub{color:#4c4658}
+#liveStatus{color:#3f4657}
 /* Readability on the off-white zone: gold subheads get a navy halo, pale
    count labels ride dark chips, and the Board/Live group header bars get a
    solid dark base so their gold text reads anywhere on the gradient. */
-.fsport{text-shadow:0 1px 0 rgba(13,27,48,.55),0 1px 6px rgba(13,27,48,.55)}
+.fsport{text-shadow:0 1px 0 rgba(13,27,48,.55),0 1px 6px rgba(13,27,48,.55);background:rgba(10,22,44,.88);padding:3px 10px;border-radius:10px}
 .fcount{background:rgba(10,22,44,.80);color:#e6dcff;padding:1px 8px;border-radius:999px}
 .foilgcount{background:rgba(10,22,44,.80);color:#e6dcff;padding:1px 8px;border-radius:999px}
 .foilghdr span{text-shadow:0 1px 0 rgba(13,27,48,.60),0 1px 5px rgba(13,27,48,.55)}
@@ -1564,17 +1567,6 @@ body.aion [data-ai]{display:block}
   <!-- LEADERBOARD -->
   <section class="view" id="view-board">
     <div id="pickemHome"></div>
-    <div class="card row" style="justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;margin-bottom:10px">
-      <div><b>Your Agent</b></div>
-      <button class="agentbtn" id="agentBtn">👤 Guest Agent</button>
-    </div>
-    <h2 style="font-size:17px;margin:12px 0 6px">🔍 Find Agents</h2>
-    <div class="card" style="margin-bottom:10px;padding:10px"><input type="text" id="agentSearch" placeholder="Search usernames…" autocomplete="off" style="width:100%;background:#101018;border:1px solid #2c2c3a;border-radius:10px;color:#fff;padding:9px 12px;font-size:14px;box-sizing:border-box"><div id="agentSearchResults" style="margin-top:6px"></div></div>
-    <h2>👥 Following <button type="button" class="csbtn" id="followToggle" style="float:right">▾ HIDE</button></h2>
-    <div id="followingBody">
-    <p class="sub">Agents you follow — tap one to open their profile.</p>
-    <div id="followingBox"><p class="empty">Loading…</p></div>
-    </div>
     <h2>🏆 Tiers</h2>
     <button type="button" id="tiersToggle" class="sectoggle">&#9660; HIDE THE TIERS</button><div id="tiersBody"><p class="sub">Climb the ladder by winning Agent Clash battles — every win earns tier points for the character you set below.</p>
     <div id="tiers"></div></div>
@@ -1613,7 +1605,8 @@ body.aion [data-ai]{display:block}
   <div class="row" style="margin:4px 0 8px"><img id="agAvatarImg" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;display:none"><div><b id="agFeatured">No profile card set</b><br><span class="note">Pick a character below, or set your profile pic from any unlocked card in My Cards (Board tab) — it saves to your cloud profile for everyone to see.</span></div></div>
   <div class="fld"><label>Username</label><input type="text" id="agName" placeholder="e.g. agent12" autocomplete="off"></div>
   <p class="note" id="agNameHint" style="margin:-4px 0 8px">Pick your own unique username — 3-20 characters, letters, numbers and _ only. It's the name other agents see; your email always stays private.</p>
-  <div class="cardsec" id="profCharSec"><button type="button" class="cardsec-h" id="profCharToggle"><span>🎭 PICK YOUR CHARACTER</span><span class="csbtn" id="profCharBtn">▾ HIDE</span></button><div class="cardsec-b"><div id="agAvatars" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div><p class="note" style="margin-top:8px">Your character shows on all your tier cards and becomes your profile pic.</p></div></div>
+  <div class="cardsec" id="profCharSec"><button type="button" class="cardsec-h" id="profCharToggle"><span class="bigchev" id="profCharChev">▾</span><span>🎭 PICK YOUR CHARACTER</span><span class="csbtn" id="profCharBtn">▾ HIDE</span></button><div class="cardsec-b"><div id="agAvatars" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div><p class="note" style="margin-top:8px">Your character shows on all your tier cards and becomes your profile pic.</p></div></div>
+  <div class="cardsec" id="profSocialSec"><button type="button" class="cardsec-h" id="profSocialToggle"><span class="bigchev" id="profSocialChev">▾</span><span>👥 FIND AGENTS &amp; FOLLOWING</span><span class="csbtn" id="profSocialBtn">▾ HIDE</span></button><div class="cardsec-b"><div class="card" style="margin-bottom:10px;padding:10px"><input type="text" id="agentSearch" placeholder="Search usernames…" autocomplete="off" style="width:100%;background:#101018;border:1px solid #2c2c3a;border-radius:10px;color:#fff;padding:9px 12px;font-size:14px;box-sizing:border-box"><div id="agentSearchResults" style="margin-top:6px"></div></div><p class="sub">Agents you follow — tap one to open their profile.</p><div id="followingBox"><p class="empty">Loading…</p></div></div></div>
   <div class="fld"><label>Account — email &amp; password</label>
     <div id="agAuthOut">
       <input type="email" id="agEmail" placeholder="you@example.com" autocomplete="email">
@@ -5050,7 +5043,7 @@ function cardSec(id, title, count, inner, openDefault, gridCls){
   if (!lsGet("pa_cardsecs_v3", 0)) { var s0 = lsGet("pa_cardsecs", {}); s0.tier = true; s0.player = false; s0.foils = false; s0.special = false; lsSet("pa_cardsecs", s0); lsSet("pa_cardsecs_v3", 1); }
   var st = lsGet("pa_cardsecs", {});
   var open = (id in st) ? !!st[id] : openDefault;
-  return '<div class="cardsec' + (open ? '' : ' closed') + '"><button class="cardsec-h" data-cardsec="' + id + '"><span>' + title + '</span><span class="cscount">' + count + '</span><span class="csbtn">' + (open ? '\u25BE HIDE' : '\u25B8 SHOW') + '</span></button><div class="cardsec-b"><div class="' + (gridCls === "cardrail" ? "cardrail" : "cardsgrid" + (gridCls ? " " + gridCls : "")) + '">' + inner + '</div></div></div>';
+  return '<div class="cardsec' + (open ? '' : ' closed') + '"><button class="cardsec-h" data-cardsec="' + id + '"><span>' + title + '</span><span class="bigchev">' + (open ? "\u25BE" : "\u25B8") + '</span><span class="cscount">' + count + '</span><span class="csbtn">' + (open ? '\u25BE HIDE' : '\u25B8 SHOW') + '</span></button><div class="cardsec-b"><div class="' + (gridCls === "cardrail" ? "cardrail" : "cardsgrid" + (gridCls ? " " + gridCls : "")) + '">' + inner + '</div></div></div>';
 }
 function charWinsMap(){ return lsGet("pa_charwins", {}) || {}; }
 function charWins(ci){ var m = charWinsMap(); return parseInt(m[ci], 10) || 0; }
@@ -5125,7 +5118,7 @@ function renderBoard(){
     + (cards.length ? cardSec("player", "🏆 PLAYER CARDS — winning tickets", cards.length + " earned", playerCards, false, "cardrail") : "")
     + (fl0.length ? cardSec("foils", "🎁 PACK PULLS — from packs", fl0.length + " pulled", foilCardsOnly, false, "foilgroups") : "")
     + cardSec("special", "⭐ SPECIAL CARDS — Pick'em & chase", specN + " of 2", specialCardHTML() + ringCardHTML(), false, "cardrail");
-  document.querySelectorAll(".cardsec-h").forEach(function(h){ h.addEventListener("click", function(){ var sec = h.parentElement; var nowClosed = sec.classList.toggle("closed"); var st = lsGet("pa_cardsecs", {}); st[h.getAttribute("data-cardsec")] = !nowClosed; lsSet("pa_cardsecs", st); var csid = h.getAttribute("data-cardsec"); if (!nowClosed && csid) boardAccordion(csid); var ch = h.querySelector(".csbtn"); if (ch) ch.textContent = nowClosed ? "\u25B8 SHOW" : "\u25BE HIDE"; sfx("click"); }); });
+  document.querySelectorAll(".cardsec-h").forEach(function(h){ h.addEventListener("click", function(){ var sec = h.parentElement; var nowClosed = sec.classList.toggle("closed"); var st = lsGet("pa_cardsecs", {}); st[h.getAttribute("data-cardsec")] = !nowClosed; lsSet("pa_cardsecs", st); var csid = h.getAttribute("data-cardsec"); if (!nowClosed && csid) boardAccordion(csid); var ch = h.querySelector(".csbtn"); if (ch) ch.textContent = nowClosed ? "\u25B8 SHOW" : "\u25BE HIDE"; var bc = h.querySelector(".bigchev"); if (bc) bc.textContent = nowClosed ? "\u25B8" : "\u25BE"; sfx("click"); }); });
   document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); var av0 = b.getAttribute("data-avatar")||""; profile.avatar = av0; profile.featured = b.getAttribute("data-featured")||""; if (av0.indexOf("/api/avatars") === 0) profile.char = av0; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
   document.querySelectorAll(".dlcard").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); downloadCard(b.getAttribute("data-kind"), parseInt(b.getAttribute("data-idx"),10), b); }); });
   document.querySelectorAll(".setprofs").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); profile.avatar = b.getAttribute("data-avatar") || ""; profile.featured = b.getAttribute("data-featured") || ""; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
@@ -8033,7 +8026,7 @@ function feedTicketCard(it){
   return '<div class="ftcard"><div class="fthd" data-agent="' + o.id + '">' + (o.avatar_url ? '<img src="' + esc(o.avatar_url) + '" alt="" style="' + frameCss(o.featured_card || "", 2, o.avatar_url).replace(/^;/, "") + '">' : "") + '<b>' + esc(fmtUser(o.display_name || "Agent")) + '</b>' + statusChip(t.status) + '</div>' + legs + more
     + '<div style="margin-top:6px">' + (mine ? '<span class="note"><span style="color:#ff5d7a">\u2665</span> ' + (t.likes || 0) + '</span>' : '<button type="button" class="likebtn' + (t.likedByMe ? ' on' : '') + '" data-like="' + t.id + '"><span class="hrt">\u2665</span> ' + (t.likes || 0) + '</button>') + '</div></div>';
 }
-var BOARD_ACCORDION_KEYS = ["following", "tiers", "tier", "player", "foils", "special"];
+var BOARD_ACCORDION_KEYS = ["tiers", "tier", "player", "foils", "special"];
 function boardSectionTitleEl(key){
   if (key === "following") { var fb = $("followToggle"); if (!fb) return null; return fb.closest ? (fb.closest("h2") || fb) : fb; }
   if (key === "tiers") { var tg = $("tiersToggle"); if (!tg) return null; var pv = tg.previousElementSibling; return (pv && pv.tagName === "H2") ? pv : tg; }
@@ -8201,10 +8194,10 @@ setInterval(function(){ loadPickemEvent(); }, 30000);
 /* ---------- profile + push ---------- */
 function refreshAgentBtn(){
   var t = tierFor(charWins(tierCharIdx()));
-  $("agentBtn").innerHTML = (profile.avatar ? '<img src="'+esc(profile.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px' + frameCss(profile.featured, 2, profile.avatar) + '"> ' : "👤 ") + esc(profile.name || "Guest Agent") + " · <b>" + t.name + "</b>";
+  var _ab=$("agentBtn"); if(_ab) _ab.innerHTML = (profile.avatar ? '<img src="'+esc(profile.avatar)+'" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:-5px' + frameCss(profile.featured, 2, profile.avatar) + '"> ' : "👤 ") + esc(profile.name || "Guest Agent") + " · <b>" + t.name + "</b>";
 }
-var logoImgEl = $("logoImg"); if (logoImgEl) logoImgEl.addEventListener("click", function(){ var ab = $("agentBtn"); if (ab) ab.click(); });
-$("agentBtn").addEventListener("click", function(){
+var logoImgEl = $("logoImg"); if (logoImgEl) logoImgEl.addEventListener("click", function(){ openAgentDlg(); });
+function openAgentDlg(){
   $("agName").value = profile.name || ""; $("agEmail").value = profile.email || "";
   var ai = $("agAvatarImg"); if (ai) { if (profile.avatar) { ai.src = profile.avatar; ai.style.display = ""; } else ai.style.display = "none"; } applyAvatarFrame(ai, profile.featured);
   var af = $("agFeatured"); if (af) af.textContent = String(profile.featured || "").replace(/^[^A-Za-z0-9]+/, "") || "No profile card set";
@@ -8213,15 +8206,24 @@ $("agentBtn").addEventListener("click", function(){
   $("agStats").innerHTML = "<span>"+CHARNAMES[tierCharIdx() - 1]+" \u00B7 Tier <b>"+t.name+"</b></span><span>Wins <b>"+_w+"</b></span><span>Record <b>"+_w+"W–"+_l+"L</b></span>" + (_pct != null ? "<span>Win rate <b>"+_pct+"%</b></span>" : "") + "<span>Streak <b>"+_st+"</b>"+(_st >= 3 ? " 🔥" : "")+"</span><span>Tickets <b>"+tickets.length+"</b></span>" + (nx ? "<span>Next: <b>"+nx.name+"</b> in "+(nx.wins-charWins(tierCharIdx()))+" wins</span>" : "<span><b>Top tier reached 👑</b></span>");
   renderAuth(); renderAvatarGrid();
   $("agentDlg").showModal();
-});
+}
+var _ab0 = $("agentBtn"); if (_ab0) _ab0.addEventListener("click", openAgentDlg);
 $("agClose").addEventListener("click", function(){ $("agentDlg").close(); });
 (function(){
   var sec = $("profCharSec"), tog = $("profCharToggle"), btn = $("profCharBtn");
   if (!sec || !tog) return;
   function profCharOpen(){ var st = lsGet("pa_cardsecs", {}); return ("profchar" in st) ? !!st["profchar"] : true; }
-  function applyProfChar(){ var open = profCharOpen(); sec.classList.toggle("closed", !open); if (btn) btn.textContent = open ? "▾ HIDE" : "▸ SHOW"; }
+  function applyProfChar(){ var open = profCharOpen(); sec.classList.toggle("closed", !open); if (btn) btn.textContent = open ? "▾ HIDE" : "▸ SHOW"; var chv = $("profCharChev"); if (chv) chv.textContent = open ? "▾" : "▸"; }
   tog.addEventListener("click", function(){ var st = lsGet("pa_cardsecs", {}); st["profchar"] = !profCharOpen(); lsSet("pa_cardsecs", st); applyProfChar(); sfx("click"); });
   applyProfChar();
+})();
+(function(){
+  var sec = $("profSocialSec"), tog = $("profSocialToggle"), btn = $("profSocialBtn"), chv = $("profSocialChev");
+  if (!sec || !tog) return;
+  function profSocialOpen(){ var st = lsGet("pa_cardsecs", {}); return ("profsocial" in st) ? !!st["profsocial"] : true; }
+  function applyProfSocial(){ var open = profSocialOpen(); sec.classList.toggle("closed", !open); if (btn) btn.textContent = open ? "▾ HIDE" : "▸ SHOW"; if (chv) chv.textContent = open ? "▾" : "▸"; }
+  tog.addEventListener("click", function(){ var st = lsGet("pa_cardsecs", {}); st["profsocial"] = !profSocialOpen(); lsSet("pa_cardsecs", st); applyProfSocial(); sfx("click"); });
+  applyProfSocial();
 })();
 $("agSave").addEventListener("click", function(){
   var nm = $("agName").value.trim();
@@ -10049,7 +10051,7 @@ espEnsure();
         window._paRecovery = rtok;
         history.replaceState(null, "", location.pathname);
         setTimeout(function(){
-          var ab = $("agentBtn"); if (ab) ab.click();
+          openAgentDlg();
           authNote("Enter a new password below, then tap Set new password.");
           var sp = $("agSetPass"); if (sp) sp.style.display = "";
         }, 700);
