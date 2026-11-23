@@ -1689,7 +1689,7 @@ body.aion [data-ai]{display:block}
       <div class="wcard" style="padding:10px 16px;text-align:left">
 <div style="display:flex;align-items:center;gap:9px;padding:6px 0"><img src="https://a.espncdn.com/i/headshots/nba/players/full/3945274.png" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover" onerror="this.remove()"><div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px;color:#fff">Luka Doncic</div><div style="color:#9a9ab0;font-size:11.5px">36.5 PTS</div></div><span class="wmore" style="padding:6px 12px;font-size:12px">MORE</span><span class="wless" style="padding:6px 12px;font-size:12px">LESS</span></div>
       </div>
-      <div class="wsub">One player a day — pick MORE or LESS.<br>Get it right, win a <b style="color:#f5c518">FREE PACK</b>.</div>
+      <div class="wsub">One player a day — pick MORE or LESS.<br>Get it right, win a <b style="color:#f5c518">PACK</b>.</div>
       <div class="wsub" style="font-size:15px">Plus <b style="color:#fff">Agent Clash</b> — win battles, open packs,<br>chase <b style="color:#f5c518">THE RING</b>.</div>
       <button type="button" class="bigbtn" id="wStart" style="max-width:280px;margin-top:10px">Start exploring →</button>
     </div>
@@ -10244,7 +10244,7 @@ function renderPickem2(){
   var box = $("pickemHome"); if (!box) return;
   var st = pk2State();
   var started = Date.now() >= pk2FirstStart();
-  var head = '<div style="display:flex;gap:7px;align-items:center"><img src="/api/battle?v=14&s=5" alt="" style="width:26px;height:26px;border-radius:8px;object-fit:cover;object-position:top;border:1px solid #f5c518;flex:0 0 auto"><div style="min-width:0"><div class="pk-kick">🏆 DAILY PICK\'EM</div><div class="pk-title">The Dealmaker\'s Pick</div></div></div><div class="note" style="margin-top:4px">Pick MORE or LESS. Get it right and win a <b style="color:#f5c518">FREE PACK</b>. Free to play — pick locks at tip-off.</div>';
+  var head = '<div style="display:flex;gap:7px;align-items:center"><img src="/api/battle?v=14&s=5" alt="" style="width:26px;height:26px;border-radius:8px;object-fit:cover;object-position:top;border:1px solid #f5c518;flex:0 0 auto"><div style="min-width:0"><div class="pk-kick">🏆 DAILY PICK\'EM</div><div class="pk-title">The Dealmaker\'s Pick</div></div></div><div class="note" style="margin-top:4px">Pick MORE or LESS. Get it right and win a <b style="color:#f5c518">PACK</b>. Free to play — pick locks at tip-off.</div>';
   var legsHtml = PICKEM2.legs.map(function(l, i){
     var pick = st.picks[i];
     var act = st.actuals[i];
@@ -10256,7 +10256,7 @@ function renderPickem2(){
     return '<div class="pk2leg"><img src="' + esc(l.img) + '" alt="" onerror="this.remove()"><div style="min-width:0;flex:1"><b>' + esc(l.name) + '</b><div class="note">' + esc(l.team) + ' vs ' + esc(l.opp) + ' · ' + esc(l.statLabel) + ' <b style="color:#fff">' + l.line + '</b></div>' + res + '</div><div class="pk2btns"><button type="button" class="pk2btn' + (pick === "MORE" ? " on" : "") + '" data-pk2="' + i + ':MORE"' + dis + '>MORE</button><button type="button" class="pk2btn' + (pick === "LESS" ? " on" : "") + '" data-pk2="' + i + ':LESS"' + dis + '>LESS</button></div><div class="pk2LiveSlot" id="pk2Live' + i + '"></div></div>';
   }).join("");
   var foot = "";
-  if (st.graded === "win"){ var nd = PICKEM2.legs.filter(function(l, i){ return st.actuals[i] !== "VOID"; }).length; foot = '<div style="margin-top:6px;font-weight:900;color:#4fe3c1">🎉 PERFECT — ' + nd + ' for ' + nd + '! Your free pack is waiting in My Packs below.</div>'; }
+  if (st.graded === "win"){ var nd = PICKEM2.legs.filter(function(l, i){ return st.actuals[i] !== "VOID"; }).length; foot = '<div style="margin-top:6px;font-weight:900;color:#4fe3c1">🎉 PERFECT — ' + nd + ' for ' + nd + '! Your pack is waiting in My Packs below.</div>'; }
   else if (st.graded === "loss") foot = '<div style="margin-top:6px;font-weight:800;color:#ff8fa3">Missed it — a new pick drops with the next round.</div>';
   else if (st.locked) foot = '<div style="margin-top:6px;font-weight:800;color:#cdbcf5">🔒 Picks locked — good luck! Results land here when the games finish.</div>';
   else if (started) foot = '<div style="margin-top:6px" class="note">This game has started — picks are closed. A new pick drops with the next round.</div>';
