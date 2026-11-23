@@ -10348,8 +10348,7 @@ function renderPickem2(){
   else if (st.graded === "win" && window._pk2JustGraded === "win") stampHtml = pkConfettiHtml();
   else if (st.locked && !st.graded) stampHtml = '<div class="pkstamp lock' + (window._pk2JustLocked ? " slam" : "") + '">LOCKED IN</div>';
   window._pk2JustLocked = false; window._pk2JustGraded = "";
-  box.innerHTML = '<div class="pickem">' + stampHtml + head + legsHtml + '<div data-ai id="pkTakes"></div>' + foot + '</div>';
-  aiTakesRender();
+  box.innerHTML = '<div class="pickem">' + stampHtml + head + legsHtml + foot + '</div>';
   box.querySelectorAll("[data-pk2]").forEach(function(b){ b.addEventListener("click", function(){ var parts = b.getAttribute("data-pk2").split(":"); var s2 = pk2State(); if (s2.locked || Date.now() >= pk2FirstStart()) return; s2.picks[parts[0]] = parts[1]; pk2Save(s2); renderPickem2(); }); });
   var lk = $("pk2Lock");
   if (lk) lk.addEventListener("click", function(){ var s2 = pk2State(); if (Object.keys(s2.picks).length < PICKEM2.legs.length) return; s2.locked = true; window._pk2JustLocked = true; pk2Save(s2); renderPickem2(); });
