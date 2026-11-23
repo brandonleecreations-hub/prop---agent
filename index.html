@@ -7810,6 +7810,32 @@ function saLayersSet(patch){ try { var L = saLayersGet(); Object.keys(patch).for
 function fitHeaderPad(){ var hd = document.querySelector("header"); if (hd) document.body.style.paddingTop = hd.offsetHeight + "px"; }
 window.addEventListener("resize", fitHeaderPad);
 fitHeaderPad(); setTimeout(fitHeaderPad, 500); setTimeout(fitHeaderPad, 1800);
+/* Pin the header + bottom nav to the VISIBLE screen while pinch-zooming
+   (Brandon 2026-11-23: "bars still move on zoom" — some phone browsers
+   anchor fixed bars to the page, not the zoomed view). The VisualViewport
+   API reports exactly which part of the page is on screen; we park both
+   bars there, at their normal size, on every zoom/pan frame. */
+var _pinRaf = 0;
+function pinBars(){
+  var vv = window.visualViewport; if (!vv) return;
+  var hd = document.querySelector("header"), nv = document.querySelector("nav.bottom");
+  if (!hd && !nv) return;
+  if (vv.scale <= 1.01 && vv.offsetLeft < 1 && vv.offsetTop < 1){
+    [hd, nv].forEach(function(el){ if (el){ el.style.left = ""; el.style.top = ""; el.style.width = ""; el.style.right = ""; el.style.bottom = ""; el.style.marginLeft = ""; } });
+    return;
+  }
+  if (hd){ hd.style.left = vv.offsetLeft + "px"; hd.style.top = vv.offsetTop + "px"; hd.style.width = vv.width + "px"; hd.style.right = "auto"; }
+  if (nv){
+    var nw = Math.min(vv.width * 0.86, 600), nh = nv.offsetHeight || 56;
+    nv.style.left = (vv.offsetLeft + (vv.width - nw) / 2) + "px";
+    nv.style.width = nw + "px";
+    nv.style.top = (vv.offsetTop + vv.height - nh - 10) + "px";
+    nv.style.bottom = "auto"; nv.style.right = "auto"; nv.style.marginLeft = "0";
+  }
+}
+function pinBarsRaf(){ if (_pinRaf) return; _pinRaf = requestAnimationFrame(function(){ _pinRaf = 0; pinBars(); }); }
+if (window.visualViewport){ window.visualViewport.addEventListener("resize", pinBarsRaf); window.visualViewport.addEventListener("scroll", pinBarsRaf); }
+window.addEventListener("resize", pinBarsRaf);
 (function saRestoreLayers(){
   try {
     if (/[?&](game|tab|dl)=/.test(location.search || "")) return;
