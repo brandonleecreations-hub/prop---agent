@@ -31,7 +31,7 @@ body.onboard{background-image:radial-gradient(1000px 560px at 50% -10%,rgba(255,
 body{font-family:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 a{color:var(--blu);text-decoration:none}
 button{font-family:inherit;cursor:pointer}
-header{position:sticky;top:0;z-index:50;background:radial-gradient(620px 130px at 6% 0%, rgba(124,58,237,.20), rgba(0,0,0,0) 60%), rgba(0,0,0,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header{position:fixed;top:0;left:0;right:0;z-index:50;background:radial-gradient(620px 130px at 6% 0%, rgba(124,58,237,.20), rgba(0,0,0,0) 60%), rgba(0,0,0,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .hwrap{max-width:1060px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:10px}
 .hwrap>div{min-width:0;flex:1 1 auto}
 h1{overflow:hidden}
@@ -7783,6 +7783,12 @@ function saOpenGame(key, eid){ try { showView("live"); } catch (e) {} try { open
 function saLayersGet(){ var L = lsGet("pa_layers", null); return (L && typeof L === "object") ? L : {}; }
 function saLayersSet(patch){ try { var L = saLayersGet(); Object.keys(patch).forEach(function(k){ if (patch[k]) L[k] = patch[k]; else delete L[k]; }); lsSet("pa_layers", L); } catch (e) {} }
 (function(){ var pd = $("playerDlg"); if (pd) pd.addEventListener("close", function(){ saLayersSet({ player: null, playerObj: null }); }); var td = $("teamDlg"); if (td) td.addEventListener("close", function(){ saLayersSet({ team: null }); }); })();
+/* Header is FIXED (not sticky) so it stays pinned to the screen even
+   when the page is pinch-zoomed and panned — Brandon 2026-11-23. Body
+   top padding mirrors the header height and re-fits on resize/fonts. */
+function fitHeaderPad(){ var hd = document.querySelector("header"); if (hd) document.body.style.paddingTop = hd.offsetHeight + "px"; }
+window.addEventListener("resize", fitHeaderPad);
+fitHeaderPad(); setTimeout(fitHeaderPad, 500); setTimeout(fitHeaderPad, 1800);
 (function saRestoreLayers(){
   try {
     if (/[?&](game|tab|dl)=/.test(location.search || "")) return;
