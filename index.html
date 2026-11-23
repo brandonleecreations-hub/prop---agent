@@ -7278,58 +7278,6 @@ function espSyncStream(d){
     + '<div style="position:relative;padding-top:56.25%;margin-top:8px;border-radius:10px;overflow:hidden;background:#000"><iframe src="' + emb.src + '" style="position:absolute;left:0;top:0;width:100%;height:100%;border:0" allowfullscreen title="Live stream"></iframe></div>'
     + '<p class="note" style="margin-top:6px">This match\u2019s official stream \u2014 plays automatically, tap the speaker in the player for sound.</p></div>';
 }
-function closeEspGame(){
-  espOpen = null;
-  var sw = $("espStreamWrap"); if (sw){ sw.innerHTML = ""; sw._espKey = ""; }
-  var gd = $("espGameDetail"); if (gd) gd.innerHTML = "";
-  var ef = $("espFinished"); if (ef) ef.style.display = "";
-}
-function espRenderGc(){
-  var gd = $("espGameDetail");
-  if (!gd || !espOpen || !espOpen.data) return;
-  var d = espOpen.data;
-  espApplyLiveActuals(d);
-  gd.innerHTML = '<button class="gcBack" type="button">← All games</button>'
-    + espScoreHeadHtml(d)
-    + (d.game === "lol" ? espLolSbHtml(d) : espCs2SbHtml(d))
-    + espGcPropsHtml(d);
-  espWireSliders(gd); bindTiles(gd);
-  espSyncStream(d);
-}
-/* Live stream for esports matches (Brandon 2026-11-23): official Twitch
-   broadcasts are embeddable (unlike the big leagues). The player lives in
-   #espStreamWrap OUTSIDE #espGameDetail so the 45-60s auto-refresh that
-   rebuilds the scoreboard never reloads the video. */
-function espTwitchChannel(d){
-  if (d.game === "lol"){
-    var L = String(d.league || "").toLowerCase();
-    if (L.indexOf("lck") >= 0) return "lck";
-    if (L.indexOf("lpl") >= 0) return "lpl";
-    if (L.indexOf("lec") >= 0 || L.indexOf("emea") >= 0) return "lec";
-    if (L.indexOf("lta") >= 0 || L.indexOf("lcs") >= 0) return "lta";
-    if (L.indexOf("cblol") >= 0) return "cblol";
-    return "riotgames";
-  }
-  var T = String(d.tournament || "").toLowerCase();
-  if (T.indexOf("blast") >= 0) return "blastpremier";
-  if (T.indexOf("pgl") >= 0) return "pgl";
-  if (T.indexOf("starladder") >= 0 || T.indexOf("starseries") >= 0) return "starladder_cs2";
-  if (T.indexOf("fissure") >= 0) return "fissure_cs2";
-  if (T.indexOf("esl") >= 0 || T.indexOf("iem") >= 0 || T.indexOf("katowice") >= 0 || T.indexOf("cologne") >= 0) return "eslcs";
-  return ""; // smaller events stream on their own channels — no embed rather than a wrong one
-}
-function espSyncStream(d){
-  var w = $("espStreamWrap"); if (!w) return;
-  var ch0 = d ? espTwitchChannel(d) : "";
-  var key = d && d.state === "in" && ch0 ? (d.game + ":" + (d.slug || d.id || "") + ":" + ch0) : "";
-  if (w._espKey === key) return;
-  w._espKey = key;
-  if (!key){ w.innerHTML = ""; return; }
-  var ch = espTwitchChannel(d);
-  w.innerHTML = '<div class="card" style="margin-bottom:10px"><div class="row" style="justify-content:space-between;align-items:center"><span style="font-weight:900">📺 WATCH LIVE</span><a href="https://www.twitch.tv/' + ch + '" target="_blank" rel="noopener" style="color:#c9a7ff;font-weight:800;font-size:12px">Open in Twitch ↗</a></div>'
-    + '<div style="position:relative;padding-top:56.25%;margin-top:8px;border-radius:10px;overflow:hidden;background:#000"><iframe src="https://player.twitch.tv/?channel=' + ch + '&parent=prop-agent-bre.vercel.app&autoplay=true&muted=true" style="position:absolute;left:0;top:0;width:100%;height:100%;border:0" allowfullscreen title="Live stream"></iframe></div>'
-    + '<p class="note" style="margin-top:6px">Official broadcast via Twitch — free to watch.</p></div>';
-}
 function espScoreHeadHtml(d){
   var t = d.teams || [];
   var s1 = d.game === "cs2" ? (d.score || [])[0] : (t[0] && t[0].wins);
