@@ -3338,7 +3338,7 @@ function groupsTotal(groups){ return groups.reduce(function(a, g){ return a + (g
 function futBlockHtml(){
   if (futPill !== "all" && !_futGroups.some(function(g){ return g.key === futPill; })) futPill = "all";
   var total = groupsTotal(_futGroups);
-  return '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Future Games</h2><span style="color:#e6dcff;font-weight:700;background:rgba(10,22,44,.80);padding:1px 8px;border-radius:999px">' + total + ' game' + (total===1?"":"s") + '</span></div>'
+  return '<div class="row" style="justify-content:space-between;align-items:baseline"><h2>Upcoming Games</h2><span style="color:#e6dcff;font-weight:700;background:rgba(10,22,44,.80);padding:1px 8px;border-radius:999px">' + total + ' game' + (total===1?"":"s") + '</span></div>'
     + (total ? (liveFilter === "all" ? pillRowHtml("fut", _futGroups, futPill) : "") + sectionGroupsHtml(futPill, _futGroups, liveFilter !== "all") : '<p class="empty">No future games in the next two days.</p>');
 }
 function renderFutBlock(){
