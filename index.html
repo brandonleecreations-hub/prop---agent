@@ -4951,7 +4951,7 @@ async function downloadCard(kind, idx, btn){
   ctx.textAlign="center"; ctx.fillStyle="#fff";
   var icon=await loadImgC("/api/icons?s=logo", false);
   if (icon) ctx.drawImage(icon, W/2-52, 44, 104, 104);
-  ctx.font="800 30px system-ui, sans-serif"; ctx.fillText("SCORE AGENT", W/2, 198);
+  ctx.font="800 30px system-ui, sans-serif"; ctx.fillText("STAT AGENT", W/2, 198);
   ctx.font="700 15px system-ui, sans-serif"; ctx.fillStyle="#b9a8e8"; ctx.fillText("P R O P S   T I C K E R", W/2, 226);
   var cy=472;
   if (photoSrc){
@@ -5001,7 +5001,7 @@ var POWERS = [
 function charIdxOf(){ var m = /[?&]s=(\d+)/.exec((profile && profile.char) || ""); return m ? parseInt(m[1], 10) : 0; }
 function cardCharIdx(){ var v = parseInt(localStorage.getItem("pa_cardchar") || "0", 10); if (v >= 1 && v <= 12) return v; return charIdxOf() || 1; }
 function cardBackHTML(title, sub){
-  return '<div class="flipback"><img src="/api/icons?s=logo" alt=""><div class="bkname">SCORE AGENT</div><div class="bksub"><b style="color:#fff">' + title + '</b><br>' + sub + '</div></div>';
+  return '<div class="flipback"><img src="/api/icons?s=logo" alt=""><div class="bkname">STAT AGENT</div><div class="bksub"><b style="color:#fff">' + title + '</b><br>' + sub + '</div></div>';
 }
 /* Brandon 2026-11-19: LEGEND cards carrying his ultimate-form art (battle s=<ci>L), shown whole. */
 var LEGEND_ART = { "1": "1L", "2": "2L", "3": "3L", "4": "4L", "5": "5L", "6": "6L", "7": "7L", "8": "8L", "9": "9L", "10": "10L", "11": "11L", "12": "12L" };
@@ -5137,7 +5137,7 @@ function renderBoard(){
 }
 
 /* ---------- Weekly Pick'em (special card reward) ---------- */
-var WEEKLY_PICKEM = { week: "2026-W47", lgKey: "nfl", eventId: "401873066", starts: "2026-11-20T01:15Z", away: "Indianapolis Colts", home: "Houston Texans", awayShort: "Colts", homeShort: "Texans", note: "Thursday Night Football", cardName: "SCORE AGENT", art: "/api/avatars?s=13&v=2", bannerArt: "/api/banners?s=pickem" };
+var WEEKLY_PICKEM = { week: "2026-W47", lgKey: "nfl", eventId: "401873066", starts: "2026-11-20T01:15Z", away: "Indianapolis Colts", home: "Houston Texans", awayShort: "Colts", homeShort: "Texans", note: "Thursday Night Football", cardName: "STAT AGENT", art: "/api/avatars?s=13&v=2", bannerArt: "/api/banners?s=pickem" };
 function specialUnlocked(){ return (lsGet("pa_special", []) || []).indexOf(WEEKLY_PICKEM.week) >= 0; }
 function pickemWhen(){ try { return new Date(WEEKLY_PICKEM.starts).toLocaleString("en-US", { timeZone: "America/Denver", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); } catch(e){ return ""; } }
 /* Weekly Pick'em countdown (Brandon 2026-11-19): medium segmented timer in the
@@ -5344,7 +5344,7 @@ function renderPacks(){
     + '</div>';
 }
 function ringBackHTML(){
-  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=logo" alt=""></div><div class="bkname" style="color:#f5c518">SCORE AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">THE RING · CHAMPIONSHIP EDITION</div><div class="bksub">Signed · One of a Kind<br>The rarest pull in the game — about 1 pack in 200</div><div class="holo" style="--hc:#f5c51859"></div></div>';
+  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=logo" alt=""></div><div class="bkname" style="color:#f5c518">STAT AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">THE RING · CHAMPIONSHIP EDITION</div><div class="bksub">Signed · One of a Kind<br>The rarest pull in the game — about 1 pack in 200</div><div class="holo" style="--hc:#f5c51859"></div></div>';
 }
 function stampsGet(){ return lsGet("pa_stamps", []); }
 function ringCardHTML(){
@@ -5386,7 +5386,7 @@ function downloadRingCard(btn){
     x.fillStyle = "#e5e9f2"; x.font = "700 25px system-ui, sans-serif";
     x.fillText("CHAMPIONSHIP EDITION · ONE OF A KIND", 315, 838);
     x.fillStyle = "#9aa7bd"; x.font = "600 21px system-ui, sans-serif";
-    x.fillText("SCORE AGENT", 315, 872);
+    x.fillText("STAT AGENT", 315, 872);
     var a = document.createElement("a"); a.download = "the-ring-chase-card.png"; a.href = cv.toDataURL("image/png"); a.click();
     if (btn) { var o = btn.textContent; btn.textContent = "Saved ✓"; setTimeout(function(){ btn.textContent = o; }, 1600); }
   };
@@ -5405,7 +5405,7 @@ function specialCardHTML(){
 }
 function specialBackHTML(){
   var cfg = WEEKLY_PICKEM;
-  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=logo" alt=""></div><div class="bkname" style="color:#f5c518">SCORE AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">WEEKLY PICK\'EM · SPECIAL EDITION</div><div class="bksub">' + cfg.awayShort + ' @ ' + cfg.homeShort + ' · ' + pickemWhen() + ' MST<br>Won in the Weekly Pick\'em</div><div class="holo" style="--hc:#f5c51859"></div></div>';
+  return '<div class="flipback specialback"><div class="sbring"><img src="/api/icons?s=logo" alt=""></div><div class="bkname" style="color:#f5c518">STAT AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">WEEKLY PICK\'EM · SPECIAL EDITION</div><div class="bksub">' + cfg.awayShort + ' @ ' + cfg.homeShort + ' · ' + pickemWhen() + ' MST<br>Won in the Weekly Pick\'em</div><div class="holo" style="--hc:#f5c51859"></div></div>';
 }
 function downloadSpecialCard(btn){
   var cfg = WEEKLY_PICKEM;
@@ -5425,7 +5425,7 @@ function downloadSpecialCard(btn){
     ctx.fillStyle = "#e5e9f2"; ctx.font = "700 25px system-ui, sans-serif";
     ctx.fillText("WEEKLY PICK'EM · SPECIAL EDITION", W / 2, 815);
     ctx.fillStyle = "#9aa7bd"; ctx.font = "600 21px system-ui, sans-serif";
-    ctx.fillText("SCORE AGENT", W / 2, 855);
+    ctx.fillText("STAT AGENT", W / 2, 855);
     cv.toBlob(function(bl){
       var a = document.createElement("a"); a.href = URL.createObjectURL(bl); a.download = "prop-agent-special-card.png"; a.click();
       setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
@@ -5446,7 +5446,7 @@ function ensureCardPop(){
   if (document.getElementById("cardPop")) return;
   var cfg = WEEKLY_PICKEM;
   var sparks = [[-120,-160],[110,-140],[-150,40],[150,60],[-90,150],[100,160],[0,-190],[30,190]].map(function(p){ return '<span class="spark" style="--tx:' + p[0] + 'px;--ty:' + p[1] + 'px"></span>'; }).join("");
-  var back = '<div class="sbring"><img src="/api/icons?s=logo" alt=""></div><div class="bkname" style="color:#f5c518">SCORE AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">WEEKLY PICK\'EM · SPECIAL EDITION</div><div class="bksub">' + cfg.awayShort + ' @ ' + cfg.homeShort + ' · ' + pickemWhen() + ' MST<br>Won in the Weekly Pick\'em</div><div class="holo" style="--hc:#f5c51859"></div>';
+  var back = '<div class="sbring"><img src="/api/icons?s=logo" alt=""></div><div class="bkname" style="color:#f5c518">STAT AGENT</div><div class="bksub" style="color:#f5c518;letter-spacing:1.5px;font-weight:800">WEEKLY PICK\'EM · SPECIAL EDITION</div><div class="bksub">' + cfg.awayShort + ' @ ' + cfg.homeShort + ' · ' + pickemWhen() + ' MST<br>Won in the Weekly Pick\'em</div><div class="holo" style="--hc:#f5c51859"></div>';
   var el = document.createElement("div");
   el.className = "cardpop"; el.id = "cardPop";
   el.innerHTML = '<div class="burst"></div>'
@@ -5557,12 +5557,12 @@ function viewPulledCard(i){
   if (pu.ring) {
     front.style.borderColor = "#f5c518";
     front.innerHTML = '<img src="/api/avatars?s=14" alt="" style="width:100%;height:100%;object-fit:cover;display:block"><div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">THE RING</b><span class="rarpill" style="background:#f5c518;color:#1a1405">🏆 CHASE</span></div>';
-    back.innerHTML = '<img src="/api/icons?s=logo" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">SCORE AGENT</b><div style="color:#f5c518;letter-spacing:1.5px;font-weight:800;font-size:12px">THE RING · CHAMPIONSHIP EDITION</div><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">Signed · One of a Kind<br>The rarest pull in the game</div>';
+    back.innerHTML = '<img src="/api/icons?s=logo" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">STAT AGENT</b><div style="color:#f5c518;letter-spacing:1.5px;font-weight:800;font-size:12px">THE RING · CHAMPIONSHIP EDITION</div><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">Signed · One of a Kind<br>The rarest pull in the game</div>';
   } else {
     var t = TIERS[pu.ti], cname = CHARNAMES[pu.ci - 1];
     front.style.borderColor = t.color;
     front.innerHTML = '<img src="' + esc(cardArtUrl(pu.ci, pu.ti)) + '" alt="" style="width:100%;height:100%;' + (legendArt(pu.ci, pu.ti) ? 'object-fit:contain;background:#120a26' : 'object-fit:cover') + ';display:block">' + (pu.ti === 2 ? '<div class="glitterfx"></div>' : pu.ti === 3 ? '<div class="glitterfx pglit"></div>' : '') + '<div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + cname + '</b>' + (pu.unlock ? '<span class="rarpill" style="background:' + t.color + '">' + t.name.toUpperCase() + ' · UNLOCKED</span>' : '<span class="rarpill" style="background:#f5c518;color:#1a1405">✨ ' + t.name.toUpperCase() + ' FOIL</span>') + '<span style="display:none"></span></div>';
-    back.innerHTML = '<img src="/api/icons?s=logo" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">SCORE AGENT</b><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">' + (pu.unlock ? cname + ' · ' + t.name.toUpperCase() + ' BATTLE CARD<br>' + (pu.bumped ? 'Unlocked from a pack — ' + cname + ' jumped to ' + t.name.toUpperCase() + ' tier!' : 'Unlocked from a pack — it is on your tier list now.') + '<br>Battle with it in Grid Clash!' : cname + ' · FOIL<br>' + t.name + ' tier gold foil edition<br>Pulled from a Stat Agent pack.') + '</div>';
+    back.innerHTML = '<img src="/api/icons?s=logo" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">STAT AGENT</b><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">' + (pu.unlock ? cname + ' · ' + t.name.toUpperCase() + ' BATTLE CARD<br>' + (pu.bumped ? 'Unlocked from a pack — ' + cname + ' jumped to ' + t.name.toUpperCase() + ' tier!' : 'Unlocked from a pack — it is on your tier list now.') + '<br>Battle with it in Grid Clash!' : cname + ' · FOIL<br>' + t.name + ' tier gold foil edition<br>Pulled from a Stat Agent pack.') + '</div>';
   }
   document.getElementById("pullView").classList.add("open");
 }
@@ -8825,7 +8825,7 @@ function renderHomeSport(){
 })();
 
 
-/* ================= SCORE AGENT: Player Finder + Player Pages + Weekly Pick'em ================= */
+/* ================= STAT AGENT: Player Finder + Player Pages + Weekly Pick'em ================= */
 var ESPN_V3 = "https://site.api.espn.com/apis/common/v3/sports/";
 var PF_LEAGUES = [
   { key: "nba", label: "NBA", sport: "basketball", league: "nba" },
@@ -10170,7 +10170,7 @@ function paBackStep(){
     try { history.pushState({ pa: "trap" }, ""); } catch (e) {}
   });
 })();
-/* ================= SCORE AGENT AI (Brandon 2026-11-21) =================
+/* ================= STAT AGENT AI (Brandon 2026-11-21) =================
    Six user-facing AI features. All dormant until the server reports an
    OPENAI_API_KEY (aiBoot ping): every AI surface is [data-ai] and stays
    CSS-hidden until body.aion. Generated blurbs are cached server-side
