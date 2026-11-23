@@ -9,7 +9,7 @@
 self.addEventListener("push", function(event) {
   var data = {};
   try { data = event.data ? event.data.json() : {}; } catch (e) { data = { body: event.data ? event.data.text() : "" }; }
-  var title = data.title || "Score Agent";
+  var title = data.title || "Stat Agent";
   var options = {
     body: data.body || "",
     icon: "/api/icons?s=logo",
