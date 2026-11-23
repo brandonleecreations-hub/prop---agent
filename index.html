@@ -7814,7 +7814,7 @@ function ensurePackPop(){
     + '<div class="revealwrap"><div class="revealglow" id="packGlow" style="display:none"></div><div class="revealrow" id="packCards" style="display:none"></div></div>'
     + '<div class="note" id="packHint" style="display:none">Tap a card to view it big — tap the big card to flip it</div>'
     + '<div id="packCap" style="font-weight:900;color:#f5c518;text-align:center"></div>'
-    + '<button class="mini" id="packClose" style="background:#17171f;border:1px solid #33333f;color:#fff;padding:9px 18px;border-radius:10px;font-weight:800">Rip</button></div>';
+    + '<button class="mini" id="packClose" style="background:#17171f;border:1px solid #33333f;color:#fff;padding:9px 18px;border-radius:10px;font-weight:800">Rip It</button></div>';
   document.body.appendChild(el);
   el.addEventListener("click", function(e){ if (e.target === el) { el.classList.remove("open"); renderBoard(); } });
   document.getElementById("packClose").addEventListener("click", function(){ if (!window._packOpened) { ripPackOpen(); return; } el.classList.remove("open"); renderBoard(); });
@@ -7871,7 +7871,7 @@ function openPackPop(demo, free){
   stage.style.display = "block"; stage.classList.remove("torn"); stage.classList.remove("charging");
   stage.innerHTML = '<div class="packfloat"><div class="packsplit"><div class="ph ph-t"></div><div class="ph ph-b"></div><div class="packshine"></div><div class="packflash"></div></div><div class="packaura"><i></i><i></i><i></i></div></div><div style="font-weight:900;margin-top:10px;color:#f5c518;letter-spacing:1px">' + (demo ? "DEMO PACK" : "AGENT CLASH PACK") + '</div><div class="note">Tap to open</div>';
   cap.textContent = "";
-  var pc0 = $("packClose"); if (pc0) { pc0.textContent = "Rip"; pc0.classList.remove("pop"); }
+  var pc0 = $("packClose"); if (pc0) { pc0.textContent = "Rip It"; pc0.classList.remove("pop"); }
   $("packPop").classList.add("open");
 }
 document.addEventListener("click", function(e){
