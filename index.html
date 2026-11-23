@@ -7248,11 +7248,13 @@ function espTwitchChannel(d){
   if (T.indexOf("pgl") >= 0) return "pgl";
   if (T.indexOf("starladder") >= 0 || T.indexOf("starseries") >= 0) return "starladder_cs2";
   if (T.indexOf("fissure") >= 0) return "fissure_cs2";
-  return "eslcs";
+  if (T.indexOf("esl") >= 0 || T.indexOf("iem") >= 0 || T.indexOf("katowice") >= 0 || T.indexOf("cologne") >= 0) return "eslcs";
+  return ""; // smaller events stream on their own channels — no embed rather than a wrong one
 }
 function espSyncStream(d){
   var w = $("espStreamWrap"); if (!w) return;
-  var key = d && d.state === "in" ? (d.game + ":" + (d.slug || d.id || "") + ":" + espTwitchChannel(d)) : "";
+  var ch0 = d ? espTwitchChannel(d) : "";
+  var key = d && d.state === "in" && ch0 ? (d.game + ":" + (d.slug || d.id || "") + ":" + ch0) : "";
   if (w._espKey === key) return;
   w._espKey = key;
   if (!key){ w.innerHTML = ""; return; }
