@@ -3909,7 +3909,7 @@ function teamSchedLoad(lg, tourLg, tid, box, curId){
     box.innerHTML = '<div class="tgrp">Schedule</div><div class="tslider" id="teamSchedSlider">' + cards + '</div>';
     var sl = $("teamSchedSlider"), onEl = sl ? sl.querySelector(".tscard-on") : null;
     if (sl && onEl) sl.scrollLeft = Math.max(0, onEl.offsetLeft - 14);
-    box.querySelectorAll("[data-sched-game]").forEach(function(c){ c.addEventListener("click", function(){ var raw = c.getAttribute("data-sched-game"); var gid = (tourLg !== lg.league) ? tourLg + ":" + raw : raw; var d = $("teamDlg"); if (d && d.open) d.close(); showView("live"); window._gameFrom = "sport"; openGame(lg.key, gid); }); });
+    box.querySelectorAll("[data-sched-game]").forEach(function(c){ c.addEventListener("click", function(){ var raw = c.getAttribute("data-sched-game"); var gid = (tourLg !== lg.league) ? tourLg + ":" + raw : raw; var d = $("teamDlg"); if (d && d.open) d.close(); showView("live"); window._gameFrom = null; openGame(lg.key, gid); }); });
   }).catch(function(){});
 }
 function openTeamRoster(teamId, teamName){
