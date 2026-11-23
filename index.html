@@ -4137,6 +4137,7 @@ function watchHtml(lg, comp, s, st){
   return '<div class="watchrow"><span style="font-size:11px;font-weight:900;letter-spacing:1.5px;color:var(--gold)">📺 ' + (st.state === "in" ? "WATCH LIVE" : "WATCH ON") + '</span>' + btns.map(function(b){ return '<a class="watchbtn" href="' + b.url + '" target="_blank" rel="noopener">▶ ' + esc(b.label) + '</a>'; }).join("") + '</div>';
 }
 function openGame(key, eventId, isRefresh){
+  if (key === "mma") { openMmaCard(eventId); return; }
   saLayersSet({ game: { key: key, eventId: String(eventId) } });
   if (key === "esports") { openEspGame(eventId); return; }
   window._openGame = {key: key, eventId: eventId};
@@ -9458,7 +9459,7 @@ function mmaCard(f){
   if (st.state === "in") when = '<span style="color:#ff5d7a;font-weight:800">LIVE' + (f.status.period ? " \u00B7 R" + f.status.period : "") + (f.status.displayClock ? " " + esc(f.status.displayClock) : "") + '</span>';
   else if (st.state === "post"){ var m = mmaMethod(c); when = "Final" + (m ? " \u00B7 " + esc(m) : "") + (f.status.period ? " \u00B7 R" + f.status.period : ""); }
   else when = esc(pfTnWhen(f.date));
-  return '<div class="tnm mmam darkbox"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;color:var(--mut);margin-bottom:4px"><img src="' + UFC_LOGO + '" alt="UFC" style="height:16px;width:16px;object-fit:contain;flex:none" onerror="this.remove()"><span style="flex:1;min-width:0">' + esc(f._ename || "") + (f._wc ? " \u00B7 " + esc(f._wc) : "") + '</span><span>' + when + '</span></div>' + rows + '</div>';
+  return '<div class="tnm mmam darkbox"' + (st.state === "post" && f.evId ? ' data-mma-ev="' + esc(f.evId) + '" style="cursor:pointer"' : '') + '><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;color:var(--mut);margin-bottom:4px"><img src="' + UFC_LOGO + '" alt="UFC" style="height:16px;width:16px;object-fit:contain;flex:none" onerror="this.remove()"><span style="flex:1;min-width:0">' + esc(f._ename || "") + (f._wc ? " \u00B7 " + esc(f._wc) : "") + '</span><span>' + when + '</span></div>' + rows + '</div>';
 }
 function mmaFetchRange(ck, fromDays, toDays){
   if (boardCache[ck] && Date.now() - boardCache[ck].ts < 25000) return Promise.resolve(boardCache[ck].events);
@@ -9472,41 +9473,92 @@ function mmaFetchCards(){ return mmaFetchRange("mma_cards", 4, 42); }
 function mmaLoad(){
   return Promise.all([mmaFetchFights(), mmaFetchCards()]).then(function(rs){
     var cards = (rs[1] || []).slice().sort(function(a, b){ return String(a.date).localeCompare(String(b.date)); }).slice(0, 6);
-    window._mmaData = { fights: mmaFlatten(rs[0]), cards: cards };
+    window._mmaData = { fights: mmaFlatten(rs[0]), cards: cards, events: rs[0] || [] };
     return window._mmaData;
   });
 }
 function mmaSectionsHtml(fights, cards){
-  var pill = window._mmaPill || "all";
-  var present = {};
-  fights.forEach(function(f){ if (f._wc) present[f._wc] = 1; });
-  var wcs = MMA_WC_ORDER.filter(function(w){ return present[w]; }).concat(Object.keys(present).filter(function(w){ return MMA_WC_ORDER.indexOf(w) < 0; }).sort());
-  var pillDefs = [{ k: "all", l: "All Classes" }].concat(wcs.map(function(w){ return { k: w, l: w.replace(/^Women's /, "W. ") }; }));
-  var html = '<div class="tabs" style="margin:2px 0 10px">' + pillDefs.map(function(p){ return '<button type="button" class="tab' + (pill === p.k ? " on" : "") + '" data-mmawc="' + esc(p.k) + '">' + esc(p.l) + '</button>'; }).join("") + '</div>';
-  var list = pill === "all" ? fights : fights.filter(function(f){ return f._wc === pill; });
   var live = [], up = [], fin = [];
-  list.forEach(function(f){ var st = f.status && f.status.type && f.status.type.state; if (st === "in") live.push(f); else if (st === "post") fin.push(f); else up.push(f); });
+  (fights || []).forEach(function(f){ var st = f.status && f.status.type && f.status.type.state; if (st === "in") live.push(f); else if (st === "post") fin.push(f); else up.push(f); });
   var slider = function(l){ return '<div class="lvslider">' + l.map(mmaCard).join("") + '</div>'; };
+  var html = "";
   if (live.length) html += '<h3 class="sgh">\uD83D\uDD34 Live Now</h3>' + slider(live);
-  if (up.length) html += '<h3 class="sgh">Upcoming Fights</h3>' + slider(up);
-  if (fin.length) html += '<h3 class="sgh">Finished</h3>' + slider(fin);
-  if (!live.length && !up.length && !fin.length) html += '<p class="empty">No fights in this class right now.</p>';
-  if (cards && cards.length){
-    html += '<h3 class="sgh">\uD83E\uDD4A Next Fight Cards</h3><div class="lvslider">' + cards.map(function(e){
-      var comps = e.competitions || []; var main = comps[comps.length - 1];
-      var names = main ? (main.competitors || []).map(function(x){ return esc((x.athlete && x.athlete.displayName) || ""); }).join(" vs ") : "";
-      var wc = main && main.type ? main.type.abbreviation : "";
-      return '<div class="tnm mmam darkbox"><div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mut);margin-bottom:4px"><img src="' + UFC_LOGO + '" alt="UFC" style="height:16px;width:16px;object-fit:contain;flex:none" onerror="this.remove()"><span>' + esc(pfTnWhen(e.date)) + (wc ? " \u00B7 " + esc(wc) : "") + '</span></div><div style="font-weight:800;color:#fff;font-size:14px;line-height:1.25">' + esc(e.name || "UFC Event") + '</div>' + (names ? '<div class="note" style="margin-top:3px">Main event: ' + names + '</div>' : "") + '<div class="note">' + comps.length + ' fights on the card</div></div>';
-    }).join("") + '</div>';
-  }
+  if (up.length) html += '<h3 class="sgh">\uD83E\uDD4A Upcoming Fights</h3>' + slider(up);
+  if (fin.length) html += '<h3 class="sgh">Past Fights</h3><div class="note" style="margin:2px 0 4px">Tap a fight for the full card &amp; results</div>' + slider(fin);
+  if (!live.length && !up.length && !fin.length) html += '<p class="empty">No fights right now.</p>';
+  html += '<div id="mmaRankBox"><h3 class="sgh">\uD83C\uDFC6 UFC Rankings</h3><p class="empty">Loading rankings\u2026</p></div>';
   return html;
+}
+function mmaRankRender(box){
+  var rb = box ? box.querySelector("#mmaRankBox") : null; if (!rb) return;
+  var draw = function(divs){
+    if (!divs || !divs.length){ rb.innerHTML = ""; return; }
+    var sel = window._mmaRankSel || divs[0].key;
+    if (!divs.some(function(d){ return d.key === sel; })) sel = divs[0].key;
+    var cur = divs.filter(function(d){ return d.key === sel; })[0];
+    var rel = divs[0].released || "";
+    rb.innerHTML = '<h3 class="sgh">\uD83C\uDFC6 UFC Rankings</h3>' + (rel ? '<div class="note" style="margin:2px 0 4px">Official rankings \u00B7 released ' + esc(rel) + ' \u00B7 tap a fighter for his profile</div>' : '')
+      + '<div class="tabs" style="margin:2px 0 10px">' + divs.map(function(d){ return '<button type="button" class="tab' + (d.key === sel ? " on" : "") + '" data-mmarank="' + esc(d.key) + '">' + esc(d.title.replace(/^Women's /, "W. ")) + '</button>'; }).join("") + '</div>'
+      + '<div class="pfslider">' + cur.fighters.map(pfWikiCard).join("") + '</div>';
+    rb.querySelectorAll("[data-mmarank]").forEach(function(b){ b.addEventListener("click", function(){ window._mmaRankSel = b.getAttribute("data-mmarank"); draw(window._mmaRankDivs); }); });
+    pfWireWikiCards(rb);
+    pfResolveWikiCards(rb);
+  };
+  if (window._mmaRankDivs) draw(window._mmaRankDivs);
+  else pfWikiRankings().then(function(divs){ if (divs) window._mmaRankDivs = divs; draw(divs); }).catch(function(){ draw(null); });
+}
+function mmaFindEvent(evId){
+  var d = window._mmaData || {};
+  var all = (d.events || []).concat(d.cards || []);
+  for (var i = 0; i < all.length; i++) if (String(all[i].id) === String(evId)) return all[i];
+  return null;
+}
+function mmaBoutHtml(c){
+  var st = (c.status || {}).type || {};
+  var wc = (c.type && c.type.abbreviation) || "";
+  var rows = (c.competitors || []).map(function(x){
+    var a = x.athlete || {};
+    var nm = esc(a.displayName || "");
+    if (a.displayName) nm = '<span data-player="' + esc(a.displayName) + '" data-league="mma" style="cursor:pointer;text-decoration:underline dotted">' + nm + '</span>';
+    var img = x.id ? '<img src="https://a.espncdn.com/i/headshots/mma/players/full/' + esc(String(x.id)) + '.png" alt="" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex:none" loading="lazy" onerror="this.remove()">' : '';
+    var flHref = (a.flag && a.flag.href) || "";
+    var flagImg = flHref ? '<img class="mmaflag" data-flagchk="' + esc(String(x.id || "")) + '" data-flagcc="' + esc(flHref.split("/").pop().replace(".png", "")) + '" src="' + esc(flHref) + '" alt="" style="width:17px;height:12px;border-radius:2px;object-fit:cover">' : '';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:3px 0;' + (x.winner ? "color:#fff;font-weight:900" : "color:#c9c9d6") + '">' + img + flagImg + '<span style="flex:1;min-width:0">' + nm + '</span>' + (x.winner && st.state === "post" ? '<span style="color:#120b28;background:var(--gold);font-size:10px;font-weight:900;border-radius:99px;padding:1px 7px;flex:none">WIN</span>' : '') + '</div>';
+  }).join("");
+  var meta = "";
+  if (st.state === "post"){ var m = mmaMethod(c); meta = "Final" + (m ? " \u00B7 " + esc(m) : "") + (c.status.period ? " \u00B7 R" + c.status.period : "") + (c.status.displayClock ? " \u00B7 " + esc(c.status.displayClock) : ""); }
+  else if (st.state === "in") meta = "LIVE" + (c.status.period ? " \u00B7 R" + c.status.period : "");
+  else meta = pfTnWhen(c.date);
+  return '<div class="darkbox" style="margin-top:8px;padding:9px 11px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--mut)"><span style="letter-spacing:1.2px;font-weight:800">' + esc(wc) + '</span><span>' + meta + '</span></div>' + rows + '</div>';
+}
+function openMmaCard(evId){
+  var ev = mmaFindEvent(evId); if (!ev) return;
+  var again = window._openGame && window._openGame.key === "mma" && String(window._openGame.eventId) === String(evId);
+  window._openGame = { key: "mma", eventId: String(evId) };
+  saLayersSet({ game: { key: "mma", eventId: String(evId) } });
+  if (!again){
+    window._liveScrollY = window.scrollY || 0;
+    ["liveCenter", "liveTabs", "liveStatus", "liveFinished"].forEach(function(id){ var el = $(id); if (el) el.style.display = "none"; });
+  }
+  var gd = $("gameDetail"); if (!gd) return;
+  var comps = (ev.competitions || []).slice().reverse();
+  var stt = ((ev.status || {}).type || {});
+  gd.innerHTML = '<button class="gcBack" type="button" id="mmaCardBack">\u2190 All fights</button>'
+    + '<div class="darkbox" style="margin-top:8px;padding:12px"><div style="display:flex;align-items:center;gap:8px"><img src="' + UFC_LOGO + '" alt="UFC" style="height:22px"><div style="font-weight:900;font-size:16px">' + esc(ev.name || "UFC Fight Card") + '</div></div>'
+    + '<div class="note" style="margin-top:3px">' + esc(pfTnWhen(ev.date)) + (stt.state === "post" ? " \u00B7 Final" : stt.state === "in" ? " \u00B7 LIVE" : "") + '</div></div>'
+    + comps.map(mmaBoutHtml).join("");
+  var bk = $("mmaCardBack"); if (bk) bk.addEventListener("click", function(){ closeGame(false); });
+  bindTiles(gd);
+  mmaFlagVerify(gd);
+  if (!again) window.scrollTo(0, 0);
 }
 function mmaRenderInto(box){
   if (!box) return;
   var d = window._mmaData || { fights: [], cards: [] };
   box.innerHTML = mmaSectionsHtml(d.fights, d.cards);
-  box.querySelectorAll("[data-mmawc]").forEach(function(b){ b.addEventListener("click", function(){ window._mmaPill = b.getAttribute("data-mmawc"); mmaRerender(); }); });
+  box.querySelectorAll("[data-mma-ev]").forEach(function(el){ el.addEventListener("click", function(e){ if (e.target && e.target.closest && e.target.closest("[data-player]")) return; var fromHome = window._view === "home"; if (fromHome) showView("live"); window._gameFrom = fromHome ? "home" : null; openGame("mma", el.getAttribute("data-mma-ev")); }); });
   bindTiles(box);
+  mmaRankRender(box);
   box.querySelectorAll(".lvslider").forEach(function(tr, i){ try { popSliderInit(tr, "mma" + i, ".tnm"); } catch (e) {} });
 }
 function mmaRerender(){
