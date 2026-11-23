@@ -3774,6 +3774,16 @@ function trackerHtml(lg, s, comp, cs){
 }
 
 function closeGame(silent){
+  if (silent) window._teamReturn = null;
+  else if (window._teamReturn) {
+    var tr = window._teamReturn; window._teamReturn = null;
+    window._openGame = null;
+    saLayersSet({ game: null, team: null });
+    var gd0 = $("gameDetail"); if (gd0) gd0.innerHTML = "";
+    ["liveCenter", "liveTabs", "liveStatus", "liveFinished"].forEach(function(id){ var el = $(id); if (el) el.style.display = ""; });
+    openTeamRoster(tr.id, tr.name);
+    return;
+  }
   closeEspGame(!silent);
   var dest = window._gameFrom || "live"; window._gameFrom = null;
   window._openGame = null;
@@ -3873,7 +3883,7 @@ function teamStandLoad(lg, tourLg, tid, box){
     }).catch(function(){ render(g0); });
   }).catch(function(){});
 }
-function teamSchedLoad(lg, tourLg, tid, box, curId){
+function teamSchedLoad(lg, tourLg, tid, box, curId, teamName){
   if (!box) return;
   fetchJson(ESPN + lg.sport + "/" + tourLg + "/teams/" + tid + "/schedule").then(function(d){
     var evs = (d && d.events) || [];
@@ -3909,7 +3919,7 @@ function teamSchedLoad(lg, tourLg, tid, box, curId){
     box.innerHTML = '<div class="tgrp">Schedule</div><div class="tslider" id="teamSchedSlider">' + cards + '</div>';
     var sl = $("teamSchedSlider"), onEl = sl ? sl.querySelector(".tscard-on") : null;
     if (sl && onEl) sl.scrollLeft = Math.max(0, onEl.offsetLeft - 14);
-    box.querySelectorAll("[data-sched-game]").forEach(function(c){ c.addEventListener("click", function(){ var raw = c.getAttribute("data-sched-game"); var gid = (tourLg !== lg.league) ? tourLg + ":" + raw : raw; var d = $("teamDlg"); if (d && d.open) d.close(); showView("live"); window._gameFrom = null; openGame(lg.key, gid); }); });
+    box.querySelectorAll("[data-sched-game]").forEach(function(c){ c.addEventListener("click", function(){ var raw = c.getAttribute("data-sched-game"); var gid = (tourLg !== lg.league) ? tourLg + ":" + raw : raw; var d = $("teamDlg"); if (d && d.open) d.close(); showView("live"); window._gameFrom = null; openGame(lg.key, gid); window._teamReturn = { id: String(tid), name: teamName || "" }; }); });
   }).catch(function(){});
 }
 function openTeamRoster(teamId, teamName){
@@ -3951,7 +3961,7 @@ function openTeamRoster(teamId, teamName){
   if (!dlg._wired){ dlg._wired = 1; dlg.addEventListener("click", function(e){ if (e.target === dlg) dlg.close(); }); }
   if (!dlg.open) dlg.showModal();
   teamStandLoad(lg, ctx.tourLg, tid, $("teamStandBox"));
-  teamSchedLoad(lg, ctx.tourLg, tid, $("teamSchedBox"), String(((s.header || {}).id) || ((window._openGame || {}).eventId) || "").split(":").pop());
+  teamSchedLoad(lg, ctx.tourLg, tid, $("teamSchedBox"), String(((s.header || {}).id) || ((window._openGame || {}).eventId) || "").split(":").pop(), teamName);
   fetchJson(ESPN + lg.sport + "/" + ctx.tourLg + "/teams/" + tid + "/roster").then(function(r){
     var list = $("teamRosterList"); if (!list || !dlg.open) return;
     var groups = [], gmap = {};
