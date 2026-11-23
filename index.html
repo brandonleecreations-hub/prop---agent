@@ -1440,6 +1440,7 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
 .pk2btn{background:#1b1b28;color:#fff;border:1px solid #3a3a52;border-radius:9px;padding:8px 10px;font-weight:900;font-size:12.5px}
 .pk2btn.on{background:linear-gradient(135deg,#7C3AED,#6d28d9);border-color:#a78bfa}
 .pk2btn:disabled{opacity:.55}
+.pk2btn.on:disabled{opacity:1;box-shadow:0 0 0 2px #f5c518}
 #pickemHome .pickem{padding:3px 6px}
 #pickemHome .pk-title{font-size:12px;margin:0}
 #pickemHome .pk-kick{font-size:10px}
@@ -10334,7 +10335,7 @@ function renderPickem2(){
     else if (act != null && act !== "" && !pick){ res = '<div class="note" style="margin-top:4px">Final: <b style="color:#fff">' + act + ' ' + esc(l.statLabel) + '</b></div>'; }
     else if (act != null && act !== "" && pick){ var hit = (pick === "MORE" && act > l.line) || (pick === "LESS" && act < l.line); res = '<div class="note" style="margin-top:4px">Final: <b style="color:#fff">' + act + ' ' + esc(l.statLabel) + '</b>' + (hit ? ' · <b style="color:#4fe3c1">HIT ✓</b>' : ' · <b style="color:#ff5d7a">MISS ✗</b>') + '</div>'; }
     var dis = (st.locked || started) ? " disabled" : "";
-    return '<div class="pk2leg"><img src="' + esc(l.img) + '" alt="" onerror="this.remove()"><div style="min-width:0;flex:1"><b>' + esc(l.name) + '</b><div class="note">' + esc(l.team) + ' vs ' + esc(l.opp) + ' · ' + esc(l.statLabel) + ' <b style="color:#fff">' + l.line + '</b></div>' + res + '</div><div class="pk2btns"><button type="button" class="pk2btn' + (pick === "MORE" ? " on" : "") + '" data-pk2="' + i + ':MORE"' + dis + '>MORE</button><button type="button" class="pk2btn' + (pick === "LESS" ? " on" : "") + '" data-pk2="' + i + ':LESS"' + dis + '>LESS</button></div><div class="pk2LiveSlot" id="pk2Live' + i + '"></div></div>';
+    return '<div class="pk2leg"><img src="' + esc(l.img) + '" alt="" onerror="this.remove()"><div style="min-width:0;flex:1"><b>' + esc(l.name) + '</b><div class="note">' + esc(l.team) + ' vs ' + esc(l.opp) + ' · ' + esc(l.statLabel) + ' <b style="color:#fff">' + l.line + '</b></div>' + res + '</div><div class="pk2btns"><button type="button" class="pk2btn' + (pick === "MORE" ? " on" : "") + '" data-pk2="' + i + ':MORE"' + dis + '>' + (st.locked && pick === "MORE" ? "✓ " : "") + 'MORE</button><button type="button" class="pk2btn' + (pick === "LESS" ? " on" : "") + '" data-pk2="' + i + ':LESS"' + dis + '>' + (st.locked && pick === "LESS" ? "✓ " : "") + 'LESS</button></div><div class="pk2LiveSlot" id="pk2Live' + i + '"></div></div>';
   }).join("");
   var foot = "";
   if (st.graded === "win"){ var nd = PICKEM2.legs.filter(function(l, i){ return st.actuals[i] !== "VOID"; }).length; foot = '<div style="margin-top:6px;font-weight:900;color:#4fe3c1">🎉 PERFECT — ' + nd + ' for ' + nd + '! Your pack is waiting in My Packs below.</div>'; }
