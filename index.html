@@ -7357,8 +7357,9 @@ function espCs2SbHtml(d){
     var played = (m.s1 != null && m.s2 != null) || m.status === "finished" || m.state === "done";
     if (has) {
       sections++;
-      h += '<div class="espsblb">MAP ' + m.n + ' · ' + (m.statsFrom === "live" ? "LIVE PLAYER STATS" : "FINAL PLAYER STATS") + '</div>'
-        + espCs2TeamTable(d, m, 0) + espCs2TeamTable(d, m, 1) + espCs2TeamTable(d, m, -1);
+      h += '<div class="espsblb">MAP ' + m.n + ' · ' + (m.statsFrom === "final" ? "FINAL PLAYER STATS" : "LIVE PLAYER STATS") + '</div>'
+        + espCs2TeamTable(d, m, 0) + espCs2TeamTable(d, m, 1) + espCs2TeamTable(d, m, -1)
+        + (m.statsFrom === "roster" ? '<p class="note" style="margin:4px 0 2px">Live chart — kills, deaths and headshots fill in here the moment the source posts them.</p>' : '');
     } else if (isLive) {
       sections++;
       h += '<p class="empty" style="margin:6px 0 2px">MAP ' + m.n + ' · ' + esc(m.name || "") + ' is live — player stats post here as the source reports them.</p>';

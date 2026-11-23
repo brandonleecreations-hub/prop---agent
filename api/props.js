@@ -1198,6 +1198,16 @@ async function espCs2Match(slug) {
       if (rd && rd.roundsPlayed) { cur.roundsPlayed = rd.roundsPlayed; cur.tally = rd.tally; cur.rounds = rd.rounds || []; cur.clanIds = {}; if (rd.wClan) cur.clanIds[rd.wClan] = rd.wId; if (rd.lClan) cur.clanIds[rd.lClan] = rd.lId; }
       const st = await bo3GameStats(cur.gameId, true);
       if (st) { cur.players = st; cur.statsFrom = "live"; }
+      else {
+        // Our own live chart (Brandon 2026-11-23): when bo3 has posted no
+        // stats yet, still put the chart on screen with both teams'
+        // rosters (K/A/D/HS at zero) so it is there from round 1; the
+        // real numbers swap in automatically once bo3 posts them.
+        const ros = await Promise.all(det.teams.map((t) => bo3Roster(t.slug).catch(() => [])));
+        const rows = [];
+        det.teams.forEach((t, ti) => { (ros[ti] || []).slice(0, 5).forEach((pl) => rows.push({ nick: pl.nick, name: pl.name, img: pl.img, teamId: t.id, clan: "", k: 0, hs: 0, d: 0, a: 0, adr: null, rating: null, kast: null })); });
+        if (rows.length) { cur.players = rows; cur.statsFrom = "roster"; }
+      }
     }
   }
   return det;
