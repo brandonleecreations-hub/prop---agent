@@ -1444,6 +1444,22 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
 #pickemHome .pk2leg{gap:5px;padding:2px 5px;margin-top:3px;border-radius:9px}
 #pickemHome .pk2leg img{width:24px;height:24px}
 #pickemHome .pk2btn{padding:2px 6px;font-size:10px;border-radius:7px}
+#pickemHome .pickem{position:relative}
+.pk2leg{flex-wrap:wrap}
+.pk2LiveSlot{flex:1 1 100%;min-width:0}
+.pk2track{margin-top:5px;background:rgba(0,0,0,.30);border:1px solid rgba(245,197,24,.32);border-radius:9px;padding:5px 7px}
+.pk2trow{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;font-weight:800;color:#e9e4ff}
+.pk2tbar{position:relative;height:7px;border-radius:99px;background:rgba(255,255,255,.14);margin:5px 0 4px;overflow:hidden}
+.pk2tbar i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,#f5c518,#ffd970)}
+.pk2tbar i.win{background:linear-gradient(90deg,#2fbf9a,#4fe3c1)}
+.pk2tbar i.bust{background:linear-gradient(90deg,#e5486c,#ff5d7a)}
+.pkstamp{position:absolute;top:8px;right:8px;z-index:6;pointer-events:none;font-size:13.5px;font-weight:900;letter-spacing:1.5px;padding:4px 10px;border-radius:8px;transform:rotate(-12deg)}
+.pkstamp.lock{color:#dccfff;border:3px solid #7c3aed;background:rgba(76,29,149,.32);text-shadow:0 2px 8px rgba(0,0,0,.55);box-shadow:0 6px 18px rgba(124,58,237,.45)}
+.pkstamp.loss{color:#ffb3c1;border:3px solid #e5486c;background:rgba(229,72,108,.15);text-shadow:0 2px 8px rgba(0,0,0,.55);box-shadow:0 6px 18px rgba(229,72,108,.35)}
+.pkstamp.slam{animation:stampIn .45s cubic-bezier(.2,2.4,.4,1) both}
+.pkconfetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:6;border-radius:12px}
+.pkconfetti i{position:absolute;top:-12px;width:7px;height:11px;border-radius:2px;animation:pkfall 1.6s ease-in forwards}
+@keyframes pkfall{to{transform:translateY(260px) rotate(560deg);opacity:0}}
 .pktick{margin-top:5px;overflow:hidden;white-space:nowrap;background:rgba(0,0,0,.3);border:1px solid rgba(245,197,24,.3);border-radius:10px;padding:6px 0}
 .pktickin{display:inline-block;padding-left:100%;animation:pktickmove 28s linear infinite;font-size:14px;font-weight:800;color:#ffe9a8}
 @keyframes pktickmove{from{transform:translateX(0)}to{transform:translateX(-100%)}}
@@ -9942,7 +9958,7 @@ function renderPickem2(){
     else if (act != null && act !== "" && !pick){ res = '<div class="note" style="margin-top:4px">Final: <b style="color:#fff">' + act + ' ' + esc(l.statLabel) + '</b></div>'; }
     else if (act != null && act !== "" && pick){ var hit = (pick === "MORE" && act > l.line) || (pick === "LESS" && act < l.line); res = '<div class="note" style="margin-top:4px">Final: <b style="color:#fff">' + act + ' ' + esc(l.statLabel) + '</b>' + (hit ? ' · <b style="color:#4fe3c1">HIT ✓</b>' : ' · <b style="color:#ff5d7a">MISS ✗</b>') + '</div>'; }
     var dis = (st.locked || started) ? " disabled" : "";
-    return '<div class="pk2leg"><img src="' + esc(l.img) + '" alt="" onerror="this.remove()"><div style="min-width:0;flex:1"><b>' + esc(l.name) + '</b><div class="note">' + esc(l.team) + ' vs ' + esc(l.opp) + ' · ' + esc(l.statLabel) + ' <b style="color:#fff">' + l.line + '</b></div>' + res + '</div><div class="pk2btns"><button type="button" class="pk2btn' + (pick === "MORE" ? " on" : "") + '" data-pk2="' + i + ':MORE"' + dis + '>MORE</button><button type="button" class="pk2btn' + (pick === "LESS" ? " on" : "") + '" data-pk2="' + i + ':LESS"' + dis + '>LESS</button></div></div>';
+    return '<div class="pk2leg"><img src="' + esc(l.img) + '" alt="" onerror="this.remove()"><div style="min-width:0;flex:1"><b>' + esc(l.name) + '</b><div class="note">' + esc(l.team) + ' vs ' + esc(l.opp) + ' · ' + esc(l.statLabel) + ' <b style="color:#fff">' + l.line + '</b></div>' + res + '</div><div class="pk2btns"><button type="button" class="pk2btn' + (pick === "MORE" ? " on" : "") + '" data-pk2="' + i + ':MORE"' + dis + '>MORE</button><button type="button" class="pk2btn' + (pick === "LESS" ? " on" : "") + '" data-pk2="' + i + ':LESS"' + dis + '>LESS</button></div><div class="pk2LiveSlot" id="pk2Live' + i + '"></div></div>';
   }).join("");
   var foot = "";
   if (st.graded === "win"){ var nd = PICKEM2.legs.filter(function(l, i){ return st.actuals[i] !== "VOID"; }).length; foot = '<div style="margin-top:6px;font-weight:900;color:#4fe3c1">🎉 PERFECT — ' + nd + ' for ' + nd + '! Your free pack is waiting in My Packs below.</div>'; }
@@ -9950,12 +9966,58 @@ function renderPickem2(){
   else if (st.locked) foot = '<div style="margin-top:6px;font-weight:800;color:#cdbcf5">🔒 Picks locked — good luck! Results land here when the games finish.</div>';
   else if (started) foot = '<div style="margin-top:6px" class="note">This game has started — picks are closed. A new pick drops with the next round.</div>';
   else { var n = Object.keys(st.picks).length; foot = '<button type="button" class="bigbtn" id="pk2Lock" style="width:100%;margin-top:6px"' + (n < PICKEM2.legs.length ? " disabled" : "") + '>🔒 Lock my pick (' + n + '/' + PICKEM2.legs.length + ')</button>'; }
-  box.innerHTML = '<div class="pickem">' + head + legsHtml + '<div data-ai id="pkTakes"></div>' + foot + '</div>';
+  var stampHtml = "";
+  if (st.graded === "loss") stampHtml = '<div class="pkstamp loss' + (window._pk2JustGraded === "loss" ? " slam" : "") + '">\u2715 LOSS</div>';
+  else if (st.graded === "win" && window._pk2JustGraded === "win") stampHtml = pkConfettiHtml();
+  else if (st.locked && !st.graded) stampHtml = '<div class="pkstamp lock' + (window._pk2JustLocked ? " slam" : "") + '">LOCKED IN</div>';
+  window._pk2JustLocked = false; window._pk2JustGraded = "";
+  box.innerHTML = '<div class="pickem">' + stampHtml + head + legsHtml + '<div data-ai id="pkTakes"></div>' + foot + '</div>';
   aiTakesRender();
   box.querySelectorAll("[data-pk2]").forEach(function(b){ b.addEventListener("click", function(){ var parts = b.getAttribute("data-pk2").split(":"); var s2 = pk2State(); if (s2.locked || Date.now() >= pk2FirstStart()) return; s2.picks[parts[0]] = parts[1]; pk2Save(s2); renderPickem2(); }); });
   var lk = $("pk2Lock");
-  if (lk) lk.addEventListener("click", function(){ var s2 = pk2State(); if (Object.keys(s2.picks).length < PICKEM2.legs.length) return; s2.locked = true; pk2Save(s2); renderPickem2(); });
+  if (lk) lk.addEventListener("click", function(){ var s2 = pk2State(); if (Object.keys(s2.picks).length < PICKEM2.legs.length) return; s2.locked = true; window._pk2JustLocked = true; pk2Save(s2); renderPickem2(); });
   pk2MaybeGrade();
+  pk2LiveTick();
+}
+function pkConfettiHtml(){
+  var cols = ["#f5c518", "#7c3aed", "#4fe3c1", "#ff5d7a", "#7dd3fc", "#b26bff"];
+  var h = '<div class="pkconfetti">';
+  for (var i = 0; i < 18; i++){ h += '<i style="left:' + ((i * 53) % 100) + '%;background:' + cols[i % cols.length] + ';animation-delay:' + ((i % 6) * 0.11) + 's"></i>'; }
+  return h + '</div>';
+}
+/* PrizePicks-style live tracker (Brandon 2026-11-23): once the user has a
+   pick and the game is live, the Pick'em box shows the player's current
+   stat against the line with a progress bar, refreshed on every render
+   (summaryForEvent caches 25s). */
+function pk2LiveTick(){
+  var st = pk2State();
+  if (st.graded) return;
+  PICKEM2.legs.forEach(function(l, i){
+    var el = $("pk2Live" + i); if (!el) return;
+    var pick = st.picks[i]; if (!pick) return;
+    if (st.actuals[i] != null && st.actuals[i] !== "") return;
+    if (Date.now() < new Date(l.starts).getTime()) return;
+    var lg = { key: l.league, sport: l.sport, league: l.league };
+    summaryForEvent(lg, l.eventId).then(function(sm){
+      var el2 = $("pk2Live" + i); if (!el2 || !sm) return;
+      var comp = (sm.header && sm.header.competitions || [])[0] || {};
+      var gst = (comp.status && comp.status.type) || {};
+      if (gst.state !== "in") return;
+      var cur = pk2StatFromSummary(sm, l);
+      if (cur == null){ el2.innerHTML = '<div class="note" style="margin-top:4px">Has not checked in yet — the tracker starts with his first stat.</div>'; return; }
+      var clk = gst.shortDetail || gst.detail || "LIVE";
+      var pct = Math.max(0, Math.min(100, Math.round(cur / l.line * 100)));
+      var cls = "", status = "";
+      if (pick === "MORE"){
+        if (cur > l.line){ cls = "win"; status = '\u2713 OVER the line'; }
+        else status = "needs " + (Math.floor(l.line - cur) + 1) + " more";
+      } else {
+        if (cur < l.line){ cls = "win"; status = "\u2713 under by " + (Math.round((l.line - cur) * 10) / 10); }
+        else { cls = "bust"; status = "\u2717 over the line"; }
+      }
+      el2.innerHTML = '<div class="pk2track"><div class="pk2trow"><span style="color:#ff5d7a">\u25CF LIVE \u00B7 ' + esc(clk) + '</span><b style="color:#fff">' + cur + ' ' + esc(l.statLabel) + '</b></div><div class="pk2tbar"><i class="' + cls + '" style="width:' + pct + '%"></i></div><div class="pk2trow"><span style="color:#9a9ab0">Line ' + l.line + ' \u00B7 your pick: ' + pick + '</span><span>' + status + '</span></div></div>';
+    }).catch(function(){});
+  });
 }
 var _pk2Grading = false;
 function pk2PlayerDnp(sm, leg){
@@ -9994,6 +10056,7 @@ function pk2FinishGrade(st){
   if (PICKEM2.legs.every(function(l, i){ return st.actuals[i] === "VOID"; })) return;
   var win = PICKEM2.legs.every(function(l, i){ var a = st.actuals[i]; if (a === "VOID") return true; return (st.picks[i] === "MORE" && a > l.line) || (st.picks[i] === "LESS" && a < l.line); });
   st.graded = win ? "win" : "loss";
+  window._pk2JustGraded = win ? "win" : "loss";
   if (win && !st.awarded){ st.awarded = true; var pk = packsGet(); pk.n = (pk.n || 0) + 1; packsSet(pk); }
   pk2Save(st);
   renderPickem2();
