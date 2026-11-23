@@ -8713,7 +8713,7 @@ document.querySelectorAll("nav.bottom button").forEach(function(b){
   b.addEventListener("click", function(){
     var n = b.getAttribute("data-nav");
     if (n==="home"){ setSport("all"); }
-    else if (n==="live"){ liveFilter = "all"; finPill = "all"; futPill = "all"; showView("live"); }
+    else if (n==="live"){ liveFilter = "all"; finPill = "all"; futPill = "all"; document.querySelectorAll("#sportTabs .tab").forEach(function(t){ t.classList.toggle("on", false); }); showView("live"); }
     else showView(n);
   });
 });
