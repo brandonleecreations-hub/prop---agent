@@ -3840,7 +3840,16 @@ function teamStandHtml(lg, grp, tid){
   var cols = teamStandCols(lg).filter(function(c){
     return grp.entries.some(function(e){ return (e.stats || []).some(function(x){ return x.name === c[0]; }); });
   });
-  var rows = grp.entries.map(function(e){
+  var sv = function(e, n){ var v = null; (e.stats || []).forEach(function(x){ if (x.name === n) v = (x.value != null ? x.value : parseFloat(x.displayValue)); }); return v; };
+  var ents = grp.entries.slice();
+  var hasRank = ents.some(function(e){ return sv(e, "rank") != null; });
+  ents.sort(function(a, b){
+    if (hasRank) return (sv(a, "rank") || 99) - (sv(b, "rank") || 99);
+    if (lg.sport === "hockey" || lg.sport === "soccer") { var dp = (sv(b, "points") || 0) - (sv(a, "points") || 0); if (dp) return dp; }
+    var dw = (sv(b, "winPercent") || 0) - (sv(a, "winPercent") || 0); if (dw) return dw;
+    return (sv(b, "wins") || 0) - (sv(a, "wins") || 0);
+  });
+  var rows = ents.map(function(e){
     var t = e.team || {};
     var sm = {};
     (e.stats || []).forEach(function(x){ sm[x.name] = x.displayValue; });
