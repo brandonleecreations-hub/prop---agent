@@ -7338,7 +7338,11 @@ function espCs2SbHtml(d){
      parsed_status "waiting" with empty players_stats) says so on that
      map, instead of one blanket line hiding which maps are missing. */
   var sections = 0;
-  maps.forEach(function(m){
+  /* Live map's stats FIRST — they sit right under the stream video
+     (Brandon 2026-11-23). Finished maps keep their order after it. */
+  var ordered = maps.slice();
+  if (d.state === "in" && liveM) ordered = [liveM].concat(maps.filter(function(x){ return x !== liveM; }));
+  ordered.forEach(function(m){
     var has = (m.players || []).length > 0;
     var isLive = d.state === "in" && d.liveMap === m.n;
     var played = (m.s1 != null && m.s2 != null) || m.status === "finished" || m.state === "done";
