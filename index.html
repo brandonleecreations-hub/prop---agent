@@ -1460,6 +1460,8 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
 .pkconfetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:6;border-radius:12px}
 .pkconfetti i{position:absolute;top:-12px;width:7px;height:11px;border-radius:2px;animation:pkfall 1.6s ease-in forwards}
 @keyframes pkfall{to{transform:translateY(260px) rotate(560deg);opacity:0}}
+#packClose.pop{animation:btnpop .35s cubic-bezier(.2,2.2,.4,1) both}
+@keyframes btnpop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
 .pktick{margin-top:5px;overflow:hidden;white-space:nowrap;background:rgba(0,0,0,.3);border:1px solid rgba(245,197,24,.3);border-radius:10px;padding:6px 0}
 .pktickin{display:inline-block;padding-left:100%;animation:pktickmove 28s linear infinite;font-size:14px;font-weight:800;color:#ffe9a8}
 @keyframes pktickmove{from{transform:translateX(0)}to{transform:translateX(-100%)}}
@@ -7812,17 +7814,20 @@ function ensurePackPop(){
     + '<div class="revealwrap"><div class="revealglow" id="packGlow" style="display:none"></div><div class="revealrow" id="packCards" style="display:none"></div></div>'
     + '<div class="note" id="packHint" style="display:none">Tap a card to view it big — tap the big card to flip it</div>'
     + '<div id="packCap" style="font-weight:900;color:#f5c518;text-align:center"></div>'
-    + '<button class="mini" id="packClose" style="background:#17171f;border:1px solid #33333f;color:#fff;padding:9px 18px;border-radius:10px;font-weight:800">Collect</button></div>';
+    + '<button class="mini" id="packClose" style="background:#17171f;border:1px solid #33333f;color:#fff;padding:9px 18px;border-radius:10px;font-weight:800">Rip</button></div>';
   document.body.appendChild(el);
   el.addEventListener("click", function(e){ if (e.target === el) { el.classList.remove("open"); renderBoard(); } });
-  document.getElementById("packClose").addEventListener("click", function(){ el.classList.remove("open"); renderBoard(); });
+  document.getElementById("packClose").addEventListener("click", function(){ if (!window._packOpened) { ripPackOpen(); return; } el.classList.remove("open"); renderBoard(); });
   document.getElementById("packCards").addEventListener("click", function(e){
     var c = e.target && e.target.closest ? e.target.closest("[data-view]") : null;
     if (c) viewPulledCard(parseInt(c.getAttribute("data-view"), 10));
   });
-  document.getElementById("packStage").addEventListener("click", function(){
+  document.getElementById("packStage").addEventListener("click", ripPackOpen);
+}
+function showCollectBtn(){ var b = $("packClose"); if (b) { b.textContent = "Collect"; b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop"); } }
+function ripPackOpen(){
     if (window._packOpened) return; window._packOpened = true;
-    var st = this; st.classList.add("charging");
+    var st = $("packStage"); if (!st) return; st.classList.add("charging");
     setTimeout(function(){ st.classList.add("torn"); var bst = document.getElementById("packBurst"); if (bst) bst.style.display = "block"; neonBurst(); sfx("rip"); }, 480);
     setTimeout(function(){
       neonBurst();
@@ -7842,8 +7847,8 @@ function ensurePackPop(){
       var dupN = pulls.filter(function(pu){ return pu.dup; }).length;
       if (pulls.some(function(pu){ return pu.ring; })) { cap.textContent = window._packDemo ? "DEMO — that's the chase celebration! Nothing was saved." : "🏆 YOU PULLED THE RING!! Signed, one of a kind — the rarest card in the game!"; ringCelebration(); }
       else cap.textContent = (window._packDemo ? "DEMO — " : "") + (unN ? "🔓 " + unN + " NEW CARD" + (unN === 1 ? "" : "S") + " UNLOCKED on your tier list! " : "") + (foilN ? "✨ " + foilN + " foil cop" + (foilN === 1 ? "y" : "ies") + " saved to Pack Pulls" : "") + (dupN ? " · " + dupN + " duplicate" + (dupN === 1 ? "" : "s") + " not saved" : "");
+      showCollectBtn();
     }, 1330);
-  });
 }
 function neonBurst(){ var pp = document.getElementById("packPop"); if (!pp) return; pp.classList.remove("burst"); void pp.offsetWidth; pp.classList.add("burst"); }
 function openPackPop(demo, free){
@@ -7866,6 +7871,7 @@ function openPackPop(demo, free){
   stage.style.display = "block"; stage.classList.remove("torn"); stage.classList.remove("charging");
   stage.innerHTML = '<div class="packfloat"><div class="packsplit"><div class="ph ph-t"></div><div class="ph ph-b"></div><div class="packshine"></div><div class="packflash"></div></div><div class="packaura"><i></i><i></i><i></i></div></div><div style="font-weight:900;margin-top:10px;color:#f5c518;letter-spacing:1px">' + (demo ? "DEMO PACK" : "AGENT CLASH PACK") + '</div><div class="note">Tap to open</div>';
   cap.textContent = "";
+  var pc0 = $("packClose"); if (pc0) { pc0.textContent = "Rip"; pc0.classList.remove("pop"); }
   $("packPop").classList.add("open");
 }
 document.addEventListener("click", function(e){
