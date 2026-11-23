@@ -1466,7 +1466,7 @@ nav button[data-nav="live"].liveglow .ni svg{filter:drop-shadow(0 0 7px rgba(255
 #packClose.pop{animation:btnpop .35s cubic-bezier(.2,2.2,.4,1) both}
 @keyframes btnpop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
 .pktick{margin-top:5px;overflow:hidden;white-space:nowrap;background:rgba(0,0,0,.3);border:1px solid rgba(245,197,24,.3);border-radius:10px;padding:6px 0}
-.pktickin{display:inline-block;padding-left:100%;animation:pktickmove 22s linear infinite;font-size:14px;font-weight:800;color:#ffe9a8}
+.pktickin{display:inline-block;padding-left:100%;will-change:transform;font-size:14px;font-weight:800;color:#ffe9a8}
 @keyframes pktickmove{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 .reptick{overflow:hidden;white-space:nowrap;border-radius:12px;padding:8px 0;margin:6px 0;background:linear-gradient(180deg,#191430,#0d0d16);border:1px solid rgba(167,139,250,.55);box-shadow:0 10px 22px rgba(0,0,0,.55),0 4px 10px rgba(0,0,0,.5),0 0 18px rgba(124,58,237,.35),inset 0 1px 0 rgba(255,255,255,.14)}
 .reptickin{display:inline-block;padding-left:100%;animation:pktickmove 26s linear infinite;font-size:12.5px;font-weight:700;color:#efe9ff}
@@ -10720,7 +10720,20 @@ function aiAskSendText(q){
   });
 }
 /* ---- The Dealmaker's Takes (Daily Pick'em) ---- */
+function pkTickDrive(){
+  if (window._pkTickDriven) return; window._pkTickDriven = true;
+  var t0 = Date.now();
+  setInterval(function(){
+    var el = document.querySelector("#pkTakes .pktickin");
+    if (!el) return;
+    var w = el.offsetWidth;
+    if (!w || !el.offsetParent) return;
+    var p = ((Date.now() - t0) % 22000) / 22000;
+    el.style.transform = "translateX(" + (-p * w).toFixed(1) + "px)";
+  }, 50);
+}
 function aiTakesRender(){
+  pkTickDrive();
   var box = $("pkTakes"); if (!box) return;
   if (!AI_ON) {
     // The Board can render before the AI ping returns (v1.1.27 checks saw a
