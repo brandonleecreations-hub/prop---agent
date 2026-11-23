@@ -3847,6 +3847,25 @@ function teamStandCols(lg){
   return [["wins", "W"], ["losses", "L"], ["ties", "T"], ["winPercent", "PCT"]];
 }
 function teamStandHtml(lg, grp, tid){
+  if (lg.key === "cfb" || lg.key === "cbb" || lg.key === "wbb") {
+    /* College: ESPN's wins/losses here are the CONFERENCE record (0-0 until
+       league play starts) — the team's real record is the "overall" stat,
+       with "vs. Conf." carrying the conference mark. */
+    var rows2 = grp.entries.map(function(e){
+      var t = e.team || {};
+      var sm = {};
+      (e.stats || []).forEach(function(x){ sm[x.name] = x.displayValue; });
+      var parts = String(sm["overall"] || "0-0").split("-");
+      var w = parseInt(parts[0], 10) || 0, l = parseInt(parts[1], 10) || 0;
+      var pct = (w + l) > 0 ? w / (w + l) : 0;
+      var pctTxt = pct >= 1 ? "1.000" : pct.toFixed(3).replace(/^0/, "");
+      var conf = sm["vs. Conf."] || ((sm.wins || "0") + "-" + (sm.losses || "0"));
+      var logo = ((t.logos || [])[0] || {}).href || "";
+      return { tid: String(t.id), w: w, l: l, pct: pct, html: '<tr data-tstand-team="' + esc(t.id) + '" data-tstand-name="' + esc(t.displayName || "") + '"' + (String(t.id) === String(tid) ? ' class="on"' : '') + ' style="cursor:pointer"><td>' + (logo ? '<img class="tlogo" src="' + esc(logo) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + esc(t.abbreviation || t.shortDisplayName || t.displayName || "") + '</td><td>' + w + '</td><td>' + l + '</td><td>' + pctTxt + '</td><td>' + esc(conf) + '</td></tr>' };
+    });
+    rows2.sort(function(a, b){ if (b.pct !== a.pct) return b.pct - a.pct; return b.w - a.w; });
+    return '<div class="tgrp">' + esc(grp.name) + ' Standings</div><table class="tstand"><tr><th>TEAM</th><th>W</th><th>L</th><th>PCT</th><th>CONF</th></tr>' + rows2.map(function(r){ return r.html; }).join("") + '</table>';
+  }
   var cols = teamStandCols(lg).filter(function(c){
     return grp.entries.some(function(e){ return (e.stats || []).some(function(x){ return x.name === c[0]; }); });
   });
