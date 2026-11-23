@@ -9558,7 +9558,7 @@ function mmaBoutHtml(c){
   if (st.state === "post"){ var m = mmaMethod(c); meta = "Final" + (m ? " \u00B7 " + esc(m) : "") + (c.status.period ? " \u00B7 R" + c.status.period : "") + (c.status.displayClock ? " \u00B7 " + esc(c.status.displayClock) : ""); }
   else if (st.state === "in") meta = "LIVE" + (c.status.period ? " \u00B7 R" + c.status.period : "");
   else meta = pfTnWhen(c.date);
-  return '<div class="darkbox" style="margin-top:8px;padding:9px 11px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--mut)"><span style="letter-spacing:1.2px;font-weight:800">' + esc(wc) + '</span><span>' + meta + '</span></div>' + rows + '</div>';
+  return '<div class="darkbox" style="margin-top:8px;padding:9px 11px;background:var(--panel);border-radius:14px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--mut)"><span style="letter-spacing:1.2px;font-weight:800">' + esc(wc) + '</span><span>' + meta + '</span></div>' + rows + '</div>';
 }
 function openMmaCard(evId){
   var ev = mmaFindEvent(evId); if (!ev) return;
@@ -9573,7 +9573,7 @@ function openMmaCard(evId){
   var comps = (ev.competitions || []).slice().reverse();
   var stt = ((ev.status || {}).type || {});
   gd.innerHTML = '<button class="gcBack" type="button" id="mmaCardBack">\u2190 All fights</button>'
-    + '<div class="darkbox" style="margin-top:8px;padding:12px"><div style="display:flex;align-items:center;gap:8px"><img src="' + UFC_LOGO + '" alt="UFC" style="height:22px"><div style="font-weight:900;font-size:16px">' + esc(ev.name || "UFC Fight Card") + '</div></div>'
+    + '<div class="darkbox" style="margin-top:8px;padding:12px;background:var(--panel);border-radius:14px"><div style="display:flex;align-items:center;gap:8px"><img src="' + UFC_LOGO + '" alt="UFC" style="height:22px"><div style="font-weight:900;font-size:16px">' + esc(ev.name || "UFC Fight Card") + '</div></div>'
     + '<div class="note" style="margin-top:3px">' + esc(pfTnWhen(ev.date)) + (stt.state === "post" ? " \u00B7 Final" : stt.state === "in" ? " \u00B7 LIVE" : "") + '</div></div>'
     + comps.map(mmaBoutHtml).join("");
   var bk = $("mmaCardBack"); if (bk) bk.addEventListener("click", function(){ closeGame(false); });
