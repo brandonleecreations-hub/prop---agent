@@ -6994,7 +6994,7 @@ function espBoardHtml(groups){
     var gProps = gGroups.reduce(function(n, mg){ return n + mg.rows.length; }, 0);
     var gMatches = 0;
     STATES.forEach(function(sd){ gMatches += espSched && espSched[g] ? (espSched[g][sd[0]] || []).length : 0; });
-    h += '<div class="fsport"><span>' + gd[1] + '</span><span class="fcount">' + (gMatches ? gMatches + " match" + (gMatches === 1 ? "" : "es") + " \u00B7 " : "") + gProps + " props</span></div>";
+    h += '<div class="fsport"><span>' + gd[1] + '</span><span class="fcount">' + (gMatches ? gMatches + " match" + (gMatches === 1 ? "" : "es") : "") + '</span></div>';
     var any = false;
     STATES.forEach(function(sd){
       var items = espSched && espSched[g] ? (espSched[g][sd[0]] || []) : [];
@@ -7003,8 +7003,8 @@ function espBoardHtml(groups){
       h += '<div class="espstate"><span>' + sd[2] + '</span><span class="fcount">' + items.length + " match" + (items.length === 1 ? "" : "es") + "</span></div>";
       h += '<div class="espmslider">' + items.map(function(it){ return espMatchCard(g, it); }).join("") + "</div>";
     });
-    if (gGroups.length) { any = true; h += espPropsAreaHtml(g, gGroups); }
-    if (!any) h += '<p class="empty">' + (g === "lol" ? "League of Legends is between splits right now — no matches or props." : "No CS2 matches or props right now.") + "</p>";
+
+    if (!any) h += '<p class="empty">' + (g === "lol" ? "League of Legends is between splits right now — no matches or props." : "No CS2 matches right now.") + "</p>";
   });
   return h;
 }
@@ -7242,8 +7242,8 @@ function espRenderGc(){
   espApplyLiveActuals(d);
   gd.innerHTML = '<button class="gcBack" type="button">← All games</button>'
     + espScoreHeadHtml(d)
-    + (d.game === "lol" ? espLolSbHtml(d) : espCs2SbHtml(d))
-    + espGcPropsHtml(d);
+    + (d.game === "lol" ? espLolSbHtml(d) : espCs2SbHtml(d));
+
   espWireSliders(gd); bindTiles(gd);
   gd.querySelectorAll("[data-espmap]").forEach(function(b){ b.addEventListener("click", function(){ var v = b.getAttribute("data-espmap"); window._espMapSel = v === "tot" ? "tot" : (parseInt(v, 10) || null); espRenderGc(); }); });
   espSyncStream(d);
