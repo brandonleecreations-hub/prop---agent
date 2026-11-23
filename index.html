@@ -7081,22 +7081,14 @@ function renderBuildEsp(){
   var box = $("buildEsp"); if (!box) return;
   var lg = espLg(); if (!lg) return;
   espEnsure();
-  buildProps(lg).then(function(ps){
-    if (!$("buildEsp")) return;
-    espAttachProps(ps);
-    var rows = ps.filter(function(p){ return espFreshRow(p) && p.espState !== "in" && p.espState !== "post"; });
-    buildEspPresent = !!rows.length;
-    var h = '<div class="teamhead sporthead">\uD83C\uDFAE CS2<span style="margin-left:auto;font-size:11px;color:#cdbcf5;font-weight:800;letter-spacing:.6px">SWIPE \u203a</span></div>';
-    if (rows.length) {
-      var groups = espMatchGroups(rows);
-      h += espBuildMatchHtml("cs2", "Counter-Strike 2", groups);
-      h += espBuildMatchHtml("lol", "League of Legends", groups);
-    } else {
-      h += espBuildMatchesHtml();
-    }
-    box.innerHTML = h;
-    espWireSliders(box); bindTiles(box); espWireGcLinks(box); espWireGameLinks(box); espWireBuildPills(box);
-  }).catch(function(){});
+  /* CS2 props removed (Brandon 2026-11-23): this section shows MATCHES
+     only — the same Live / Upcoming / Finished cards as the CS2 board,
+     each opening its Game Center. No prop tiles, no props fetch. */
+  buildEspPresent = false;
+  var h = '<div class="teamhead sporthead">\uD83C\uDFAE CS2<span style="margin-left:auto;font-size:11px;color:#cdbcf5;font-weight:800;letter-spacing:.6px">SWIPE \u203a</span></div>';
+  h += espBuildMatchesHtml();
+  box.innerHTML = h;
+  espWireSliders(box); bindTiles(box); espWireGcLinks(box); espWireGameLinks(box); espWireBuildPills(box);
 }
 function espMatchCard(game, it){
   var st = espStateOf(game, it);
@@ -7184,8 +7176,8 @@ function espLiveSectionHtml(game, name){
     var items = espSched[game][sd[0]] || [];
     if (!items.length) return;
     total += items.length;
-    body += '<div class="espstate"><span>' + sd[1] + '</span><span class="fcount">' + items.length + " match" + (items.length === 1 ? "" : "es") + "</span></div>"
-      + '<div class="espmslider">' + items.map(function(it){ return espMatchCard(game, it); }).join("") + "</div>";
+
+    body += '<div class="espmslider">' + items.map(function(it){ return espMatchCard(game, it); }).join("") + "</div>";
   });
   if (!total) return "";
   return '<div class="liveesp" data-liveesp="' + game + '"><div class="fsport"><span>' + name + '</span><span class="fcount">' + total + " match" + (total === 1 ? "" : "es") + "</span></div>" + body + "</div>";
