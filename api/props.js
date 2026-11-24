@@ -1166,7 +1166,7 @@ async function bo3GameStats(gameId, live) {
     if (!rows || !rows.length) return null;
     return rows.map((r) => {
       const sp = r.steam_profile || {}, pl = sp.player || {};
-      return { nick: sp.nickname || pl.nickname || "", name: ((pl.first_name || "") + " " + (pl.last_name || "")).trim(), img: pl.image_url || "", teamId: (r.team_clan && r.team_clan.team_id) || 0, clan: r.clan_name || "", k: r.kills || 0, hs: r.headshots || 0, d: r.death || 0, a: r.assists || 0, adr: r.adr != null ? Math.round(r.adr * 10) / 10 : null, rating: r.player_rating != null ? Math.round(r.player_rating * 100) / 100 : null, kast: r.kast != null ? Math.round(r.kast * 100) : null };
+      return { nick: pl.nickname || sp.nickname || "", name: ((pl.first_name || "") + " " + (pl.last_name || "")).trim(), img: pl.image_url || "", teamId: (r.team_clan && r.team_clan.team_id) || 0, clan: r.clan_name || "", k: r.kills || 0, hs: r.headshots || 0, d: r.death || 0, a: r.assists || 0, adr: r.adr != null ? Math.round(r.adr * 10) / 10 : null, rating: r.player_rating != null ? Math.round(r.player_rating * 100) / 100 : null, kast: r.kast != null ? Math.round(r.kast * 100) : null };
     });
   }).catch(() => null);
 }
