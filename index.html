@@ -747,6 +747,7 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 .newsitem .nbody{display:flex;flex-direction:column;gap:3px;min-width:0}
 .newsitem .nhead{font-size:13px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .newsitem .nsrc{color:var(--mut);font-size:11px;font-weight:400}
+.teamnews{display:flex;flex-direction:column;gap:7px}.teamnews .newsitem{flex:none;max-width:none;width:100%;box-sizing:border-box;border-color:#4c3a86;box-shadow:0 3px 0 rgba(10,6,24,.55),0 8px 16px rgba(20,10,50,.30)}.teamnews .nimg{width:46px;height:46px}.teamnews .nhead{-webkit-line-clamp:2;font-size:12.5px}
 .pctchip{display:inline-block;background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.45);border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:800;letter-spacing:.4px}
 .closed .pickrow{display:none}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(106px,1fr));gap:10px}
@@ -3942,6 +3943,14 @@ function teamSchedLoad(lg, tourLg, tid, box, curId, teamName){
     box.querySelectorAll("[data-sched-game]").forEach(function(c){ c.addEventListener("click", function(){ var raw = c.getAttribute("data-sched-game"); var gid = (tourLg !== lg.league) ? tourLg + ":" + raw : raw; var d = $("teamDlg"); if (d && d.open) d.close(); showView("live"); window._gameFrom = null; openGame(lg.key, gid); window._teamReturn = { id: String(tid), name: teamName || "" }; }); });
   }).catch(function(){});
 }
+function teamNewsLoad(lg, tourLg, tid, box){
+  if (!box) return;
+  fetchJson(ESPN + lg.sport + "/" + tourLg + "/news?team=" + encodeURIComponent(tid) + "&limit=4").then(function(d){
+    var arts = ((d && d.articles) || []).filter(function(a){ return a && a.headline; }).slice(0, 4);
+    if (!arts.length) return;
+    box.innerHTML = '<div class="tgrp">Team News</div><div class="teamnews">' + arts.map(function(a){ return articleHtml(a, []); }).join("") + '</div>';
+  }).catch(function(){});
+}
 function openTeamRoster(teamId, teamName){
   var ctx = window._gcCtx; if (!ctx || !teamId) return;
   var lg = ctx.lg, s = ctx.s;
@@ -3972,7 +3981,7 @@ function openTeamRoster(teamId, teamName){
   if (!isCollege && starters.length) html += '<div class="tgrp">Starters <span class="note">\u2014 this game</span></div><div class="tslider" data-tmslider="1">' + starters.map(function(p){ return card(p); }).join("") + '</div>';
   else if (!isCollege && gcPre) html += '<p class="note" style="margin-top:12px">Starters post once the game is underway.</p>';
   html += '<div id="teamStandBox"></div><div id="teamSchedBox"></div>';
-  html += '<div class="tgrp">Full Roster</div><div id="teamPills"></div><div id="teamRosterList"><p class="empty">Loading roster\u2026</p></div>';
+  html += '<div class="tgrp">Full Roster</div><div id="teamPills"></div><div id="teamRosterList"><p class="empty">Loading roster\u2026</p></div><div id="teamNewsBox"></div>';
   body.innerHTML = html;
   var cb = $("teamDlgClose"); if (cb) cb.addEventListener("click", function(){ dlg.close(); });
   if (!body._selWired){ body._selWired = 1; body.addEventListener("click", function(e){ var c = e.target && e.target.closest ? e.target.closest(".tcard") : null; if (!c) return; body.querySelectorAll(".tcard.tsel").forEach(function(x){ x.classList.remove("tsel"); }); c.classList.add("tsel"); }); }
@@ -3981,6 +3990,7 @@ function openTeamRoster(teamId, teamName){
   if (!dlg._wired){ dlg._wired = 1; dlg.addEventListener("click", function(e){ if (e.target === dlg) dlg.close(); }); }
   if (!dlg.open) dlg.showModal();
   teamStandLoad(lg, ctx.tourLg, tid, $("teamStandBox"));
+  teamNewsLoad(lg, ctx.tourLg, tid, $("teamNewsBox"));
   teamSchedLoad(lg, ctx.tourLg, tid, $("teamSchedBox"), String(((s.header || {}).id) || ((window._openGame || {}).eventId) || "").split(":").pop(), teamName);
   fetchJson(ESPN + lg.sport + "/" + ctx.tourLg + "/teams/" + tid + "/roster").then(function(r){
     var list = $("teamRosterList"); if (!list || !dlg.open) return;
