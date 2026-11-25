@@ -1531,6 +1531,9 @@ body.aion [data-ai]{display:block}
 .field3d.placingme .ttmsg{color:#ffd94d;text-shadow:0 0 12px rgba(245,197,24,.95)}
 @keyframes ttglowpulse{from{box-shadow:0 0 10px 2px rgba(245,197,24,.55),inset 0 0 6px rgba(245,197,24,.35)}to{box-shadow:0 0 22px 8px rgba(245,197,24,.95),inset 0 0 12px rgba(245,197,24,.65)}}
 
+/* v1.1.288 battle text: log lines (incl. the AI hype) leave the field - newest line toasts on screen ~4.5s then fades; cards move up (Brandon 2026-11-25) */
+#clashToast{position:fixed;top:64px;left:50%;transform:translate(-50%,-8px);max-width:92vw;background:rgba(10,6,24,.92);border:1.5px solid #f5b942;border-radius:999px;color:#fff;font-size:13px;font-weight:700;line-height:1.35;padding:8px 14px;text-align:center;opacity:0;pointer-events:none;transition:opacity .35s ease,transform .35s ease;z-index:600;box-shadow:0 10px 26px rgba(0,0,0,.5)}
+#clashToast.on{opacity:1;transform:translate(-50%,0)}
 /* v1.1.287 pick popup close X moved to the left (music button was blocking it); v1.1.286 pick screen: title/sub removed, screen tightened to fit; v1.1.285 character-select portraits (Brandon 2026-11-25) */
 .stepbanner{margin:4px 0 2px;padding:6px 10px;font-size:13.5px}
 .pickslots{gap:8px}
@@ -6645,7 +6648,6 @@ function clashArena(){
   }
 var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
   var cp = CL.cpu[CL.cpuActive], cpp = CL.cpu[1 - CL.cpuActive];
-  var logHtml = CL.log.slice(-2).map(function(l){ return '<div class="clashlog">' + l + '</div>'; }).join("");
   var cpuFly = (CL.cpuDrawn && CL.cpuDrawn.length) ? '<div class="cpuflywrap">' + CL.cpuDrawn.map(function(id){ var it3 = id === "energy" ? { icon: "🔮", name: "ENERGY" } : ITEM_MAP[id]; return it3 ? '<span class="cpufly"><i>' + it3.icon + '</i><span>' + it3.name + '</span></span>' : ""; }).join("") + '</div>' : '';
   CL.cpuDrawn = null;
   var intel = "";
@@ -6677,7 +6679,7 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
   clashPanel('<div class="clashround">' + (CL.mode === "ladder" ? '🏆 BOSS ' + CL.boss + ' · ' : '') + 'ROUND ' + CL.round + (CL.round >= 60 ? ' · <span style="color:#ff6b6b">⏰ SUDDEN DEATH</span>' : '') + '</div>'
     + guide
     + '<div class="field3d' + (CL.lastHit ? ' shakehit' : '') + (CL.placing === "me" ? ' placingme' : '') + '">' + turnSplashHTML() + '<div class="side cpu"><div class="sidetag">CPU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("cpu") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("cpu") + ' \u00B7 DECK ' + CL.cpuDeck.length + '</div><div class="frow">' + fighterHTML(cp, true, cpExtra, fxFor("cpu", cp)) + fighterHTML(cpp, false, "") + '</div>' + cpuFly + '</div>'
-    + '<div class="clashmid"><span class="vsbadge">VS</span><div class="zonelab">CLASH GRID · 3 IN A ROW = ABILITY</div>' + ttHTML() + '<div class="clashnums" id="clashNums"></div>' + intel + scoutHtml + logHtml + '</div>'
+    + '<div class="clashmid"><span class="vsbadge">VS</span><div class="zonelab">CLASH GRID · 3 IN A ROW = ABILITY</div>' + ttHTML() + '<div class="clashnums" id="clashNums"></div>' + intel + scoutHtml + '</div>'
     + '<div class="side me"><div class="sidetag">YOU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("me") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("me") + '</div><div class="frow">' + fighterHTML(me, true, meExtra, fxFor("me", me)) + fighterHTML(mp, false, "") + '</div></div></div>'
     + itemHTML()
     + abilityHTML()
@@ -6689,6 +6691,7 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
     + '</div>'
     + '<button class="openbtn" data-clashquit="1" style="width:100%;margin-top:8px"' + (CL.busy ? ' disabled' : '') + '>Quit battle</button>'
     );
+  if (CL.log && CL.log.length) { if (CL._toastSeen == null) CL._toastSeen = 0; if (CL.log.length > CL._toastSeen) { CL._toastSeen = CL.log.length; clashToast(CL.log[CL.log.length - 1]); } }
 }
 
 function cpuPlan(){
@@ -10998,6 +11001,18 @@ function aiReportRender(){
   }).catch(function(){});
 }
 /* ---- Agent Clash hype + recap ---- */
+var _clashToastT = null;
+function clashToast(txt){
+  try {
+    var pop = $("clashPop"); if (!pop || !pop.classList.contains("open")) return;
+    var el = $("clashToast");
+    if (!el) { el = document.createElement("div"); el.id = "clashToast"; pop.appendChild(el); }
+    el.textContent = txt;
+    el.classList.add("on");
+    if (_clashToastT) clearTimeout(_clashToastT);
+    _clashToastT = setTimeout(function(){ el.classList.remove("on"); }, 4500);
+  } catch (e) {}
+}
 function aiClashHype(){
   if (!AI_ON || !window.CL) return;
   try {
