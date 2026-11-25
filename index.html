@@ -5297,14 +5297,16 @@ function renderBoard(){
     return '<div class="tiercard unlocked"><div class="tierinner">' + front + cardBackHTML(esc(l.player), esc(l.team || "") + '<br>' + esc(l.matchup || "") + '<br>Earned on a ticket where every leg hit.') + '</div></div>';
   }).join("");
   var fl0 = foilsGet();
-  var foilCardsOnly = TIERS.map(function(t, ti){ var ks = fl0.filter(function(k){ return parseInt(k.split("-")[1], 10) === ti; }); if (!ks.length) return ""; return '<div class="foilgrp"><div class="foilghdr"><span style="color:' + t.color + '">' + t.emoji + ' ' + t.name.toUpperCase() + '</span><span class="foilgcount">' + ks.length + ' pulled</span></div><div class="foilrail">' + ks.map(function(k){ return foilCardHTML(t, parseInt(k.split("-")[0], 10)); }).join("") + '</div></div>'; }).join("");
+  var pu0 = packUnlocksGet().filter(function(k){ return fl0.indexOf(k) < 0; }); /* new-card unlocks also live in Pack Pulls (Brandon 2026-11-25) */
+  var pulledN = fl0.length + pu0.length;
+  var foilCardsOnly = TIERS.map(function(t, ti){ var uks = pu0.filter(function(k){ return parseInt(k.split("-")[1], 10) === ti; }); var ks = fl0.filter(function(k){ return parseInt(k.split("-")[1], 10) === ti; }); if (!ks.length && !uks.length) return ""; return '<div class="foilgrp"><div class="foilghdr"><span style="color:' + t.color + '">' + t.emoji + ' ' + t.name.toUpperCase() + '</span><span class="foilgcount">' + (ks.length + uks.length) + ' pulled</span></div><div class="foilrail">' + uks.map(function(k){ var c2 = parseInt(k.split("-")[0], 10); return tierCardHTML(t, charWins(c2), false, c2); }).join("") + ks.map(function(k){ return foilCardHTML(t, parseInt(k.split("-")[0], 10)); }).join("") + '</div></div>'; }).join("");
   renderPacks();
   renderClash();
   var unlockedN = TIERS.filter(function(t, ti2){ return cardUnlocked(cci, ti2); }).length;
   $("myCards").innerHTML =
     cardSec("tier", "TIER CARDS — " + CHARNAMES[cci - 1], unlockedN + " of 4 unlocked \u00B7 Grid Clash cards", tierCards, true, "cardrail")
     + (cards.length ? cardSec("player", "🏆 PLAYER CARDS — winning tickets", cards.length + " earned", playerCards, false, "cardrail") : "")
-    + (fl0.length ? cardSec("foils", "🎁 PACK PULLS — from packs", fl0.length + " pulled", foilCardsOnly, false, "foilgroups") : "")
+    + (pulledN ? cardSec("foils", "🎁 PACK PULLS — from packs", pulledN + " pulled", foilCardsOnly, false, "foilgroups") : "")
     ;
   document.querySelectorAll(".cardsec-h").forEach(function(h){ h.addEventListener("click", function(){ var sec = h.parentElement; var nowClosed = sec.classList.toggle("closed"); var st = lsGet("pa_cardsecs", {}); st[h.getAttribute("data-cardsec")] = !nowClosed; lsSet("pa_cardsecs", st); var csid = h.getAttribute("data-cardsec"); if (!nowClosed && csid) boardAccordion(csid); var ch = h.querySelector(".csbtn"); if (ch) ch.textContent = nowClosed ? "\u25B8 SHOW" : "\u25BE HIDE"; var bc = h.querySelector(".bigchev"); if (bc) bc.textContent = nowClosed ? "\u25B6" : "\u25BC"; sfx("click"); }); });
   document.querySelectorAll(".setprof").forEach(function(b){ b.addEventListener("click", function(ev){ ev.stopPropagation(); var av0 = b.getAttribute("data-avatar")||""; profile.avatar = av0; profile.featured = b.getAttribute("data-featured")||""; if (av0.indexOf("/api/avatars") === 0) profile.char = av0; lsSet("pa_profile", profile); refreshAgentBtn(); renderBoard(); cloudSave(); }); });
@@ -5742,7 +5744,7 @@ function viewPulledCard(i){
     var t = TIERS[pu.ti], cname = CHARNAMES[pu.ci - 1];
     front.style.borderColor = t.color;
     front.innerHTML = '<img src="' + esc(cardArtUrl(pu.ci, pu.ti)) + '" alt="" style="width:100%;height:100%;' + (legendArt(pu.ci, pu.ti) ? 'object-fit:contain;background:#120a26' : 'object-fit:cover') + ';display:block">' + (pu.ti === 2 ? '<div class="glitterfx"></div>' : pu.ti === 3 ? '<div class="glitterfx pglit"></div>' : '') + '<div style="position:absolute;left:0;right:0;bottom:0;padding:26px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;justify-content:space-between;align-items:center"><b style="color:#f5c518;letter-spacing:1px">' + cname + '</b>' + (pu.unlock ? '<span class="rarpill" style="background:' + t.color + '">' + t.name.toUpperCase() + ' · UNLOCKED</span>' : '<span class="rarpill" style="background:#f5c518;color:#1a1405">✨ ' + t.name.toUpperCase() + ' FOIL</span>') + '<span style="display:none"></span></div>';
-    back.innerHTML = '<img src="/api/icons?s=logo" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">STAT AGENT</b><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">' + (pu.unlock ? cname + ' · ' + t.name.toUpperCase() + ' BATTLE CARD<br>' + (pu.bumped ? 'Unlocked from a pack — ' + cname + ' jumped to ' + t.name.toUpperCase() + ' tier!' : 'Unlocked from a pack — it is on your tier list now.') + '<br>Battle with it in Grid Clash!' : cname + ' · FOIL<br>' + t.name + ' tier gold foil edition<br>Pulled from a Stat Agent pack.') + '</div>';
+    back.innerHTML = '<img src="/api/icons?s=logo" alt="" style="width:96px;height:96px;border-radius:50%;filter:sepia(1) saturate(3.2) hue-rotate(2deg) brightness(1.12)"><b style="color:#f5c518;letter-spacing:1px;font-size:19px">STAT AGENT</b><div style="color:#c9c9d4;font-size:12.5px;line-height:1.5">' + (pu.unlock ? cname + ' · ' + t.name.toUpperCase() + ' BATTLE CARD<br>' + (pu.bumped ? 'Unlocked from a pack — ' + cname + ' jumped to ' + t.name.toUpperCase() + ' tier!' : 'Unlocked from a pack — saved to Pack Pulls and your tier list.') + '<br>Battle with it in Grid Clash!' : cname + ' · FOIL<br>' + t.name + ' tier gold foil edition<br>Pulled from a Stat Agent pack.') + '</div>';
   }
   document.getElementById("pullView").classList.add("open");
 }
@@ -8178,7 +8180,7 @@ function ripPackOpen(){
       var foilN = pulls.filter(function(pu){ return pu.foil; }).length;
       var dupN = pulls.filter(function(pu){ return pu.dup; }).length;
       if (pulls.some(function(pu){ return pu.ring; })) { cap.textContent = window._packDemo ? "DEMO — that's the chase celebration! Nothing was saved." : "🏆 YOU PULLED THE RING!! Signed, one of a kind — the rarest card in the game!"; ringCelebration(); }
-      else cap.textContent = (window._packDemo ? "DEMO — " : "") + (unN ? "🔓 " + unN + " NEW CARD" + (unN === 1 ? "" : "S") + " UNLOCKED on your tier list! " : "") + (foilN ? "✨ " + foilN + " foil cop" + (foilN === 1 ? "y" : "ies") + " saved to Pack Pulls" : "") + (dupN ? " · " + dupN + " duplicate" + (dupN === 1 ? "" : "s") + " not saved" : "");
+      else cap.textContent = (window._packDemo ? "DEMO — " : "") + (unN ? "🔓 " + unN + " NEW CARD" + (unN === 1 ? "" : "S") + " UNLOCKED — saved to Pack Pulls! " : "") + (foilN ? "✨ " + foilN + " foil cop" + (foilN === 1 ? "y" : "ies") + " saved to Pack Pulls" : "") + (dupN ? " · " + dupN + " duplicate" + (dupN === 1 ? "" : "s") + " not saved" : "");
       showCollectBtn();
     }, 1330);
 }
