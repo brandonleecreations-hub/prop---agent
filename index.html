@@ -6148,7 +6148,7 @@ function ensureClashIntro(){
   if (document.getElementById("clashIntro")) return;
   var el = document.createElement("div");
   el.id = "clashIntro";
-  el.innerHTML = '<video id="clashIntroVid" src="/api/banners?s=clashintro&v=2" playsinline preload="none"></video><button id="clashIntroSkip" type="button">SKIP \u25B8</button>';
+  el.innerHTML = '<video id="clashIntroVid" src="/api/banners?s=clashintro&v=3" playsinline preload="none"></video><button id="clashIntroSkip" type="button">SKIP \u25B8</button>';
   document.body.appendChild(el);
   el.querySelector("#clashIntroVid").addEventListener("ended", function(){ finishClashIntro(true); });
   el.querySelector("#clashIntroVid").addEventListener("error", function(){ finishClashIntro(true); });
