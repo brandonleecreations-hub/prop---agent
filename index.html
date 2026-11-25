@@ -1531,7 +1531,20 @@ body.aion [data-ai]{display:block}
 .field3d.placingme .ttmsg{color:#ffd94d;text-shadow:0 0 12px rgba(245,197,24,.95)}
 @keyframes ttglowpulse{from{box-shadow:0 0 10px 2px rgba(245,197,24,.55),inset 0 0 6px rgba(245,197,24,.35)}to{box-shadow:0 0 22px 8px rgba(245,197,24,.95),inset 0 0 12px rgba(245,197,24,.65)}}
 
-/* v1.1.285 character-select portraits swap the pick-screen poster (Brandon 2026-11-25) */
+/* v1.1.286 pick screen: title/sub removed, screen tightened to fit; v1.1.285 character-select portraits (Brandon 2026-11-25) */
+.stepbanner{margin:4px 0 2px;padding:6px 10px;font-size:13.5px}
+.pickslots{gap:8px}
+.pickslot{padding:6px}
+.pickslot img{width:64px;height:64px}
+.picknm{margin-top:3px;font-size:12px}
+.pickpw{font-size:11px}
+.pickpw2{font-size:11px;margin-top:1px}
+.pickpw3{line-height:1.25}
+.pickgrid{gap:6px;margin-top:8px}
+.agentpick{padding:4px}
+.agentpick img{height:56px}
+.agentpick span{margin-top:3px}
+.pickposter{margin:8px auto 0;width:64%}
 .field3d .fcard{width:108px}
 .clashmid .clashlog{font-size:11px;line-height:1.25;margin-top:2px}
 .ttmsg{margin-top:3px}
@@ -6438,9 +6451,7 @@ function clashPickRender(){
   var stepHtml = !CL.mine[0] ? '<div class="stepbanner"><span class="stepn">STEP 1</span>⭐ PICK YOUR STARTER <span class="stepdown">▼</span></div>'
     : (!CL.mine[1] ? '<div class="stepbanner"><span class="stepn">STEP 2</span>🔁 PICK YOUR BENCH <span class="stepdim">— your tag partner</span> <span class="stepdown">▼</span></div>'
     : '<div class="stepbanner done"><span class="stepn">READY</span>✅ PAIR SET — TAP FIGHT! 🥊</div>');
-  clashPanel('<div class="clashttl' + (CL.mode === "pvp" ? ' pvpttl' : '') + '">' + (CL.mode === "pvp" ? '👥 HEAD-TO-HEAD' : CL.mode === "ladder" ? '🏆 LADDER — BOSS ' + CL.boss : CL.pair ? '🎖️ TIER CLASH — ' + TIERS[CL.pair[0]].name.toUpperCase() + '–' + TIERS[CL.pair[1]].name.toUpperCase() : '⚡ QUICK CLASH') + '</div>'
-    + '<div class="clashsub">' + (CL.mode === "pvp" ? '👥 vs <b>' + (CL.pvp.oppName || 'your friend') + '</b> — build your pair: tap an agent to see his cards and pick. They pick theirs too; a coin flip starts the battle.' + (CL.pvp.oppPicked ? ' <b style="color:#4fe3c1">✓ Your friend is ready!</b>' : '') : CL.pair ? 'One of EACH tier — your two fighters are one ' + TIERS[CL.pair[0]].name + ' and one ' + TIERS[CL.pair[1]].name + ', in either slot. Tap an agent to see his two cards and pick. The CPU fields one of each too. Tap 🔍 on any agent to read their full card first.' : 'Build your pair — tap an agent to see his cards and pick one. The CPU matches your tiers — a fair fight. Tap 🔍 on any agent to read their full card first.') + '</div>'
-    + stepHtml
+  clashPanel(stepHtml
     + '<div class="pickslots">' + slots + '</div>' + grid + tiers
     + '<button class="clashbig gold' + (ready ? ' ready' : '') + '" data-clashfight="1"' + (ready ? '' : ' disabled') + '>🥊 FIGHT!<span>' + (ready ? 'Your pair is ready' : 'Pick both fighters first') + '</span></button>'
     + '<button class="openbtn" data-clashmenu="1" style="width:100%;margin-top:8px">← Back</button>' + '<div class="pickposter"><img src="' + (PICKSHOW ? "/api/banners?s=sel" + PICKSHOW + "&v=1" : "/api/banners?s=clashbg&v=1") + '" alt="Agent Clash"></div>');
