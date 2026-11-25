@@ -1535,6 +1535,7 @@ body.aion [data-ai]{display:block}
 .field3d.placingme .ttmsg{color:#ffd94d;text-shadow:0 0 12px rgba(245,197,24,.95)}
 @keyframes ttglowpulse{from{box-shadow:0 0 10px 2px rgba(245,197,24,.55),inset 0 0 6px rgba(245,197,24,.35)}to{box-shadow:0 0 22px 8px rgba(245,197,24,.95),inset 0 0 12px rgba(245,197,24,.65)}}
 
+/* v1.1.296 TIER CLASH hidden from the Clash menu for now too (Brandon 2026-11-25) - button only, tier-clash code kept */
 /* v1.1.295 LADDER battle section removed from the Clash menu for now (Brandon 2026-11-25) - button only, all ladder code/progress kept */
 /* v1.1.294 CLASH MENU restyle: clean-up, flowing gray+purple background, 3D elite buttons (Brandon 2026-11-25) */
 .clashpanel.startbg.menufit{background:linear-gradient(155deg,#4a4a56 0%,#23222c 34%,#3d1478 68%,#17171f 100%);background-size:240% 240%;animation:menuflow 16s ease-in-out infinite alternate}
@@ -6353,7 +6354,6 @@ function clashMenu(){
   clashPanel('<div class="clashbgspace"></div>'
     + '<div class="clashsub" style="text-align:center">Pick your fighters, flip the coin, land hits, own the grid.</div>'
     + '<button class="clashbig" data-clashmode="quick">⚡ QUICK CLASH<span>Friendly fight — the CPU fields the same tier cards you bring</span></button>'
-    + '<button class="clashbig" data-clashmode="tierclash">🎖️ TIER CLASH<span>Battle in tier pairs — one of each: Rookie–Gold · Gold–Diamond · Diamond–Legend</span></button>'
     + '<button class="clashbig pvp" data-clashmode="pvp">\uD83D\uDC65 CHALLENGE A FRIEND<span>Head-to-head \u2014 enter the lobby, challenge a friend, battle live turn by turn</span></button>'
     + '<div class="clashmeta">🏆 <b>Every agent climbs their own ladder:</b> ticket wins and battle wins add points to the agent set on your tier bar \u2014 right now that\u2019s <b>' + CHARNAMES[tierCharIdx() - 1] + '</b> (' + charWins(tierCharIdx()) + ' pts). Switch the bar on the Board tab to feed a different agent. Each agent\u2019s cards and battle tier unlock with their own points.</div>'
     + '<button class="openbtn" data-guide' + (guideOn() ? 'off' : 'on') + '="1" style="width:100%;margin-top:8px">🧭 Guide is ' + (guideOn() ? 'ON — tap to turn off' : 'OFF — tap to turn on') + '</button>'
