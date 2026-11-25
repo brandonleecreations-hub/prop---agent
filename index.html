@@ -991,6 +991,10 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #refEnd.open{display:flex}
 #refEndVid{width:100%;height:100%;object-fit:contain;background:#000}
 #refEndSkip{position:absolute;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2;background:rgba(20,16,34,.85);color:#fff;border:1px solid rgba(196,168,255,.7);border-radius:999px;padding:10px 20px;font-weight:800;font-size:14px;letter-spacing:.4px}
+#refStart{position:fixed;inset:0;z-index:610;background:#000;display:none;align-items:center;justify-content:center}
+#refStart.open{display:flex}
+#refStartVid{width:100%;height:100%;object-fit:contain;background:#000}
+#refStartSkip{position:absolute;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2;background:rgba(20,16,34,.85);color:#fff;border:1px solid rgba(196,168,255,.7);border-radius:999px;padding:10px 20px;font-weight:800;font-size:14px;letter-spacing:.4px}
 .clashresult{background:linear-gradient(165deg,#1a1030,#0a0716 70%);border:2px solid rgba(245,197,24,.6);border-radius:20px;padding:20px 14px 16px;box-shadow:0 0 36px rgba(124,58,237,.45),inset 0 0 28px rgba(0,0,0,.55)}
 .clashresult.lose{border-color:rgba(255,92,92,.55);box-shadow:0 0 36px rgba(220,38,38,.35),inset 0 0 28px rgba(0,0,0,.55)}
 .clashresult .reswin{font-size:42px;letter-spacing:1px;animation:respop .5s ease-out}
@@ -6222,6 +6226,41 @@ function finishRefEnd(){
   if (_refEndWon && typeof confetti === "function") confetti();
   _refEndWon = false;
 }
+var _refStartOn = false, _refStartTimer = 0;
+function ensureRefStart(){
+  if (document.getElementById("refStart")) return;
+  var el = document.createElement("div");
+  el.id = "refStart";
+  el.innerHTML = '<video id="refStartVid" playsinline preload="none"></video><button id="refStartSkip" type="button">SKIP \u25B8</button>';
+  document.body.appendChild(el);
+  el.querySelector("#refStartVid").addEventListener("ended", function(){ finishRefStart(); });
+  el.querySelector("#refStartVid").addEventListener("error", function(){ finishRefStart(); });
+  el.querySelector("#refStartSkip").addEventListener("click", function(){ sfx("click"); finishRefStart(); });
+}
+function refStartPlay(){
+  try {
+    ensureRefStart();
+    var ov = $("refStart"), v = $("refStartVid");
+    if (!ov || !v) return;
+    _refStartOn = true;
+    v.src = "/api/banners?s=refstart&v=1";
+    ov.classList.add("open");
+    try { v.currentTime = 0; } catch (e) {}
+    var p = null;
+    try { p = v.play(); } catch (e) {}
+    if (p && p.catch) p.catch(function(){ finishRefStart(); });
+    clearTimeout(_refStartTimer);
+    _refStartTimer = setTimeout(function(){ finishRefStart(); }, 8000);
+  } catch (e) {}
+}
+function finishRefStart(){
+  if (!_refStartOn) return;
+  _refStartOn = false;
+  clearTimeout(_refStartTimer);
+  var ov = $("refStart"), v = $("refStartVid");
+  if (v) { try { v.pause(); } catch (e) {} }
+  if (ov) ov.classList.remove("open");
+}
 function closeClash(){ if (LOB) pvpLobbyCleanup(); if (CL && CL.mode === "pvp") { pvpPollStop(); if (CL.pvp.stage === "battle" && !CL.over) { CL.pvp.finSent = true; pvpSendFinal(false); var bb = battlesGet(); bb.l = (bb.l || 0) + 1; lsSet("pa_battles", bb); lsSet("pa_clash_last", Date.now()); cloudSave(); } } var p = $("clashPop"); if (p) p.classList.remove("open"); if (CL && CL.ttResolve) CL.ttResolve(-1); if (CL && CL.abResolve) CL.abResolve(""); musicStop(); closeZoom(); closeItemView(); closePickPop(); CL = null; renderClash(); renderPacks(); }
 function clashPanel(html){ var p = $("clashPanel"); if (p) { p.classList.remove("startbg"); p.classList.remove("menufit"); p.innerHTML = html; p.scrollTop = 0; } }
 function clashMenu(){
@@ -6389,6 +6428,7 @@ function clashStartFight(){
   CL.log = ["🥊 " + fName(CL.mine[0]) + " & " + fName(CL.mine[1]) + " vs " + fName(CL.cpu[0]) + " & " + fName(CL.cpu[1]) + " — FIGHT!"];
   aiClashHype();
   clashArena();
+  refStartPlay();
 }
 var ITEMS = [
   { id: "surge", icon: "⚡", name: "ENERGY SURGE", color: "#f5b942", desc: "Gain +2 Energy cards" },
