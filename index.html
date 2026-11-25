@@ -1531,7 +1531,7 @@ body.aion [data-ai]{display:block}
 .field3d.placingme .ttmsg{color:#ffd94d;text-shadow:0 0 12px rgba(245,197,24,.95)}
 @keyframes ttglowpulse{from{box-shadow:0 0 10px 2px rgba(245,197,24,.55),inset 0 0 6px rgba(245,197,24,.35)}to{box-shadow:0 0 22px 8px rgba(245,197,24,.95),inset 0 0 12px rgba(245,197,24,.65)}}
 
-/* v1.1.283 smaller battle cards so both rows fit the field (Brandon 2026-11-25) */
+/* v1.1.285 character-select portraits swap the pick-screen poster (Brandon 2026-11-25) */
 .field3d .fcard{width:108px}
 .clashmid .clashlog{font-size:11px;line-height:1.25;margin-top:2px}
 .ttmsg{margin-top:3px}
@@ -6178,7 +6178,7 @@ function ensureClashPop(){
   el.querySelector("#clashZoom").addEventListener("click", function(e){ var card = e.target.closest ? e.target.closest(".tiercard") : null; if (card) card.classList.toggle("flipped"); else closeZoom(); });
   el.querySelector("#itemPop").addEventListener("click", function(e){ if (e.target === el.querySelector("#itemPop")) closeItemView(); });
 }
-function openClashMenu(){ ensureClashPop(); MUS.mode = "menu"; $("clashPop").classList.add("open"); musicStart(); clashMenu(); }
+function openClashMenu(){ ensureClashPop(); PICKSHOW = 0; MUS.mode = "menu"; $("clashPop").classList.add("open"); musicStart(); clashMenu(); }
 var _clashIntroOn = false;
 function ensureClashIntro(){
   if (document.getElementById("clashIntro")) return;
@@ -6361,6 +6361,7 @@ function clashFixPair(changed){
    the pair's 2 cards, arranged freely across the slots with one-of-each
    still enforced (a tier your partner already holds is blocked). */
 var PICKPOP_CI = 0;
+var PICKSHOW = 0;
 function pickPopPickable(ci, ti){
   if (!CL) return false;
   var oth = CL.mine[1 - CL.sel];
@@ -6378,6 +6379,7 @@ function openPickPop(ci){
   var pop = $("pickPop");
   if (!pop || !CL) return;
   PICKPOP_CI = ci;
+  PICKSHOW = ci; var _pp = document.querySelector(".pickposter img"); if (_pp) _pp.src = "/api/banners?s=sel" + ci + "&v=1";
   var cur = CL.mine[CL.sel];
   var oth = CL.mine[1 - CL.sel];
   var tis = CL.pair ? CL.pair : [0, 1, 2, 3];
@@ -6441,7 +6443,7 @@ function clashPickRender(){
     + stepHtml
     + '<div class="pickslots">' + slots + '</div>' + grid + tiers
     + '<button class="clashbig gold' + (ready ? ' ready' : '') + '" data-clashfight="1"' + (ready ? '' : ' disabled') + '>🥊 FIGHT!<span>' + (ready ? 'Your pair is ready' : 'Pick both fighters first') + '</span></button>'
-    + '<button class="openbtn" data-clashmenu="1" style="width:100%;margin-top:8px">← Back</button>' + '<div class="pickposter"><img src="/api/banners?s=clashbg&v=1" alt="Agent Clash"></div>');
+    + '<button class="openbtn" data-clashmenu="1" style="width:100%;margin-top:8px">← Back</button>' + '<div class="pickposter"><img src="' + (PICKSHOW ? "/api/banners?s=sel" + PICKSHOW + "&v=1" : "/api/banners?s=clashbg&v=1") + '" alt="Agent Clash"></div>');
 }
 var LADDER_TIERS = [[0, 1], [0, 2], [1, 2], [0, 3], [1, 3], [2, 3], [2, 3]];
 function clashCpuPair(){
