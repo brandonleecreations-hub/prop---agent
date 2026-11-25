@@ -6228,7 +6228,7 @@ function refEndPlay(won){
     try { v.currentTime = 0; } catch (e) {}
     var p = null;
     try { p = v.play(); } catch (e) {}
-    if (p && p.catch) p.catch(function(){ finishRefEnd(); });
+    if (p && p.catch) p.catch(function(){ setTimeout(function(){ if (!_refEndOn) return; var p2 = null; try { p2 = v.play(); } catch (e) {} if (p2 && p2.catch) p2.catch(function(){ finishRefEnd(); }); }, 600); });
     clearTimeout(_refEndTimer);
     _refEndTimer = setTimeout(function(){ finishRefEnd(); }, 8000);
   } catch (e) {}
@@ -6254,8 +6254,23 @@ function ensureRefStart(){
   el.querySelector("#refStartVid").addEventListener("error", function(){ finishRefStart(); });
   el.querySelector("#refStartSkip").addEventListener("click", function(){ sfx("click"); finishRefStart(); });
 }
+var _refEndPrimed = false;
+function primeRefEnd(){
+  try {
+    if (_refEndPrimed) return; _refEndPrimed = true;
+    ensureRefEnd();
+    var ev = $("refEndVid"); if (!ev) return;
+    ev.muted = true;
+    ev.src = "/api/banners?s=refwin&v=1";
+    var ep = null;
+    try { ep = ev.play(); } catch (e) {}
+    if (ep && ep.then) ep.then(function(){ try { ev.pause(); ev.muted = false; } catch (e) {} });
+    if (ep && ep.catch) ep.catch(function(){ try { ev.muted = false; } catch (e) {} });
+  } catch (e) {}
+}
 function refStartPlay(){
   try {
+    primeRefEnd();
     ensureRefStart();
     var ov = $("refStart"), v = $("refStartVid");
     if (!ov || !v) return;
