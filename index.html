@@ -1556,12 +1556,16 @@ body.aion [data-ai]{display:block}
 .clashpanel.menufit .clashhelp{color:#b7b0cc}
 .clashpanel.menufit .clashhelp summary{color:#e9e2ff}
 /* v1.1.293 zoom: locked cards zoom up dimmed with LOCKED veil (real win count, not 999) and the zoom shows the full picture (Brandon 2026-11-25) */
-#clashZoom .tcwin .cardart{object-fit:contain}
+#clashZoom .tcwin .cardart{object-fit:fill}
+/* v1.1.299 zoom: art stretches to fill the frame exactly, frames smaller, zoom cards size to content (Brandon 2026-11-25) */
+#clashZoom .tiercard{aspect-ratio:auto}
+#clashZoom .flipfront{position:relative;height:auto}
+#clashZoom .tcwin{flex:none;height:230px}
 /* v1.1.298 zoom: Legend (portrait) art gets a tall frame so the FULL art fits it - narrower card, content height, tall art window; applies to every character (Brandon 2026-11-25) */
-#clashZoom .zoomcard:has(.fitwhole){width:min(74vw,276px);margin:auto 0}
+#clashZoom .zoomcard:has(.fitwhole){width:min(72vw,258px);margin:auto 0}
 #clashZoom .tiercard:has(.fitwhole){aspect-ratio:auto}
 #clashZoom .tiercard:has(.fitwhole) .flipfront{position:relative;height:auto}
-#clashZoom .tcwin:has(> .cardart.fitwhole){flex:none;height:min(400px,50dvh)}
+#clashZoom .tcwin:has(> .cardart.fitwhole){flex:none;height:min(330px,42dvh)}
 /* v1.1.292 pick popup: card sizes to its content and the art window gets a fixed height, so the character picture always shows (Brandon 2026-11-25) */
 #pickPop .tiercard{aspect-ratio:auto;min-height:0}
 #pickPop .flipfront{position:relative;height:auto;padding:8px}
