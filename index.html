@@ -1215,17 +1215,17 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #itemPop{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:6;padding:18px}
 #pickPop{position:absolute;inset:0;display:none;z-index:5;align-items:flex-start;justify-content:center;padding:12px 8px;overflow-y:auto}
 #pickPop.open{display:flex}
-#pickPop .ppbox{position:relative;width:100%;max-width:440px;background:radial-gradient(120% 130% at 50% 0%,#2a1454 0%,#160b31 72%);border:2px solid #f5b942;border-radius:16px;padding:12px 10px 14px;box-shadow:0 18px 44px rgba(0,0,0,.55),0 0 24px rgba(245,185,66,.28);animation:pickPopIn .18s ease-out}
+#pickPop .ppbox{position:relative;width:100%;max-width:440px;background:radial-gradient(120% 130% at 50% 0%,#2a1454 0%,#160b31 72%);border:2px solid #f5b942;border-radius:16px;padding:10px 8px 10px;box-shadow:0 18px 44px rgba(0,0,0,.55),0 0 24px rgba(245,185,66,.28);animation:pickPopIn .18s ease-out}
 @keyframes pickPopIn{from{transform:scale(.84) translateY(14px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
 @media (prefers-reduced-motion: reduce){#pickPop .ppbox{animation:none}}
 #pickPop .pphead{position:relative;text-align:center;margin-bottom:12px;padding:0 30px}
 #pickPop .ppttl{font-family:'Bungee','Archivo Black',sans-serif;font-size:17px;letter-spacing:.5px;color:#fff}
 #pickPop .ppsub{font-size:11.5px;color:#c4b5fd;margin-top:2px;font-weight:700}
 #pickPop .ppx{position:absolute;top:-4px;left:-2px;right:auto;width:30px;height:30px;border-radius:50%;border:2px solid #f5b942;background:#241243;color:#fff;font-weight:900;cursor:pointer}
-#pickPop .ppcards{display:flex;flex-wrap:nowrap;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:14px 6px 12px;scrollbar-width:none}
+#pickPop .ppcards{display:flex;flex-wrap:nowrap;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:10px 6px 8px;scrollbar-width:none}
 #pickPop .ppcards::-webkit-scrollbar{display:none}
-#pickPop .ppcard{position:relative;flex:0 0 auto;width:min(54vw,204px);scroll-snap-align:center}
-#pickPop .ppcard.pair{width:min(50vw,190px)}
+#pickPop .ppcard{position:relative;flex:0 0 auto;width:min(46vw,176px);scroll-snap-align:center}
+#pickPop .ppcard.pair{width:min(46vw,176px)}
 #pickPop .ppcard .tiercard{min-height:0;cursor:default}
 #pickPop .ppcard.pickable .tiercard{cursor:pointer}
 #pickPop .ppcard.cur{transform:scale(1.03)}
@@ -1535,7 +1535,7 @@ body.aion [data-ai]{display:block}
 .field3d.placingme .ttmsg{color:#ffd94d;text-shadow:0 0 12px rgba(245,197,24,.95)}
 @keyframes ttglowpulse{from{box-shadow:0 0 10px 2px rgba(245,197,24,.55),inset 0 0 6px rgba(245,197,24,.35)}to{box-shadow:0 0 22px 8px rgba(245,197,24,.95),inset 0 0 12px rgba(245,197,24,.65)}}
 
-/* v1.1.290 pick popup cards smaller; Legend art cover-fits its card frame everywhere (Brandon 2026-11-25) */
+/* v1.1.291 slider section tighter, whole card in view (Brandon correction); v1.1.290 pick popup cards smaller; Legend art cover-fits its card frame everywhere (Brandon 2026-11-25) */
 /* v1.1.289 pick popup: cards in a swipe slider, tap the magnifier to zoom a card, locked cards say LOCKED and sit dimmed (Brandon 2026-11-25) */
 /* v1.1.288 battle text: log lines (incl. the AI hype) leave the field - newest line toasts on screen ~4.5s then fades; cards move up (Brandon 2026-11-25) */
 #clashToast{position:fixed;top:64px;left:50%;transform:translate(-50%,-8px);max-width:92vw;background:rgba(10,6,24,.92);border:1.5px solid #f5b942;border-radius:999px;color:#fff;font-size:13px;font-weight:700;line-height:1.35;padding:8px 14px;text-align:center;opacity:0;pointer-events:none;transition:opacity .35s ease,transform .35s ease;z-index:600;box-shadow:0 10px 26px rgba(0,0,0,.5)}
