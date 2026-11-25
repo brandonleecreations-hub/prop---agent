@@ -1595,7 +1595,7 @@ body.aion [data-ai]{display:block}
     <div id="tiers"></div></div>
     <div id="clashBox"></div>
     <div id="packsBox"></div>
-    <h2>🃏 My Cards</h2>
+    <h2>My Cards</h2>
     <div class="charstrip" id="cardStrip"></div><div class="grid" id="myCards"><p class="empty">Loading cards…</p></div>
   </section>
 </main>
@@ -5302,7 +5302,7 @@ function renderBoard(){
   renderClash();
   var unlockedN = TIERS.filter(function(t, ti2){ return cardUnlocked(cci, ti2); }).length;
   $("myCards").innerHTML =
-    cardSec("tier", "🃏 TIER CARDS — " + CHARNAMES[cci - 1], unlockedN + " of 4 unlocked \u00B7 Grid Clash cards", tierCards, true, "cardrail")
+    cardSec("tier", "TIER CARDS — " + CHARNAMES[cci - 1], unlockedN + " of 4 unlocked \u00B7 Grid Clash cards", tierCards, true, "cardrail")
     + (cards.length ? cardSec("player", "🏆 PLAYER CARDS — winning tickets", cards.length + " earned", playerCards, false, "cardrail") : "")
     + (fl0.length ? cardSec("foils", "🎁 PACK PULLS — from packs", fl0.length + " pulled", foilCardsOnly, false, "foilgroups") : "")
     ;
