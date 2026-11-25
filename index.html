@@ -987,6 +987,16 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #clashIntro.open{display:flex}
 #clashIntroVid{width:100%;height:100%;object-fit:contain;background:#000}
 #clashIntroSkip{position:absolute;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2;background:rgba(20,16,34,.85);color:#fff;border:1px solid rgba(196,168,255,.7);border-radius:999px;padding:10px 20px;font-weight:800;font-size:14px;letter-spacing:.4px}
+#refEnd{position:fixed;inset:0;z-index:610;background:#000;display:none;align-items:center;justify-content:center}
+#refEnd.open{display:flex}
+#refEndVid{width:100%;height:100%;object-fit:contain;background:#000}
+#refEndSkip{position:absolute;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2;background:rgba(20,16,34,.85);color:#fff;border:1px solid rgba(196,168,255,.7);border-radius:999px;padding:10px 20px;font-weight:800;font-size:14px;letter-spacing:.4px}
+.clashresult{background:linear-gradient(165deg,#1a1030,#0a0716 70%);border:2px solid rgba(245,197,24,.6);border-radius:20px;padding:20px 14px 16px;box-shadow:0 0 36px rgba(124,58,237,.45),inset 0 0 28px rgba(0,0,0,.55)}
+.clashresult.lose{border-color:rgba(255,92,92,.55);box-shadow:0 0 36px rgba(220,38,38,.35),inset 0 0 28px rgba(0,0,0,.55)}
+.clashresult .reswin{font-size:42px;letter-spacing:1px;animation:respop .5s ease-out}
+.clashresult .reslose{font-size:38px;letter-spacing:1px;color:#ff6b6b;text-shadow:0 0 24px rgba(255,60,60,.55);animation:respop .5s ease-out}
+@keyframes respop{0%{transform:scale(.45);opacity:0}55%{transform:scale(1.14);opacity:1}100%{transform:scale(1);opacity:1}}
+.clashbig.menubtn{background:linear-gradient(145deg,#2b2440,#171126);border-color:#6d5ba8}
 .clashpanel{width:min(100vw,430px);height:100dvh;max-height:100dvh;display:flex;flex-direction:column;overflow-y:auto;margin:0 auto;background:radial-gradient(130% 100% at 50% 0%, #2a1650 0%, #0d0b16 55%);border:2px solid #f5b942;border-radius:0;padding:10px;box-shadow:0 24px 60px rgba(0,0,0,.65),0 0 34px rgba(124,58,237,.35);animation:cardpopA .45s cubic-bezier(.2,.9,.3,1.2) both}
 .clashpanel.startbg{background:#0a0618 url("/api/banners?s=clashmenu&v=1") top center/contain no-repeat}
 .clashpanel>*{flex-shrink:0}
@@ -6175,6 +6185,43 @@ function finishClashIntro(toMenu){
   if (ov) ov.classList.remove("open");
   if (toMenu) openClashMenu();
 }
+var _refEndOn = false, _refEndWon = false, _refEndTimer = 0;
+function ensureRefEnd(){
+  if (document.getElementById("refEnd")) return;
+  var el = document.createElement("div");
+  el.id = "refEnd";
+  el.innerHTML = '<video id="refEndVid" playsinline preload="none"></video><button id="refEndSkip" type="button">SKIP \u25B8</button>';
+  document.body.appendChild(el);
+  el.querySelector("#refEndVid").addEventListener("ended", function(){ finishRefEnd(); });
+  el.querySelector("#refEndVid").addEventListener("error", function(){ finishRefEnd(); });
+  el.querySelector("#refEndSkip").addEventListener("click", function(){ sfx("click"); finishRefEnd(); });
+}
+function refEndPlay(won){
+  try {
+    ensureRefEnd();
+    var ov = $("refEnd"), v = $("refEndVid");
+    if (!ov || !v) return;
+    _refEndOn = true; _refEndWon = !!won;
+    v.src = won ? "/api/banners?s=refwin&v=1" : "/api/banners?s=reflose&v=1";
+    ov.classList.add("open");
+    try { v.currentTime = 0; } catch (e) {}
+    var p = null;
+    try { p = v.play(); } catch (e) {}
+    if (p && p.catch) p.catch(function(){ finishRefEnd(); });
+    clearTimeout(_refEndTimer);
+    _refEndTimer = setTimeout(function(){ finishRefEnd(); }, 8000);
+  } catch (e) {}
+}
+function finishRefEnd(){
+  if (!_refEndOn) return;
+  _refEndOn = false;
+  clearTimeout(_refEndTimer);
+  var ov = $("refEnd"), v = $("refEndVid");
+  if (v) { try { v.pause(); } catch (e) {} }
+  if (ov) ov.classList.remove("open");
+  if (_refEndWon && typeof confetti === "function") confetti();
+  _refEndWon = false;
+}
 function closeClash(){ if (LOB) pvpLobbyCleanup(); if (CL && CL.mode === "pvp") { pvpPollStop(); if (CL.pvp.stage === "battle" && !CL.over) { CL.pvp.finSent = true; pvpSendFinal(false); var bb = battlesGet(); bb.l = (bb.l || 0) + 1; lsSet("pa_battles", bb); lsSet("pa_clash_last", Date.now()); cloudSave(); } } var p = $("clashPop"); if (p) p.classList.remove("open"); if (CL && CL.ttResolve) CL.ttResolve(-1); if (CL && CL.abResolve) CL.abResolve(""); musicStop(); closeZoom(); closeItemView(); closePickPop(); CL = null; renderClash(); renderPacks(); }
 function clashPanel(html){ var p = $("clashPanel"); if (p) { p.classList.remove("startbg"); p.classList.remove("menufit"); p.innerHTML = html; p.scrollTop = 0; } }
 function clashMenu(){
@@ -6775,16 +6822,16 @@ function clashFinish(won){
     cloudSave();
   } else cloudSave();
   renderClash(); renderPacks();
-  clashPanel('<div class="clashresult">' + (won ? '<div class="reswin">🏆 VICTORY!</div>' : '<div class="reslose">DEFEAT</div>')
+  clashPanel('<div class="clashresult elite ' + (won ? 'win' : 'lose') + '">' + (won ? '<div class="reswin">🏆 VICTORY!</div>' : '<div class="reslose">DEFEAT</div>')
     + '<div class="clashsub">' + (won ? 'Your pair takes the night! ' + (earned > 0 ? '<b style="color:#f5c518">+' + earned + ' 🪙 Clash Coins</b>' : '') : CL.mode === "pvp" ? (CL.pvp.oppName || 'Your friend') + ' takes this one. Run it back!' : 'The CPU pair takes this one. Watch their powers, time your tags, and run it back.') + '</div>'
     + '<div class="clashmeta">Battle Record: <b>' + (b.w || 0) + 'W – ' + (b.l || 0) + 'L</b> · 🪙 <b>' + coinsGet() + '</b>' + (won ? (CL.bwPoint ? ' \u00B7 \uD83C\uDFC6 <b>+' + (CL.bwPts || 5) + ' Tier Points</b> \u2014 ' + CHARNAMES[tierCharIdx() - 1] + ' now has ' + charWins(tierCharIdx()) + ' pts' : ' \u00B7 Every battle win earns 5 tier points') : '') + (CL.mode === "ladder" && won && CL.boss < 7 ? ' · Next up: Boss ' + (CL.boss + 1) : '') + (CL.mode === "ladder" && won && CL.boss === 7 ? ' · 🏆 LADDER CHAMPION!' : '') + '</div>'
     + '<div data-ai id="clashRecap"></div>'
     + (CL.mode === "pvp" ? '<button class="clashbig gold" data-pvprem="1">🔁 REMATCH<span>Same room — both pick new pairs</span></button>' : '<button class="clashbig gold" data-clashrematch="1">🔁 REMATCH<span>' + (CL.mode === "ladder" ? 'Boss ' + CL.boss + ' again' : 'New CPU pair, same tiers') + '</span></button>'
-    + '<button class="clashbig" data-clashmode="' + CL.mode + '">🔄 NEW PAIR<span>Pick different fighters</span></button>')
-    + '<button class="openbtn" data-clashclose="1" style="width:100%;margin-top:8px">Done</button></div>');
+    + '<button class="clashbig" data-clashmode="' + CL.mode + '">🥊 PICK NEW FIGHTERS<span>Pick different fighters</span></button>')
+    + '<button class="clashbig menubtn" data-clashclose="1">🏠 MAIN MENU<span>Back to the Board</span></button></div>');
   aiClashRecap(won);
   if (CL.mode === "pvp" && CL.pvp && !CL.pvp.finSent) { CL.pvp.finSent = true; pvpSendFinal(won); }
-  if (won && typeof confetti === "function") confetti();
+  refEndPlay(won); if (won && !_refEndOn && typeof confetti === "function") confetti();
 }
 
 /* ============ ESPORTS (Brandon 2026-11-19) ============
