@@ -1535,6 +1535,8 @@ body.aion [data-ai]{display:block}
 .field3d.placingme .ttmsg{color:#ffd94d;text-shadow:0 0 12px rgba(245,197,24,.95)}
 @keyframes ttglowpulse{from{box-shadow:0 0 10px 2px rgba(245,197,24,.55),inset 0 0 6px rgba(245,197,24,.35)}to{box-shadow:0 0 22px 8px rgba(245,197,24,.95),inset 0 0 12px rgba(245,197,24,.65)}}
 
+/* v1.1.293 zoom: locked cards zoom up dimmed with LOCKED veil (real win count, not 999) and the zoom shows the full picture (Brandon 2026-11-25) */
+#clashZoom .tcwin .cardart{object-fit:contain}
 /* v1.1.292 pick popup: card sizes to its content and the art window gets a fixed height, so the character picture always shows (Brandon 2026-11-25) */
 #pickPop .tiercard{aspect-ratio:auto;min-height:0}
 #pickPop .flipfront{position:relative;height:auto;padding:8px}
@@ -6075,7 +6077,7 @@ function turnBannerHTML(){
 function clashZoom(ci, ti, big){
   ensureClashPop();
   var z = $("clashZoom"); if (!z) return;
-  z.innerHTML = '<div class="zoomcard">' + tierCardHTML(TIERS[ti], 999, false, ci) + '</div><div class="zoomhint">Tap the card to flip it · tap outside to close</div>';
+  z.innerHTML = '<div class="zoomcard">' + tierCardHTML(TIERS[ti], big ? charWins(ci) : 999, false, ci) + '</div><div class="zoomhint">Tap the card to flip it · tap outside to close</div>';
   z.classList.toggle("bigzoom", !!big);
   z.classList.add("open");
   sfx("click");
