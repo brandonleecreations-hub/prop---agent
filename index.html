@@ -6621,6 +6621,7 @@ function fighterHTML(f, active, extra, fx){
     + '</div>';
 }
 function clashArena(){
+  if (CL && CL.over && CL._resultShown) return;
     if (CL.phase === "flip") {
     var fl = CL.flip, inner;
     var fguide = guideOn() ? '<div class="guidebar"><span class="gptr">👉</span><span>Call it — tap 🔴 RED or 🔵 BLUE. Winner goes first — but the first player can\'t strike on Turn 1.</span><button class="guideoff" data-guideoff="1">✕ TURN GUIDE OFF</button></div>' : '<button class="guideonbar" data-guideon="1">💡 Turn guide ON</button>';
@@ -6640,7 +6641,7 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
   var cpExtra = CL.lastHit === "cpu" ? " hitshake" : (CL.lastWin === "cpu" ? " lunge" : "");
   var myE = energyCount("me");
   var hasItem2 = CL.itemUsedRound !== CL.turnNo && CL.myHand.some(function(x){ return x !== "energy" && !itemPlayable("me", x); });
-  var atkBroke = myE < hitCost(me);
+  var atkBroke = myE < hitCost(me) && !CL.myFreeHit;
 
   var g = guideOn();
   var guide = "";
@@ -6882,7 +6883,7 @@ function clashCheckEnd(){
 }
 function clashWinPoints(){ if (CL && typeof CL.mode === "string" && CL.mode.indexOf("tier") === 0) { var tix = parseInt(CL.mode.slice(4), 10); if (tix >= 0 && tix <= 2) return 5 + tix; } return 5; }
 function clashFinish(won){
-  CL.over = true; sfx(won ? "win" : "lose");
+  CL.over = true; CL._resultShown = true; sfx(won ? "win" : "lose");
   lsSet("pa_clash_last", Date.now());
   var b = battlesGet();
   if (won) b.w = (b.w || 0) + 1; else b.l = (b.l || 0) + 1;
