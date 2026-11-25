@@ -1513,6 +1513,23 @@ body.aion [data-ai]{display:block}
 .pfhead{display:flex;gap:12px;align-items:center}
 .pfhead img{width:76px;height:76px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#7C3AED,#3b1470);border:2px solid rgba(245,197,24,.6)}
 .psrow[data-player]{cursor:pointer}
+
+/* v1.1.281 battle fit + placing glow (Brandon 2026-11-25) */
+.clashpanel{padding:2px 8px 8px}
+.clashround{margin:0 0 2px}
+.guideonbar{margin-bottom:4px}
+.guidebar{margin-bottom:4px}
+.field3d{flex:1 1 auto;min-height:0;margin-bottom:4px;padding:4px 6px 3px}
+.field3d .fcard{width:132px}
+.side{margin-top:4px}
+.clashmid{margin:5px 0 1px}
+.itemrow{margin-top:4px}
+.turnbanner{margin:3px 0 1px}
+.clashbtns{padding-top:5px}
+.field3d.placingme .ttwrap{filter:brightness(1.3)}
+.field3d.placingme .ttcell:not(.has){border-color:#ffd94d;animation:ttglowpulse .8s ease-in-out infinite alternate}
+.field3d.placingme .ttmsg{color:#ffd94d;text-shadow:0 0 12px rgba(245,197,24,.95)}
+@keyframes ttglowpulse{from{box-shadow:0 0 10px 2px rgba(245,197,24,.55),inset 0 0 6px rgba(245,197,24,.35)}to{box-shadow:0 0 22px 8px rgba(245,197,24,.95),inset 0 0 12px rgba(245,197,24,.65)}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bungee&family=Russo+One&family=Archivo:wght@500;700;900&display=swap" rel="stylesheet"></head>
 <body>
@@ -6625,7 +6642,7 @@ var me = CL.mine[CL.myActive], mp = CL.mine[1 - CL.myActive];
   var phase = !CL.busy && !CL.over && !CL.placing && !CL.abilityPick;
   clashPanel('<div class="clashround">' + (CL.mode === "ladder" ? '🏆 BOSS ' + CL.boss + ' · ' : '') + 'ROUND ' + CL.round + (CL.round >= 60 ? ' · <span style="color:#ff6b6b">⏰ SUDDEN DEATH</span>' : '') + '</div>'
     + guide
-    + '<div class="field3d' + (CL.lastHit ? ' shakehit' : '') + '">' + turnSplashHTML() + '<div class="side cpu"><div class="sidetag">CPU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("cpu") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("cpu") + ' \u00B7 DECK ' + CL.cpuDeck.length + '</div><div class="frow">' + fighterHTML(cp, true, cpExtra, fxFor("cpu", cp)) + fighterHTML(cpp, false, "") + '</div>' + cpuFly + '</div>'
+    + '<div class="field3d' + (CL.lastHit ? ' shakehit' : '') + (CL.placing === "me" ? ' placingme' : '') + '">' + turnSplashHTML() + '<div class="side cpu"><div class="sidetag">CPU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("cpu") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("cpu") + ' \u00B7 DECK ' + CL.cpuDeck.length + '</div><div class="frow">' + fighterHTML(cp, true, cpExtra, fxFor("cpu", cp)) + fighterHTML(cpp, false, "") + '</div>' + cpuFly + '</div>'
     + '<div class="clashmid"><span class="vsbadge">VS</span><div class="zonelab">CLASH GRID · 3 IN A ROW = ABILITY</div>' + ttHTML() + '<div class="clashnums" id="clashNums"></div>' + intel + scoutHtml + logHtml + '</div>'
     + '<div class="side me"><div class="sidetag">YOU \u00B7 \uD83D\uDD2E\u00D7' + energyCount("me") + ' \u00B7 \uD83C\uDCB4\u00D7' + itemCount("me") + '</div><div class="frow">' + fighterHTML(me, true, meExtra, fxFor("me", me)) + fighterHTML(mp, false, "") + '</div></div></div>'
     + itemHTML()
