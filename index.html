@@ -1557,6 +1557,13 @@ body.aion [data-ai]{display:block}
 .clashpanel.menufit .clashhelp summary{color:#e9e2ff}
 /* v1.1.293 zoom: locked cards zoom up dimmed with LOCKED veil (real win count, not 999) and the zoom shows the full picture (Brandon 2026-11-25) */
 #clashZoom .tcwin .cardart{object-fit:fill}
+/* v1.1.300 My Cards zoom gets the same treatment as the Clash zoom: art stretches to fill the frame, smaller tall frame for Legend art, cards size to content (Brandon 2026-11-25) */
+#cardZoom .tcwin .cardart{object-fit:fill}
+#cardZoom .tiercard{aspect-ratio:auto}
+#cardZoom .flipfront{position:relative;height:auto}
+#cardZoom .tcwin{flex:none;height:230px}
+#cardZoom .zoomcard:has(.fitwhole){width:min(72vw,258px)}
+#cardZoom .tcwin:has(> .cardart.fitwhole){flex:none;height:min(330px,42dvh)}
 /* v1.1.299 zoom: art stretches to fill the frame exactly, frames smaller, zoom cards size to content (Brandon 2026-11-25) */
 #clashZoom .tiercard{aspect-ratio:auto}
 #clashZoom .flipfront{position:relative;height:auto}
