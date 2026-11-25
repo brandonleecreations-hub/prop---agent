@@ -1535,6 +1535,10 @@ body.aion [data-ai]{display:block}
 .field3d.placingme .ttmsg{color:#ffd94d;text-shadow:0 0 12px rgba(245,197,24,.95)}
 @keyframes ttglowpulse{from{box-shadow:0 0 10px 2px rgba(245,197,24,.55),inset 0 0 6px rgba(245,197,24,.35)}to{box-shadow:0 0 22px 8px rgba(245,197,24,.95),inset 0 0 12px rgba(245,197,24,.65)}}
 
+/* v1.1.292 pick popup: card sizes to its content and the art window gets a fixed height, so the character picture always shows (Brandon 2026-11-25) */
+#pickPop .tiercard{aspect-ratio:auto;min-height:0}
+#pickPop .flipfront{position:relative;height:auto;padding:8px}
+#pickPop .tcwin{flex:none;height:100px}
 /* v1.1.291 slider section tighter, whole card in view (Brandon correction); v1.1.290 pick popup cards smaller; Legend art cover-fits its card frame everywhere (Brandon 2026-11-25) */
 /* v1.1.289 pick popup: cards in a swipe slider, tap the magnifier to zoom a card, locked cards say LOCKED and sit dimmed (Brandon 2026-11-25) */
 /* v1.1.288 battle text: log lines (incl. the AI hype) leave the field - newest line toasts on screen ~4.5s then fades; cards move up (Brandon 2026-11-25) */
