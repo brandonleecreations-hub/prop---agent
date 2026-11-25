@@ -1222,18 +1222,22 @@ details.card summary{cursor:pointer;font-weight:700;font-size:15px}
 #pickPop .ppttl{font-family:'Bungee','Archivo Black',sans-serif;font-size:17px;letter-spacing:.5px;color:#fff}
 #pickPop .ppsub{font-size:11.5px;color:#c4b5fd;margin-top:2px;font-weight:700}
 #pickPop .ppx{position:absolute;top:-4px;left:-2px;right:auto;width:30px;height:30px;border-radius:50%;border:2px solid #f5b942;background:#241243;color:#fff;font-weight:900;cursor:pointer}
-#pickPop .ppcards{display:flex;flex-wrap:wrap;gap:14px 10px;justify-content:center}
-#pickPop .ppcard{position:relative;width:min(42vw,164px)}
-#pickPop .ppcard.pair{width:min(44vw,178px)}
+#pickPop .ppcards{display:flex;flex-wrap:nowrap;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:14px 6px 12px;scrollbar-width:none}
+#pickPop .ppcards::-webkit-scrollbar{display:none}
+#pickPop .ppcard{position:relative;flex:0 0 auto;width:min(66vw,248px);scroll-snap-align:center}
+#pickPop .ppcard.pair{width:min(58vw,220px)}
 #pickPop .ppcard .tiercard{min-height:0;cursor:default}
 #pickPop .ppcard.pickable .tiercard{cursor:pointer}
 #pickPop .ppcard.cur{transform:scale(1.03)}
 #pickPop .ppcard.cur .tiercard{box-shadow:0 0 0 3px #ffd94d,0 0 30px rgba(255,217,77,.85);border-radius:12px}
 #pickPop .ppcard.blocked .tiercard{filter:saturate(.45) brightness(.72)}
-#pickPop .ppcurtag,#pickPop .ppblocktag,#pickPop .ppopentag{position:absolute;top:-9px;left:50%;transform:translateX(-50%);z-index:6;font-size:9.5px;font-weight:900;letter-spacing:.4px;padding:3px 8px;border-radius:99px;white-space:nowrap}
+#pickPop .ppcurtag,#pickPop .ppblocktag,#pickPop .ppopentag,#pickPop .pplocktag{position:absolute;top:-9px;left:50%;transform:translateX(-50%);z-index:6;font-size:9.5px;font-weight:900;letter-spacing:.4px;padding:3px 8px;border-radius:99px;white-space:nowrap}
 #pickPop .ppcurtag{background:#ffd94d;color:#231600;box-shadow:0 0 14px rgba(255,217,77,.8)}
 #pickPop .ppblocktag{background:#3a3f52;color:#c8cede;border:1px solid #9aa7bd}
 #pickPop .ppopentag{background:#7C3AED;color:#fff;box-shadow:0 0 12px rgba(168,85,247,.7)}
+#pickPop .pplocktag{background:#2b0f16;color:#ff8fa3;border:1px solid #e5486c;box-shadow:0 0 12px rgba(229,72,108,.45)}
+#pickPop .ppcard.locked .tiercard{filter:brightness(.48) saturate(.55)}
+#pickPop .ppzoom{position:absolute;right:6px;bottom:6px;z-index:6;width:32px;height:32px;border-radius:50%;border:2px solid #f5b942;background:rgba(20,12,40,.88);font-size:15px;line-height:1;cursor:pointer;padding:0}
 .itemview{transform:perspective(600px) rotateX(3deg);width:min(88vw,320px);background:linear-gradient(165deg,#1d1533,#0c0918);border:2px solid var(--ic,#f5b942);border-radius:16px;padding:18px 16px;text-align:center;box-shadow:0 18px 44px rgba(0,0,0,.6),0 0 22px -4px var(--ic,#f5b942);animation:cardpopA .3s cubic-bezier(.2,.9,.3,1.2) both}
 .ivicon{font-size:46px;line-height:1.1}
 .ivname{font-weight:900;font-size:17px;letter-spacing:1px;margin-top:6px}
@@ -1531,6 +1535,7 @@ body.aion [data-ai]{display:block}
 .field3d.placingme .ttmsg{color:#ffd94d;text-shadow:0 0 12px rgba(245,197,24,.95)}
 @keyframes ttglowpulse{from{box-shadow:0 0 10px 2px rgba(245,197,24,.55),inset 0 0 6px rgba(245,197,24,.35)}to{box-shadow:0 0 22px 8px rgba(245,197,24,.95),inset 0 0 12px rgba(245,197,24,.65)}}
 
+/* v1.1.289 pick popup: cards in a swipe slider, tap the magnifier to zoom a card, locked cards say LOCKED and sit dimmed (Brandon 2026-11-25) */
 /* v1.1.288 battle text: log lines (incl. the AI hype) leave the field - newest line toasts on screen ~4.5s then fades; cards move up (Brandon 2026-11-25) */
 #clashToast{position:fixed;top:64px;left:50%;transform:translate(-50%,-8px);max-width:92vw;background:rgba(10,6,24,.92);border:1.5px solid #f5b942;border-radius:999px;color:#fff;font-size:13px;font-weight:700;line-height:1.35;padding:8px 14px;text-align:center;opacity:0;pointer-events:none;transition:opacity .35s ease,transform .35s ease;z-index:600;box-shadow:0 10px 26px rgba(0,0,0,.5)}
 #clashToast.on{opacity:1;transform:translate(-50%,0)}
@@ -6408,9 +6413,10 @@ function openPickPop(ci){
     if (isCur) tag = '<div class="ppcurtag">\u2713 YOUR PICK</div>';
     else if (oth && oth.ti === ti) tag = '<div class="ppblocktag">\uD83D\uDEAB PARTNER HAS THIS TIER</div>';
     else if (CL.pair && pickable && !cardUnlocked(ci, ti)) tag = '<div class="ppopentag">\u2B50 PICKABLE IN THIS CLASH</div>';
-    cards += '<div class="ppcard' + (CL.pair ? ' pair' : '') + (isCur ? ' cur' : '') + (pickable ? ' pickable' : ' nopick') + ((oth && oth.ti === ti && !isCur) ? ' blocked' : '') + '"' + (pickable ? ' data-pickpop="' + ci + '-' + ti + '"' : '') + '>' + tierCardHTML(TIERS[ti], charWins(ci), false, ci) + tag + '</div>';
+    else if (!pickable && !cardUnlocked(ci, ti)) tag = '<div class="pplocktag">\uD83D\uDD12 LOCKED</div>';
+    cards += '<div class="ppcard' + (CL.pair ? ' pair' : '') + (isCur ? ' cur' : '') + (pickable ? ' pickable' : ' nopick') + ((oth && oth.ti === ti && !isCur) ? ' blocked' : '') + (!pickable && !cardUnlocked(ci, ti) ? ' locked' : '') + '"' + (pickable ? ' data-pickpop="' + ci + '-' + ti + '"' : '') + '>' + tierCardHTML(TIERS[ti], charWins(ci), false, ci) + tag + '<button class="ppzoom" data-ppzoom="' + ci + '-' + ti + '" title="View this card">\uD83D\uDD0D</button>' + '</div>';
   }
-  pop.innerHTML = '<div class="ppbox"><div class="pphead"><div class="ppttl">' + CHARNAMES[ci - 1] + '</div><div class="ppsub">' + (CL.sel === 0 ? '\u2B50 STARTER' : '\uD83D\uDD01 TAG PARTNER') + (CL.pair ? ' \u00B7 TIER CLASH ' + TIERS[CL.pair[0]].name + '\u2013' + TIERS[CL.pair[1]].name : '') + ' \u2014 tap a card to pick it</div><button class="ppx" data-pickpopclose="1">\u2715</button></div><div class="ppcards">' + cards + '</div></div>';
+  pop.innerHTML = '<div class="ppbox"><div class="pphead"><div class="ppttl">' + CHARNAMES[ci - 1] + '</div><div class="ppsub">' + (CL.sel === 0 ? '\u2B50 STARTER' : '\uD83D\uDD01 TAG PARTNER') + (CL.pair ? ' \u00B7 TIER CLASH ' + TIERS[CL.pair[0]].name + '\u2013' + TIERS[CL.pair[1]].name : '') + ' \u2014 swipe the cards, tap one to pick it</div><button class="ppx" data-pickpopclose="1">\u2715</button></div><div class="ppcards">' + cards + '</div></div>';
   pop.classList.add("open");
   sfx("click");
 }
@@ -8261,6 +8267,7 @@ document.addEventListener("click", function(e){
   if ((t = e.target.closest("[data-pickagent]"))) { if (CL) { var ci = parseInt(t.getAttribute("data-pickagent"), 10); if (CL.mine[1 - CL.sel] && CL.mine[1 - CL.sel].ci === ci) return; openPickPop(ci); } return; }
   if ((t = e.target.closest("[data-picktier]"))) { if (CL && CL.mine[CL.sel]) { var pkTi = parseInt(t.getAttribute("data-picktier"), 10); if (!CL.pair && CL.mine[1 - CL.sel] && CL.mine[1 - CL.sel].ti === pkTi) return; CL.mine[CL.sel].ti = pkTi; if (!CL.pair) clashFixPair(CL.sel); sfx("click"); clashPickRender(); } return; }
   if ((t = e.target.closest("[data-pickpopclose]"))) { closePickPop(); sfx("click"); return; }
+  if ((t = e.target.closest("[data-ppzoom]"))) { var zv = t.getAttribute("data-ppzoom").split("-"); clashZoom(parseInt(zv[0], 10), parseInt(zv[1], 10), true); return; }
   if ((t = e.target.closest("[data-pickpop]"))) { if (CL) { var ppv = t.getAttribute("data-pickpop").split("-"); var pci2 = parseInt(ppv[0], 10), pti2 = parseInt(ppv[1], 10); if (!pickPopPickable(pci2, pti2)) return; var wasSel3 = CL.sel; CL.mine[CL.sel] = mkFighter(pci2, pti2); if (!CL.pair) clashFixPair(CL.sel); closePickPop(); if (!CL.mine[1 - CL.sel]) CL.sel = 1 - CL.sel; if (CL.mine[0] && CL.mine[1]) sfx("gridwin"); else sfx(wasSel3 === 1 ? "tag" : "click"); clashPickRender(); } return; }
   if ((t = e.target.closest("[data-clashfight]"))) { if (CL && CL.mine[0] && CL.mine[1]) { if (CL.mode === "pvp") pvpSubmitPicks(); else clashStartFight(); } return; }
   if ((t = e.target.closest("[data-pvpshare]"))) { pvpShare(); return; }
