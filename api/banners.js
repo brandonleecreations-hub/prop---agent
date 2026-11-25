@@ -111,9 +111,9 @@ async function duoBanner(res, duoRaw) {
 module.exports = async (req, res) => {
   if (req.query && req.query.duo) { await duoBanner(res, req.query.duo); return; }
   const k = (req.query && req.query.s) || "nba";
-  const b = BANNERS[k] || (k === "clashintro" ? require("../clash-intro-data.js") : k === "clashmusic" ? require("../clash-music-data.js") : null);
+  const b = BANNERS[k] || (k === "clashintro" ? require("../clash-intro-data.js") : k === "clashmusic" ? require("../clash-music-data.js") : k === "refwin" ? require("../clash-ref-win-data.js") : k === "reflose" ? require("../clash-ref-lose-data.js") : null);
   if (!b) { res.status(404).end("unknown banner"); return; }
-  res.setHeader("Content-Type", k === "qr" ? "image/png" : k === "packcut" ? "image/webp" : (k === "clashdemo" || k === "clashintro") ? "video/mp4" : k === "clashmusic" ? "audio/mpeg" : "image/jpeg");
+  res.setHeader("Content-Type", k === "qr" ? "image/png" : k === "packcut" ? "image/webp" : (k === "clashdemo" || k === "clashintro" || k === "refwin" || k === "reflose") ? "video/mp4" : k === "clashmusic" ? "audio/mpeg" : "image/jpeg");
   res.setHeader("Cache-Control", "public, max-age=86400, immutable");
   res.status(200).end(Buffer.from(b, "base64"));
 };
