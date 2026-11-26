@@ -1557,6 +1557,13 @@ body.aion [data-ai]{display:block}
 .clashpanel.menufit .clashhelp summary{color:#e9e2ff}
 /* v1.1.293 zoom: locked cards zoom up dimmed with LOCKED veil (real win count, not 999) and the zoom shows the full picture (Brandon 2026-11-25) */
 #clashZoom .tcwin .cardart{object-fit:fill}
+/* v1.1.302 battle: HIDE ITEMS toggle removed (items always show) and the item cards section widened - deck/energy/discard zones slimmed (Brandon 2026-11-25) */
+.deckrow{gap:6px}
+.deckwrap{width:48px}
+.deck3d{width:40px;height:56px}
+.espot{width:54px}
+.pilewrap{width:44px}
+.pileback{width:36px;height:50px;margin:0 auto}
 /* v1.1.301 zoom frames fit AROUND the picture: art window sized to the image's own shape and centered, so the frame sides are not wide (Brandon 2026-11-25) */
 #clashZoom .tcwin, #cardZoom .tcwin{flex:none;width:min(220px,82%);height:auto;aspect-ratio:1/1;align-self:center}
 #clashZoom .tcwin:has(> .cardart.fitwhole), #cardZoom .tcwin:has(> .cardart.fitwhole){width:min(170px,62%);height:auto;aspect-ratio:1/2;max-height:44dvh}
@@ -6633,9 +6640,9 @@ function itemHTML(){
   var fly = ''; (CL.lastDrawn || []).forEach(function(id, ix){ var it2 = id === 'energy' ? { icon: '🔮', name: 'ENERGY' } : ITEM_MAP[id]; if (it2) fly += '<div class="drawfly face" style="animation-delay:' + (ix * 140) + 'ms"><span class="dfic">' + it2.icon + '</span><span class="dfnm">' + it2.name + '</span></div>'; }); CL.lastDrawn = [];
   var deck = '<div class="deckwrap"><div class="zonelab">' + (shuf ? '🔀 SHUFFLING…' : 'DECK') + '</div><div class="deck3d' + shuf + '"><div class="deckback"></div>' + pop + fly + '</div><div class="deckcount">' + CL.myDeck.length + ' left</div></div>';
   var pile = '<div class="pilewrap"><div class="zonelab">DISCARD</div><div class="pileback"></div><div class="deckcount">×' + CL.myPile.length + '</div></div>';
-  var handInner = ITEMS_OPEN ? '<div class="itemhand">' + cards + '</div>' : '';
+  var handInner = '<div class="itemhand">' + cards + '</div>';
   var pull = (CL.pulledMe && CL.pulledMe.length) ? '<div class="pullrow"><span class="pulllab">⬇️ YOU PULLED</span>' + CL.pulledMe.map(function(id){ var it3 = id === "energy" ? { icon: "🔮", name: "ENERGY" } : ITEM_MAP[id]; return it3 ? '<span class="pullmini"><i>' + it3.icon + '</i><span>' + it3.name + '</span></span>' : ""; }).join("") + '</div>' : '';
-  return '<div class="itemrow">' + pull + '<div class="itemlab">🎴 YOUR CARDS · 1 item per turn + your move' + (CL.itemUsedRound === CL.turnNo ? ' · <span style="color:#f5b942">played ✓</span>' : '') + '<button class="itog" data-itemtoggle="1">' + (ITEMS_OPEN ? '▾ HIDE ITEMS' : '▸ SHOW ITEMS (' + itemCount("me") + ')') + '</button></div><div class="deckrow">' + deck + espot + '<div class="itemhandwrap">' + handInner + '</div>' + pile + '</div></div>';
+  return '<div class="itemrow">' + pull + '<div class="itemlab">🎴 YOUR CARDS · 1 item per turn + your move' + (CL.itemUsedRound === CL.turnNo ? ' · <span style="color:#f5b942">played ✓</span>' : '') + '</div><div class="deckrow">' + deck + espot + '<div class="itemhandwrap">' + handInner + '</div>' + pile + '</div></div>';
 }
 function openItemView(id){
   var it = ITEM_MAP[id]; if (!it || !CL) return;
