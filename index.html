@@ -1557,6 +1557,7 @@ body.aion [data-ai]{display:block}
 .clashpanel.menufit .clashhelp summary{color:#e9e2ff}
 /* v1.1.293 zoom: locked cards zoom up dimmed with LOCKED veil (real win count, not 999) and the zoom shows the full picture (Brandon 2026-11-25) */
 #clashZoom .tcwin .cardart{object-fit:fill}
+/* v1.1.307 KO clip URL v=2 (v=1 responses were cached corrupt on phones) */
 /* v1.1.305 KO CLIPS (Brandon 2026-11-25): when a fighter lands a KO with an attack, that fighter's power-up punch clip plays full-screen (tap to skip); regular hits never play it */
 #koVid{position:fixed;inset:0;z-index:600;background:#000;display:none;align-items:center;justify-content:center}
 #koVid.open{display:flex}
@@ -6323,7 +6324,7 @@ function clashKoPlay(ci){
       if (!ov || !v || _koVidOn) { res(); return; }
       _koVidOn = true; _koVidDone = res;
       v.poster = "/api/banners?s=sel" + ci + "&v=1";
-      v.src = "/api/banners?s=kp" + ci + "&v=1";
+      v.src = "/api/banners?s=kp" + ci + "&v=2";
       ov.classList.add("open");
       try { v.currentTime = 0; } catch (e) {}
       var p = null; try { p = v.play(); } catch (e) {}
