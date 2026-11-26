@@ -1557,6 +1557,11 @@ body.aion [data-ai]{display:block}
 .clashpanel.menufit .clashhelp summary{color:#e9e2ff}
 /* v1.1.293 zoom: locked cards zoom up dimmed with LOCKED veil (real win count, not 999) and the zoom shows the full picture (Brandon 2026-11-25) */
 #clashZoom .tcwin .cardart{object-fit:fill}
+/* v1.1.304 CS2 Game Center: stats under the player pictures removed (picture + name only), pictures and team logos bigger (Brandon 2026-11-25) */
+.espstripava{width:64px;height:64px}
+.espstripava i{font-size:17px}
+.espstripnk{font-size:12px;margin-top:5px}
+.espstrippl{padding:9px 1px 8px}
 /* v1.1.303 Daily Pickem set for 2026-11-25: Kawhi Leonard 27.5 PTS (LA Clippers at Los Angeles Lakers) */
 /* v1.1.302 battle: HIDE ITEMS toggle removed (items always show) and the item cards section widened - deck/energy/discard zones slimmed (Brandon 2026-11-25) */
 .deckrow{gap:6px}
@@ -7676,7 +7681,7 @@ function espScoreHeadHtml(d){
   var s2 = d.game === "cs2" ? (d.score || [])[1] : (t[1] && t[1].wins);
   var chip = d.state === "in" ? '<span class="plive">🔴 LIVE</span>' : (d.state === "post" ? '<span class="note">🏁 FINAL</span>' : '<span class="note">' + esc(d.starts ? fmtFullDate(d.starts) : "") + '</span>');
   var sub = d.game === "cs2" ? (d.tournament || "Counter-Strike 2") : (d.league || "League of Legends");
-  var teamRow = function(tm){ return '<div class="espteam">' + espTeamLogo(tm, 30) + '<b>' + esc(tm.name || "") + '</b></div>'; };
+  var teamRow = function(tm){ return '<div class="espteam">' + espTeamLogo(tm, 46) + '<b>' + esc(tm.name || "") + '</b></div>'; };
   return '<div class="card" style="margin-bottom:10px"><div class="row" style="justify-content:space-between"><span class="note" style="text-transform:uppercase;letter-spacing:1px">' + esc(sub) + (d.bo ? ' · BEST OF ' + d.bo : '') + '</span>' + chip + '</div>'
     + '<div class="espteams">' + teamRow(t[0] || {}) + '<div class="espscore">' + (s1 != null ? s1 : 0) + ' – ' + (s2 != null ? s2 : 0) + '</div>' + teamRow(t[1] || {}) + '</div>'
     + ((d.game === "cs2" && (d.maps || []).length) ? '<div class="espmapscores">' + (d.maps || []).map(function(m){ var sc = (m.s1 != null && m.s2 != null) ? m.s1 + "–" + m.s2 : ((d.liveMap === m.n && d.state === "in") ? (espTallyScore(m, d) || "–") : "–"); return '<span>' + esc(m.name || ("Map " + m.n)) + ' <b>' + sc + '</b></span>'; }).join("") + '</div>' : '') + '</div>';
@@ -7698,10 +7703,7 @@ function espCs2Strip(d, players){
     h += '<div class="espstripteam">' + rows.map(function(r){
       return '<div class="espstrippl"><span class="espstripava">' + (r.img ? '<img src="' + esc(r.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '<i>' + esc(initials(r.nick || r.name || "?")) + '</i></span>'
         + '<span class="espstripnk">' + esc(r.nick || r.name || "") + '</span>'
-        + '<span class="espstripnums"><b>' + (r.k || 0) + '</b><b>' + (r.a || 0) + '</b><b>' + (r.d || 0) + '</b></span>'
-        + '<span class="espstriplab"><span>K</span><span>A</span><span>D</span></span>'
-        + '<span class="espstripnums espstripnums2"><b>' + (r.hs || 0) + '</b><b>' + (r.adr == null ? "\u2014" : (Math.round(r.adr * 10) / 10)) + '</b></span>'
-        + '<span class="espstriplab"><span>HS</span><span>ADR</span></span></div>';
+        + '</div>';
     }).join("") + '</div>';
   });
   return h + '</div>';
@@ -7791,7 +7793,7 @@ function espCs2TeamTable(d, pick, teamIdx){
   });
   if (!rows.length) return "";
   rows = rows.slice().sort(function(a, b){ return (b.k || 0) - (a.k || 0); });
-  return '<div class="espthd">' + (tm ? espTeamLogo(tm, 20) + '<b>' + esc(tm.name || "") + '</b>' : '<b>Players</b>') + '</div>'
+  return '<div class="espthd">' + (tm ? espTeamLogo(tm, 28) + '<b>' + esc(tm.name || "") + '</b>' : '<b>Players</b>') + '</div>'
     + '<div class="espprow espphd"><span></span><span>PLAYER</span><span>K</span><span>A</span><span>D</span><span>HS</span><span>ADR</span></div>'
     + rows.map(function(r){
       return '<div class="espprow"><span class="espava">' + (r.img ? '<img src="' + esc(r.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') + '<i>' + esc(initials(r.nick || r.name || "?")) + '</i></span>'
