@@ -1557,6 +1557,11 @@ body.aion [data-ai]{display:block}
 .clashpanel.menufit .clashhelp summary{color:#e9e2ff}
 /* v1.1.293 zoom: locked cards zoom up dimmed with LOCKED veil (real win count, not 999) and the zoom shows the full picture (Brandon 2026-11-25) */
 #clashZoom .tcwin .cardart{object-fit:fill}
+/* v1.1.305 KO CLIPS (Brandon 2026-11-25): when a fighter lands a KO with an attack, that fighter's power-up punch clip plays full-screen (tap to skip); regular hits never play it */
+#koVid{position:fixed;inset:0;z-index:600;background:#000;display:none;align-items:center;justify-content:center}
+#koVid.open{display:flex}
+#koVidEl{width:100%;height:100%;object-fit:contain;background:#000}
+#koVidSkip{position:absolute;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2;background:rgba(20,16,34,.85);color:#fff;border:1px solid rgba(196,168,255,.7);border-radius:999px;padding:10px 20px;font-weight:800;font-size:14px;letter-spacing:.4px}
 /* v1.1.304 CS2 Game Center: stats under the player pictures removed (picture + name only), pictures and team logos bigger (Brandon 2026-11-25) */
 .espstripava{width:64px;height:64px}
 .espstripava i{font-size:17px}
@@ -6302,6 +6307,43 @@ function ensureRefEnd(){
   el.querySelector("#refEndVid").addEventListener("error", function(){ finishRefEnd(); });
   el.querySelector("#refEndSkip").addEventListener("click", function(){ sfx("click"); finishRefEnd(); });
 }
+var _koVidOn = false, _koVidTimer = 0, _koVidDone = null;
+function ensureKoVid(){
+  if (document.getElementById("koVid")) return;
+  var ov = document.createElement("div"); ov.id = "koVid";
+  ov.innerHTML = '<video id="koVidEl" playsinline muted preload="auto"></video><button id="koVidSkip" type="button">SKIP \u25B8</button>';
+  document.body.appendChild(ov);
+  ov.addEventListener("click", function(){ finishKoVid(); });
+}
+function clashKoPlay(ci){
+  return new Promise(function(res){
+    try {
+      ensureKoVid();
+      var ov = $("koVid"), v = $("koVidEl");
+      if (!ov || !v || _koVidOn) { res(); return; }
+      _koVidOn = true; _koVidDone = res;
+      v.poster = "/api/banners?s=sel" + ci + "&v=1";
+      v.src = "/api/banners?s=kp" + ci + "&v=1";
+      ov.classList.add("open");
+      try { v.currentTime = 0; } catch (e) {}
+      var p = null; try { p = v.play(); } catch (e) {}
+      if (p && p.catch) p.catch(function(){ setTimeout(function(){ if (!_koVidOn) return; var p2 = null; try { p2 = v.play(); } catch (e) {} if (p2 && p2.catch) p2.catch(function(){ finishKoVid(); }); }, 600); });
+      v.onended = function(){ finishKoVid(); };
+      clearTimeout(_koVidTimer);
+      _koVidTimer = setTimeout(function(){ finishKoVid(); }, 7000);
+    } catch (e) { _koVidOn = false; res(); }
+  });
+}
+function finishKoVid(){
+  if (!_koVidOn) return;
+  _koVidOn = false;
+  clearTimeout(_koVidTimer);
+  var ov = $("koVid"), v = $("koVidEl");
+  if (v) { try { v.pause(); } catch (e) {} v.onended = null; }
+  if (ov) ov.classList.remove("open");
+  var d = _koVidDone; _koVidDone = null;
+  if (d) d();
+}
 function refEndPlay(won){
   try {
     ensureRefEnd();
@@ -6837,6 +6879,7 @@ async function resolveAttack(atkSide, B){
     }
     clashArena();
     await clashSleep(600); if (CL !== B) return;
+    if (CL.lastKO === D) { await clashKoPlay(A.ci); if (CL !== B) return; }
     await doMarks(atkSide, marks, B);
   } else {
     CL.lastBlock = defSide;
