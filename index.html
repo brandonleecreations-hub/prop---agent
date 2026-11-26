@@ -1557,6 +1557,7 @@ body.aion [data-ai]{display:block}
 .clashpanel.menufit .clashhelp summary{color:#e9e2ff}
 /* v1.1.293 zoom: locked cards zoom up dimmed with LOCKED veil (real win count, not 999) and the zoom shows the full picture (Brandon 2026-11-25) */
 #clashZoom .tcwin .cardart{object-fit:fill}
+/* v1.1.303 Daily Pickem set for 2026-11-25: Kawhi Leonard 27.5 PTS (LA Clippers at Los Angeles Lakers) */
 /* v1.1.302 battle: HIDE ITEMS toggle removed (items always show) and the item cards section widened - deck/energy/discard zones slimmed (Brandon 2026-11-25) */
 .deckrow{gap:6px}
 .deckwrap{width:48px}
@@ -1800,7 +1801,7 @@ body.aion [data-ai]{display:block}
         <div style="text-align:left"><div style="font-weight:900;font-size:19px;letter-spacing:.5px;color:#fff">THE DEALMAKER'S</div><div style="color:#f5c518;font-weight:900;letter-spacing:2px;font-size:13px">DAILY PICK'EM</div></div>
       </div>
       <div class="wcard" style="padding:10px 16px;text-align:left">
-<div style="display:flex;align-items:center;gap:9px;padding:6px 0"><img src="https://a.espncdn.com/i/headshots/nba/players/full/3945274.png" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover" onerror="this.remove()"><div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px;color:#fff">Luka Doncic</div><div style="color:#9a9ab0;font-size:11.5px">36.5 PTS</div></div><span class="wmore" style="padding:6px 12px;font-size:12px">MORE</span><span class="wless" style="padding:6px 12px;font-size:12px">LESS</span></div>
+<div style="display:flex;align-items:center;gap:9px;padding:6px 0"><img src="https://a.espncdn.com/i/headshots/nba/players/full/6450.png" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover" onerror="this.remove()"><div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px;color:#fff">Kawhi Leonard</div><div style="color:#9a9ab0;font-size:11.5px">27.5 PTS</div></div><span class="wmore" style="padding:6px 12px;font-size:12px">MORE</span><span class="wless" style="padding:6px 12px;font-size:12px">LESS</span></div>
       </div>
       <div class="wsub">One player a day — pick MORE or LESS.<br>Get it right, win a <b style="color:#f5c518">PACK</b>.</div>
       <div class="wsub" style="font-size:15px">Plus <b style="color:#fff">Agent Clash</b> — win battles, open packs,<br>chase <b style="color:#f5c518">THE RING</b>.</div>
@@ -10538,8 +10539,8 @@ function openPlayer(name, leagueKey, viewOnly, finalView){
 }
 
 /* ---------- Weekly Pick'em 2: Brandon's 3 players, MORE/LESS, 3-for-3 wins a pack ---------- */
-var PICKEM2 = { week: "2026-11-23", legs: [
-  { name: "Luka Doncic", athleteId: "3945274", sport: "basketball", league: "nba", eventId: "401910044", stat: "PTS", statLabel: "Points", line: 36.5, team: "Los Angeles Lakers", opp: "Utah Jazz", starts: "2026-11-24T03:00:00Z", img: "https://a.espncdn.com/i/headshots/nba/players/full/3945274.png" }
+var PICKEM2 = { week: "2026-11-25", legs: [
+  { name: "Kawhi Leonard", athleteId: "6450", sport: "basketball", league: "nba", eventId: "401809801", stat: "PTS", statLabel: "Points", line: 27.5, team: "LA Clippers", opp: "Los Angeles Lakers", starts: "2026-11-26T04:00:00Z", img: "https://a.espncdn.com/i/headshots/nba/players/full/6450.png" }
 ]};
 function pk2State(){ var st = lsGet("pa_pickem2", null); if (!st || st.week !== PICKEM2.week) st = { week: PICKEM2.week, picks: {}, locked: false, graded: "", awarded: false, actuals: {} }; return st; }
 function pk2Save(st){ lsSet("pa_pickem2", st); }
